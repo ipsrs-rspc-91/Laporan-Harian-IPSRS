@@ -1551,6 +1551,8 @@
           return;
         } else {
           clearSession();
+          showLoginScreen('Sesi berakhir, silakan login kembali.');
+          return;
         }
       }catch(err){
         showLoginScreen('Tidak dapat menghubungi server: ' + (err && err.message ? err.message : err));
@@ -1559,21 +1561,12 @@
     }
 
     // Tidak ada sesi aktif (sessionStorage kosong/berakhir, mis. browser baru
-    // dibuka lagi). Kalau username+password "Ingat Saya" sudah tersimpan di
-    // localStorage (sudah diisi otomatis ke form oleh loadRememberedCredentials()
-    // sebelum fungsi ini dipanggil), langsung coba login otomatis di latar
-    // belakang -- user TIDAK perlu klik tombol Masuk lagi, form input akan
-    // terbuka begitu server membalas (satu kali round-trip, secepat mungkin).
-    // Kalau belum ada kredensial tersimpan, tampilkan layar login biasa dan
-    // proses "Memeriksa..." tetap berjalan seperti biasa saat user klik Masuk.
-    const remU = document.getElementById('loginUsername').value.trim();
-    const remP = document.getElementById('loginPassword').value;
-    const remChecked = document.getElementById('loginRemember').checked;
+    // dibuka lagi). Form login tetap ditampilkan dan user WAJIB klik tombol
+    // "Masuk" sendiri -- TIDAK ADA login otomatis diam-diam lagi (dihapus atas
+    // permintaan: auto-login dianggap berisiko keamanan). Username/password
+    // "Ingat Saya" (kalau ada) tetap terisi otomatis di form oleh
+    // loadRememberedCredentials() supaya user tinggal klik, bukan mengetik ulang.
     showLoginScreen();
-    if(remChecked && remU && remP){
-      const msgEl = document.getElementById('loginMsg');
-      await performLogin(remU, remP, true, msgEl, true);
-    }
   }
 
   loadRememberedCredentials();
