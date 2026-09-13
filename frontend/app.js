@@ -85,21 +85,16 @@
     el.className = text ? (isErr ? 'msg-err' : 'msg-ok') : '';
   }
 
-  function openSaveSuccessModal(reportId){
-    const bg = document.getElementById('saveSuccessModalBg');
-    const sub = document.getElementById('saveSuccessSub');
-    if(!bg) return;
-    if(sub) sub.innerText = reportId ? ('Laporan berhasil tersimpan. ID: ' + reportId) : 'Laporan berhasil tersimpan.';
-    bg.classList.add('show');
-    setTimeout(function(){
-      const ok = document.getElementById('saveSuccessOkBtn');
-      if(ok) ok.focus();
-    }, 0);
+  // Modal konfirmasi "Data telah disimpan" -- dipakai supaya klik tombol
+  // Simpan Laporan selalu memberi reaksi yang jelas (bukan cuma teks kecil
+  // di bawah tombol yang gampang tak disadari, terutama di HP).
+  function openSaveSuccessModal(msg){
+    const sub = document.getElementById('saveSuccessModalSub');
+    if(sub) sub.innerText = msg || 'Laporan berhasil disimpan.';
+    document.getElementById('saveSuccessModalBg').classList.add('show');
   }
-
   function closeSaveSuccessModal(){
-    const bg = document.getElementById('saveSuccessModalBg');
-    if(bg) bg.classList.remove('show');
+    document.getElementById('saveSuccessModalBg').classList.remove('show');
   }
 
   // ============================================================
@@ -256,30 +251,44 @@
     document.getElementById('appShell').classList.remove('hidden');
   }
 
-  async function doLogin(){
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const remember = document.getElementById('loginRemember').checked;
-    const msgEl = document.getElementById('loginMsg');
-    if(!username || !password){ msgEl.innerText = 'Username dan password wajib diisi.'; return; }
-    msgEl.innerText = 'Memeriksa...';
+  async function performLogin(username, password, remember, msgEl, autoMode){
+    if(!username || !password){
+      if(msgEl) msgEl.innerText = 'Username dan password wajib diisi.';
+      return false;
+    }
+    if(msgEl) msgEl.innerText = autoMode ? 'Masuk otomatis...' : 'Memeriksa...';
     try{
       const json = await gsRun('apiLogin', username, password);
       if(json && json.ok){
         setSession(json);
         if(remember){ saveRememberedCredentials(username, password); }
         else{ clearRememberedCredentials(); }
-        msgEl.innerText = '';
+        if(msgEl) msgEl.innerText = '';
         document.getElementById('loginPassword').value = '';
         hideLoginScreen();
         applyIdentityToUI();
         await afterAuthReady();
+        return true;
       } else {
-        msgEl.innerText = (json && json.msg) ? json.msg : 'Login gagal.';
+        if(msgEl) msgEl.innerText = (json && json.msg) ? json.msg : 'Login gagal.';
+        // Kredensial "Ingat Saya" tersimpan sudah tidak valid (mis. password
+        // diganti) -- hapus supaya tidak terus-menerus mencoba auto-login
+        // dengan kredensial yang salah setiap kali app dibuka.
+        if(autoMode) clearRememberedCredentials();
+        return false;
       }
     }catch(err){
-      msgEl.innerText = 'Error: ' + (err && err.message ? err.message : err);
+      if(msgEl) msgEl.innerText = 'Error: ' + (err && err.message ? err.message : err);
+      return false;
     }
+  }
+
+  async function doLogin(){
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const remember = document.getElementById('loginRemember').checked;
+    const msgEl = document.getElementById('loginMsg');
+    await performLogin(username, password, remember, msgEl, false);
   }
 
   async function doLogout(){
@@ -775,38 +784,24 @@
     const err = validateInputPayload(payload);
     if(err){ setMsg('msgInput', err, true); return; }
 
-    const saveBtn = document.querySelector('button[onclick="saveData()"]');
-    if(saveBtn){
-      saveBtn.disabled = true;
-      saveBtn.dataset.originalText = saveBtn.innerText;
-      saveBtn.innerText = 'Menyimpan...';
-    }
     setMsg('msgInput', 'Menyimpan...');
     try{
       const json = await authRun('apiCreateReport', payload);
       if(json && json.ok){
-        setMsg('msgInput', '');
+        setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
         ['Pelapor','Pukul','NoLK','Ruang','MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Keterangan'].forEach(id => {
-          const el = document.getElementById(id);
-          if(el) el.value = '';
+          document.getElementById(id).value = '';
         });
         document.getElementById('Kategori').value = '';
         document.getElementById('AreaKerja').value = '';
         refreshItemOptions();
         document.getElementById('Status').value = 'Selesai';
-
-        // Dialog sukses hanya muncul setelah backend mengembalikan ok:true.
-        openSaveSuccessModal(json.report_id);
+        openSaveSuccessModal('Laporan berhasil disimpan (ID: ' + json.report_id + ').');
       } else {
         setMsg('msgInput', (json && json.msg) ? json.msg : 'Gagal menyimpan laporan.', true);
       }
     }catch(err){
       setMsg('msgInput', 'Error: ' + (err && err.message ? err.message : err), true);
-    }finally{
-      if(saveBtn){
-        saveBtn.disabled = false;
-        saveBtn.innerText = saveBtn.dataset.originalText || 'Simpan Laporan';
-      }
     }
   }
 
@@ -1314,7 +1309,9 @@
         setMsg('msgEdit','Perubahan tersimpan.');
         _laporanSubTabLoaded.monitoring = false;
         _laporanSubTabLoaded.rekap = false;
-        setTimeout(() => { closeEditModal(); loadReportsBySelectedMonth(); }, 600);
+        closeEditModal();
+        openSaveSuccessModal('Perubahan laporan berhasil disimpan.');
+        loadReportsBySelectedMonth();
       } else {
         setMsg('msgEdit', (json && json.msg) ? json.msg : 'Gagal menyimpan.', true);
       }
@@ -1536,22 +1533,42 @@
 
   async function checkAuthAndInit(){
     const s = getSession();
-    if(!s || !s.token){ showLoginScreen(); return; }
-    CURRENT_SESSION = s;
-    try{
-      const json = await gsRun('apiWhoAmI', s.token);
-      if(json && json.ok){
-        setSession(Object.assign({}, s, json));
-        hideLoginScreen();
-        await afterAuthReady();
-      } else {
-        clearSession();
-        showLoginScreen('Sesi berakhir, silakan login kembali.');
+    if(s && s.token){
+      CURRENT_SESSION = s;
+      try{
+        const json = await gsRun('apiWhoAmI', s.token);
+        if(json && json.ok){
+          setSession(Object.assign({}, s, json));
+          hideLoginScreen();
+          await afterAuthReady();
+          return;
+        } else {
+          clearSession();
+        }
+      }catch(err){
+        showLoginScreen('Tidak dapat menghubungi server: ' + (err && err.message ? err.message : err));
+        return;
       }
-    }catch(err){
-      showLoginScreen('Tidak dapat menghubungi server: ' + (err && err.message ? err.message : err));
+    }
+
+    // Tidak ada sesi aktif (sessionStorage kosong/berakhir, mis. browser baru
+    // dibuka lagi). Kalau username+password "Ingat Saya" sudah tersimpan di
+    // localStorage (sudah diisi otomatis ke form oleh loadRememberedCredentials()
+    // sebelum fungsi ini dipanggil), langsung coba login otomatis di latar
+    // belakang -- user TIDAK perlu klik tombol Masuk lagi, form input akan
+    // terbuka begitu server membalas (satu kali round-trip, secepat mungkin).
+    // Kalau belum ada kredensial tersimpan, tampilkan layar login biasa dan
+    // proses "Memeriksa..." tetap berjalan seperti biasa saat user klik Masuk.
+    const remU = document.getElementById('loginUsername').value.trim();
+    const remP = document.getElementById('loginPassword').value;
+    const remChecked = document.getElementById('loginRemember').checked;
+    showLoginScreen();
+    if(remChecked && remU && remP){
+      const msgEl = document.getElementById('loginMsg');
+      await performLogin(remU, remP, true, msgEl, true);
     }
   }
 
   loadRememberedCredentials();
   checkAuthAndInit();
+
