@@ -242,11 +242,15 @@
   // LOGIN / LOGOUT / PASSWORD
   // ============================================================
   function showLoginScreen(msg){
+    const authLoading = document.getElementById('authLoading');
+    if(authLoading) authLoading.classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('appShell').classList.add('hidden');
     if(msg) document.getElementById('loginMsg').innerText = msg;
   }
   function hideLoginScreen(){
+    const authLoading = document.getElementById('authLoading');
+    if(authLoading) authLoading.classList.add('hidden');
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
   }
