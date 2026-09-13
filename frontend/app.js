@@ -291,11 +291,18 @@
     await performLogin(username, password, remember, msgEl, false);
   }
 
-  async function doLogout(){
+  function doLogout(){
+    // PENTING: showLoginScreen() dipanggil LANGSUNG di sini (bukan setelah
+    // `await gsRun('apiLogout', ...)`) -- versi sebelumnya menunggu balasan
+    // server dulu baru mengganti layar, jadi kalau GAS sedang lambat, tombol
+    // "Keluar" terasa "tidak bereaksi" selama itu. Sesi lokal (token) dihapus
+    // dan layar login ditampilkan SEKETIKA; penghapusan baris sesi di server
+    // tetap dikirim, tapi berjalan di latar belakang tanpa diTUNGGU UI.
     const s = getSession();
     clearSession();
-    if(s && s.token){ try{ await gsRun('apiLogout', s.token); }catch(e){} }
+    closeUserMenu();
     showLoginScreen('Anda sudah keluar. Silakan login kembali.');
+    if(s && s.token){ gsRun('apiLogout', s.token).catch(function(e){}); }
   }
 
   function openPwModal(){
