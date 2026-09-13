@@ -85,6 +85,23 @@
     el.className = text ? (isErr ? 'msg-err' : 'msg-ok') : '';
   }
 
+  function openSaveSuccessModal(reportId){
+    const bg = document.getElementById('saveSuccessModalBg');
+    const sub = document.getElementById('saveSuccessSub');
+    if(!bg) return;
+    if(sub) sub.innerText = reportId ? ('Laporan berhasil tersimpan. ID: ' + reportId) : 'Laporan berhasil tersimpan.';
+    bg.classList.add('show');
+    setTimeout(function(){
+      const ok = document.getElementById('saveSuccessOkBtn');
+      if(ok) ok.focus();
+    }, 0);
+  }
+
+  function closeSaveSuccessModal(){
+    const bg = document.getElementById('saveSuccessModalBg');
+    if(bg) bg.classList.remove('show');
+  }
+
   // ============================================================
   // HTTP API WRAPPER — GitHub Pages -> Google Apps Script Web App
   // ============================================================
@@ -758,23 +775,38 @@
     const err = validateInputPayload(payload);
     if(err){ setMsg('msgInput', err, true); return; }
 
+    const saveBtn = document.querySelector('button[onclick="saveData()"]');
+    if(saveBtn){
+      saveBtn.disabled = true;
+      saveBtn.dataset.originalText = saveBtn.innerText;
+      saveBtn.innerText = 'Menyimpan...';
+    }
     setMsg('msgInput', 'Menyimpan...');
     try{
       const json = await authRun('apiCreateReport', payload);
       if(json && json.ok){
-        setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
+        setMsg('msgInput', '');
         ['Pelapor','Pukul','NoLK','Ruang','MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Keterangan'].forEach(id => {
-          document.getElementById(id).value = '';
+          const el = document.getElementById(id);
+          if(el) el.value = '';
         });
         document.getElementById('Kategori').value = '';
         document.getElementById('AreaKerja').value = '';
         refreshItemOptions();
         document.getElementById('Status').value = 'Selesai';
+
+        // Dialog sukses hanya muncul setelah backend mengembalikan ok:true.
+        openSaveSuccessModal(json.report_id);
       } else {
         setMsg('msgInput', (json && json.msg) ? json.msg : 'Gagal menyimpan laporan.', true);
       }
     }catch(err){
       setMsg('msgInput', 'Error: ' + (err && err.message ? err.message : err), true);
+    }finally{
+      if(saveBtn){
+        saveBtn.disabled = false;
+        saveBtn.innerText = saveBtn.dataset.originalText || 'Simpan Laporan';
+      }
     }
   }
 
