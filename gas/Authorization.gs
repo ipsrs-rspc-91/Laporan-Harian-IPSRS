@@ -22,11 +22,13 @@ function canEditReport_(session,reportOwnerStaffId,reportOwnerRole){
   if(reportOwnerRole===ROLE_KA_IPSRS)return false;
 
   // Administrasi selalu dapat mengedit laporannya sendiri.
-  // Jika KA IPSRS memberi izin ADMINISTRASI_EDIT=AKTIF, Administrasi
-  // juga dapat mengedit laporan seluruh tim, kecuali laporan KA IPSRS.
+  // Jika izin edit global Administrasi aktif, Administrasi dapat mengedit
+  // laporan seluruh tim (kecuali laporan KA IPSRS). Di luar itu, izin khusus
+  // yang diberikan KA IPSRS tetap dapat membuka akses edit untuk target tertentu.
   if(session.role===ROLE_ADMINISTRASI){
     if(String(session.staff_id)===String(reportOwnerStaffId))return true;
-    return getAccessSetting_(ACCESS_SETTING_ADMINISTRASI_EDIT,ACCESS_INACTIVE)===ACCESS_ACTIVE;
+    if(getAccessSetting_(ACCESS_SETTING_ADMINISTRASI_EDIT,ACCESS_INACTIVE)===ACCESS_ACTIVE)return true;
+    return hasActiveEditPermission_(session.staff_id,reportOwnerStaffId);
   }
 
   // Role lain dapat mengedit laporan sendiri. Untuk laporan orang lain,
