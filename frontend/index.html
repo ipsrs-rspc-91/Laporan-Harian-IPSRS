@@ -298,6 +298,18 @@
   table.data-table tbody td{ padding:10px 12px; border-top:1px solid var(--border); vertical-align:top; }
   table.data-table tbody tr{ cursor:pointer; }
   table.data-table tbody tr:hover{ background:#f7fafb; }
+  .laporan-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px;}
+  .laporan-summary .stat-card.status-selesai{background:#f0fdf4;border-color:#86efac;}
+  .laporan-summary .stat-card.status-selesai .s-value,.laporan-summary .stat-card.status-selesai .s-label{color:#166534;}
+  .laporan-summary .stat-card.status-belum{background:#fff1f2;border-color:#fca5a5;}
+  .laporan-summary .stat-card.status-belum .s-value,.laporan-summary .stat-card.status-belum .s-label{color:#b91c1c;}
+  .report-action{white-space:nowrap;}
+  .report-action .btn{padding:6px 9px;font-size:12px;}
+  .report-row-selesai td:first-child{border-left:4px solid #22c55e;}
+  .report-row-belum td:first-child{border-left:4px solid #ef4444;}
+  .report-row-proses td:first-child{border-left:4px solid #f59e0b;}
+  @media(max-width:760px){.laporan-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
 
   .card-list{ display:none; flex-direction:column; gap:var(--sp-2); }
   .rcard{ background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 14px; cursor:pointer; }
@@ -637,7 +649,8 @@
 <div class="sub-tabs">
   <button class="sub-tab" data-subtab="monitoring" onclick="goLaporanSubTab('monitoring')">Monitoring Harian</button>
   <button class="sub-tab" data-subtab="rekap" onclick="goLaporanSubTab('rekap')">Rekap Bulanan</button>
-  <button class="sub-tab active" data-subtab="daftar" onclick="goLaporanSubTab('daftar')">Daftar Laporan</button>
+  <button class="sub-tab active" data-subtab="saya" onclick="goLaporanSubTab('saya')">Laporan Saya</button>
+  <button class="sub-tab" data-subtab="daftar" onclick="goLaporanSubTab('daftar')">Daftar Laporan</button>
 </div>
 
 <!-- ===================== MONITORING HARIAN ===================== -->
@@ -733,6 +746,12 @@
 
 <!-- ===================== DAFTAR LAPORAN (existing, tidak diubah) ===================== -->
 <div id="subtab-daftar" class="sub-tab-panel active">
+  <div class="laporan-summary" id="laporanSummaryGrid">
+    <div class="stat-card"><div class="s-value" id="lapTotal">0</div><div class="s-label">Total Laporan</div></div>
+    <div class="stat-card status-selesai"><div class="s-value" id="lapSelesai">0</div><div class="s-label">Selesai</div></div>
+    <div class="stat-card status-belum"><div class="s-value" id="lapBelum">0</div><div class="s-label">Belum</div></div>
+    <div class="stat-card"><div class="s-value" id="lapBulanIni">-</div><div class="s-label">Bulan Ini</div></div>
+  </div>
   <div id="adminStaffPanel" class="admin-staff-panel card">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--sp-2);">
       <b style="font-size:var(--fs-base);">Filter Petugas</b>
@@ -792,7 +811,7 @@
         <thead>
           <tr>
             <th>Tanggal</th><th>Pukul</th><th>Ruang</th><th>No LK</th><th>Masalah/Kegiatan</th>
-            <th>Tindakan</th><th>Petugas</th><th>Bidang/Shift</th><th>Status</th><th>Kategori</th><th>Area Kerja</th><th>Item</th>
+            <th>Tindakan</th><th>Petugas</th><th>Bidang/Shift</th><th>Status</th><th>Kategori</th><th>Area Kerja</th><th>Item</th><th>Aksi</th>
           </tr>
         </thead>
         <tbody id="reportTableBody"></tbody>
