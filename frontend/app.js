@@ -278,9 +278,15 @@
         else{ clearRememberedCredentials(); }
         if(msgEl) msgEl.innerText = '';
         document.getElementById('loginPassword').value = '';
-        hideLoginScreen();
         applyIdentityToUI();
         await afterAuthReady();
+        // Tampilkan aplikasi setelah seluruh inisialisasi selesai.
+        // Sebelumnya appShell ditampilkan sebelum afterAuthReady(), sehingga
+        // user bisa klik Laporan saat inisialisasi masih berjalan.
+        // afterAuthReady() lalu memanggil goPage('input') beberapa detik
+        // kemudian dan menimpa halaman yang sedang dibuka user.
+        hideLoginScreen();
+        goPage('input');
         return true;
       } else {
         if(msgEl) msgEl.innerText = (json && json.msg) ? json.msg : 'Login gagal.';
@@ -1590,7 +1596,6 @@
     // Panel filter petugas terbuka untuk SEMUA peran (prinsip: "semua boleh melihat"),
     // jadi datanya juga harus dimuat untuk semua peran -- bukan cuma role tertentu.
     await loadAdminStaffListIfNeeded();
-    goPage('input');
   }
 
   async function checkAuthAndInit(){
@@ -1601,8 +1606,9 @@
         const json = await gsRun('apiWhoAmI', s.token);
         if(json && json.ok){
           setSession(Object.assign({}, s, json));
-          hideLoginScreen();
           await afterAuthReady();
+          hideLoginScreen();
+          goPage('input');
           return;
         } else {
           clearSession();
