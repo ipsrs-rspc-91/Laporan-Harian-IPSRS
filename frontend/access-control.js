@@ -2,6 +2,25 @@
 (function(){
   let mounted=false, staffCache=[];
   function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  async function callAccessApi(action, ...args){
+    const s=typeof getSession==='function'?getSession():null;
+    if(!s||!s.token) throw new Error('Sesi tidak ditemukan, silakan login kembali.');
+    const p={token:s.token};
+    if(action==='apiSetAccessSetting'){p.key=args[0]||'';p.value=args[1]||'';}
+    else if(action==='apiSetEditPermission'){p.grantedToStaffId=args[0]||'';p.targetStaffId=args[1]||'';p.isActive=args[2];}
+    const url=(typeof getApiUrl==='function'?getApiUrl():(window.IPSRS_API_URL||'')).trim();
+    const response=await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,data:p})});
+    const text=await response.text();let json;try{json=JSON.parse(text);}catch(e){throw new Error('Respons backend bukan JSON yang valid. HTTP '+response.status);}
+    return json;
+  }
+  async function callAccessRead(action){
+    const s=typeof getSession==='function'?getSession():null;
+    if(!s||!s.token) throw new Error('Sesi tidak ditemukan, silakan login kembali.');
+    const url=(typeof getApiUrl==='function'?getApiUrl():(window.IPSRS_API_URL||'')).trim();
+    const response=await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,data:{token:s.token}})});
+    const text=await response.text();let json;try{json=JSON.parse(text);}catch(e){throw new Error('Respons backend bukan JSON yang valid. HTTP '+response.status);}
+    return json;
+  }
   function mount(){
     if(mounted||typeof getSession!=='function')return;
     const s=getSession();
@@ -16,15 +35,15 @@
   async function render(){
     const el=document.getElementById('accessContent');if(!el)return;el.innerHTML='<div class="access-muted">Memuat pengaturan...</div>';
     try{
-      const [ac,st,pm]=await Promise.all([authRun('apiGetAccessControl'),authRun('apiListStaff'),authRun('apiListEditPermissions')]);
+      const [ac,st,pm]=await Promise.all([callAccessRead('apiGetAccessControl'),callAccessRead('apiListStaff'),callAccessRead('apiListEditPermissions')]);
       if(!ac.ok)throw new Error(ac.msg||'Gagal memuat pengaturan.');
       staffCache=(st&&st.ok?st.data:[]).filter(x=>x.status!=='Nonaktif');
       const perms=pm&&pm.ok?pm.data:[];
-      el.innerHTML=`<div class="access-grid"><div class="access-card"><div class="access-row"><div><h3>Visibilitas Laporan Tim</h3><div class="access-muted">AKTIF = semua anggota IPSRS dapat melihat laporan tim. NONAKTIF = hanya pemilik dan KA IPSRS.</div></div><button class="access-switch ${ac.laporan_tim==='AKTIF'?'on':''}" onclick="toggleAccessSetting('LAPORAN_TIM','${ac.laporan_tim}')"></button></div></div><div class="access-card"><div class="access-row"><div><h3>Administrasi — Izin Edit</h3><div class="access-muted">AKTIF = Administrasi dapat mengedit laporan semua staf kecuali laporan KA IPSRS. NONAKTIF = read-only.</div></div><button class="access-switch ${ac.administrasi_edit==='AKTIF'?'on':''}" onclick="toggleAccessSetting('ADMINISTRASI_EDIT','${ac.administrasi_edit}')"></button></div></div></div><div class="access-card"><h3>Izin Edit Khusus</h3><div class="access-muted">Berikan izin kepada staf tertentu untuk mengedit laporan staf lain. Laporan KA IPSRS tidak dapat diberi izin edit.</div><div class="access-form"><div><label>Pemberi izin</label><select id="permGrantee">${staffCache.map(x=>`<option value="${esc(x.staff_id)}">${esc(x.nama)} — ${esc(x.role_label||x.role)}</option>`).join('')}</select></div><div><label>Target laporan</label><select id="permTarget">${staffCache.map(x=>`<option value="${esc(x.staff_id)}">${esc(x.nama)} — ${esc(x.role_label||x.role)}</option>`).join('')}</select></div><button class="access-btn-primary" onclick="saveAccessPermission()">Simpan Izin</button></div><table class="access-table"><thead><tr><th>Pemberi</th><th>Target</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${perms.length?perms.map(p=>`<tr><td>${esc(p.granted_to_staff_name)}</td><td>${esc(p.target_staff_name)}</td><td>${p.is_active==='AKTIF'?'AKTIF':'NONAKTIF'}</td><td><button class="access-btn-secondary" onclick="togglePermission('${esc(p.granted_to_staff_id)}','${esc(p.target_staff_id)}','${p.is_active}')">${p.is_active==='AKTIF'?'Cabut':'Aktifkan'}</button></td></tr>`).join(''):'<tr><td colspan="4">Belum ada izin khusus.</td></tr>'}</tbody></table></div><div class="access-actions"><button class="access-btn-secondary" onclick="closeAccessPanel()">Selesai</button></div>`;
+      el.innerHTML=`<div class="access-grid"><div class="access-card"><div class="access-row"><div><h3>Visibilitas Laporan Tim</h3><div class="access-muted">AKTIF = semua anggota IPSRS dapat melihat laporan tim. NONAKTIF = hanya pemilik dan KA IPSRS.</div></div><button class="access-switch ${ac.laporan_tim==='AKTIF'?'on':''}" onclick="toggleAccessSetting('LAPORAN_TIM','${ac.laporan_tim}')"></button></div></div><div class="access-card"><div class="access-row"><div><h3>Administrasi — Izin Edit</h3><div class="access-muted">AKTIF = Administrasi dapat mengedit laporan semua staf kecuali laporan KA IPSRS. NONAKTIF = Administrasi tetap dapat mengedit laporan miliknya sendiri, tetapi tidak dapat mengedit laporan staf lain.</div></div><button class="access-switch ${ac.administrasi_edit==='AKTIF'?'on':''}" onclick="toggleAccessSetting('ADMINISTRASI_EDIT','${ac.administrasi_edit}')"></button></div></div></div><div class="access-card"><h3>Izin Edit Khusus</h3><div class="access-muted">Berikan izin kepada staf tertentu untuk mengedit laporan staf lain. Laporan KA IPSRS tidak dapat diberi izin edit.</div><div class="access-form"><div><label>Pemberi izin</label><select id="permGrantee">${staffCache.map(x=>`<option value="${esc(x.staff_id)}">${esc(x.nama)} — ${esc(x.role_label||x.role)}</option>`).join('')}</select></div><div><label>Target laporan</label><select id="permTarget">${staffCache.map(x=>`<option value="${esc(x.staff_id)}">${esc(x.nama)} — ${esc(x.role_label||x.role)}</option>`).join('')}</select></div><button class="access-btn-primary" onclick="saveAccessPermission()">Simpan Izin</button></div><table class="access-table"><thead><tr><th>Pemberi</th><th>Target</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${perms.length?perms.map(p=>`<tr><td>${esc(p.granted_to_staff_name)}</td><td>${esc(p.target_staff_name)}</td><td>${p.is_active==='AKTIF'?'AKTIF':'NONAKTIF'}</td><td><button class="access-btn-secondary" onclick="togglePermission('${esc(p.granted_to_staff_id)}','${esc(p.target_staff_id)}','${p.is_active}')">${p.is_active==='AKTIF'?'Cabut':'Aktifkan'}</button></td></tr>`).join(''):'<tr><td colspan="4">Belum ada izin khusus.</td></tr>'}</tbody></table></div><div class="access-actions"><button class="access-btn-secondary" onclick="closeAccessPanel()">Selesai</button></div>`;
     }catch(e){el.innerHTML='<div class="access-muted">Gagal memuat: '+esc(e.message||e)+'</div>';}
   }
-  window.toggleAccessSetting=async function(key,current){const next=current==='AKTIF'?'NONAKTIF':'AKTIF';if(!confirm('Ubah '+key+' menjadi '+next+'?'))return;const r=await authRun('apiSetAccessSetting',key,next);if(!r.ok)alert(r.msg||'Gagal mengubah pengaturan.');await render();};
-  window.saveAccessPermission=async function(){const g=document.getElementById('permGrantee').value,t=document.getElementById('permTarget').value;if(g===t){alert('Pemberi izin dan target harus berbeda.');return;}const r=await authRun('apiSetEditPermission',g,t,true);if(!r.ok)alert(r.msg||'Gagal menyimpan izin.');await render();};
-  window.togglePermission=async function(g,t,current){const next=current==='AKTIF'?false:true;const r=await authRun('apiSetEditPermission',g,t,next);if(!r.ok)alert(r.msg||'Gagal mengubah izin.');await render();};
+  window.toggleAccessSetting=async function(key,current){const next=current==='AKTIF'?'NONAKTIF':'AKTIF';if(!confirm('Ubah '+key+' menjadi '+next+'?'))return;const r=await callAccessApi('apiSetAccessSetting',key,next);if(!r.ok)alert(r.msg||'Gagal mengubah pengaturan.');await render();};
+  window.saveAccessPermission=async function(){const g=document.getElementById('permGrantee').value,t=document.getElementById('permTarget').value;if(g===t){alert('Pemberi izin dan target harus berbeda.');return;}const r=await callAccessApi('apiSetEditPermission',g,t,true);if(!r.ok)alert(r.msg||'Gagal menyimpan izin.');await render();};
+  window.togglePermission=async function(g,t,current){const next=current==='AKTIF'?false:true;const r=await callAccessApi('apiSetEditPermission',g,t,next);if(!r.ok)alert(r.msg||'Gagal mengubah izin.');await render();};
   const timer=setInterval(()=>{mount();if(mounted)clearInterval(timer);},500);setTimeout(mount,50);
 })();
