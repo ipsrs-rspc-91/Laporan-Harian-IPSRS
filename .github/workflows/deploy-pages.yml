@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -22,21 +22,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Split frontend into editable page files
-        run: python3 scripts/split_frontend.py
-
-      - name: Commit split frontend
-        run: |
-          if [ -f frontend/pages/Page_Login.html ]; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add frontend/index.html frontend/css/style.css frontend/pages frontend/_legacy/index-original.html
-            if ! git diff --cached --quiet; then
-              git commit -m 'refactor: split IPSRS frontend into page files'
-              git push
-            fi
-          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
