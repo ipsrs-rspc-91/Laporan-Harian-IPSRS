@@ -964,6 +964,9 @@
       const staffPanel = document.getElementById('adminStaffPanel');
       if(staffPanel) staffPanel.classList.toggle('hidden', name !== 'daftar');
       _laporanSubTabLoaded[name] = false;
+      // Panel petugas hanya diperlukan pada Daftar Laporan. Jangan panggil
+      // apiListStaff saat login karena itu menambah waktu tunggu awal.
+      if(name === 'daftar') loadAdminStaffListIfNeeded();
       loadReportsBySelectedMonth();
       return;
     }
@@ -1585,17 +1588,22 @@
     applyIdentityToUI();
     buildMonthOptions();
     populateStaticSelects();
-    // Muat kategori/area/item kustom LEBIH DULU, baru taruh option
-    // "+ Tambah ... Baru" di paling bawah -- supaya urutannya selalu benar:
-    // [bawaan...] [kustom...] [separator] [+ Tambah ... Baru].
-    await Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()]);
+    // Inisialisasi login HARUS ringan. Data tambahan dimuat di background/lazy
+    // supaya user tidak tertahan di splash screen dan tidak ada navigasi tertunda.
     appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
     appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
-    refreshItemOptions(); // membangun Item + "+ Tambah Item Baru" jika Area Kerja sudah terisi
+    refreshItemOptions();
     document.getElementById('Status').value = 'Selesai';
-    // Panel filter petugas terbuka untuk SEMUA peran (prinsip: "semua boleh melihat"),
-    // jadi datanya juga harus dimuat untuk semua peran -- bukan cuma role tertentu.
-    await loadAdminStaffListIfNeeded();
+
+    // Data kustom tidak boleh menghambat login. Jalankan setelah UI sudah aktif.
+    // Promise sengaja tidak di-await.
+    Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()])
+      .then(() => {
+        appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
+        appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
+        refreshItemOptions();
+      })
+      .catch(() => {});
   }
 
   async function checkAuthAndInit(){
