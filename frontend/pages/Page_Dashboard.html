@@ -1,0 +1,119 @@
+<section id="page-dashboard" class="page">
+        <div class="page-header">
+  <div>
+    <h1>Dashboard</h1>
+    <div class="desc">Kepatuhan &amp; pencapaian laporan harian IPSRS</div>
+  </div>
+  <div class="filters-bar" style="margin:0;">
+    <div class="f-item">
+      <label>Bulan</label>
+      <select id="DashBulan" onchange="loadDashboard()"></select>
+    </div>
+    <div class="f-item hidden" id="dashStaffFilterWrap">
+      <label>Petugas</label>
+      <select id="DashStaff" onchange="loadDashboard()"><option value="">Semua Petugas</option></select>
+    </div>
+  </div>
+</div>
+
+<b style="font-size:var(--fs-sm); color:var(--primary-dark); text-transform:uppercase; letter-spacing:.03em;">Kepatuhan Hari Ini</b>
+<div class="stat-grid" style="margin-top:var(--sp-2); margin-bottom:var(--sp-4);">
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--primary-light); color:var(--primary);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+    </div>
+    <div class="s-value" id="statPetugasAktif">0</div>
+    <div class="s-label">Total Petugas Aktif</div>
+  </div>
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--success-bg); color:var(--success);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+    </div>
+    <div class="s-value" id="statSudahIsiHariIni">0</div>
+    <div class="s-label">Sudah Isi Hari Ini</div>
+  </div>
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--danger-bg); color:var(--danger);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg>
+    </div>
+    <div class="s-value" id="statBelumIsiHariIni">0</div>
+    <div class="s-label">Belum Isi Hari Ini</div>
+  </div>
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--primary-light); color:var(--primary);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+    </div>
+    <div class="s-value" id="statComplianceHariIni">0%</div>
+    <div class="s-label">Compliance Hari Ini</div>
+  </div>
+</div>
+<div class="smallnote" id="dashComplianceNote" style="margin:-14px 0 20px;"></div>
+
+<b style="font-size:var(--fs-sm); color:var(--primary-dark); text-transform:uppercase; letter-spacing:.03em;">Aktivitas &amp; Pencapaian Bulan Ini</b>
+<div class="stat-grid" style="margin-top:var(--sp-2);">
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--primary-light); color:var(--primary);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path></svg>
+    </div>
+    <div class="s-value" id="statTotal">0</div>
+    <div class="s-label">Total Laporan</div>
+  </div>
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--success-bg); color:var(--success);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+    </div>
+    <div class="s-value" id="statSelesai">0</div>
+    <div class="s-label">Selesai</div>
+  </div>
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--warning-bg); color:var(--warning);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+    </div>
+    <div class="s-value" id="statBelum">0</div>
+    <div class="s-label">Belum Selesai</div>
+  </div>
+  <div class="stat-card">
+    <div class="s-icon" style="background:var(--primary-light); color:var(--primary);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+    </div>
+    <div class="s-value" id="statPersen">0%</div>
+    <div class="s-label">Tingkat Penyelesaian</div>
+  </div>
+</div>
+
+<div class="dash-grid" style="margin-top:var(--sp-4);">
+  <div class="card">
+    <b style="font-size:var(--fs-base);">Status Pencapaian Pekerjaan</b>
+    <div class="smallnote" style="margin:2px 0 10px;">Ini gambaran progres pekerjaan, BUKAN peringkat kinerja petugas.</div>
+    <div id="barPencapaian"></div>
+  </div>
+  <div class="card">
+    <b style="font-size:var(--fs-base);">Laporan per Kategori</b>
+    <div id="barKategori" style="margin-top:var(--sp-3);"></div>
+  </div>
+</div>
+
+<div class="dash-grid" style="margin-top:var(--sp-4);">
+  <div class="card">
+    <b style="font-size:var(--fs-base);">Status Laporan</b>
+    <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+    <div class="legend-list" id="statusLegend"></div>
+  </div>
+  <div class="card">
+    <b style="font-size:var(--fs-base);">Area Kerja Teraktif</b>
+    <div id="barArea" style="margin-top:var(--sp-3);"></div>
+  </div>
+</div>
+
+<div class="dash-grid" style="margin-top:var(--sp-4);">
+  <div class="card">
+    <b style="font-size:var(--fs-base);">Laporan Terbaru</b>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+  <div class="card hidden" id="dashStaffCard">
+    <b style="font-size:var(--fs-base);">Petugas Teraktif</b>
+    <div id="barStaff" style="margin-top:var(--sp-3);"></div>
+  </div>
+</div>
+
+      </section>

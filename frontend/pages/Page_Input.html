@@ -1,0 +1,78 @@
+<section id="page-input" class="page active">
+        <div class="page-header">
+  <div>
+    <h1>Input Laporan</h1>
+    <div class="desc">Isi laporan kegiatan / perbaikan harian ini</div>
+  </div>
+  <div class="pill" id="inputIdentityPill">-</div>
+</div>
+
+<div class="card">
+  <div class="form-grid">
+    <div>
+      <label for="Tanggal">Tanggal</label>
+      <input type="date" id="Tanggal">
+
+      <label for="Pelapor">Pelapor</label>
+      <input id="Pelapor" placeholder="Nama yang melapor">
+
+      <div class="field-row">
+        <div>
+          <label for="Pukul">Pukul</label>
+          <input id="Pukul" placeholder="HH:MM">
+        </div>
+        <div>
+          <label for="NoLK">No LK</label>
+          <input id="NoLK">
+        </div>
+      </div>
+
+      <label for="Ruang">Ruang</label>
+      <input id="Ruang" placeholder="Contoh: IGD, Ruang Anggrek">
+
+      <label for="MasalahKegiatan">Masalah / Kegiatan</label>
+      <textarea id="MasalahKegiatan" placeholder="Jelaskan masalah atau kegiatan"></textarea>
+
+      <label for="Tindakan">Tindakan</label>
+      <textarea id="Tindakan" placeholder="Tindakan yang dilakukan"></textarea>
+    </div>
+
+    <div>
+      <label for="SparePartUnit">Spare Part / Unit</label>
+      <input id="SparePartUnit">
+
+      <label for="Type">Type</label>
+      <input id="Type">
+
+      <label for="Jumlah">Jumlah</label>
+      <input id="Jumlah" type="number" min="0">
+
+      <label for="Status">Status</label>
+      <select id="Status">
+        <option value="Selesai">Selesai</option>
+        <option value="Belum">Belum</option>
+      </select>
+
+      <label for="Petugas">Petugas</label>
+      <input id="Petugas" class="readonlyPetugas" readonly>
+      <div class="smallnote">Otomatis terisi dari akun yang login &mdash; tidak dapat diubah manual.</div>
+
+      <label for="Kategori">Kategori</label>
+      <select id="Kategori" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
+
+      <label for="AreaKerja">Area Kerja</label>
+      <select id="AreaKerja" onchange="handleAreaKerjaChange()"><option value="">Pilih area kerja&hellip;</option></select>
+
+      <label for="Item">Item</label>
+      <select id="Item" onchange="handleItemChange()"><option value="">Pilih area kerja dahulu&hellip;</option></select>
+
+      <label for="Keterangan">Keterangan</label>
+      <textarea id="Keterangan" placeholder="Catatan tambahan (opsional)"></textarea>
+    </div>
+  </div>
+
+  <button class="btn accent lg block" style="margin-top:var(--sp-4);" onclick="saveData()">Simpan Laporan</button>
+  <div id="msgInput" style="margin-top:var(--sp-2); font-size:var(--fs-base); font-weight:700;"></div>
+</div>
+
+      </section>
