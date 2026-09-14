@@ -78,6 +78,15 @@
     return (str===undefined||str===null?'':String(str))
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+  // Empty state seragam -- dipakai di semua tabel/kartu yang datanya kosong,
+  // supaya tampilannya konsisten di seluruh halaman (bukan teks polos beda-beda).
+  function emptyStateHtml(text){
+    return '<div class="empty-state">'
+      + '<svg class="es-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>'
+      + '<div class="es-text">' + text + '</div>'
+      + '</div>';
+  }
+
   function setMsg(id, text, isErr){
     const el = document.getElementById(id);
     if(!el) return;
@@ -1116,7 +1125,7 @@
   function renderStaffDetailReports(laporan){
     const wrap = document.getElementById('staffDetailReports');
     if(laporan.length === 0){
-      wrap.innerHTML = '<div class="smallnote">Belum ada laporan pada bulan ini.</div>';
+      wrap.innerHTML = emptyStateHtml('Belum ada laporan pada bulan ini.');
       return;
     }
     wrap.innerHTML = '';
@@ -1182,7 +1191,7 @@
     const staffBody = document.getElementById('rekapStaffBody');
     const perStaff = json.per_staff || [];
     if(perStaff.length === 0){
-      staffBody.innerHTML = '<tr><td colspan="6" class="smallnote">Belum ada data staf.</td></tr>';
+      staffBody.innerHTML = '<tr><td colspan="6">' + emptyStateHtml('Belum ada data staf.') + '</td></tr>';
     } else {
       staffBody.innerHTML = perStaff.map(s => `
         <tr>
@@ -1199,7 +1208,7 @@
     const bidangBody = document.getElementById('rekapBidangBody');
     const perBidang = json.per_bidang || [];
     if(perBidang.length === 0){
-      bidangBody.innerHTML = '<tr><td colspan="4" class="smallnote">Belum ada data bidang.</td></tr>';
+      bidangBody.innerHTML = '<tr><td colspan="4">' + emptyStateHtml('Belum ada data bidang.') + '</td></tr>';
     } else {
       bidangBody.innerHTML = perBidang.map(b => `
         <tr>
@@ -1290,7 +1299,7 @@
         return;
       }
       if(!json.data || json.data.length === 0){
-        list.innerHTML = '<div class="smallnote">Belum ada riwayat perubahan untuk laporan ini.</div>';
+        list.innerHTML = emptyStateHtml('Belum ada riwayat perubahan untuk laporan ini.');
         return;
       }
       list.innerHTML = '';
@@ -1419,7 +1428,7 @@
     const el = document.getElementById(containerId);
     el.innerHTML = '';
     if(!items || items.length === 0){
-      el.innerHTML = '<div class="smallnote">Belum ada data.</div>';
+      el.innerHTML = emptyStateHtml('Belum ada data.');
       return;
     }
     const max = Math.max.apply(null, items.map(i => i.value)) || 1;
@@ -1445,7 +1454,7 @@
     const colors = ['#1a9e57', '#c98a12'];
 
     if(selesai === 0 && belum === 0){
-      ctx.parentElement.innerHTML = '<div class="smallnote" style="padding-top:80px; text-align:center;">Belum ada data pada periode ini.</div>';
+      ctx.parentElement.innerHTML = emptyStateHtml('Belum ada data pada periode ini.');
       legendEl.innerHTML = '';
       return;
     }
@@ -1473,7 +1482,7 @@
     const el = document.getElementById('recentList');
     el.innerHTML = '';
     if(!recent || recent.length === 0){
-      el.innerHTML = '<div class="smallnote">Belum ada laporan.</div>';
+      el.innerHTML = emptyStateHtml('Belum ada laporan.');
       return;
     }
     recent.forEach(r => {
