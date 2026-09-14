@@ -613,13 +613,13 @@
 </div>
 
 <div class="sub-tabs">
-  <button class="sub-tab active" data-subtab="monitoring" onclick="goLaporanSubTab('monitoring')">Monitoring Harian</button>
+  <button class="sub-tab" data-subtab="monitoring" onclick="goLaporanSubTab('monitoring')">Monitoring Harian</button>
   <button class="sub-tab" data-subtab="rekap" onclick="goLaporanSubTab('rekap')">Rekap Bulanan</button>
-  <button class="sub-tab" data-subtab="daftar" onclick="goLaporanSubTab('daftar')">Daftar Laporan</button>
+  <button class="sub-tab active" data-subtab="daftar" onclick="goLaporanSubTab('daftar')">Daftar Laporan</button>
 </div>
 
 <!-- ===================== MONITORING HARIAN ===================== -->
-<div id="subtab-monitoring" class="sub-tab-panel active">
+<div id="subtab-monitoring" class="sub-tab-panel hidden">
   <div class="card" style="margin-bottom:16px;">
     <div class="filters-bar">
       <div class="f-item">
@@ -710,11 +710,11 @@
 </div>
 
 <!-- ===================== DAFTAR LAPORAN (existing, tidak diubah) ===================== -->
-<div id="subtab-daftar" class="sub-tab-panel hidden">
+<div id="subtab-daftar" class="sub-tab-panel active">
   <div id="adminStaffPanel" class="admin-staff-panel card">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
       <b style="font-size:13.5px;">Filter Petugas</b>
-      <div class="pill" id="adminStaffActivePill">Menampilkan: Semua Petugas</div>
+      <div class="pill" id="adminStaffActivePill">Menampilkan: -</div>
     </div>
     <div class="smallnote">Semua peran bisa melihat seluruh laporan. Pilih petugas untuk melihat rekap khusus miliknya, atau "Semua Petugas" untuk gabungan.</div>
     <div class="staff-grid" id="adminStaffGrid"></div>
