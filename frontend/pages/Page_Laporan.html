@@ -199,3 +199,124 @@
 </div>
 
       </section>
+
+<!-- ===================== MODAL: EDIT LAPORAN ===================== -->
+  <div id="editModalBg" class="modal-bg">
+    <div class="modal">
+      <h3>Edit Laporan</h3>
+      <div class="modal-sub" id="editModalSub">ID: -</div>
+      <div id="editPermissionNote" class="smallnote hidden" style="color:var(--danger); font-weight:700;"></div>
+
+      <div id="historyPanel" class="hidden" style="background:var(--primary-light); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:var(--sp-3);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b style="font-size:var(--fs-sm); color:var(--primary-dark);">Riwayat Perubahan (khusus KA IPSRS &amp; Administrasi)</b>
+          <button class="btn" style="padding:4px 10px; font-size:var(--fs-xs);" onclick="toggleHistoryList()">Tampilkan/Sembunyikan</button>
+        </div>
+        <div id="historyList" class="hidden" style="margin-top:var(--sp-2); max-height:220px; overflow-y:auto;"></div>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label>Tanggal</label>
+          <input type="date" id="Edit_Tanggal">
+          <label>Pelapor</label>
+          <input id="Edit_Pelapor">
+          <div class="field-row">
+            <div><label>Pukul</label><input id="Edit_Pukul" placeholder="HH:MM"></div>
+            <div><label>No LK</label><input id="Edit_NoLK"></div>
+          </div>
+          <label>Ruang</label>
+          <input id="Edit_Ruang">
+          <label>Masalah / Kegiatan</label>
+          <textarea id="Edit_MasalahKegiatan"></textarea>
+          <label>Tindakan</label>
+          <textarea id="Edit_Tindakan"></textarea>
+        </div>
+        <div>
+          <label>Spare Part / Unit</label>
+          <input id="Edit_SparePartUnit">
+          <label>Type</label>
+          <input id="Edit_Type">
+          <label>Jumlah</label>
+          <input id="Edit_Jumlah" type="number">
+          <label>Status</label>
+          <select id="Edit_Status">
+            <option value="Selesai">Selesai</option>
+            <option value="Belum">Belum</option>
+          </select>
+          <label>Petugas</label>
+          <input id="Edit_Petugas" class="readonlyPetugas" readonly>
+          <label>Kategori</label>
+          <input id="Edit_Kategori">
+          <label>Area Kerja</label>
+          <input id="Edit_AreaKerja">
+          <label>Item</label>
+          <input id="Edit_Item">
+          <label>Keterangan</label>
+          <textarea id="Edit_Keterangan"></textarea>
+        </div>
+      </div>
+
+      <div id="msgEdit"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeEditModal()">Batal</button>
+        <button class="btn primary" id="btnSaveEdit" onclick="saveEdit()">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+<!-- ===================== MODAL: TAMBAH KATEGORI ===================== -->
+  <div id="kategoriModalBg" class="modal-bg">
+    <div class="modal" style="max-width:420px;">
+      <h3>Tambah Kategori Baru</h3>
+      <div class="modal-sub">Kategori baru langsung tersimpan &amp; muncul di dropdown semua petugas.</div>
+      <label for="kategoriBaruInput">Nama kategori</label>
+      <input id="kategoriBaruInput" placeholder="Contoh: PEMASANGAN CCTV BARU">
+      <div id="kategoriBaruMsg"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeTambahKategoriModal()">Batal</button>
+        <button class="btn primary" onclick="simpanKategoriBaru()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+<!-- ===================== MODAL: TAMBAH AREA KERJA ===================== -->
+  <div id="areaModalBg" class="modal-bg">
+    <div class="modal" style="max-width:420px;">
+      <h3>Tambah Area Kerja Baru</h3>
+      <div class="modal-sub">Area kerja baru langsung tersimpan &amp; muncul di dropdown semua petugas.</div>
+      <label for="areaBaruInput">Nama area kerja</label>
+      <input id="areaBaruInput" placeholder="Contoh: M.E. ( Instalasi Listrik )">
+      <div id="areaBaruMsg"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeTambahAreaModal()">Batal</button>
+        <button class="btn primary" onclick="simpanAreaBaru()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+<!-- ===================== MODAL: TAMBAH ITEM ===================== -->
+  <div id="itemModalBg" class="modal-bg">
+    <div class="modal" style="max-width:420px;">
+      <h3>Tambah Item Baru</h3>
+      <div class="modal-sub">Item baru untuk Area Kerja: <b id="itemBaruAreaLabel">-</b>. Langsung tersimpan &amp; muncul untuk semua petugas yang memilih Area Kerja ini.</div>
+      <label for="itemBaruInput">Nama item</label>
+      <input id="itemBaruInput" placeholder="Contoh: Panel LVMDP Gedung A">
+      <div id="itemBaruMsg"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeTambahItemModal()">Batal</button>
+        <button class="btn primary" onclick="simpanItemBaru()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+<!-- ===================== MODAL: KONFIRMASI SIMPAN ===================== -->
+  <div id="saveSuccessModalBg" class="modal-bg">
+    <div class="modal" style="max-width:380px; text-align:center;">
+      <h3>Data telah disimpan</h3>
+      <div class="modal-sub" id="saveSuccessModalSub">Laporan berhasil disimpan.</div>
+      <div class="modal-actions" style="justify-content:center;">
+        <button class="btn primary" onclick="closeSaveSuccessModal()">OK</button>
+      </div>
+    </div>
+  </div>
