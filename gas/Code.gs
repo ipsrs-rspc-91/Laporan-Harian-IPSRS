@@ -147,8 +147,6 @@ var API_ACTIONS = {
     return apiGetStaffPerformance(d.token || '', d.staffId || '', d.bulan || '');
   },
 
-  // API custom berikut tetap disediakan karena frontend sudah memanggilnya.
-  // Implementasinya akan diverifikasi pada audit API tahap berikutnya.
   apiGetKategoriKustom: function(d) {
     return apiGetKategoriKustom(d.token || '');
   },
@@ -158,37 +156,19 @@ var API_ACTIONS = {
   },
 
   apiGetItemKustom: function(d) {
-    return apiGetItemKustom(
-      d.token || '',
-      d.area || '',
-      d.nama || '',
-      d.existingItemsForArea || []
-    );
+    return apiGetItemKustom(d.token || '', d.area || '', d.nama || '', d.existingItemsForArea || []);
   },
 
   apiTambahKategori: function(d) {
-    return apiTambahKategori(
-      d.token || '',
-      d.nama || '',
-      Array.isArray(d.staticList) ? d.staticList : []
-    );
+    return apiTambahKategori(d.token || '', d.nama || '', Array.isArray(d.staticList) ? d.staticList : []);
   },
 
   apiTambahAreaKerja: function(d) {
-    return apiTambahAreaKerja(
-      d.token || '',
-      d.nama || '',
-      Array.isArray(d.staticList) ? d.staticList : []
-    );
+    return apiTambahAreaKerja(d.token || '', d.nama || '', Array.isArray(d.staticList) ? d.staticList : []);
   },
 
   apiTambahItem: function(d) {
-    return apiTambahItem(
-      d.token || '',
-      d.area || '',
-      d.nama || '',
-      Array.isArray(d.existingItemsForArea) ? d.existingItemsForArea : []
-    );
+    return apiTambahItem(d.token || '', d.area || '', d.nama || '', Array.isArray(d.existingItemsForArea) ? d.existingItemsForArea : []);
   }
 };
 
