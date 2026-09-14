@@ -1,6 +1,7 @@
 const SPREADSHEET_ID = '';
 
 const SHEET_USERS='USERS', SHEET_STAFF='STAFF', SHEET_REPORTS='REPORTS', SHEET_SESSIONS='SESSIONS', SHEET_AUDIT='AUDIT_LOG', SHEET_HISTORY='REPORT_HISTORY', SHEET_MIGRATION_ERROR='MIGRATION_ERROR';
+const SHEET_KATEGORI_CUSTOM='KATEGORI_CUSTOM', SHEET_AREA_KERJA_CUSTOM='AREA_KERJA_CUSTOM', SHEET_ITEM_CUSTOM='ITEM_CUSTOM';
 const SESSION_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const ROLE_KA_IPSRS='KA_IPSRS', ROLE_ADMINISTRASI='ADMINISTRASI', ROLE_KASIE='KASIE', ROLE_STAF='STAF', ROLE_PETUGAS_SHIFT='PETUGAS_SHIFT';
 const BIDANG_LIST=['ME','Sipil','Workshop','Elektromedik','Kesling'];
@@ -13,7 +14,10 @@ REPORTS:['report_id','staff_id','nama_snapshot','bidang_snapshot','role_snapshot
 SESSIONS:['token','username','staff_id','role','bidang','shift','nama','created_at','expires_at'],
 AUDIT_LOG:['timestamp','username','staff_id','action','report_id','keterangan','field_changed','old_value','new_value','version_before','version_after'],
 REPORT_HISTORY:['history_id','report_id','edited_at','edited_by_username','edited_by_staff_id','data_before_json','data_after_json'],
-MIGRATION_ERROR:['report_id','nama_asli','alasan','tanggal_migrasi']};
+MIGRATION_ERROR:['report_id','nama_asli','alasan','tanggal_migrasi'],
+KATEGORI_CUSTOM:['nama','created_at','created_by_staff_id','created_by_name'],
+AREA_KERJA_CUSTOM:['nama','created_at','created_by_staff_id','created_by_name'],
+ITEM_CUSTOM:['area','nama','created_at','created_by_staff_id','created_by_name']};
 const STATUS_PENCAPAIAN_LIST=['Selesai','Sebagian','Belum Selesai','Ditunda','Tindak Lanjut'];
 const STATUS_SDM_LIST=['Aktif','Calon','Nonaktif'];
 const CALON_STAFF_SEED=[{nama:'Calon 1 SDM IPSRS'},{nama:'Calon 2 SDM IPSRS'},{nama:'Calon 3 SDM IPSRS'},{nama:'Calon 4 SDM IPSRS'},{nama:'Calon 5 SDM IPSRS'},{nama:'Calon 6 SDM IPSRS'},{nama:'Calon 7 SDM IPSRS'}];
