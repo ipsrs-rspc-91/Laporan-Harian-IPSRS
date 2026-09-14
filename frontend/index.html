@@ -5,112 +5,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <link rel="stylesheet" href="css/style.css">
-
-
 </head><body>
-
-  <!-- ===================== AUTH LOADING (splash netral) =====================
-       Ditampilkan PALING AWAL, sebelum tahu status sesi valid/tidak. Tanpa ini,
-       form login (LOGIN SCREEN di bawah) akan sempat tampil dulu setiap kali
-       halaman di-refresh/dibuka -- walau sebenarnya user MASIH login (sesi
-       masih valid) -- karena verifikasi ke server (apiWhoAmI) makan waktu.
-       Efeknya: layar "kedip" balik ke form login lalu balik lagi ke form
-       input beberapa detik kemudian. Splash ini menutupi jeda itu dengan
-       tampilan netral, baru diganti ke LOGIN SCREEN atau APP SHELL setelah
-       checkAuthAndInit() (app.js) tahu pasti hasilnya. -->
-  <div id="authLoading" class="auth-loading">
-    <div class="login-logo">
-      <img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere">
-    </div>
-    <div class="auth-loading-text">Memuat...</div>
-  </div>
-
-  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div id="authLoading" class="auth-loading"><div class="login-logo"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><div class="auth-loading-text">Memuat...</div></div>
   <div id="loginScreen" class="hidden"></div>
-
-  <!-- ===================== APP SHELL ===================== -->
   <div id="appShell" class="app-shell hidden">
-
     <header class="topbar">
-      <button class="topbar-brand" onclick="goPage('input')" title="Kembali ke Input Laporan">
-        <div class="logo-box">
-          <img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere">
-        </div>
-        <span class="topbar-brand-text">
-          <h2>LAPORAN HARIAN IPSRS</h2>
-          <span>RS. Puri Cinere</span>
-        </span>
-      </button>
-
+      <button class="topbar-brand" onclick="goPage('input')" title="Kembali ke Input Laporan"><div class="logo-box"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><span class="topbar-brand-text"><h2>LAPORAN HARIAN IPSRS</h2><span>RS. Puri Cinere</span></span></button>
       <nav class="topbar-nav">
-        <button class="nav-item" data-page="laporan" onclick="goPage('laporan')">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 13h6M9 17h6"></path></svg>
-          <span>Laporan</span>
-        </button>
-        <button class="nav-item" data-page="dashboard" onclick="goPage('dashboard')">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
-          <span>Dashboard</span>
-        </button>
+        <button class="nav-item" data-page="laporan" onclick="goPage('laporan')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 13h6M9 17h6"></path></svg><span>Laporan</span></button>
+        <button class="nav-item" data-page="dashboard" onclick="goPage('dashboard')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span>Dashboard</span></button>
       </nav>
-
-      <div class="topbar-user">
-        <button class="user-chip" onclick="toggleUserMenu()">
-          <span class="u-avatar" id="mobileIdentityChip">-</span>
-          <span class="u-name" id="sbIdentityNama">-</span>
-          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
-        </button>
-        <div class="user-menu" id="userMenu">
-          <div class="identity-card">
-            <div class="i-name" id="sbIdentityNamaMenu">-</div>
-            <div class="i-meta" id="sbIdentityMeta">-</div>
-          </div>
-          <button class="btn block" onclick="openPwModal()">Ganti Password</button>
-          <button class="btn block" onclick="doLogout()">Keluar</button>
-        </div>
-      </div>
+      <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button class="btn block" onclick="openPwModal()">Ganti Password</button><button class="btn block" onclick="doLogout()">Keluar</button></div></div>
     </header>
     <div class="user-menu-backdrop" id="userMenuBackdrop" onclick="closeUserMenu()"></div>
-
-    <main class="content">
-      <section id="page-input" class="page active"></section>
-      <section id="page-dashboard" class="page"></section>
-      <section id="page-laporan" class="page"></section>
-    </main>
+    <main class="content"><section id="page-input" class="page active"></section><section id="page-dashboard" class="page"></section><section id="page-laporan" class="page"></section></main>
   </div>
-
-  <!-- ===================== MODAL: GANTI PASSWORD ===================== -->
-  <div id="pwModalBg" class="modal-bg">
-    <div class="modal" style="max-width:380px;">
-      <h3>Ganti Password</h3>
-      <div class="modal-sub">Segera ganti password default setelah login pertama.</div>
-      <label for="pwOld">Password lama</label>
-      <input id="pwOld" type="password">
-      <label for="pwNew">Password baru (min. 6 karakter)</label>
-      <input id="pwNew" type="password">
-      <div id="pwMsg"></div>
-      <div class="modal-actions">
-        <button class="btn" onclick="closePwModal()">Batal</button>
-        <button class="btn primary" onclick="doChangePassword()">Simpan</button>
-      </div>
-    </div>
-  </div>
-
+  <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
   <script>
   (async function(){
     const mounts={loginScreen:'pages/Page_Login.html','page-input':'pages/Page_Input.html','page-dashboard':'pages/Page_Dashboard.html','page-laporan':'pages/Page_Laporan.html'};
-    async function fragment(id,url){
-      const el=document.getElementById(id); if(!el) throw new Error('Mount point not found: '+id);
-      const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('Gagal memuat '+url+' ('+r.status+')');
-      el.outerHTML=await r.text();
-    }
+    async function fragment(id,url){const el=document.getElementById(id);if(!el)throw new Error('Mount point not found: '+id);const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');el.outerHTML=await r.text();}
     function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Gagal memuat '+src));document.body.appendChild(s);});}
-    try{
-      await Promise.all(Object.entries(mounts).map(([id,url])=>fragment(id,url)));
-      await script('js/static-data.js');
-      await script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js');
-      await script('./config.js');
-      await script('./app.js');
-    }catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
+    try{await Promise.all(Object.entries(mounts).map(([id,url])=>fragment(id,url)));await script('js/static-data.js');await script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js');await script('./config.js');await script('./app.js');await script('./access-control.js');}
+    catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
   })();
   </script>
 </body>
