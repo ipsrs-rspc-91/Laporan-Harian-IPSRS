@@ -354,6 +354,16 @@
     document.getElementById('adminStaffPanel').classList.remove('hidden');
     document.getElementById('dashStaffFilterWrap').classList.remove('hidden');
     document.getElementById('dashStaffCard').classList.remove('hidden');
+
+    // Default filter Petugas = diri sendiri (bukan "Semua Petugas") supaya
+    // begitu buka tab Laporan, yang langsung tampil adalah laporan milik
+    // petugas yang login -- bukan gabungan semua orang. Tetap bisa diganti
+    // ke "Semua Petugas" kapan saja lewat panel Filter Petugas (ini cuma
+    // nilai AWAL, bukan pembatasan akses -- prinsip "semua boleh melihat
+    // semua" di atas tetap berlaku).
+    adminSelectedStaffId = CURRENT_SESSION.staff_id || '';
+    const pill = document.getElementById('adminStaffActivePill');
+    if(pill) pill.innerText = 'Menampilkan: ' + (CURRENT_SESSION.staff_id||'-') + ' - ' + nama;
   }
 
   function canEditReport(report){
@@ -928,7 +938,12 @@
     _laporanSubTabLoaded.monitoring = false;
     _laporanSubTabLoaded.rekap = false;
     _laporanSubTabLoaded.daftar = false;
-    goLaporanSubTab('monitoring');
+    // Default saat klik menu "Laporan": langsung ke sub-tab "Daftar Laporan"
+    // (bukan "Monitoring Harian") -- dan applyIdentityToUI() sudah menyetel
+    // adminSelectedStaffId ke staff_id yang login, jadi daftar yang tampil
+    // otomatis terfilter ke laporan milik sendiri dulu, bukan gabungan semua
+    // petugas. User tetap bisa pilih "Semua Petugas" lewat panel Filter Petugas.
+    goLaporanSubTab('daftar');
   }
 
   // ============================================================
@@ -1375,7 +1390,10 @@
       opt.innerText = st.staff_id + ' - ' + (st.nama||'');
       sel.appendChild(opt);
     });
-    sel.value = current || adminSelectedStaffId || '';
+    // SENGAJA tidak fallback ke adminSelectedStaffId di sini -- itu default
+    // punya panel "Filter Petugas" di tab Laporan (default: diri sendiri).
+    // Dashboard harus tetap default "Semua Petugas" sendiri, independen.
+    sel.value = current || '';
   }
   function selectAdminStaff(staffId){
     adminSelectedStaffId = staffId;
@@ -1474,7 +1492,9 @@
 
   async function loadDashboard(){
     const bulan = document.getElementById('DashBulan').value;
-    const staffFilter = document.getElementById('DashStaff').value || adminSelectedStaffId || null;
+    // SENGAJA tidak fallback ke adminSelectedStaffId (default punya tab Laporan)
+    // -- Dashboard punya pilihan sendiri lewat dropdown #DashStaff, default "Semua Petugas".
+    const staffFilter = document.getElementById('DashStaff').value || null;
     try{
       const [statsJson, monJson] = await Promise.all([
         authRun('apiDashboardStats', bulan, staffFilter),
