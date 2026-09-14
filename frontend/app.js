@@ -844,7 +844,8 @@
     try{
       // Melihat laporan terbuka untuk semua peran -- filter petugas/bidang/shift
       // dilakukan di client (applyFilters) supaya panel & dropdown tetap responsif.
-      const json = await authRun('apiGetReports', bulan);
+      const staffFilter = (_laporanMode === 'saya' && CURRENT_SESSION) ? (CURRENT_SESSION.staff_id || '') : '';
+      const json = await authRun('apiGetReports', bulan, staffFilter, '', '');
       if(!json || !json.ok){
         setMsg('msgReport', (json && json.msg) ? json.msg : 'Gagal memuat data.', true);
         rawData = [];
@@ -881,7 +882,19 @@
     });
 
     renderReportTable(viewData);
+    renderLaporanSummary(viewData, document.getElementById('FilterBulan') ? document.getElementById('FilterBulan').value : '');
     setMsg('msgReport', 'Data tampil: ' + viewData.length + ' dari ' + rawData.length);
+  }
+
+  function renderLaporanSummary(rows, bulan){
+    const total = rows.length;
+    const selesai = rows.filter(r => r.Status === 'Selesai').length;
+    const belum = rows.filter(r => r.Status !== 'Selesai').length;
+    const el = id => document.getElementById(id);
+    if(el('lapTotal')) el('lapTotal').innerText = total;
+    if(el('lapSelesai')) el('lapSelesai').innerText = selesai;
+    if(el('lapBelum')) el('lapBelum').innerText = belum;
+    if(el('lapBulanIni')) el('lapBulanIni').innerText = bulan || '-';
   }
 
   function renderReportTable(viewData){
@@ -890,7 +903,9 @@
     tbody.innerHTML = '';
     cardList.innerHTML = '';
 
+    window.__IPSRS_REPORTS = window.__IPSRS_REPORTS || {};
     viewData.forEach(row => {
+      window.__IPSRS_REPORTS[String(row.ID)] = row;
       const tr = document.createElement('tr');
       const bidangShift = row.Bidang || row.Shift || '-';
       tr.innerHTML = `
@@ -906,7 +921,9 @@
         <td>${escapeHtml(row.Kategori)}</td>
         <td>${escapeHtml(row.AreaKerja)}</td>
         <td>${escapeHtml(row.Item)}</td>
+        <td class="report-action"><button class="btn" type="button" onclick="event.stopPropagation();openEditModalForReport(window.__IPSRS_REPORTS['${escapeHtml(String(row.ID))}'])">✏️ Edit</button></td>
       `;
+      tr.className = row.Status === 'Selesai' ? 'report-row-selesai' : (row.Status === 'Belum' ? 'report-row-belum' : 'report-row-proses');
       tr.onclick = () => openEditModalForReport(row);
       tbody.appendChild(tr);
 
@@ -928,18 +945,26 @@
   // ============================================================
   // SUB-TAB HALAMAN LAPORAN (Monitoring Harian / Rekap Bulanan / Daftar Laporan)
   // ============================================================
-  const _laporanSubTabLoaded = { monitoring: false, rekap: false, daftar: false };
+  const _laporanSubTabLoaded = { monitoring: false, rekap: false, daftar: false, saya: false };
+  let _laporanMode = 'saya';
 
   function goLaporanSubTab(name){
+    const panelName = (name === 'saya' || name === 'daftar') ? 'daftar' : name;
     document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.add('hidden'));
-    document.getElementById('subtab-' + name).classList.remove('hidden');
+    document.getElementById('subtab-' + panelName).classList.remove('hidden');
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === name));
-
+    if(name === 'saya' || name === 'daftar'){
+      _laporanMode = name;
+      const staffPanel = document.getElementById('adminStaffPanel');
+      if(staffPanel) staffPanel.classList.toggle('hidden', name !== 'daftar');
+      _laporanSubTabLoaded[name] = false;
+      loadReportsBySelectedMonth();
+      return;
+    }
     if(!_laporanSubTabLoaded[name]){
       _laporanSubTabLoaded[name] = true;
       if(name === 'monitoring') loadStaffMonitoring();
       if(name === 'rekap') loadMonthlyRecap();
-      if(name === 'daftar') loadReportsBySelectedMonth();
     }
   }
 
@@ -947,12 +972,9 @@
     _laporanSubTabLoaded.monitoring = false;
     _laporanSubTabLoaded.rekap = false;
     _laporanSubTabLoaded.daftar = false;
-    // Default saat klik menu "Laporan": langsung ke sub-tab "Daftar Laporan"
-    // (bukan "Monitoring Harian") -- dan applyIdentityToUI() sudah menyetel
-    // adminSelectedStaffId ke staff_id yang login, jadi daftar yang tampil
-    // otomatis terfilter ke laporan milik sendiri dulu, bukan gabungan semua
-    // petugas. User tetap bisa pilih "Semua Petugas" lewat panel Filter Petugas.
-    goLaporanSubTab('daftar');
+    _laporanSubTabLoaded.saya = false;
+    _laporanMode = 'saya';
+    goLaporanSubTab('saya');
   }
 
   // ============================================================
