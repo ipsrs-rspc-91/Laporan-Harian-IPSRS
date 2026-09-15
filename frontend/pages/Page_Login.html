@@ -25,7 +25,23 @@
         <span>Ingat saya di perangkat ini</span>
       </label>
 
-      <button class="btn primary lg block" style="margin-top:var(--sp-5);" onclick="doLogin()">Masuk</button>
+      <style>
+        .login-submit{
+          transition:background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+        }
+        .login-submit:hover{
+          background:var(--success) !important;
+          border-color:var(--success) !important;
+          color:#fff !important;
+          box-shadow:0 6px 18px rgba(26,158,87,.28);
+          transform:translateY(-1px);
+        }
+        .login-submit:active{
+          transform:translateY(0);
+          box-shadow:0 3px 10px rgba(26,158,87,.22);
+        }
+      </style>
+      <button class="btn primary lg block login-submit" style="margin-top:var(--sp-5);" onclick="doLogin()">Masuk</button>
       <div id="loginMsg"></div>
     </div>
   </div>
