@@ -141,7 +141,7 @@
   .topbar{
     display:flex; align-items:center; gap:var(--sp-2); flex-wrap:wrap; flex-shrink:0;
     background:linear-gradient(100deg, var(--primary-dark), var(--primary) 120%);
-    color:#fff; padding:10px 20px; z-index:200;
+    color:#fff; padding:10px 20px; position:relative; z-index:210;
     box-shadow:0 2px 10px rgba(9,63,80,0.18);
   }
 
@@ -173,7 +173,7 @@
 
   .user-menu{
     display:none; position:absolute; top:calc(100% + 10px); right:0; background:#fff; color:var(--text);
-    border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:var(--sp-3); width:220px; z-index:210;
+    border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:var(--sp-3); width:220px; z-index:220;
   }
   .user-menu.show{ display:block; }
   .user-menu .identity-card{ background:var(--primary-light); border-radius:12px; padding:11px 12px; margin-bottom:var(--sp-2); }
