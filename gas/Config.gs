@@ -4,14 +4,13 @@ const SHEET_USERS='USERS', SHEET_STAFF='STAFF', SHEET_REPORTS='REPORTS', SHEET_S
 const SHEET_KATEGORI_CUSTOM='KATEGORI_CUSTOM', SHEET_AREA_KERJA_CUSTOM='AREA_KERJA_CUSTOM', SHEET_ITEM_CUSTOM='ITEM_CUSTOM';
 const SESSION_LIFETIME_MS = 12 * 60 * 60 * 1000;
 const ROLE_KA_IPSRS='KA_IPSRS', ROLE_ADMINISTRASI='ADMINISTRASI', ROLE_KASIE='KASIE', ROLE_STAF='STAF', ROLE_PETUGAS_SHIFT='PETUGAS_SHIFT';
-const BIDANG_LIST=['ME','Sipil','Workshop','Elektromedik','Kesling'];
-const SHIFT_LIST=['Pagi','Siang','Malam'];
+const BIDANG_LIST=['ME','Sipil','Workshop','Elektromedik','Kesling','Shift'];
 const ROLE_LABELS={KA_IPSRS:'KA IPSRS',ADMINISTRASI:'Administrasi IPSRS',KASIE:'Kasie',STAF:'Staf',PETUGAS_SHIFT:'Petugas Shift'};
 const HEADERS={
 USERS:['user_id','username','password_hash','password_salt','staff_id','role','status','created_at','updated_at'],
 STAFF:['staff_id','nama','role','bidang','status','created_at','updated_at','jabatan'],
-REPORTS:['report_id','staff_id','nama_snapshot','bidang_snapshot','role_snapshot','shift_snapshot','tanggal','pelapor','pukul','nolk','ruang','masalah_kegiatan','tindakan','status','keterangan','kategori','area_kerja','item','spare_part_unit','type','jumlah','jadwal_kerja','rencana_kegiatan','target_pekerjaan','realisasi_pekerjaan','hasil_pencapaian','status_pencapaian','kendala','tindak_lanjut','waktu_mulai','waktu_selesai','created_at','updated_at','created_by_username','created_by_staff_id','created_by_name','created_by_role','updated_by_staff_id','updated_by_name','updated_by_role','version'],
-SESSIONS:['token','username','staff_id','role','bidang','shift','nama','created_at','expires_at'],
+REPORTS:['report_id','staff_id','nama_snapshot','bidang_snapshot','role_snapshot','tanggal','pelapor','pukul','nolk','ruang','masalah_kegiatan','tindakan','status','keterangan','kategori','area_kerja','item','spare_part_unit','type','jumlah','jadwal_kerja','rencana_kegiatan','target_pekerjaan','realisasi_pekerjaan','hasil_pencapaian','status_pencapaian','kendala','tindak_lanjut','waktu_mulai','waktu_selesai','created_at','updated_at','created_by_username','created_by_staff_id','created_by_name','created_by_role','updated_by_staff_id','updated_by_name','updated_by_role','version'],
+SESSIONS:['token','username','staff_id','role','bidang','nama','created_at','expires_at'],
 AUDIT_LOG:['timestamp','username','staff_id','action','report_id','keterangan','field_changed','old_value','new_value','version_before','version_after'],
 REPORT_HISTORY:['history_id','report_id','edited_at','edited_by_username','edited_by_staff_id','data_before_json','data_after_json'],
 MIGRATION_ERROR:['report_id','nama_asli','alasan','tanggal_migrasi'],
@@ -32,8 +31,8 @@ const CALON_STAFF_SEED=[
 {staff_id:'STAF-WORKSHOP-05',nama:'Calon 9 SDM IPSRS',jabatan:'Staf Workshop',role:'STAF',bidang:'Workshop',status:'Nonaktif'},
 {staff_id:'STAF-ELEKTROMEDIK-02',nama:'Calon 10 SDM IPSRS',jabatan:'Staf Elektromedik',role:'STAF',bidang:'Elektromedik',status:'Nonaktif'},
 {staff_id:'STAF-ELEKTROMEDIK-03',nama:'Calon 11 SDM IPSRS',jabatan:'Staf Elektromedik',role:'STAF',bidang:'Elektromedik',status:'Nonaktif'},
-{staff_id:'STAF-KESLING-02',nama:'Calon 12 SDM IPSRS',jabatan:'Staf KesLing',role:'STAF',bidang:'Kesling',status:'Nonaktif'},
-{staff_id:'STAF-KESLING-03',nama:'Calon 13 SDM IPSRS',jabatan:'Staf KesLing',role:'STAF',bidang:'Kesling',status:'Nonaktif'},
+{staff_id:'STAF-KESLING-02',nama:'Calon 12 SDM IPSRS',jabatan:'Staf KesLing',role:'STAF',bidang:'KesLing',status:'Nonaktif'},
+{staff_id:'STAF-KESLING-03',nama:'Calon 13 SDM IPSRS',jabatan:'Staf KesLing',role:'STAF',bidang:'KesLing',status:'Nonaktif'},
 {staff_id:'STAF-PENDAMPING-03',nama:'Calon 14 SDM IPSRS',jabatan:'Staf Pendamping',role:'STAF',bidang:'Helper',status:'Nonaktif'},
 {staff_id:'STAF-PENDAMPING-04',nama:'Calon 15 SDM IPSRS',jabatan:'Staf Pendamping',role:'STAF',bidang:'Helper',status:'Nonaktif'},
 {staff_id:'STAF-PENDAMPING-05',nama:'Calon 16 SDM IPSRS',jabatan:'Staf Pendamping',role:'STAF',bidang:'Helper',status:'Nonaktif'},
