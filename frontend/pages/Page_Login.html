@@ -10,7 +10,15 @@
       <input id="loginUsername" type="text" placeholder="contoh: petugas01" autocomplete="username">
 
       <label for="loginPassword">Password</label>
-      <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+      <div class="ipsrs-password-wrap" style="position:relative;width:100%;">
+        <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding-right:52px;box-sizing:border-box;">
+        <button id="togglePassword" type="button" aria-label="Tampilkan password" aria-pressed="false" title="Tampilkan password" onclick="togglePasswordVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:#64748b;">
+          <svg id="passwordEyeIcon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
 
       <label class="remember-row" for="loginRemember">
         <input id="loginRemember" type="checkbox">
