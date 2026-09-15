@@ -93,16 +93,11 @@ function login(username,password){
     bidang=staff?staff.bidang:'',
     shift=staff?staff.shift:'';
 
-  const lock=LockService.getScriptLock();
-  if(!lock.tryLock(5000))return {ok:false,msg:'Server sedang sibuk, silakan coba lagi.'};
-  let token;
-  try{
-    // Jangan scan/delete seluruh SESSIONS setiap login. Session kedaluwarsa
-    // tetap ditolak oleh validateSession(); pembersihan dapat dilakukan terpisah.
-    token=Utilities.getUuid()+'-'+Utilities.getUuid();
-    const now=new Date(),exp=new Date(now.getTime()+SESSION_LIFETIME_MS),sess=getSheet(SHEET_SESSIONS);
-    sess.appendRow(objToRow(HEADERS.SESSIONS,{token:token,username:username,staff_id:u.staff_id,role:u.role,bidang:bidang,shift:shift,nama:nama,created_at:now.toISOString(),expires_at:exp.toISOString()}));
-  }finally{lock.releaseLock();}
+  // Jalur login tidak lagi menunggu ScriptLock. Setiap sesi memakai token UUID
+  // unik dan appendRow aman untuk penambahan baris oleh eksekusi bersamaan.
+  const token=Utilities.getUuid()+'-'+Utilities.getUuid();
+  const now=new Date(),exp=new Date(now.getTime()+SESSION_LIFETIME_MS),sess=getSheet(SHEET_SESSIONS);
+  sess.appendRow(objToRow(HEADERS.SESSIONS,{token:token,username:username,staff_id:u.staff_id,role:u.role,bidang:bidang,shift:shift,nama:nama,created_at:now.toISOString(),expires_at:exp.toISOString()}));
 
   // Login berhasil tidak perlu menunggu penulisan audit tambahan. Audit
   // LOGIN_FAILED tetap dipertahankan untuk keamanan; aktivitas penting seperti
@@ -164,7 +159,7 @@ function adminResetPassword(session,targetUsername,newPassword){
   try{
     const sheet=getSheet(SHEET_USERS),salt=randomSalt(),hash=hashPassword(newPassword,salt),hIdx=found.headers.indexOf('password_hash'),sIdx=found.headers.indexOf('password_salt'),uIdx=found.headers.indexOf('updated_at');
     sheet.getRange(found.rowIndex,hIdx+1).setValue(hash);
-    sheet.getRange(found.rowIndex,sIdx+1).setValue(salt);
+    sheet.getRange(found.rowIndex,sIdx+1).setValue(nowIso());
     sheet.getRange(found.rowIndex,uIdx+1).setValue(nowIso());
     invalidateAuthCache_(targetUsername,found.row.staff_id);
   }finally{lock.releaseLock();}
