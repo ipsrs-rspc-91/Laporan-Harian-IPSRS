@@ -94,7 +94,7 @@ function login(username,password){
     shift=staff?staff.shift:'';
 
   // Jalur login tidak lagi menunggu ScriptLock. Setiap sesi memakai token UUID
-  // unik dan appendRow aman untuk penambahan baris oleh eksekusi bersamaan.
+  // unik dan appendRow digunakan langsung agar respons login tidak tertahan lock.
   const token=Utilities.getUuid()+'-'+Utilities.getUuid();
   const now=new Date(),exp=new Date(now.getTime()+SESSION_LIFETIME_MS),sess=getSheet(SHEET_SESSIONS);
   sess.appendRow(objToRow(HEADERS.SESSIONS,{token:token,username:username,staff_id:u.staff_id,role:u.role,bidang:bidang,shift:shift,nama:nama,created_at:now.toISOString(),expires_at:exp.toISOString()}));
@@ -159,7 +159,7 @@ function adminResetPassword(session,targetUsername,newPassword){
   try{
     const sheet=getSheet(SHEET_USERS),salt=randomSalt(),hash=hashPassword(newPassword,salt),hIdx=found.headers.indexOf('password_hash'),sIdx=found.headers.indexOf('password_salt'),uIdx=found.headers.indexOf('updated_at');
     sheet.getRange(found.rowIndex,hIdx+1).setValue(hash);
-    sheet.getRange(found.rowIndex,sIdx+1).setValue(nowIso());
+    sheet.getRange(found.rowIndex,sIdx+1).setValue(salt);
     sheet.getRange(found.rowIndex,uIdx+1).setValue(nowIso());
     invalidateAuthCache_(targetUsername,found.row.staff_id);
   }finally{lock.releaseLock();}
