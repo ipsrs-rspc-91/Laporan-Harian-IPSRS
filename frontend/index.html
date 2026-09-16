@@ -111,6 +111,7 @@
       await script('./access-policy-ui.js?v=20260916');
       await script('./login-fast.js?v=20260916');
       await script('./dashboard-loading.js?v=20260916');
+      await script('./dashboard-loading-v2.js?v=20260916-1');
       Promise.all(Object.entries(deferredMounts).map(([id,url])=>fragment(id,url))).catch(e=>console.warn('Deferred page load:',e));
       script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js').catch(e=>console.warn('Deferred Chart.js load:',e));
     }
