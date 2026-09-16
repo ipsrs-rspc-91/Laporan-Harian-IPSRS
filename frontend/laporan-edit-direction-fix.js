@@ -1,16 +1,13 @@
-/* Laporan Edit Direction + Navigation/Data Init Fix v20260916-5
+/* Laporan Edit Direction + Navigation/Data Init Fix v20260916-6
  * Laporan Saya  : memiliki tombol Edit.
  * Daftar Laporan: read-only, tanpa tombol Edit.
  * Header         : satu baris pada desktop dan HP, tanpa tombol Keluar turun.
  * Rekap/Daftar   : memastikan kontrol bulan siap setelah Page_Laporan dimuat.
- * Summary        : kartu Total/Selesai/Belum dibuat proporsional seperti summary utama.
+ * Summary        : kartu Total/Selesai/Belum dibuat proporsional dan tidak menyusut.
  */
 (function(){
   'use strict';
 
-  /* ================================================================
-   * RESPONSIVE HEADER + LAPORAN SAYA SUMMARY FIX
-   * ================================================================ */
   function installResponsiveHeaderFix(){
     if(document.getElementById('ipsrs-responsive-header-fix')) return;
     var style = document.createElement('style');
@@ -49,50 +46,64 @@
       + '}\n'
       + '\n'
       + '/* ============================================================\n'
-      + '   LAPORAN SAYA: summary cards dibuat sama-sama lebar dan rapi.\n'
-      + '   Struktur Page_Laporan: .card > div(header) > .laporan-summary.\n'
-      + '   Sebelumnya selector memakai #panel-laporan-saya yang tidak ada.\n'
+      + '   LAPORAN SAYA: summary Total/Selesai/Belum harus terlihat\n'
+      + '   seperti kartu summary utama, bukan 3 kartu kecil.\n'
       + '   ============================================================ */\n'
-      + '#subtab-saya .laporan-summary{\n'
-      + '  display:grid !important;\n'
-      + '  grid-template-columns:repeat(3,minmax(150px,1fr)) !important;\n'
-      + '  gap:12px !important;\n'
-      + '  flex:1 1 auto !important;\n'
-      + '  width:100% !important;\n'
-      + '  min-width:0 !important;\n'
-      + '  max-width:520px !important;\n'
-      + '  overflow:visible !important;\n'
-      + '}\n'
-      + '#subtab-saya .laporan-summary .stat-card{\n'
-      + '  width:auto !important;\n'
-      + '  min-width:0 !important;\n'
-      + '  min-height:76px !important;\n'
-      + '  box-sizing:border-box !important;\n'
-      + '  padding:12px 16px !important;\n'
-      + '}\n'
-      + '#subtab-saya .laporan-summary .s-value{font-size:24px !important; line-height:1.05 !important;}\n'
-      + '#subtab-saya .laporan-summary .s-label{font-size:12px !important; white-space:nowrap !important;}\n'
       + '#subtab-saya > .card:first-child > div:first-child{\n'
       + '  display:flex !important;\n'
       + '  align-items:center !important;\n'
+      + '  justify-content:space-between !important;\n'
       + '  gap:24px !important;\n'
+      + '  width:100% !important;\n'
+      + '  box-sizing:border-box !important;\n'
       + '}\n'
       + '#subtab-saya > .card:first-child > div:first-child > div:first-child{\n'
-      + '  flex:0 1 auto !important;\n      min-width:170px !important;\n      }\n'
+      + '  flex:1 1 auto !important;\n'
+      + '  min-width:220px !important;\n'
+      + '}\n'
+      + '#subtab-saya .laporan-summary{\n'
+      + '  display:grid !important;\n'
+      + '  grid-template-columns:repeat(3,180px) !important;\n'
+      + '  gap:12px !important;\n'
+      + '  flex:0 0 564px !important;\n'
+      + '  width:564px !important;\n'
+      + '  max-width:none !important;\n'
+      + '  min-width:564px !important;\n'
+      + '  overflow:visible !important;\n'
+      + '}\n'
+      + '#subtab-saya .laporan-summary .stat-card{\n'
+      + '  width:180px !important;\n'
+      + '  min-width:180px !important;\n'
+      + '  height:76px !important;\n'
+      + '  min-height:76px !important;\n'
+      + '  box-sizing:border-box !important;\n'
+      + '  padding:12px 16px !important;\n'
+      + '  margin:0 !important;\n'
+      + '}\n'
+      + '#subtab-saya .laporan-summary .s-value{font-size:24px !important; line-height:1.05 !important;}\n'
+      + '#subtab-saya .laporan-summary .s-label{font-size:12px !important; white-space:nowrap !important;}\n'
       + '@media (max-width:900px){\n'
-      + '  #subtab-saya .laporan-summary{max-width:480px !important; grid-template-columns:repeat(3,minmax(130px,1fr)) !important;}\n'
+      + '  #subtab-saya > .card:first-child > div:first-child{gap:14px !important;}\n'
+      + '  #subtab-saya .laporan-summary{grid-template-columns:repeat(3,145px) !important; flex-basis:454px !important; width:454px !important; min-width:454px !important;}\n'
+      + '  #subtab-saya .laporan-summary .stat-card{width:145px !important; min-width:145px !important;}\n'
       + '}\n'
       + '@media (max-width:700px){\n'
-      + '  #subtab-saya > .card:first-child > div:first-child{gap:12px !important; align-items:stretch !important;}\n'
-      + '  #subtab-saya > .card:first-child > div:first-child > div:first-child{min-width:115px !important;}\n'
+      + '  #subtab-saya > .card:first-child > div:first-child{gap:10px !important; align-items:center !important;}\n'
+      + '  #subtab-saya > .card:first-child > div:first-child > div:first-child{min-width:130px !important;}\n'
       + '  #subtab-saya .laporan-summary{\n'
-      + '    max-width:none !important;\n'
-      + '    width:max-content !important;\n'
-      + '    grid-template-columns:repeat(3,120px) !important;\n'
-      + '    flex:0 0 auto !important;\n'
-      + '    overflow:visible !important;\n'
+      + '    grid-template-columns:repeat(3,112px) !important;\n'
+      + '    flex:0 0 344px !important;\n'
+      + '    width:344px !important;\n'
+      + '    min-width:344px !important;\n'
+      + '    gap:4px !important;\n'
       + '  }\n'
-      + '  #subtab-saya .laporan-summary .stat-card{min-width:120px !important; min-height:68px !important; padding:10px 12px !important;}\n'
+      + '  #subtab-saya .laporan-summary .stat-card{width:112px !important; min-width:112px !important; height:68px !important; min-height:68px !important; padding:9px 10px !important;}\n'
+      + '  #subtab-saya .laporan-summary .s-value{font-size:22px !important;}\n'
+      + '  #subtab-saya .laporan-summary .s-label{font-size:11px !important;}\n'
+      + '}\n'
+      + '@media (max-width:480px){\n'
+      + '  #subtab-saya > .card:first-child{overflow-x:auto !important;}\n'
+      + '  #subtab-saya > .card:first-child > div:first-child{min-width:500px !important;}\n'
       + '}\n';
     document.head.appendChild(style);
   }
