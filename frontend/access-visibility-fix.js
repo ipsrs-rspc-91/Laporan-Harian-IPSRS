@@ -139,7 +139,7 @@
           .then(function(){ return originalGoPage(name); })
           .catch(function(err){
             console.error('Halaman "' + name + '" belum berhasil dimuat:', err);
-            return originalGoPage(name);
+            return false;
           });
       }
       return originalGoPage(name);
