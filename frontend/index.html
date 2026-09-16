@@ -106,7 +106,7 @@
       await script('./access-policy-ui.js?v=20260916');
       await script('./login-fast.js?v=20260916');
       await script('./dashboard-loading-v2.js?v=20260916-2');
-      await script('./access-visibility-fix.js?v=20260916-1');
+      await script('./access-visibility-fix.js?v=20260916-2');
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
       Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan]).catch(e=>console.warn('Deferred page load:',e));
