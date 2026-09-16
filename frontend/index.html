@@ -25,6 +25,21 @@
     .topbar-user .user-chip {
       flex:0 0 auto;
     }
+
+    /* PATCH UI: staff_id pada avatar tidak boleh meluber dan menimpa nama. */
+    .topbar-user .u-avatar {
+      width:auto;
+      min-width:26px;
+      max-width:72px;
+      flex:0 0 auto;
+      padding:0 6px;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+      font-size:10px;
+      line-height:26px;
+    }
+
     .logout-direct {
       display:inline-flex;
       align-items:center;
@@ -49,6 +64,10 @@
     .logout-direct svg { width:19px; height:19px; flex:none; }
     @media (max-width:700px) {
       .topbar-user { gap:5px; }
+      .topbar-user .u-avatar {
+        max-width:56px;
+        font-size:9px;
+      }
       .logout-direct {
         min-width:42px;
         width:42px;
@@ -67,7 +86,7 @@
     <header class="topbar">
       <button class="topbar-brand" onclick="goPage('input')" title="Kembali ke Input Laporan"><div class="logo-box"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><span class="topbar-brand-text"><h2>LAPORAN HARIAN IPSRS</h2><span>RS. Puri Cinere</span></span></button>
       <nav class="topbar-nav">
-        <button class="nav-item" data-page="laporan" onclick="goPage('laporan')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2-2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 13h6M9 17h6"></path></svg><span>Laporan</span></button>
+        <button class="nav-item" data-page="laporan" onclick="goPage('laporan')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 13h6M9 17h6"></path></svg><span>Laporan</span></button>
         <button class="nav-item" data-page="dashboard" onclick="goPage('dashboard')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span>Dashboard</span></button>
       </nav>
       <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" class="logout-direct" onclick="try{doLogout()}catch(e){try{sessionStorage.removeItem('ipsrs_session_v1')}catch(_e){};location.reload();}" title="Keluar dari aplikasi" aria-label="Keluar dari aplikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg><span>Keluar</span></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button type="button" class="btn block" onclick="openPwModal()">Ganti Password</button></div></div>
