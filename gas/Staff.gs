@@ -138,13 +138,6 @@ function getStaffMonitoring(session, bulan, tanggal) {
       continue;
     }
 
-    // Hanya staf AKTIF menjadi populasi monitoring harian.
-    // Data NONAKTIF/CALON tetap tersimpan di STAFF, tetapi tidak
-    // ditampilkan sebagai petugas aktif.
-    if ((s.status || 'Aktif') !== 'Aktif') {
-      continue;
-    }
-
     const dateMap =
       byStaffDate[s.staff_id] || {};
 
@@ -993,12 +986,6 @@ function listStaff(session) {
       );
 
     if (!r.staff_id) {
-      continue;
-    }
-
-    // Filter dropdown/filter petugas hanya untuk SDM AKTIF.
-    // Staf NONAKTIF/CALON tetap ada di master STAFF dan tidak dihapus.
-    if ((r.status || 'Aktif') !== 'Aktif') {
       continue;
     }
 
