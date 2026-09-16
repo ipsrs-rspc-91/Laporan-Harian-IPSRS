@@ -94,19 +94,72 @@
   }
 
   if (typeof originalGoPage === 'function') {
+    // ======================================================================
+    // FIX RACE CONDITION NAVIGASI
+    // ======================================================================
+    // page-dashboard dan page-laporan dipasang ke DOM secara deferred oleh
+    // index.html. Karena goPage() dipanggil langsung dari onclick menu, user
+    // dapat menekan menu sebelum fragment selesai di-mount.
+    //
+    // PENTING: jangan memanggil originalGoPage() sebelum Promise halaman
+    // selesai. originalGoPage() sendiri langsung mencari #page-* dan, untuk
+    // Laporan, resetLaporanSubTabCache() -> goLaporanSubTab() yang langsung
+    // mencari elemen sub-tab. Jika DOM belum siap, inilah sumber race.
+    function waitForPageReady(pageName){
+      return new Promise(function(resolve, reject){
+        var started = Date.now();
+        var timeoutMs = 15000;
+
+        function check(){
+          var ready = window.__ipsrsPageReady;
+          var promise = ready && ready[pageName];
+
+          // index.html membuat Promise readiness setelah seluruh JS utama
+          // selesai dimuat. Jika nilainya belum tersedia sesaat setelah login,
+          // tunggu sebentar dan cek kembali.
+          if (promise && typeof promise.then === 'function') {
+            Promise.resolve(promise).then(resolve, reject);
+            return;
+          }
+
+          // Fallback: jika promise tidak tersedia tetapi elemen sudah benar-
+          // benar ter-mount, navigasi tetap boleh dilanjutkan.
+          var el = document.getElementById('page-' + pageName);
+          if (el && (pageName === 'input' || el.innerHTML.trim() !== '')) {
+            resolve(true);
+            return;
+          }
+
+          if (Date.now() - started >= timeoutMs) {
+            reject(new Error('Timeout menunggu halaman ' + pageName + ' selesai dimuat.'));
+            return;
+          }
+
+          setTimeout(check, 25);
+        }
+
+        check();
+      });
+    }
+
     window.goPage = function(name){
-      if (name === 'dashboard' && window.__ipsrsPageReady && window.__ipsrsPageReady.dashboard) {
-        // Dashboard fragment dimuat secara deferred. Tunggu mount selesai
-        // sebelum goPage/loadDashboard dijalankan agar tidak pernah mendapat
-        // "page-dashboard" kosong atau null.
-        return Promise.resolve(window.__ipsrsPageReady.dashboard)
-          .then(function(){ return originalGoPage(name); })
-          .catch(function(err){
-            console.error('Dashboard belum berhasil dimuat:', err);
-            return originalGoPage(name);
-          });
+      // Input sudah mounted sejak awal, sehingga tidak perlu ditahan.
+      if (name !== 'dashboard' && name !== 'laporan') {
+        return originalGoPage(name);
       }
-      return originalGoPage(name);
+
+      return waitForPageReady(name)
+        .then(function(){
+          // Fragment SUDAH ada di DOM pada titik ini. Baru sekarang jalankan
+          // navigasi asli agar loadDashboard()/resetLaporanSubTabCache() aman.
+          return originalGoPage(name);
+        })
+        .catch(function(err){
+          console.error('Halaman ' + name + ' belum berhasil dimuat:', err);
+          // Jangan memanggil originalGoPage() saat readiness gagal karena itu
+          // justru dapat mengulangi error DOM/null yang sedang kita cegah.
+          return false;
+        });
     };
   }
 
