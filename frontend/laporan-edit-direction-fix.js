@@ -1,9 +1,55 @@
-/* Laporan Edit Direction Fix v20260916-2
+/* Laporan Edit Direction Fix v20260916-3
  * Laporan Saya  : memiliki tombol Edit.
  * Daftar Laporan: read-only, tanpa tombol Edit.
+ * Header         : satu baris pada desktop dan HP, tanpa tombol Keluar turun.
  */
 (function(){
   'use strict';
+
+  /* ================================================================
+   * RESPONSIVE HEADER FIX
+   * Jangan biarkan topbar melakukan wrap. Pada layar sempit elemen
+   * dipadatkan agar tetap satu baris; jika sangat sempit, header dapat
+   * digeser horizontal, tetapi TIDAK ada elemen yang turun ke baris 2.
+   * ================================================================ */
+  function installResponsiveHeaderFix(){
+    if(document.getElementById('ipsrs-responsive-header-fix')) return;
+    var style = document.createElement('style');
+    style.id = 'ipsrs-responsive-header-fix';
+    style.textContent = '\n'
+      + 'html,body{overflow-x:hidden;}\n'
+      + '.topbar{flex-wrap:nowrap !important; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; white-space:nowrap;}\n'
+      + '.topbar::-webkit-scrollbar{display:none;}\n'
+      + '.topbar-brand,.topbar-nav,.topbar-user{flex-shrink:0 !important;}\n'
+      + '.topbar-brand{min-width:0;}\n'
+      + '.topbar-nav{flex-shrink:0 !important;}\n'
+      + '.topbar-user{display:flex !important; align-items:center; flex-wrap:nowrap !important;}\n'
+      + '.user-chip,.logout-direct{flex-shrink:0 !important; white-space:nowrap;}\n'
+      + '@media (max-width:700px){\n'
+      + '  .topbar{gap:4px !important; padding:6px 8px !important;}\n'
+      + '  .topbar-brand{margin-right:0 !important; padding:3px 2px !important;}\n'
+      + '  .topbar-brand .logo-box{width:36px !important; height:36px !important; border-radius:10px !important;}\n'
+      + '  .topbar-brand-text{display:none !important;}\n'
+      + '  .topbar-nav{gap:0 !important;}\n'
+      + '  .topbar-nav .nav-item{padding:7px 8px !important; gap:4px !important; font-size:11px !important; border-radius:9px !important;}\n'
+      + '  .topbar-nav .nav-item .icon{width:17px !important; height:17px !important;}\n'
+      + '  .topbar-user{margin-left:2px !important; gap:4px !important;}\n'
+      + '  .topbar-user .user-chip{padding:5px 6px !important; gap:4px !important; font-size:10px !important;}\n'
+      + '  .topbar-user .u-avatar{max-width:48px !important; min-width:24px !important; width:auto !important; height:24px !important; font-size:9px !important; padding:0 5px !important;}\n'
+      + '  .topbar-user .u-name{display:none !important;}\n'
+      + '  .topbar-user .icon-sm{width:13px !important; height:13px !important;}\n'
+      + '  .logout-direct{min-width:38px !important; width:38px !important; height:38px !important; min-height:38px !important; padding:0 !important; border-radius:9px !important;}\n'
+      + '  .logout-direct span{display:none !important;}\n'
+      + '  .logout-direct svg{width:18px !important; height:18px !important;}\n'
+      + '}\n'
+      + '@media (max-width:360px){\n'
+      + '  .topbar{padding-left:5px !important; padding-right:5px !important;}\n'
+      + '  .topbar-nav .nav-item{padding-left:6px !important; padding-right:6px !important; font-size:10px !important;}\n'
+      + '  .topbar-nav .nav-item .icon{width:16px !important; height:16px !important;}\n'
+      + '  .logout-direct{width:36px !important; min-width:36px !important; height:36px !important; min-height:36px !important;}\n'
+      + '}\n';
+    document.head.appendChild(style);
+  }
 
   function el(id){ return document.getElementById(id); }
 
@@ -78,6 +124,7 @@
   }
 
   function refresh(){
+    installResponsiveHeaderFix();
     addSayaEditColumn();
     makeDaftarReadOnly();
     installDaftarReadOnlyGuard();
@@ -96,6 +143,8 @@
     };
     window.__ipsrsEditDirectionWrapped = true;
   }
+
+  installResponsiveHeaderFix();
 
   var obs = new MutationObserver(function(){
     wrapNavigation();
