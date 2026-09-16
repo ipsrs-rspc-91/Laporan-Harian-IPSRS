@@ -1,7 +1,22 @@
 /* PATCH: akses laporan & dashboard untuk seluruh petugas yang sudah login.
  * Tidak mengubah aturan keamanan backend; hanya memastikan state/filter frontend
- * tidak mengunci petugas pada laporan sendiri dan Dashboard tidak dipanggil
- * sebelum fragment Dashboard selesai dimount.
+ * tidak mengunci petugas pada laporan sendiri dan Dashboard/Laporan tidak
+ * dipanggil sebelum fragment halamannya selesai dimount.
+ *
+ * FIX (16-09-2026): sebelumnya proteksi "tunggu fragment selesai dimuat"
+ * hanya diterapkan untuk name === 'dashboard'. Menu "Laporan" TIDAK
+ * mendapat proteksi yang sama, padahal pages/Page_Laporan.html juga
+ * dimuat secara deferred/async (lihat index.html -> deferredMounts).
+ * Akibatnya, kalau petugas klik menu "Laporan" sebelum fragment itu
+ * selesai di-fetch & disisipkan ke DOM, goLaporanSubTab() mencoba
+ * mengakses elemen (#subtab-daftar, #FilterBulan, dst) yang belum ada
+ * -> error JS diam-diam -> halaman Laporan tampak kosong (baik laporan
+ * sendiri maupun laporan petugas lain, karena keduanya ada di section
+ * page-laporan yang sama). Ini juga yang membuat Dashboard kadang
+ * ikut gagal tampil kalau navigasi terjadi sangat cepat setelah login.
+ * Perbaikan di bawah menggeneralisasi mekanisme tunggu itu untuk kedua
+ * halaman (dashboard & laporan), plus jaga-jaga defensif di
+ * goLaporanSubTab supaya tidak pernah throw walau elemen belum siap.
  */
 (function(){
   const originalGoLaporanSubTab = window.goLaporanSubTab;
@@ -74,8 +89,24 @@
     };
   }
 
+  // FIX: elemen sub-tab halaman Laporan (#subtab-daftar dkk) hanya ada
+  // setelah fragment pages/Page_Laporan.html selesai dimount. Kalau
+  // dipanggil lebih awal (mis. dari setTimeout sinkronisasi di bawah,
+  // atau dari goPage sebelum proteksi mount aktif), jangan biarkan throw
+  // -- cukup diamkan, nanti dipanggil ulang otomatis setelah mount siap
+  // (lihat wrapper window.goPage di bawah).
+  function laporanDomReady(){
+    return !!document.getElementById('subtab-daftar');
+  }
+
   if (typeof originalGoLaporanSubTab === 'function' && typeof originalSelectAdminStaff === 'function') {
     window.goLaporanSubTab = function(name){
+      if (!laporanDomReady()) {
+        // Halaman Laporan belum selesai dimount -- jangan diproses dulu,
+        // daripada error karena elemen belum ada.
+        return;
+      }
+
       const session = typeof getSession === 'function' ? getSession() : null;
 
       // Laporan Saya = paksa filter ke petugas yang sedang login.
@@ -93,73 +124,25 @@
     };
   }
 
+  // FIX UTAMA: tunggu fragment halaman selesai dimount SEBELUM goPage()
+  // aslinya dijalankan -- sebelumnya ini hanya berlaku untuk 'dashboard',
+  // sekarang berlaku juga untuk 'laporan' (lihat catatan di atas).
+  const PAGE_READY_KEYS = { dashboard: 'dashboard', laporan: 'laporan' };
+
   if (typeof originalGoPage === 'function') {
-    // ======================================================================
-    // FIX RACE CONDITION NAVIGASI
-    // ======================================================================
-    // page-dashboard dan page-laporan dipasang ke DOM secara deferred oleh
-    // index.html. Karena goPage() dipanggil langsung dari onclick menu, user
-    // dapat menekan menu sebelum fragment selesai di-mount.
-    //
-    // PENTING: jangan memanggil originalGoPage() sebelum Promise halaman
-    // selesai. originalGoPage() sendiri langsung mencari #page-* dan, untuk
-    // Laporan, resetLaporanSubTabCache() -> goLaporanSubTab() yang langsung
-    // mencari elemen sub-tab. Jika DOM belum siap, inilah sumber race.
-    function waitForPageReady(pageName){
-      return new Promise(function(resolve, reject){
-        var started = Date.now();
-        var timeoutMs = 15000;
-
-        function check(){
-          var ready = window.__ipsrsPageReady;
-          var promise = ready && ready[pageName];
-
-          // index.html membuat Promise readiness setelah seluruh JS utama
-          // selesai dimuat. Jika nilainya belum tersedia sesaat setelah login,
-          // tunggu sebentar dan cek kembali.
-          if (promise && typeof promise.then === 'function') {
-            Promise.resolve(promise).then(resolve, reject);
-            return;
-          }
-
-          // Fallback: jika promise tidak tersedia tetapi elemen sudah benar-
-          // benar ter-mount, navigasi tetap boleh dilanjutkan.
-          var el = document.getElementById('page-' + pageName);
-          if (el && (pageName === 'input' || el.innerHTML.trim() !== '')) {
-            resolve(true);
-            return;
-          }
-
-          if (Date.now() - started >= timeoutMs) {
-            reject(new Error('Timeout menunggu halaman ' + pageName + ' selesai dimuat.'));
-            return;
-          }
-
-          setTimeout(check, 25);
-        }
-
-        check();
-      });
-    }
-
     window.goPage = function(name){
-      // Input sudah mounted sejak awal, sehingga tidak perlu ditahan.
-      if (name !== 'dashboard' && name !== 'laporan') {
-        return originalGoPage(name);
-      }
+      const readyKey = PAGE_READY_KEYS[name];
+      const readyPromise = readyKey && window.__ipsrsPageReady ? window.__ipsrsPageReady[readyKey] : null;
 
-      return waitForPageReady(name)
-        .then(function(){
-          // Fragment SUDAH ada di DOM pada titik ini. Baru sekarang jalankan
-          // navigasi asli agar loadDashboard()/resetLaporanSubTabCache() aman.
-          return originalGoPage(name);
-        })
-        .catch(function(err){
-          console.error('Halaman ' + name + ' belum berhasil dimuat:', err);
-          // Jangan memanggil originalGoPage() saat readiness gagal karena itu
-          // justru dapat mengulangi error DOM/null yang sedang kita cegah.
-          return false;
-        });
+      if (readyPromise) {
+        return Promise.resolve(readyPromise)
+          .then(function(){ return originalGoPage(name); })
+          .catch(function(err){
+            console.error('Halaman "' + name + '" belum berhasil dimuat:', err);
+            return originalGoPage(name);
+          });
+      }
+      return originalGoPage(name);
     };
   }
 
