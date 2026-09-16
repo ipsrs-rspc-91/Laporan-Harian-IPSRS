@@ -1,16 +1,14 @@
-/* Laporan Edit Direction Fix v20260916-3
+/* Laporan Edit Direction + Navigation/Data Init Fix v20260916-4
  * Laporan Saya  : memiliki tombol Edit.
  * Daftar Laporan: read-only, tanpa tombol Edit.
  * Header         : satu baris pada desktop dan HP, tanpa tombol Keluar turun.
+ * Rekap/Daftar   : memastikan kontrol bulan siap setelah Page_Laporan dimuat.
  */
 (function(){
   'use strict';
 
   /* ================================================================
    * RESPONSIVE HEADER FIX
-   * Jangan biarkan topbar melakukan wrap. Pada layar sempit elemen
-   * dipadatkan agar tetap satu baris; jika sangat sempit, header dapat
-   * digeser horizontal, tetapi TIDAK ada elemen yang turun ke baris 2.
    * ================================================================ */
   function installResponsiveHeaderFix(){
     if(document.getElementById('ipsrs-responsive-header-fix')) return;
@@ -79,7 +77,6 @@
       btn.addEventListener('click', function(e){
         e.preventDefault();
         e.stopPropagation();
-        /* Baris Laporan Saya sudah memiliki onclick asli yang membawa objek report. */
         tr.click();
       });
       td.appendChild(btn);
@@ -123,37 +120,151 @@
     }, true);
   }
 
+  /* ================================================================
+   * FIX DATA INITIALIZATION AFTER DYNAMIC PAGE LOAD
+   * Page_Laporan dimuat dinamis setelah afterAuthReady(). Karena itu
+   * buildMonthOptions() sebelumnya dapat berjalan sebelum RekapBulan /
+   * FilterBulan ada di DOM. Akibatnya tab bisa terbuka tetapi datanya
+   * tidak pernah memiliki periode bulan yang valid.
+   * ================================================================ */
+  var dataInitDone = false;
+
+  function ensureMonthOptions(){
+    var ids = ['DashBulan','FilterBulan','MonBulan','RekapBulan','MyFilterBulan'];
+    var now = new Date();
+    var opts = [];
+    for(var i=0;i<12;i++){
+      var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      opts.push({
+        val: d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'),
+        label: d.toLocaleDateString('id-ID',{month:'long',year:'numeric'})
+      });
+    }
+    ids.forEach(function(id){
+      var sel=el(id);
+      if(!sel) return;
+      if(sel.options.length===0){
+        opts.forEach(function(o){
+          var op=document.createElement('option');
+          op.value=o.val;
+          op.innerText=o.label;
+          sel.appendChild(op);
+        });
+      }
+      if(!sel.value && opts.length) sel.value=opts[0].val;
+    });
+  }
+
+  function ensureBasicFilterOptions(){
+    var bidangList = window.BIDANG_LIST || ['ME','Sipil','Workshop','Elektromedik','Kesling'];
+    var shiftList = window.SHIFT_LIST || ['Pagi','Siang','Malam'];
+
+    [['FilterBidang',bidangList],['MonFilterBidang',bidangList]].forEach(function(pair){
+      var sel=el(pair[0]);
+      if(!sel || sel.options.length>1) return;
+      pair[1].forEach(function(v){
+        var o=document.createElement('option'); o.value=v; o.innerText=v; sel.appendChild(o);
+      });
+    });
+    [['FilterShift',shiftList],['MonFilterShift',shiftList]].forEach(function(pair){
+      var sel=el(pair[0]);
+      if(!sel || sel.options.length>1) return;
+      pair[1].forEach(function(v){
+        var o=document.createElement('option'); o.value=v; o.innerText=v; sel.appendChild(o);
+      });
+    });
+  }
+
+  function ensureLaporanControls(){
+    if(!el('page-laporan')) return false;
+    ensureMonthOptions();
+    ensureBasicFilterOptions();
+    if(!dataInitDone && typeof window.buildMonthOptions === 'function'){
+      try{ window.buildMonthOptions(); }catch(e){
+        console.error('[ERR-UI-LAPORAN-INIT-001] laporan-edit-direction-fix.js::buildMonthOptions()',e);
+      }
+    }
+    dataInitDone=true;
+    return true;
+  }
+
+  function showOnly(name){
+    document.querySelectorAll('.sub-tab-panel').forEach(function(p){ p.classList.add('hidden'); });
+    var panel=el('subtab-'+name);
+    if(!panel) return false;
+    panel.classList.remove('hidden');
+    document.querySelectorAll('.sub-tab').forEach(function(b){
+      b.classList.toggle('active',b.dataset.subtab===name);
+      b.type='button';
+    });
+    return true;
+  }
+
+  function loadLaporanData(name){
+    try{
+      if(name==='monitoring' && typeof window.loadStaffMonitoring==='function'){
+        window.loadStaffMonitoring();
+      }else if(name==='rekap' && typeof window.loadMonthlyRecap==='function'){
+        window.loadMonthlyRecap();
+      }else if(name==='daftar' && typeof window.loadReportsBySelectedMonth==='function'){
+        if(typeof window.loadAdminStaffListIfNeeded==='function') window.loadAdminStaffListIfNeeded();
+        window.loadReportsBySelectedMonth();
+      }
+    }catch(e){
+      console.error('[ERR-UI-LAPORAN-TAB-001] laporan-edit-direction-fix.js::loadLaporanData()',e);
+    }
+  }
+
   function refresh(){
     installResponsiveHeaderFix();
+    ensureLaporanControls();
     addSayaEditColumn();
     makeDaftarReadOnly();
     installDaftarReadOnlyGuard();
   }
 
-  function wrapNavigation(){
-    if(typeof window.goLaporanSubTab !== 'function' || window.__ipsrsEditDirectionWrapped) return;
-    var original = window.goLaporanSubTab;
-    window.goLaporanSubTab = function(name){
-      var result = original.apply(this, arguments);
-      setTimeout(refresh, 0);
-      setTimeout(refresh, 150);
-      setTimeout(refresh, 500);
-      setTimeout(refresh, 1200);
-      return result;
-    };
-    window.__ipsrsEditDirectionWrapped = true;
-  }
+  /* Ambil implementasi navigasi yang sudah ada. Laporan Saya tetap
+     memakai implementasi tersebut karena menangani filter pribadi + Edit. */
+  var previousGo = window.goLaporanSubTab;
+  window.goLaporanSubTab = function(name){
+    if(!ensureLaporanControls()){
+      setTimeout(function(){ window.goLaporanSubTab(name); },50);
+      return false;
+    }
+
+    if(name==='saya'){
+      if(typeof previousGo==='function'){
+        var resultSaya = previousGo(name);
+        setTimeout(refresh,0);
+        setTimeout(refresh,150);
+        setTimeout(refresh,500);
+        return resultSaya;
+      }
+      return false;
+    }
+
+    if(name!=='monitoring' && name!=='rekap' && name!=='daftar') return false;
+    if(!showOnly(name)) return false;
+
+    var admin=el('adminStaffPanel');
+    if(admin) admin.classList.toggle('hidden',name!=='daftar');
+
+    setTimeout(function(){
+      refresh();
+      loadLaporanData(name);
+    },0);
+    return true;
+  };
 
   installResponsiveHeaderFix();
 
-  var obs = new MutationObserver(function(){
-    wrapNavigation();
-    refresh();
-  });
+  var obs = new MutationObserver(function(){ refresh(); });
   obs.observe(document.body, {childList:true, subtree:true});
 
-  if(document.readyState !== 'loading') wrapNavigation();
-  else document.addEventListener('DOMContentLoaded', wrapNavigation);
-  setTimeout(wrapNavigation, 0);
-  setTimeout(refresh, 500);
+  if(document.readyState !== 'loading') refresh();
+  else document.addEventListener('DOMContentLoaded', refresh);
+  setTimeout(refresh,0);
+  setTimeout(refresh,150);
+  setTimeout(refresh,500);
+  setTimeout(refresh,1200);
 })();
