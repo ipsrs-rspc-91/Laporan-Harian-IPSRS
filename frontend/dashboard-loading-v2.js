@@ -1,8 +1,9 @@
 /*
  * Dashboard Loading v2
  * PATCH ONLY.
- * Menunggu Page_Dashboard benar-benar ter-mount sebelum goPage/loadDashboard
- * dijalankan. Setelah itu indikator menunggu request statistik selesai.
+ * Menjamin urutan: Page_Dashboard mount -> Chart.js ready -> loadDashboard
+ * -> request selesai -> indikator ditutup.
+ * Tidak mengubah logika data Dashboard.
  */
 (function(){
   'use strict';
@@ -10,6 +11,7 @@
   let loadingActive = false;
   let pendingRequests = 0;
   let requestStarted = false;
+  let requestFailed = false;
   let hideTimer = null;
   let navigationBusy = false;
 
@@ -39,6 +41,7 @@
   function showLoading(text){
     loadingActive = true;
     requestStarted = false;
+    requestFailed = false;
     pendingRequests = 0;
     navigationBusy = true;
     if(hideTimer) clearTimeout(hideTimer);
@@ -54,6 +57,15 @@
     if(overlay) overlay.classList.remove('show');
   }
 
+  function showError(text){
+    loadingActive = false;
+    navigationBusy = false;
+    if(hideTimer) clearTimeout(hideTimer);
+    setText(text || 'Gagal memuat Dashboard.');
+    ensureOverlay().classList.add('show');
+    hideTimer = setTimeout(hideLoading, 1800);
+  }
+
   function dashboardDomReady(){
     return !!(
       document.getElementById('DashBulan') &&
@@ -63,28 +75,73 @@
     );
   }
 
-  function waitForDashboardDom(deadline, done){
-    if(dashboardDomReady()){
-      done(true);
-      return;
+  function waitForDashboardMount(deadline){
+    const ready = window.__ipsrsPageReady && window.__ipsrsPageReady.dashboard;
+    if(ready && typeof ready.then === 'function'){
+      return Promise.race([
+        ready.then(function(){ return true; }).catch(function(err){
+          console.error('Dashboard page mount error:', err);
+          return false;
+        }),
+        new Promise(function(resolve){
+          const remain = Math.max(0, deadline - Date.now());
+          setTimeout(function(){ resolve(false); }, remain);
+        })
+      ]).then(function(result){
+        return result === true && dashboardDomReady();
+      });
     }
-    if(Date.now() >= deadline){
-      done(false);
-      return;
+
+    // Fallback kompatibilitas jika lifecycle promise belum tersedia.
+    return new Promise(function(resolve){
+      function check(){
+        if(dashboardDomReady()) return resolve(true);
+        if(Date.now() >= deadline) return resolve(false);
+        setTimeout(check, 40);
+      }
+      check();
+    });
+  }
+
+  function waitForChart(deadline){
+    if(window.Chart) return Promise.resolve(true);
+    const ready = window.__ipsrsChartReady;
+    if(ready && typeof ready.then === 'function'){
+      return Promise.race([
+        ready.then(function(){ return !!window.Chart; }).catch(function(err){
+          console.error('Chart.js load error:', err);
+          return false;
+        }),
+        new Promise(function(resolve){
+          const remain = Math.max(0, deadline - Date.now());
+          setTimeout(function(){ resolve(false); }, remain);
+        })
+      ]);
     }
-    setTimeout(function(){ waitForDashboardDom(deadline, done); }, 40);
+    return new Promise(function(resolve){
+      function check(){
+        if(window.Chart) return resolve(true);
+        if(Date.now() >= deadline) return resolve(false);
+        setTimeout(check, 40);
+      }
+      check();
+    });
   }
 
   function waitForRequests(deadline){
     if(!loadingActive) return;
     if(requestStarted && pendingRequests === 0){
-      // Beri satu frame tambahan agar hasil render KPI/chart benar-benar masuk DOM.
-      hideTimer = setTimeout(hideLoading, 220);
+      if(requestFailed){
+        showError('Dashboard gagal mengambil data. Silakan coba lagi.');
+        return;
+      }
+      // Satu frame tambahan memberi kesempatan KPI, bar, chart, dan recent list
+      // selesai dirender setelah Promise API selesai.
+      hideTimer = setTimeout(hideLoading, 180);
       return;
     }
     if(Date.now() >= deadline){
-      setText('Dashboard membutuhkan waktu lebih lama dari biasanya.');
-      hideTimer = setTimeout(hideLoading, 700);
+      showError('Dashboard membutuhkan waktu lebih lama dari biasanya. Silakan coba lagi.');
       return;
     }
     setTimeout(function(){ waitForRequests(deadline); }, 50);
@@ -104,18 +161,44 @@
       }
     }catch(e){}
 
-    if(isDashboardRequest){
-      requestStarted = true;
-      pendingRequests++;
-      if(loadingActive) setText('Sedang mengambil data statistik...');
+    if(!isDashboardRequest) return nativeFetch(input, init);
+
+    requestStarted = true;
+    pendingRequests++;
+    if(loadingActive) setText('Sedang mengambil data statistik...');
+
+    let request;
+    try{
+      request = nativeFetch(input, init);
+    }catch(err){
+      requestFailed = true;
+      pendingRequests = Math.max(0, pendingRequests - 1);
+      throw err;
     }
 
-    const request = nativeFetch(input, init);
-    if(isDashboardRequest){
-      request.finally(function(){
-        pendingRequests = Math.max(0, pendingRequests - 1);
+    // Jangan mengonsumsi response asli. Clone dipakai hanya untuk mendeteksi
+    // {ok:false} dari API, termasuk saat HTTP tetap 200.
+    request.then(function(response){
+      if(!response.ok){
+        requestFailed = true;
+        return;
+      }
+      return response.clone().text().then(function(text){
+        try{
+          const json = JSON.parse(text);
+          if(json && json.ok === false) requestFailed = true;
+        }catch(e){
+          requestFailed = true;
+        }
+      }).catch(function(){
+        requestFailed = true;
       });
-    }
+    }).catch(function(){
+      requestFailed = true;
+    }).finally(function(){
+      pendingRequests = Math.max(0, pendingRequests - 1);
+    });
+
     return request;
   };
 
@@ -128,32 +211,44 @@
       return originalGoPage(name);
     }
 
-    // Cegah klik berulang saat Dashboard sedang diproses.
     if(navigationBusy) return;
 
     showLoading('Menyiapkan dashboard...');
-    const deadline = Date.now() + 15000;
+    const deadline = Date.now() + 20000;
 
-    // PENTING: jangan panggil originalGoPage sebelum Page_Dashboard selesai
-    // dimuat. originalGoPage sendiri akan memanggil loadDashboard().
-    waitForDashboardDom(deadline, function(ready){
-      if(!ready){
-        setText('Dashboard gagal disiapkan. Silakan coba lagi.');
-        setTimeout(hideLoading, 1200);
-        return;
+    // 1) Page_Dashboard harus sudah ter-mount.
+    waitForDashboardMount(deadline).then(function(pageReady){
+      if(!pageReady){
+        showError('Dashboard gagal disiapkan. Silakan coba lagi.');
+        return false;
       }
 
-      setText('Sedang mengambil data statistik...');
-      try{
-        originalGoPage(name);
-      }catch(err){
-        console.error('Dashboard navigation error:', err);
-        setText('Gagal memuat Dashboard.');
-        setTimeout(hideLoading, 1200);
-        return;
-      }
+      setText('Menyiapkan komponen grafik...');
+      // 2) Chart.js harus tersedia sebelum loadDashboard membuat doughnut chart.
+      return waitForChart(deadline).then(function(chartReady){
+        if(!chartReady){
+          showError('Komponen grafik gagal dimuat. Silakan coba lagi.');
+          return false;
+        }
 
-      waitForRequests(deadline);
+        setText('Sedang mengambil data statistik...');
+        try{
+          // 3) goPage asli menampilkan page dan memanggil loadDashboard().
+          originalGoPage(name);
+        }catch(err){
+          console.error('Dashboard navigation error:', err);
+          showError('Gagal memuat Dashboard.');
+          return false;
+        }
+
+        // 4) Tunggu seluruh request Dashboard yang benar-benar dimulai oleh
+        // loadDashboard(), lalu beri satu frame untuk render akhir.
+        waitForRequests(deadline);
+        return true;
+      });
+    }).catch(function(err){
+      console.error('Dashboard loading error:', err);
+      showError('Gagal memuat Dashboard.');
     });
   };
 })();
