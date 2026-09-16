@@ -109,7 +109,7 @@
       await script('./access-visibility-fix.js?v=20260916-4');
       await script('./laporan-edit-direction-fix.js?v=20260916-7');
       await script('./laporan-loading-state.js?v=20260916-1');
-      await script('./daftar-laporan-fix.js?v=20260916-1');
+      await script('./daftar-laporan-fix.js?v=20260916-2');
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
       Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan]).catch(e=>console.warn('Deferred page load:',e));
