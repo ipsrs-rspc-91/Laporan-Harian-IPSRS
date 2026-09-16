@@ -4,7 +4,7 @@
   <base href="./">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="stylesheet" href="css/style.css?v=20260916-2">
+  <link rel="stylesheet" href="css/style.css?v=20260916-3">
   <style>
     /* Urutan menu Laporan: Laporan Saya → Monitoring Harian → Rekap Bulanan → Daftar Laporan */
     .sub-tabs { display:flex; }
@@ -12,6 +12,40 @@
     .sub-tabs .sub-tab[data-subtab="monitoring"] { order:2; }
     .sub-tabs .sub-tab[data-subtab="rekap"] { order:3; }
     .sub-tabs .sub-tab[data-subtab="daftar"] { order:4; }
+
+    /* PATCH UI: Keluar dibuat langsung terlihat agar petugas tidak perlu membuka menu akun. */
+    .logout-direct {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:42px;
+      padding:0 18px;
+      margin-left:8px;
+      border:0;
+      border-radius:10px;
+      background:#dc2626;
+      color:#fff;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+      white-space:nowrap;
+      box-shadow:0 2px 7px rgba(0,0,0,.10);
+    }
+    .logout-direct:hover { background:#b91c1c; }
+    .logout-direct:active { transform:translateY(1px); }
+    .logout-direct svg { width:19px; height:19px; flex:none; }
+    @media (max-width:700px) {
+      .logout-direct {
+        min-width:42px;
+        width:42px;
+        height:42px;
+        padding:0;
+        margin-left:4px;
+        border-radius:10px;
+      }
+      .logout-direct span { display:none; }
+    }
   </style>
 </head><body>
   <div id="authLoading" class="auth-loading"><div class="login-logo"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><div class="auth-loading-text">Memuat...</div></div>
@@ -23,7 +57,7 @@
         <button class="nav-item" data-page="laporan" onclick="goPage('laporan')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M9 13h6M9 17h6"></path></svg><span>Laporan</span></button>
         <button class="nav-item" data-page="dashboard" onclick="goPage('dashboard')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span>Dashboard</span></button>
       </nav>
-      <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button type="button" class="btn block" onclick="openPwModal()">Ganti Password</button><button type="button" class="btn block" onclick="try{doLogout()}catch(e){try{sessionStorage.removeItem('ipsrs_session_v1')}catch(_e){};location.reload();}">Keluar</button></div></div>
+      <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" class="logout-direct" onclick="try{doLogout()}catch(e){try{sessionStorage.removeItem('ipsrs_session_v1')}catch(_e){};location.reload();}" title="Keluar dari aplikasi" aria-label="Keluar dari aplikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg><span>Keluar</span></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button type="button" class="btn block" onclick="openPwModal()">Ganti Password</button></div></div>
     </header>
     <div class="user-menu-backdrop" id="userMenuBackdrop" onclick="closeUserMenu()"></div>
     <main class="content"><section id="page-input" class="page active"></section><section id="page-dashboard" class="page"></section><section id="page-laporan" class="page"></section></main>
