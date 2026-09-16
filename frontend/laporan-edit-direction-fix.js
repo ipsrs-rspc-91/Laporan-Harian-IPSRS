@@ -1,4 +1,4 @@
-/* Laporan Edit Direction Fix v20260916-1
+/* Laporan Edit Direction Fix v20260916-2
  * Laporan Saya  : memiliki tombol Edit.
  * Daftar Laporan: read-only, tanpa tombol Edit.
  */
@@ -6,14 +6,14 @@
   'use strict';
 
   function el(id){ return document.getElementById(id); }
-  function safe(v){ return typeof escapeHtml === 'function' ? escapeHtml(v) : String(v == null ? '' : v); }
 
   function addSayaEditColumn(){
-    var table = el('subtab-saya') && el('subtab-saya').querySelector('table.data-table');
-    if(!table) return;
-    var head = table.querySelector('thead tr');
+    var panel = el('subtab-saya');
+    if(!panel) return;
+    var table = panel.querySelector('table.data-table');
+    var head = table && table.querySelector('thead tr');
     var body = el('laporanSayaTableBody');
-    if(!head || !body) return;
+    if(!table || !head || !body) return;
 
     if(!head.querySelector('.laporan-saya-action-head')){
       var th = document.createElement('th');
@@ -23,23 +23,7 @@
     }
 
     Array.prototype.forEach.call(body.querySelectorAll('tr'), function(tr){
-      var old = tr.querySelector('.laporan-saya-action');
-      if(old) return;
-      var id = tr.__ipsrsReportId || '';
-      var cells = tr.children;
-      if(!id && cells.length){
-        /* ID tidak tampil di tabel; ambil berdasarkan urutan dari data cache. */
-        var rows = window.__IPSRS_REPORTS || {};
-        for(var key in rows){
-          if(rows[key] && rows[key].Tanggal != null &&
-             rows[key].Ruang != null &&
-             String(rows[key].Tanggal) === String(cells[0].innerText || '') &&
-             String(rows[key].Ruang) === String(cells[2].innerText || '')){
-            id = key;
-            break;
-          }
-        }
-      }
+      if(tr.querySelector('.laporan-saya-action')) return;
       var td = document.createElement('td');
       td.className = 'laporan-saya-action';
       var btn = document.createElement('button');
@@ -49,28 +33,12 @@
       btn.addEventListener('click', function(e){
         e.preventDefault();
         e.stopPropagation();
-        var report = id && window.__IPSRS_REPORTS ? window.__IPSRS_REPORTS[String(id)] : null;
-        if(report && typeof openEditModalForReport === 'function') openEditModalForReport(report);
-        else if(typeof tr._ipsrsReport === 'object' && typeof openEditModalForReport === 'function') openEditModalForReport(tr._ipsrsReport);
+        /* Baris Laporan Saya sudah memiliki onclick asli yang membawa objek report. */
+        tr.click();
       });
       td.appendChild(btn);
       tr.appendChild(td);
     });
-  }
-
-  function patchSayaRows(){
-    var body = el('laporanSayaTableBody');
-    if(!body) return;
-    var rows = Array.isArray(window.__ipsrsMyData) ? window.__ipsrsMyData : null;
-    if(rows){
-      Array.prototype.forEach.call(body.querySelectorAll('tr'), function(tr, i){
-        if(rows[i]){
-          tr._ipsrsReport = rows[i];
-          if(rows[i].ID != null) tr.__ipsrsReportId = String(rows[i].ID);
-        }
-      });
-    }
-    addSayaEditColumn();
   }
 
   function makeDaftarReadOnly(){
@@ -80,8 +48,8 @@
     if(table){
       var head = table.querySelector('thead tr');
       if(head){
-        var last = head.lastElementChild;
-        if(last && String(last.textContent || '').trim().toLowerCase() === 'aksi') last.style.display = 'none';
+        var lastHead = head.lastElementChild;
+        if(lastHead && String(lastHead.textContent || '').trim().toLowerCase() === 'aksi') lastHead.style.display = 'none';
       }
       Array.prototype.forEach.call(table.querySelectorAll('tbody tr'), function(tr){
         var last = tr.lastElementChild;
@@ -89,6 +57,11 @@
         tr.style.cursor = 'default';
       });
     }
+    var cards = panel.querySelectorAll('.card-list .rcard');
+    Array.prototype.forEach.call(cards, function(card){
+      card.style.cursor = 'default';
+      card.onclick = null;
+    });
   }
 
   function installDaftarReadOnlyGuard(){
@@ -105,7 +78,7 @@
   }
 
   function refresh(){
-    patchSayaRows();
+    addSayaEditColumn();
     makeDaftarReadOnly();
     installDaftarReadOnlyGuard();
   }
