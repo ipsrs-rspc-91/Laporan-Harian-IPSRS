@@ -10,9 +10,17 @@
   const originalApplyFilters = window.applyFilters;
   const originalCanEditReport = window.canEditReport;
 
-  // FIX UTAMA: StaffID dari Google Sheets dapat berupa number, sedangkan
-  // StaffID dari session/filter frontend berupa string. Normalisasi di satu
-  // titik agar laporan milik petugas tidak hilang hanya karena beda tipe data.
+  // FIX UTAMA: backend menggunakan staff_id. Beberapa bagian frontend lama
+  // masih membaca StaffID. Normalisasi keduanya di satu titik agar data laporan
+  // tidak hilang hanya karena perbedaan nama field atau tipe data.
+  function getStaffId(row){
+    if(!row) return '';
+    const value = row.staff_id !== undefined && row.staff_id !== null
+      ? row.staff_id
+      : row.StaffID;
+    return value === null || value === undefined ? '' : String(value).trim();
+  }
+
   function sameStaffId(a, b){
     if(a === null || a === undefined || b === null || b === undefined) return false;
     return String(a).trim() === String(b).trim();
@@ -24,17 +32,28 @@
         ? String(adminSelectedStaffId).trim()
         : '';
 
+      // app.js versi lama menggunakan r.StaffID saat filtering, sedangkan
+      // response backend yang benar menggunakan r.staff_id. Tambahkan alias
+      // sementara agar fungsi filter lama tetap kompatibel tanpa mengubah
+      // kontrak data backend.
+      if(Array.isArray(rawData)){
+        rawData.forEach(function(row){
+          if(row && (row.StaffID === undefined || row.StaffID === null || row.StaffID === '')){
+            row.StaffID = getStaffId(row);
+          }
+        });
+      }
+
       if(wanted && Array.isArray(rawData)){
         const match = rawData.find(function(row){
-          return row && sameStaffId(row.StaffID, wanted);
+          return row && sameStaffId(getStaffId(row), wanted);
         });
 
         if(match){
           const previous = adminSelectedStaffId;
           // originalApplyFilters() menggunakan strict comparison.
-          // Untuk sementara gunakan representasi StaffID yang sama persis
-          // dengan data laporan, lalu kembalikan state UI semula.
-          adminSelectedStaffId = match.StaffID;
+          // Gunakan representasi StaffID yang sudah dinormalisasi.
+          adminSelectedStaffId = getStaffId(match);
           try{
             return originalApplyFilters();
           }finally{
@@ -51,7 +70,7 @@
     window.canEditReport = function(report){
       if(!CURRENT_SESSION || !report) return false;
       if(CURRENT_SESSION.role === 'KA_IPSRS' || CURRENT_SESSION.role === 'ADMINISTRASI') return true;
-      return sameStaffId(report.StaffID, CURRENT_SESSION.staff_id);
+      return sameStaffId(getStaffId(report), CURRENT_SESSION.staff_id);
     };
   }
 
