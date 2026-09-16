@@ -10,8 +10,10 @@
  * 5) Hanya request yang SEDANG berjalan yang dideduplikasi.
  * 6) Filter status/kategori/area/bidang/pencarian tetap client-side.
  * 7) Filter staff tidak lagi dipakai untuk Laporan Saya.
+ * 8) Daftar Laporan read-only di UI: tidak ada tombol Edit dan baris/kartu
+ *    tidak membuka modal edit. Otorisasi edit tetap wajib ditegakkan backend.
  *
- * GANTI laporan-fast.js lama dengan file ini.
+ * GANTI laporan-fast-v2.js lama dengan file ini.
  * Jangan load bersamaan dengan:
  * - laporan-edit-direction-fix.js
  * - laporan-loading-state.js
@@ -82,7 +84,6 @@
 
     try{
       const json=await requestReports(b,staff);
-      // Jangan render response lama jika user sudah pindah tab/bulan/filter.
       if(mySerial!==requestSerial) return;
       if(!json || !json.ok){
         rawData=[];
@@ -100,10 +101,8 @@
     }
   }
 
-  // Server-side loader menjadi sumber utama.
   window.loadReportsBySelectedMonth=loadReportsUltra;
 
-  // Bungkus filter hanya untuk memastikan staff filter TIDAK pernah memotong Saya.
   const originalApply=window.applyFilters;
   if(typeof originalApply==='function'){
     window.applyFilters=function(){
@@ -121,7 +120,55 @@
     };
   }
 
-  // Tambahkan Semua Bulan tanpa duplikasi.
+  // =====================================================================
+  // UI POLICY: DAFTAR LAPORAN = READ ONLY
+  // app.js adalah renderer dasar. Wrapper ini mengubah hanya perilaku UI
+  // setelah renderer selesai, tanpa membuat renderer kedua atau script baru.
+  // Backend GAS tetap menjadi otoritas keamanan untuk apiUpdateReport().
+  // =====================================================================
+  const originalRenderReportTable=window.renderReportTable;
+  if(typeof originalRenderReportTable==='function'){
+    window.renderReportTable=function(viewData){
+      originalRenderReportTable.apply(this,arguments);
+
+      if(mode()!=='daftar') return;
+
+      const tbody=document.getElementById('reportTableBody');
+      if(tbody){
+        Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+          tr.onclick=null;
+          const actionCell=tr.querySelector('.report-action');
+          if(actionCell){
+            actionCell.innerHTML='';
+            actionCell.removeAttribute('onclick');
+          }
+        });
+      }
+
+      const cardList=document.getElementById('reportCardList');
+      if(cardList){
+        Array.from(cardList.querySelectorAll('.rcard')).forEach(function(card){
+          card.onclick=null;
+          card.removeAttribute('onclick');
+          card.style.cursor='default';
+        });
+      }
+
+      // Hilangkan header "Aksi" juga pada Daftar Laporan agar kolom edit
+      // tidak tersisa sebagai ruang kosong yang membingungkan.
+      const table=tbody ? tbody.closest('table') : null;
+      if(table){
+        const headers=table.querySelectorAll('thead th');
+        const lastHeader=headers.length ? headers[headers.length-1] : null;
+        if(lastHeader) lastHeader.style.display='none';
+        Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+          const lastCell=tr.lastElementChild;
+          if(lastCell) lastCell.style.display='none';
+        });
+      }
+    };
+  }
+
   function ensureAllMonth(){
     const sel=document.getElementById('FilterBulan');
     if(!sel) return;
@@ -132,7 +179,6 @@
     }
   }
 
-  // Jangan biarkan filter staf lama terbawa saat masuk Laporan Saya.
   const originalGo=window.goLaporanSubTab;
   if(typeof originalGo==='function'){
     window.goLaporanSubTab=function(name){
@@ -141,7 +187,6 @@
     };
   }
 
-  // Daftar Laporan tetap read-only di UI.
   document.addEventListener('click',function(ev){
     if(mode()!=='daftar') return;
     const btn=ev.target && ev.target.closest ? ev.target.closest('button') : null;
@@ -152,7 +197,6 @@
     }
   },true);
 
-  // Request baru selalu mengambil data terbaru setelah save/edit.
   window.__invalidateLaporanFastCache=function(){ /* kompatibilitas; tidak ada TTL cache */ };
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ensureAllMonth,{once:true});
