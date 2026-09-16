@@ -22,11 +22,7 @@
       gap:8px;
       flex-shrink:0;
     }
-    .topbar-user .user-chip {
-      flex:0 0 auto;
-    }
-
-    /* PATCH UI: staff_id pada avatar tidak boleh meluber dan menimpa nama. */
+    .topbar-user .user-chip { flex:0 0 auto; }
     .topbar-user .u-avatar {
       width:auto;
       min-width:26px;
@@ -39,7 +35,6 @@
       font-size:10px;
       line-height:26px;
     }
-
     .logout-direct {
       display:inline-flex;
       align-items:center;
@@ -64,10 +59,7 @@
     .logout-direct svg { width:19px; height:19px; flex:none; }
     @media (max-width:700px) {
       .topbar-user { gap:5px; }
-      .topbar-user .u-avatar {
-        max-width:56px;
-        font-size:9px;
-      }
+      .topbar-user .u-avatar { max-width:56px; font-size:9px; }
       .logout-direct {
         min-width:42px;
         width:42px;
@@ -100,13 +92,9 @@
   (async function(){
     const initialMounts={loginScreen:'pages/Page_Login.html', 'page-input':'pages/Page_Input.html'};
     const deferredMounts={ 'page-dashboard':'pages/Page_Dashboard.html', 'page-laporan':'pages/Page_Laporan.html' };
-
-    // PATCH: expose lifecycle promises so Dashboard loading does not rely on
-    // polling DOM elements while the deferred page is still being fetched.
     window.__ipsrsPageReady = window.__ipsrsPageReady || {};
     window.__ipsrsPageReady.dashboard = null;
     window.__ipsrsPageReady.laporan = null;
-
     async function fragment(id,url){const el=document.getElementById(id);if(!el)throw new Error('Mount point not found: '+id);const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');el.outerHTML=await r.text();return true;}
     function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Gagal memuat '+src));document.body.appendChild(s);});}
     try{
@@ -118,18 +106,11 @@
       await script('./access-policy-ui.js?v=20260916');
       await script('./login-fast.js?v=20260916');
       await script('./dashboard-loading-v2.js?v=20260916-2');
-
-      // PATCH: simpan promise mount per halaman. Dashboard loader menunggu
-      // promise ini agar tidak pernah memanggil goPage/loadDashboard terlalu dini.
+      await script('./access-visibility-fix.js?v=20260916-1');
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
-      Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan])
-        .catch(e=>console.warn('Deferred page load:',e));
-
-      // PATCH: Chart.js punya lifecycle promise sendiri. Dashboard loader
-      // menunggunya sebelum loadDashboard supaya render chart deterministik.
-      window.__ipsrsChartReady = script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js')
-        .catch(e=>{ console.warn('Deferred Chart.js load:',e); throw e; });
+      Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan]).catch(e=>console.warn('Deferred page load:',e));
+      window.__ipsrsChartReady = script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js').catch(e=>{ console.warn('Deferred Chart.js load:',e); throw e; });
     }
     catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
   })();
