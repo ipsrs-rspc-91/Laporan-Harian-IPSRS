@@ -4,7 +4,15 @@
   <base href="./">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260916-2">
+  <style>
+    /* Urutan menu Laporan: Laporan Saya → Monitoring Harian → Rekap Bulanan → Daftar Laporan */
+    .sub-tabs { display:flex; }
+    .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
+    .sub-tabs .sub-tab[data-subtab="monitoring"] { order:2; }
+    .sub-tabs .sub-tab[data-subtab="rekap"] { order:3; }
+    .sub-tabs .sub-tab[data-subtab="daftar"] { order:4; }
+  </style>
 </head><body>
   <div id="authLoading" class="auth-loading"><div class="login-logo"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><div class="auth-loading-text">Memuat...</div></div>
   <div id="loginScreen" class="hidden"></div>
