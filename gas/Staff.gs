@@ -138,14 +138,6 @@ function getStaffMonitoring(session, bulan, tanggal) {
       continue;
     }
 
-    // Hanya staf AKTIF yang menjadi populasi Monitoring Harian.
-    // NONAKTIF / Calon SDM tetap tersimpan di STAFF,
-    // tetapi tidak ditampilkan sebagai petugas aktif.
-    const isAktif =
-      (s.status || 'Aktif').toString().trim().toLowerCase() === 'aktif';
-
-    if (!isAktif) continue;
-
     const dateMap =
       byStaffDate[s.staff_id] || {};
 
@@ -157,14 +149,23 @@ function getStaffMonitoring(session, bulan, tanggal) {
       }
     });
 
-    const belumIsiHari = Math.max(
-      0,
-      wajibDates.length - sudahIsiHari
-    );
+    const isAktif =
+      (s.status || 'Aktif') === 'Aktif';
+
+    const belumIsiHari =
+      isAktif
+        ? Math.max(
+            0,
+            wajibDates.length - sudahIsiHari
+          )
+        : 0;
 
     let statusHariIni;
 
-    if (tanggalTidakWajib) {
+    if (!isAktif) {
+      statusHariIni = 'TIDAK_WAJIB';
+
+    } else if (tanggalTidakWajib) {
       statusHariIni = 'TIDAK_WAJIB';
 
     } else if (tanggal > todayStr) {
@@ -851,6 +852,7 @@ function getStaffPerformance(
       sp !== ''
     ) {
       pencapaian[sp]++;
+
     } else {
       pencapaian['Belum Diisi']++;
     }
@@ -985,13 +987,6 @@ function listStaff(session) {
       );
 
     if (!r.staff_id) {
-      continue;
-    }
-
-    // Hanya staf AKTIF yang menjadi populasi petugas aktif.
-    // NONAKTIF / Calon SDM tetap tersimpan di STAFF,
-    // tetapi tidak ditampilkan pada Daftar Laporan / filter Petugas.
-    if ((r.status || 'Aktif').toString().trim().toLowerCase() !== 'aktif') {
       continue;
     }
 
