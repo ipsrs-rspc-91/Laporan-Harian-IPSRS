@@ -1,14 +1,15 @@
-/* Laporan Edit Direction + Navigation/Data Init Fix v20260916-4
+/* Laporan Edit Direction + Navigation/Data Init Fix v20260916-5
  * Laporan Saya  : memiliki tombol Edit.
  * Daftar Laporan: read-only, tanpa tombol Edit.
  * Header         : satu baris pada desktop dan HP, tanpa tombol Keluar turun.
  * Rekap/Daftar   : memastikan kontrol bulan siap setelah Page_Laporan dimuat.
+ * Summary        : kartu Total/Selesai/Belum dibuat proporsional seperti summary utama.
  */
 (function(){
   'use strict';
 
   /* ================================================================
-   * RESPONSIVE HEADER FIX
+   * RESPONSIVE HEADER + LAPORAN SAYA SUMMARY FIX
    * ================================================================ */
   function installResponsiveHeaderFix(){
     if(document.getElementById('ipsrs-responsive-header-fix')) return;
@@ -45,6 +46,53 @@
       + '  .topbar-nav .nav-item{padding-left:6px !important; padding-right:6px !important; font-size:10px !important;}\n'
       + '  .topbar-nav .nav-item .icon{width:16px !important; height:16px !important;}\n'
       + '  .logout-direct{width:36px !important; min-width:36px !important; height:36px !important; min-height:36px !important;}\n'
+      + '}\n'
+      + '\n'
+      + '/* ============================================================\n'
+      + '   LAPORAN SAYA: summary cards dibuat sama-sama lebar dan rapi.\n'
+      + '   Struktur Page_Laporan: .card > div(header) > .laporan-summary.\n'
+      + '   Sebelumnya selector memakai #panel-laporan-saya yang tidak ada.\n'
+      + '   ============================================================ */\n'
+      + '#subtab-saya .laporan-summary{\n'
+      + '  display:grid !important;\n'
+      + '  grid-template-columns:repeat(3,minmax(150px,1fr)) !important;\n'
+      + '  gap:12px !important;\n'
+      + '  flex:1 1 auto !important;\n'
+      + '  width:100% !important;\n'
+      + '  min-width:0 !important;\n'
+      + '  max-width:520px !important;\n'
+      + '  overflow:visible !important;\n'
+      + '}\n'
+      + '#subtab-saya .laporan-summary .stat-card{\n'
+      + '  width:auto !important;\n'
+      + '  min-width:0 !important;\n'
+      + '  min-height:76px !important;\n'
+      + '  box-sizing:border-box !important;\n'
+      + '  padding:12px 16px !important;\n'
+      + '}\n'
+      + '#subtab-saya .laporan-summary .s-value{font-size:24px !important; line-height:1.05 !important;}\n'
+      + '#subtab-saya .laporan-summary .s-label{font-size:12px !important; white-space:nowrap !important;}\n'
+      + '#subtab-saya > .card:first-child > div:first-child{\n'
+      + '  display:flex !important;\n'
+      + '  align-items:center !important;\n'
+      + '  gap:24px !important;\n'
+      + '}\n'
+      + '#subtab-saya > .card:first-child > div:first-child > div:first-child{\n'
+      + '  flex:0 1 auto !important;\n      min-width:170px !important;\n      }\n'
+      + '@media (max-width:900px){\n'
+      + '  #subtab-saya .laporan-summary{max-width:480px !important; grid-template-columns:repeat(3,minmax(130px,1fr)) !important;}\n'
+      + '}\n'
+      + '@media (max-width:700px){\n'
+      + '  #subtab-saya > .card:first-child > div:first-child{gap:12px !important; align-items:stretch !important;}\n'
+      + '  #subtab-saya > .card:first-child > div:first-child > div:first-child{min-width:115px !important;}\n'
+      + '  #subtab-saya .laporan-summary{\n'
+      + '    max-width:none !important;\n'
+      + '    width:max-content !important;\n'
+      + '    grid-template-columns:repeat(3,120px) !important;\n'
+      + '    flex:0 0 auto !important;\n'
+      + '    overflow:visible !important;\n'
+      + '  }\n'
+      + '  #subtab-saya .laporan-summary .stat-card{min-width:120px !important; min-height:68px !important; padding:10px 12px !important;}\n'
       + '}\n';
     document.head.appendChild(style);
   }
@@ -120,13 +168,6 @@
     }, true);
   }
 
-  /* ================================================================
-   * FIX DATA INITIALIZATION AFTER DYNAMIC PAGE LOAD
-   * Page_Laporan dimuat dinamis setelah afterAuthReady(). Karena itu
-   * buildMonthOptions() sebelumnya dapat berjalan sebelum RekapBulan /
-   * FilterBulan ada di DOM. Akibatnya tab bisa terbuka tetapi datanya
-   * tidak pernah memiliki periode bulan yang valid.
-   * ================================================================ */
   var dataInitDone = false;
 
   function ensureMonthOptions(){
@@ -158,20 +199,15 @@
   function ensureBasicFilterOptions(){
     var bidangList = window.BIDANG_LIST || ['ME','Sipil','Workshop','Elektromedik','Kesling'];
     var shiftList = window.SHIFT_LIST || ['Pagi','Siang','Malam'];
-
     [['FilterBidang',bidangList],['MonFilterBidang',bidangList]].forEach(function(pair){
       var sel=el(pair[0]);
       if(!sel || sel.options.length>1) return;
-      pair[1].forEach(function(v){
-        var o=document.createElement('option'); o.value=v; o.innerText=v; sel.appendChild(o);
-      });
+      pair[1].forEach(function(v){ var o=document.createElement('option'); o.value=v; o.innerText=v; sel.appendChild(o); });
     });
     [['FilterShift',shiftList],['MonFilterShift',shiftList]].forEach(function(pair){
       var sel=el(pair[0]);
       if(!sel || sel.options.length>1) return;
-      pair[1].forEach(function(v){
-        var o=document.createElement('option'); o.value=v; o.innerText=v; sel.appendChild(o);
-      });
+      pair[1].forEach(function(v){ var o=document.createElement('option'); o.value=v; o.innerText=v; sel.appendChild(o); });
     });
   }
 
@@ -220,11 +256,8 @@
     ensureLaporanControls();
     addSayaEditColumn();
     makeDaftarReadOnly();
-    installDaftarReadOnlyGuard();
   }
 
-  /* Ambil implementasi navigasi yang sudah ada. Laporan Saya tetap
-     memakai implementasi tersebut karena menangani filter pribadi + Edit. */
   var previousGo = window.goLaporanSubTab;
   window.goLaporanSubTab = function(name){
     if(!ensureLaporanControls()){
@@ -249,10 +282,7 @@
     var admin=el('adminStaffPanel');
     if(admin) admin.classList.toggle('hidden',name!=='daftar');
 
-    setTimeout(function(){
-      refresh();
-      loadLaporanData(name);
-    },0);
+    setTimeout(function(){ refresh(); loadLaporanData(name); },0);
     return true;
   };
 
