@@ -38,6 +38,17 @@ const AUTH_CACHE_TTL_SECONDS_ = 300;
 const AUTH_DIRECTORY_CACHE_KEY_ = 'auth:directory:v3';
 
 
+/**
+ * Normalisasi staff_id terpusat.
+ * Tujuan: mencegah mismatch akibat spasi/format string yang berbeda
+ * antara USERS, STAFF, REPORTS, dan session.
+ */
+function normalizeStaffId_(staffId) {
+  if (staffId === null || staffId === undefined) return '';
+  return String(staffId).trim();
+}
+
+
 function buildAuthDirectory_() {
   const usersSheet = getSheet(SHEET_USERS);
   const staffSheet = getSheet(SHEET_STAFF);
@@ -70,7 +81,7 @@ function buildAuthDirectory_() {
   for (let i = 1; i < staff.length; i++) {
     const r = rowToObj(staffHeaders, staff[i]);
 
-    const key = String(r.staff_id || '');
+    const key = normalizeStaffId_(r.staff_id);
 
     if (key) {
       byStaffId[key] = r;
@@ -122,10 +133,12 @@ function invalidateAuthCache_(username, staffId) {
     );
   }
 
-  if (staffId) {
+  const normalizedStaffId = normalizeStaffId_(staffId);
+
+  if (normalizedStaffId) {
     cache.remove(
       'auth:staff:' +
-      String(staffId)
+      normalizedStaffId
     );
   }
 }
@@ -146,7 +159,7 @@ function getCachedStaffById_(staffId) {
   const directory = getAuthDirectory_();
 
   return directory.byStaffId[
-    String(staffId || '')
+    normalizeStaffId_(staffId)
   ] || null;
 }
 
@@ -156,8 +169,12 @@ function getStaffByIdFromSheet_(staffId) {
   const rows = sheet.getDataRange().getValues();
   const headers = rows[0];
 
+  const wantedStaffId = normalizeStaffId_(staffId);
+
+  if (!wantedStaffId) return null;
+
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === staffId) {
+    if (normalizeStaffId_(rows[i][0]) === wantedStaffId) {
       return rowToObj(headers, rows[i]);
     }
   }
@@ -269,13 +286,18 @@ function login(username, password) {
   }
 
   const u = found.row;
+  const userStatus = String(u.status || '')
+    .trim()
+    .toLowerCase();
 
-  if (u.status !== 'Aktif') {
+  if (userStatus !== 'aktif') {
     return {
       ok: false,
       msg: 'Akun nonaktif. Hubungi KA IPSRS.'
     };
   }
+
+  const normalizedStaffId = normalizeStaffId_(u.staff_id);
 
   const hash = hashPassword(
     password,
@@ -285,7 +307,7 @@ function login(username, password) {
   if (hash !== u.password_hash) {
     logAudit(
       username,
-      u.staff_id,
+      normalizedStaffId,
       'LOGIN_FAILED',
       '',
       'Password salah'
@@ -297,7 +319,7 @@ function login(username, password) {
     };
   }
 
-  const staff = getStaffById(u.staff_id);
+  const staff = getStaffById(normalizedStaffId);
 
   const nama = staff ? staff.nama : '';
   const bidang = staff ? staff.bidang : '';
@@ -321,7 +343,7 @@ function login(username, password) {
       {
         token: token,
         username: username,
-        staff_id: u.staff_id,
+        staff_id: normalizedStaffId,
         role: u.role,
         bidang: bidang,
         nama: nama,
@@ -335,7 +357,7 @@ function login(username, password) {
     ok: true,
     token: token,
     username: username,
-    staff_id: u.staff_id,
+    staff_id: normalizedStaffId,
     role: u.role,
     nama: nama,
     bidang: bidang
@@ -367,6 +389,9 @@ function validateSession(token) {
         return null;
       }
 
+      // Normalisasi staff_id juga untuk session lama yang mungkin masih
+      // menyimpan spasi/format berbeda. Tidak mengubah data sheet.
+      row.staff_id = normalizeStaffId_(row.staff_id);
       return row;
     }
   }
