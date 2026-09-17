@@ -1546,7 +1546,7 @@ cardList.appendChild(card);
       item.innerHTML = `
         <div>
          <div class="r-main">${escapeHtml(formatTanggalDisplay(r.Tanggal))} | ${escapeHtml(r.Ruang)}</div>
-          <div class="r-sub">${escapeHtml(r.MasalahKegiatan)}</div>
+          <div class="r-sub">${escapeHtml(r.Petugas)} | ${escapeHtml(r.MasalahKegiatan)}</div>
         </div>
         <span class="pill ${r.Status==='Selesai'?'success':'warning'}">${escapeHtml(r.Status)}</span>
       `;
