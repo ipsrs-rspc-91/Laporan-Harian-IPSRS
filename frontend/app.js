@@ -934,17 +934,39 @@
       tbody.appendChild(tr);
 
       const card = document.createElement('div');
-      card.className = 'rcard';
-      card.innerHTML = `
-        <div class="rc-top">
-          <div class="rc-title">${escapeHtml(row.Ruang)} &middot; ${escapeHtml(formatTanggalDisplay(row.Tanggal))}</div>
-          <span class="pill ${row.Status==='Selesai'?'success':'warning'}">${escapeHtml(row.Status)}</span>
-        </div>
-        <div class="rc-line">${escapeHtml(row.MasalahKegiatan)}</div>
-        <div class="rc-line">${escapeHtml(row.Petugas)} &middot; ${escapeHtml(bidangShift)} &middot; ${escapeHtml(row.Kategori)}</div>
-      `;
-      card.onclick = () => openEditModalForReport(row);
-      cardList.appendChild(card);
+card.className = 'rcard';
+
+card.innerHTML = `
+  <div class="rc-top">
+    <div class="rc-title">
+      ${escapeHtml(formatTanggalDisplay(row.Tanggal))}
+      &middot;
+      ${escapeHtml(row.Ruang)}
+    </div>
+
+    <span class="pill ${row.Status === 'Selesai' ? 'success' : 'warning'}">
+      ${escapeHtml(row.Status)}
+    </span>
+  </div>
+
+  <div class="rc-line">
+    <span class="rc-label">Masalah:</span>
+    ${escapeHtml(row.MasalahKegiatan)}
+  </div>
+
+  <div class="rc-line">
+    <span class="rc-label">Tindak Lanjut:</span>
+    ${escapeHtml(row.Tindakan)}
+  </div>
+
+  <div class="rc-line">
+    <span class="rc-label">Petugas:</span>
+    ${escapeHtml(row.Petugas)}
+  </div>
+`;
+
+card.onclick = () => openEditModalForReport(row);
+cardList.appendChild(card);
     });
   }
 
