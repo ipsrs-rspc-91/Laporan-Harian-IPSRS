@@ -304,7 +304,6 @@
   @media(max-width:760px){.laporan-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
 
 
-  .card-list{ display:none; flex-direction:column; gap:var(--sp-2); }
 
   /* ===================== MOBILE VIEW TOGGLE (TABEL / CARD) ===================== */
   .report-view-area{ min-width:0; }
@@ -414,262 +413,147 @@
     .topbar-brand-text{ display:none; }
   }
 
-/* ============================================================
-   MOBILE REPORT CARD - FINAL
-   Card: tanggal → ruang, status kanan, masalah, tindak lanjut, petugas.
-   Tabel tetap lengkap dan tidak diubah.
-   ============================================================ */
-.rcard{
-  min-width:0;
-  width:100%;
-  box-sizing:border-box;
-  overflow:hidden;
-}
-.rcard .rc-top{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  min-width:0;
-}
-.rcard .rc-title{
-  min-width:0;
-  flex:1 1 auto;
-  overflow-wrap:anywhere;
-}
-.rcard .rc-top .pill{
-  flex:0 0 auto;
-  white-space:nowrap;
-}
-.rcard .rc-line{
-  min-width:0;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-}
-.rcard .rc-label{
-  font-weight:700;
-}
-
-@media (min-width:761px){
-  /* Desktop: pilihan Card tetap tidak ditampilkan; tabel tetap menjadi tampilan utama. */
-  .report-view-area .report-view-label,
-  .report-view-area > .report-view-btn{display:none;}
-}
 /* =========================================================
-   MOBILE CARD LAPORAN IPSRS
-   FINAL UI
+   REPORT CARD - FINAL
+   Mobile only
+   Desktop tetap menggunakan tabel
    ========================================================= */
 
+.card-list {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rcard {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 2px solid #37474f;
+  border-radius: 14px;
+  padding: 14px 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.rcard:hover {
+  border-color: #263238;
+}
+
+.rcard .rc-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
+  padding-bottom: 11px;
+  margin-bottom: 9px;
+  border-bottom: 2px solid #dce2e6;
+}
+
+.rcard .rc-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #17232d;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.rc-date {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rc-separator {
+  width: 1px;
+  height: 18px;
+  background: #9aa7af;
+  flex: 0 0 1px;
+}
+
+.rc-room {
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rcard .rc-top .pill {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.1;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.rcard .rc-line {
+  display: block;
+  min-width: 0;
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #37474f;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.rcard .rc-label {
+  font-weight: 700;
+  color: #17232d;
+}
+
+.rcard .pill.success,
+.rcard .pill.warning {
+  white-space: nowrap !important;
+}
+
 @media (max-width: 768px) {
-
-  /* =======================================================
-     1. AREA CARD
-     ======================================================= */
-
   .report-card-view {
     display: flex;
     flex-direction: column;
-    gap: 12px;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    gap: 14px;
   }
-
-
-  /* =======================================================
-     2. CARD INDIVIDUAL
-     ======================================================= */
 
   .report-card-view .rcard {
     width: 100%;
-    box-sizing: border-box;
-
-    padding: 14px 15px;
-
-    background: #ffffff;
-
-    border: 1px solid #d9e1e7;
-    border-radius: 12px;
-
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
-
-    overflow: hidden;
-
-    cursor: pointer;
+    max-width: 100%;
   }
-
-
-  /* =======================================================
-     3. HEADER CARD
-        Tanggal + Ruang       Status
-     ======================================================= */
-
-  .report-card-view .rcard .rc-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-
-    width: 100%;
-
-    gap: 10px;
-
-    padding-bottom: 10px;
-
-    margin-bottom: 8px;
-
-    border-bottom: 1px solid #e5eaee;
-  }
-
-
-  /* =======================================================
-     4. TANGGAL + RUANG
-     ======================================================= */
-
-  .report-card-view .rcard .rc-title {
-    flex: 1 1 auto;
-
-    min-width: 0;
-
-    font-size: 16px;
-    font-weight: 600;
-
-    line-height: 1.4;
-
-    color: #263238;
-
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-
-
-  /* =======================================================
-     5. STATUS
-        SELALU DI KANAN
-        TIDAK BOLEH TURUN
-     ======================================================= */
-
-  .report-card-view .rcard .rc-top .pill {
-    flex: 0 0 auto;
-
-    margin-left: auto;
-
-    white-space: nowrap;
-    word-break: keep-all;
-
-    padding: 7px 12px;
-
-    font-size: 13px;
-    font-weight: 700;
-
-    line-height: 1.1;
-
-    border-radius: 20px;
-
-    text-align: center;
-  }
-
-
-  /* =======================================================
-     6. ISI CARD
-     ======================================================= */
-
-  .report-card-view .rcard .rc-line {
-    display: block;
-
-    margin-top: 7px;
-
-    font-size: 15px;
-
-    line-height: 1.45;
-
-    color: #37474f;
-
-    white-space: normal;
-
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-
-
-  /* =======================================================
-     7. LABEL
-        Masalah:
-        Tindak Lanjut:
-        Petugas:
-     ======================================================= */
-
-  .report-card-view .rcard .rc-label {
-    font-weight: 700;
-
-    color: #263238;
-  }
-
-
-  /* =======================================================
-     8. JARAK BARIS PERTAMA
-     ======================================================= */
-
-  .report-card-view .rcard .rc-line:first-of-type {
-    margin-top: 4px;
-  }
-
-
-  /* =======================================================
-     9. EFEK SAAT CARD DITEKAN
-     ======================================================= */
-
-  .report-card-view .rcard:active {
-    transform: scale(0.995);
-  }
-
-
-  /* =======================================================
-     10. AGAR CARD TIDAK MELEBAR KELUAR LAYAR
-     ======================================================= */
 
   .report-view-content {
     width: 100%;
     max-width: 100%;
-
     box-sizing: border-box;
   }
-
-  .report-card-view {
-    max-width: 100%;
-
-    overflow: hidden;
-  }
-
-
-  /* =======================================================
-     11. STATUS SELESAI
-     ======================================================= */
-
-  .report-card-view .rcard .pill.success {
-    white-space: nowrap;
-  }
-
-
-  /* =======================================================
-     12. STATUS SELAIN SELESAI
-     ======================================================= */
-
-  .report-card-view .rcard .pill.warning {
-    white-space: nowrap;
-  }
-
 }
 
-
-/* =========================================================
-   DESKTOP
-   Card tetap tersembunyi.
-   Tampilan desktop tetap tabel.
-   ========================================================= */
-
 @media (min-width: 769px) {
+  /* Desktop: tabel tetap menjadi tampilan utama dan toggle Card tidak ditampilkan. */
+  .report-view-area .report-view-label,
+  .report-view-area > .report-view-btn {
+    display: none !important;
+  }
 
   .report-card-view {
     display: none !important;
   }
-
 }
