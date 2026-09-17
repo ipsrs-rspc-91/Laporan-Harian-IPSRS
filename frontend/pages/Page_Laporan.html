@@ -166,19 +166,34 @@
 
     <div id="msgReport" style="font-size:var(--fs-sm); color:var(--muted); font-weight:600; margin-bottom:var(--sp-2);"></div>
 
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Tanggal</th><th>Pukul</th><th>Ruang</th><th>No LK</th><th>Masalah/Kegiatan</th>
-            <th>Tindakan</th><th>Petugas</th><th>Bidang/Shift</th><th>Status</th><th>Kategori</th><th>Area Kerja</th><th>Item</th><th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="reportTableBody"></tbody>
-      </table>
-    </div>
+    <div class="report-view-area">
+      <!-- Pilihan tampilan hanya muncul di HP. CSS-only: tidak memanggil GAS/JS tambahan. -->
+      <span class="report-view-label">Tampilan:</span>
+      <input type="radio" id="reportViewTable" name="reportView" checked>
+      <label class="report-view-btn" for="reportViewTable" title="Tampilan tabel">
+        <span class="view-icon" aria-hidden="true">▦</span> Tabel
+      </label>
+      <input type="radio" id="reportViewCard" name="reportView">
+      <label class="report-view-btn" for="reportViewCard" title="Tampilan card">
+        <span class="view-icon" aria-hidden="true">▤</span> Card
+      </label>
 
-    <div class="card-list" id="reportCardList"></div>
+      <div class="report-view-content">
+        <div class="table-wrap report-table-view">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tanggal</th><th>Pukul</th><th>Ruang</th><th>No LK</th><th>Masalah/Kegiatan</th>
+                <th>Tindakan</th><th>Petugas</th><th>Bidang/Shift</th><th>Status</th><th>Kategori</th><th>Area Kerja</th><th>Item</th><th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card-list report-card-view" id="reportCardList"></div>
+      </div>
+    </div>
   </div>
 </div>
 
