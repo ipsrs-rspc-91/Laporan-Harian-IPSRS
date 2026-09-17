@@ -427,36 +427,42 @@
   box-sizing: border-box;
 }
 
-.rcard {
+.report-card-view .rcard {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  padding: 0;
   background: #ffffff;
   border: 2px solid #37474f;
   border-radius: 14px;
-  padding: 14px 15px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   cursor: pointer;
 }
 
-.rcard:hover {
+.report-card-view .rcard:hover {
   border-color: #263238;
 }
 
-.rcard .rc-top {
+.report-card-view .rcard:active {
+  transform: scale(0.995);
+}
+
+.report-card-view .rcard .rc-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
   min-width: 0;
   gap: 12px;
-  padding-bottom: 11px;
-  margin-bottom: 9px;
+  padding: 13px 15px 11px;
+  margin: 0;
+  background: #f3faf9;
   border-bottom: 2px solid #dce2e6;
+  border-radius: 12px 12px 0 0;
 }
 
-.rcard .rc-title {
+.report-card-view .rcard .rc-title {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
@@ -477,10 +483,11 @@
 }
 
 .rc-separator {
-  width: 1px;
-  height: 18px;
-  background: #9aa7af;
-  flex: 0 0 1px;
+  width: 2px;
+  height: 20px;
+  background: #16a085;
+  border-radius: 2px;
+  flex: 0 0 2px;
 }
 
 .rc-room {
@@ -489,7 +496,7 @@
   overflow-wrap: anywhere;
 }
 
-.rcard .rc-top .pill {
+.report-card-view .rcard .rc-top .pill {
   flex: 0 0 auto;
   margin-left: auto;
   white-space: nowrap !important;
@@ -502,10 +509,11 @@
   text-align: center;
 }
 
-.rcard .rc-line {
+.report-card-view .rcard .rc-line {
   display: block;
   min-width: 0;
-  margin-top: 8px;
+  margin: 0;
+  padding: 0 15px;
   font-size: 15px;
   line-height: 1.5;
   color: #37474f;
@@ -514,13 +522,21 @@
   word-break: normal;
 }
 
-.rcard .rc-label {
+.report-card-view .rcard .rc-line:first-of-type {
+  padding-top: 12px;
+}
+
+.report-card-view .rcard .rc-line:last-of-type {
+  padding-bottom: 14px;
+}
+
+.report-card-view .rcard .rc-label {
   font-weight: 700;
   color: #17232d;
 }
 
-.rcard .pill.success,
-.rcard .pill.warning {
+.report-card-view .rcard .pill.success,
+.report-card-view .rcard .pill.warning {
   white-space: nowrap !important;
 }
 
