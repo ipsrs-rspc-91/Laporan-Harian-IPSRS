@@ -413,3 +413,46 @@
     .login-card{ padding:28px 20px; }
     .topbar-brand-text{ display:none; }
   }
+
+/* ============================================================
+   MOBILE REPORT CARD - FINAL
+   Card: tanggal → ruang, status kanan, masalah, tindak lanjut, petugas.
+   Tabel tetap lengkap dan tidak diubah.
+   ============================================================ */
+.rcard{
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.rcard .rc-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+}
+.rcard .rc-title{
+  min-width:0;
+  flex:1 1 auto;
+  overflow-wrap:anywhere;
+}
+.rcard .rc-top .pill{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+.rcard .rc-line{
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.rcard .rc-label{
+  font-weight:700;
+}
+
+@media (min-width:761px){
+  /* Desktop: pilihan Card tetap tidak ditampilkan; tabel tetap menjadi tampilan utama. */
+  .report-view-area .report-view-label,
+  .report-view-area > .report-view-btn{display:none;}
+}
+
