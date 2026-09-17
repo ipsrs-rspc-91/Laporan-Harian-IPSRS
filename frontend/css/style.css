@@ -249,7 +249,7 @@
   .recent-list{ display:flex; flex-direction:column; gap:0; margin-top:var(--sp-2); }
   .recent-item{ display:flex; justify-content:space-between; gap:var(--sp-2); padding:11px 0; border-bottom:1px solid var(--border); }
   .recent-item:last-child{ border-bottom:none; }
-  .recent-item .r-main{ font-size:var(--fs-sm); font-weight:500; }
+  .recent-item .r-main{ font-size:var(--fs-sm); font-weight:400; }
   .recent-item .r-sub{ font-size:var(--fs-base); color:var(--text); font-weight:600; margin-top:var(--sp-1); }
 
   /* ===================== FORM INPUT ===================== */
