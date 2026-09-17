@@ -939,9 +939,9 @@ card.className = 'rcard';
 card.innerHTML = `
   <div class="rc-top">
     <div class="rc-title">
-      ${escapeHtml(formatTanggalDisplay(row.Tanggal))}
-      &middot;
-      ${escapeHtml(row.Ruang)}
+      <span class="rc-date">${escapeHtml(formatTanggalDisplay(row.Tanggal))}</span>
+      <span class="rc-separator" aria-hidden="true"></span>
+      <span class="rc-room">${escapeHtml(row.Ruang)}</span>
     </div>
 
     <span class="pill ${row.Status === 'Selesai' ? 'success' : 'warning'}">
