@@ -1545,7 +1545,7 @@ cardList.appendChild(card);
       item.className = 'recent-item';
       item.innerHTML = `
         <div>
-          <div class="r-main">${escapeHtml(r.Ruang)} &middot; ${escapeHtml(r.Tanggal)}</div>
+          <div class="r-main">${escapeHtml(r.Ruang)} &middot; ${escapeHtml(formatTanggalDisplay(r.Tanggal))}}</div>
           <div class="r-sub">${escapeHtml(r.MasalahKegiatan)}</div>
         </div>
         <span class="pill ${r.Status==='Selesai'?'success':'warning'}">${escapeHtml(r.Status)}</span>
