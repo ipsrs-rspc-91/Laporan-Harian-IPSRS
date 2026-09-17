@@ -1,6 +1,6 @@
 /**
  * laporan-fast-v2.js
- * ULTRA PATH halaman Laporan IPSRS.
+ * FINAL INTEGRATION v20260917-REPORT-FIX1
  *
  * Prinsip:
  * 1) Laporan Saya -> 1 request server dengan staff_id user login.
@@ -9,11 +9,12 @@
  * 4) Tidak ada cache TTL yang bisa menampilkan data basi.
  * 5) Hanya request yang SEDANG berjalan yang dideduplikasi.
  * 6) Filter status/kategori/area/bidang/pencarian tetap client-side.
- * 7) Filter staff tidak lagi dipakai untuk Laporan Saya.
+ * 7) Laporan Saya memakai renderer utama app.js dan tombol Edit tetap tersedia.
  * 8) Daftar Laporan read-only di UI: tidak ada tombol Edit dan baris/kartu
  *    tidak membuka modal edit. Otorisasi edit tetap wajib ditegakkan backend.
+ * 9) Kebijakan read-only dipasang setelah renderer utama tersedia, sehingga
+ *    tidak bergantung pada timing mount Page_Laporan.html.
  *
- * GANTI laporan-fast-v2.js lama dengan file ini.
  * Jangan load bersamaan dengan:
  * - laporan-edit-direction-fix.js
  * - laporan-loading-state.js
@@ -23,8 +24,12 @@
 (function(){
   'use strict';
 
+  if(window.__IPSRS_LAPORAN_FAST_V2_FIX1) return;
+  window.__IPSRS_LAPORAN_FAST_V2_FIX1 = true;
+
   const inflight = new Map();
   let requestSerial = 0;
+  let rendererWrapped = false;
 
   function mode(){
     const active=document.querySelector('.sub-tab.active');
@@ -53,7 +58,9 @@
     if(sel) sel.value='';
   }
 
-  function requestKey(month,staff){ return String(month||'')+'|'+String(staff||''); }
+  function requestKey(month,staff){
+    return String(month||'')+'|'+String(staff||'');
+  }
 
   function requestReports(month,staff){
     const key=requestKey(month,staff);
@@ -85,12 +92,14 @@
     try{
       const json=await requestReports(b,staff);
       if(mySerial!==requestSerial) return;
+
       if(!json || !json.ok){
         rawData=[];
         if(typeof renderReportTable==='function') renderReportTable([]);
         setMsg('msgReport',(json&&json.msg)||'Gagal memuat data.',true);
         return;
       }
+
       rawData=Array.isArray(json.data)?json.data:[];
       applyFilters();
       setMsg('msgReport','Data tampil: '+rawData.length);
@@ -107,6 +116,7 @@
   if(typeof originalApply==='function'){
     window.applyFilters=function(){
       if(mode()!=='saya') return originalApply.apply(this,arguments);
+
       let previous='';
       try{
         if(typeof adminSelectedStaffId !== 'undefined'){
@@ -115,19 +125,23 @@
         }
         return originalApply.apply(this,arguments);
       }finally{
-        try{ if(typeof adminSelectedStaffId !== 'undefined') adminSelectedStaffId=previous; }catch(e){}
+        try{
+          if(typeof adminSelectedStaffId !== 'undefined') adminSelectedStaffId=previous;
+        }catch(e){}
       }
     };
   }
 
-  // =====================================================================
-  // UI POLICY: DAFTAR LAPORAN = READ ONLY
-  // app.js adalah renderer dasar. Wrapper ini mengubah hanya perilaku UI
-  // setelah renderer selesai, tanpa membuat renderer kedua atau script baru.
-  // Backend GAS tetap menjadi otoritas keamanan untuk apiUpdateReport().
-  // =====================================================================
-  const originalRenderReportTable=window.renderReportTable;
-  if(typeof originalRenderReportTable==='function'){
+  // -------------------------------------------------------------------
+  // DAFTAR LAPORAN = READ ONLY
+  // Pasang wrapper secara deterministik. app.js sudah dimuat sebelum file ini,
+  // tetapi wrapper juga diverifikasi melalui MutationObserver agar tetap aman
+  // bila urutan mount halaman berubah di kemudian hari.
+  // -------------------------------------------------------------------
+  function installRendererPolicy(){
+    if(rendererWrapped || typeof window.renderReportTable !== 'function') return;
+
+    const originalRenderReportTable=window.renderReportTable;
     window.renderReportTable=function(viewData){
       originalRenderReportTable.apply(this,arguments);
 
@@ -141,6 +155,7 @@
           if(actionCell){
             actionCell.innerHTML='';
             actionCell.removeAttribute('onclick');
+            actionCell.style.display='none';
           }
         });
       }
@@ -154,27 +169,31 @@
         });
       }
 
-      // Hilangkan header "Aksi" juga pada Daftar Laporan agar kolom edit
-      // tidak tersisa sebagai ruang kosong yang membingungkan.
       const table=tbody ? tbody.closest('table') : null;
       if(table){
         const headers=table.querySelectorAll('thead th');
         const lastHeader=headers.length ? headers[headers.length-1] : null;
         if(lastHeader) lastHeader.style.display='none';
-        Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
-          const lastCell=tr.lastElementChild;
-          if(lastCell) lastCell.style.display='none';
-        });
       }
     };
+
+    rendererWrapped=true;
   }
+
+  installRendererPolicy();
+
+  const rendererObserver=new MutationObserver(function(){
+    installRendererPolicy();
+  });
+  rendererObserver.observe(document.body,{childList:true,subtree:true});
 
   function ensureAllMonth(){
     const sel=document.getElementById('FilterBulan');
     if(!sel) return;
     if(!Array.from(sel.options).some(o=>o.value==='')){
       const o=document.createElement('option');
-      o.value=''; o.textContent='Semua Bulan';
+      o.value='';
+      o.textContent='Semua Bulan';
       sel.insertBefore(o,sel.firstChild);
     }
   }
@@ -187,20 +206,31 @@
     };
   }
 
+  // Lapisan terakhir untuk mencegah tombol Edit pada Daftar Laporan jika ada
+  // renderer lain yang menambahkannya setelah render utama selesai.
   document.addEventListener('click',function(ev){
     if(mode()!=='daftar') return;
     const btn=ev.target && ev.target.closest ? ev.target.closest('button') : null;
     if(!btn) return;
     const t=String(btn.textContent||'').toLowerCase();
     if(t.indexOf('edit')!==-1 || t.indexOf('✏')!==-1){
-      ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation();
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
     }
   },true);
 
   window.__invalidateLaporanFastCache=function(){ /* kompatibilitas; tidak ada TTL cache */ };
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ensureAllMonth,{once:true});
-  else ensureAllMonth();
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){
+      ensureAllMonth();
+      installRendererPolicy();
+    },{once:true});
+  }else{
+    ensureAllMonth();
+    installRendererPolicy();
+  }
 
-  console.info('[LAPORAN_ULTRA] active');
+  console.info('[LAPORAN_ULTRA] v20260917-REPORT-FIX1 active');
 })();
