@@ -305,11 +305,50 @@
 
 
   .card-list{ display:none; flex-direction:column; gap:var(--sp-2); }
-  .rcard{ background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 14px; cursor:pointer; }
-  .rcard:hover{ border-color:var(--accent); }
-  .rcard .rc-top{ display:flex; justify-content:space-between; gap:var(--sp-2); margin-bottom:var(--sp-1); }
-  .rcard .rc-title{ font-weight:800; font-size:var(--fs-base); }
-  .rcard .rc-line{ font-size:var(--fs-sm); color:var(--muted); margin-top:var(--sp-1); }
+
+  /* ===================== MOBILE VIEW TOGGLE (TABEL / CARD) ===================== */
+  .report-view-area{ min-width:0; }
+  .report-view-label,
+  .report-view-area > input[type="radio"],
+  .report-view-area > .report-view-btn{ display:none; }
+  .report-view-content{ min-width:0; }
+  .report-table-view{ display:block; }
+  .report-card-view{ display:none; }
+  .report-view-btn{
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:34px;
+    padding:7px 12px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    background:#fff;
+    color:var(--primary-dark);
+    font-size:var(--fs-sm);
+    font-weight:700;
+    cursor:pointer;
+    user-select:none;
+    transition:background .15s ease,border-color .15s ease,color .15s ease;
+  }
+  .report-view-btn:hover{ border-color:var(--accent); }
+  .report-view-area > input[type="radio"]:focus-visible + .report-view-btn{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+  .report-view-area > input[type="radio"]:checked + .report-view-btn{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#fff;
+  }
+  .report-view-btn .view-icon{
+    width:16px;
+    height:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    line-height:1;
+  }
 
   /* ===================== MODAL ===================== */
   .modal-bg{ position:fixed; inset:0; background:rgba(10,25,32,0.45); display:none; align-items:center; justify-content:center; z-index:500; padding:var(--sp-4); }
@@ -335,57 +374,42 @@
     .stat-grid{ grid-template-columns:repeat(2, 1fr); }
     .dash-grid{ grid-template-columns:1fr; }
     .form-grid{ grid-template-columns:1fr; }
-
-    /* ================================================================
-       LAPORAN MOBILE: pertahankan tabel desktop.
-       HP menggunakan scroll horizontal + vertical pada area tabel.
-       Header tabel tetap terlihat saat scroll vertical.
-       ================================================================ */
-    .table-wrap{
-      width:100%;
+    /* Mobile: user may choose Tabel or Card. Default = Tabel. */
+    .report-view-label{
+      display:inline-flex;
+      align-items:center;
+      margin-right:4px;
+      color:var(--muted);
+      font-size:var(--fs-sm);
+      font-weight:600;
+    }
+    .report-view-area > input[type="radio"]{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+    .report-view-area > .report-view-btn{ display:inline-flex; }
+    .report-view-content .table-wrap{
       max-width:100%;
-      max-height:calc(100vh - 300px);
-      min-height:280px;
       overflow-x:auto;
       overflow-y:auto;
       -webkit-overflow-scrolling:touch;
-      overscroll-behavior:contain;
-      touch-action:pan-x pan-y;
-      scrollbar-width:auto;
     }
-
-    table.data-table{
-      display:table;
-      width:max-content;
-      min-width:1100px;
-      table-layout:auto;
-    }
-
-    table.data-table thead th{
-      position:sticky;
-      top:0;
-      z-index:3;
-    }
-
-    /* Mobile tidak memakai layout kartu untuk Laporan. */
-    .card-list{
-      display:none;
-    }
-
+    .report-view-content table.data-table{ display:table; min-width:1100px; }
+    .report-view-area > #reportViewCard:checked ~ .report-view-content .report-table-view{ display:none; }
+    .report-view-area > #reportViewCard:checked ~ .report-view-content .report-card-view{ display:flex; }
+    .report-view-area > #reportViewTable:checked ~ .report-view-content .report-table-view{ display:block; }
+    .report-view-area > #reportViewTable:checked ~ .report-view-content .report-card-view{ display:none; }
     .page-header h1{ font-size:var(--fs-lg); }
   }
   @media (max-width: 480px){
     .stat-grid{ grid-template-columns:1fr 1fr; gap:var(--sp-2); }
     .login-card{ padding:28px 20px; }
     .topbar-brand-text{ display:none; }
-
-    /* Beri ruang scroll yang nyaman pada layar HP kecil. */
-    .table-wrap{
-      max-height:calc(100vh - 270px);
-      min-height:260px;
-    }
-
-    table.data-table{
-      min-width:1100px;
-    }
   }
