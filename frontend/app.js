@@ -1416,7 +1416,9 @@ cardList.appendChild(card);
     try{
       const json = await authRun('apiListStaff');
       if(json && json.ok){
-        ADMIN_STAFF_LIST = json.data || [];
+        ADMIN_STAFF_LIST = (json.data || []).filter(st =>
+  String(st.status || '').trim().toLowerCase() === 'aktif'
+);
         renderAdminStaffGrid();
         renderDashStaffSelect();
       }
