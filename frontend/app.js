@@ -1506,7 +1506,7 @@ cardList.appendChild(card);
 
     const data = [selesai, belum];
     const labels = ['Selesai', 'Belum Selesai'];
-    const colors = ['#1a9e57', '#c98a12'];
+    const colors = ['#1a9e57', '#b91c1c'];
 
     if(selesai === 0 && belum === 0){
       ctx.parentElement.innerHTML = emptyStateHtml('Belum ada data pada periode ini.');
