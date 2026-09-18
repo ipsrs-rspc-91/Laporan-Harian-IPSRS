@@ -90,7 +90,7 @@
   .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px; }
   .pill{ display:inline-flex; align-items:center; gap:var(--sp-1); padding:5px 12px; border-radius:999px; font-size:var(--fs-sm); font-weight:700; background:var(--primary-light); color:var(--primary); }
   .pill.success{ background:var(--success-bg); color:var(--success); }
-  .pill.warning{ background:var(--warning-bg); color:var(--warning); }
+  .pill.warning{ background:#fff1f2; color:#b91c1c; border:1px solid #fca5a5; }
   .pill.muted{ background:#eef1f2; color:var(--muted); }
 
   .icon{ width:19px; height:19px; flex-shrink:0; }
