@@ -302,6 +302,8 @@
   .report-row-selesai td:first-child{border-left:4px solid #22c55e;}
   .report-row-belum td:first-child{border-left:4px solid #ef4444;}
   .report-row-proses td:first-child{border-left:4px solid #f59e0b;}
+  /* Status laporan: badge Selesai/Belum tetap fixed dan tidak mengikuti tinggi teks. */
+  .report-table-view td .pill{ flex:0 0 110px; width:110px; min-width:110px; height:34px; min-height:34px; box-sizing:border-box; justify-content:center; align-items:center; white-space:nowrap; }
   @media(max-width:760px){.laporan-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
 
 
@@ -498,7 +500,15 @@
 }
 
 .report-card-view .rcard .rc-top .pill {
-  flex: 0 0 auto;
+  flex: 0 0 110px;
+  width: 110px;
+  min-width: 110px;
+  height: 34px;
+  min-height: 34px;
+  box-sizing: border-box;
+  align-self: center;
+  justify-content: center;
+  align-items: center;
   margin-left: auto;
   white-space: nowrap !important;
   word-break: keep-all !important;
@@ -539,6 +549,20 @@
 .report-card-view .rcard .pill.success,
 .report-card-view .rcard .pill.warning {
   white-space: nowrap !important;
+}
+
+/* Riwayat laporan pada Detail Staf: status juga fixed. */
+#staffDetailReports .rc-top > .pill{
+  flex:0 0 110px;
+  width:110px;
+  min-width:110px;
+  height:34px;
+  min-height:34px;
+  box-sizing:border-box;
+  align-self:center;
+  justify-content:center;
+  align-items:center;
+  white-space:nowrap !important;
 }
 
 @media (max-width: 768px) {
