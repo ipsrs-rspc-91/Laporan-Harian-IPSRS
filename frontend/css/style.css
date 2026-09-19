@@ -318,6 +318,11 @@
   .laporan-summary .stat-card.status-selesai .s-value,.laporan-summary .stat-card.status-selesai .s-label{color:#166534;}
   .laporan-summary .stat-card.status-belum{background:#fff1f2;border-color:#fca5a5;}
   .laporan-summary .stat-card.status-belum .s-value,.laporan-summary .stat-card.status-belum .s-label{color:#b91c1c;}
+  /* Dashboard: warna kartu status sesuai kesepakatan. */
+  .stat-grid .stat-card.status-selesai{background:#f0fdf4;border-color:#86efac;}
+  .stat-grid .stat-card.status-selesai .s-value,.stat-grid .stat-card.status-selesai .s-label{color:#166534;}
+  .stat-grid .stat-card.status-belum{background:#fff1f2;border-color:#fca5a5;}
+  .stat-grid .stat-card.status-belum .s-value,.stat-grid .stat-card.status-belum .s-label{color:#b91c1c;}
   .report-action{white-space:nowrap;}
   .report-action .btn{padding:6px 9px;font-size:12px;}
   .report-row-selesai td:first-child{border-left:4px solid #22c55e;}
