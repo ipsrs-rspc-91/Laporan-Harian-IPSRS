@@ -855,6 +855,7 @@
   let _dateTimePickerDate = null;
   let _dateTimePickerMonth = null;
   let _dateTimePickerMode = 'DATE';
+  let _dateTimeDateSelectedByUser = false;
   let _dateTimeHourSelectedByUser = false;
   let _dateTimeMinuteSelectedByUser = false;
 
@@ -883,6 +884,7 @@
       b.textContent=d.getDate();
       b.addEventListener('click',()=>{
         _dateTimePickerDate=new Date(d);
+        _dateTimeDateSelectedByUser=true;
         renderDateTimePickerCalendar_();
         updateDateTimePickerFooter_();
       });
@@ -925,7 +927,7 @@
 
   function updateDateTimePickerFooter_(){
     const btn=document.getElementById('datetimeGoTimeBtn');
-    if(btn) btn.disabled=!_dateTimePickerDate;
+    if(btn) btn.disabled=!_dateTimeDateSelectedByUser;
   }
 
   function updateDateTimePickerSelectionMessage_(){
@@ -966,8 +968,10 @@
     const hm=String(pukul?.value||'').match(/^(\d{1,2}):(\d{2})/);
     const hour=document.getElementById('datetimeHour'), minute=document.getElementById('datetimeMinute');
     const hasExistingTime=!!hm;
+    const hasExistingDate=!!tanggal?.value;
     if(hour) hour.value=hm?pad2_(hm[1]):'12';
     if(minute){const mm=hm?Number(hm[2]):0;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
+    _dateTimeDateSelectedByUser=hasExistingDate;
     _dateTimeHourSelectedByUser=hasExistingTime;
     _dateTimeMinuteSelectedByUser=hasExistingTime;
     renderDateTimePickerCalendar_();
@@ -981,7 +985,7 @@
   }
 
   function goToDateTimeTimeMode(){
-    if(!_dateTimePickerDate){
+    if(!_dateTimeDateSelectedByUser){
       alert('Silakan pilih tanggal terlebih dahulu.');
       return;
     }
@@ -1000,7 +1004,10 @@
   }
 
   function applyDateTimePicker(){
-    if(!_dateTimePickerDate) return;
+    if(!_dateTimeDateSelectedByUser){
+      alert('Silakan pilih tanggal terlebih dahulu.');
+      return;
+    }
     if(!_dateTimeHourSelectedByUser){
       updateDateTimePickerSelectionMessage_();
       return;
