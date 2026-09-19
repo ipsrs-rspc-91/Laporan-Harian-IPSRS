@@ -437,14 +437,30 @@
   function formatTanggalDisplay(value){
     if(value === undefined || value === null || value === '') return '';
 
-    // Data Dashboard dari backend dapat berupa ISO datetime:
-    // 2026-09-18T17:00:00.000Z
-    // Ambil hanya bagian tanggal YYYY-MM-DD agar tidak ikut menampilkan
-    // jam/timezone dan tidak berubah tanggal karena konversi UTC.
     const text = String(value).trim();
-    const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(isoMatch){
-      return isoMatch[3] + '/' + isoMatch[2] + '/' + isoMatch[1];
+
+    // Google Apps Script dapat mengirim nilai Date dari Sheets sebagai ISO UTC.
+    // Contoh: 2026-09-18T17:00:00.000Z sebenarnya adalah 19/09/2026
+    // pukul 00:00 WIB. Jangan mengambil YYYY-MM-DD mentah karena itu tanggal UTC.
+    const isoDateTimeMatch = text.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/);
+    if(isoDateTimeMatch){
+      const d = new Date(text);
+      if(!Number.isNaN(d.getTime())){
+        const parts = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Jakarta',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }).formatToParts(d);
+        const get = type => parts.find(p => p.type === type)?.value || '';
+        return get('day') + '/' + get('month') + '/' + get('year');
+      }
+    }
+
+    // Nilai date-only dari backend: YYYY-MM-DD.
+    const isoDateMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(isoDateMatch){
+      return isoDateMatch[3] + '/' + isoDateMatch[2] + '/' + isoDateMatch[1];
     }
 
     // Fallback untuk tanggal yang sudah berbentuk DD/MM/YYYY.
