@@ -830,6 +830,28 @@
   // ============================================================
   // INPUT LAPORAN
   // ============================================================
+  function setStatusValue(value){
+    const status = document.getElementById('Status');
+    const v = value == null ? '' : String(value);
+    if(status) status.value = v;
+
+    document.querySelectorAll('#page-input .status-choice').forEach(btn => {
+      btn.classList.toggle('is-selected', btn.dataset.status === v);
+    });
+  }
+
+  function selectInputStatus(value){
+    const status = document.getElementById('Status');
+    if(status && status.disabled) return;
+    setStatusValue(value);
+  }
+
+  function setStatusButtonsDisabled(disabled){
+    document.querySelectorAll('#page-input .status-choice').forEach(btn => {
+      btn.disabled = !!disabled;
+    });
+  }
+
   function getInputPayload(){
     const payload = {
       Tanggal: document.getElementById('Tanggal').value,
@@ -858,6 +880,7 @@
     if(!p.Tanggal) return 'Tanggal wajib diisi.';
     if(!p.Ruang) return 'Ruang wajib diisi.';
     if(!p.MasalahKegiatan) return 'Masalah/Kegiatan wajib diisi.';
+    if(!p.Status) return 'Status wajib dipilih.';
     if(!p.Kategori) return 'Kategori wajib dipilih.';
     if(!p.AreaKerja) return 'Area kerja wajib dipilih.';
     // Jaga-jaga di frontend (validasi sesungguhnya tetap di backend, lihat
@@ -913,8 +936,7 @@
     if(kategori) kategori.value = '';
     if(area) area.value = '';
     refreshItemOptions();
-    const status = document.getElementById('Status');
-    if(status) status.value = 'Selesai';
+    setStatusValue('');
   }
 
   function startCreateReportForm(){
@@ -939,6 +961,7 @@
       const el = document.getElementById(id);
       if(el) el.disabled = false;
     });
+    setStatusButtonsDisabled(false);
     const petugas = document.getElementById('Petugas');
     if(petugas){
       petugas.disabled = false;
@@ -1000,6 +1023,7 @@
       const el = document.getElementById(id);
       if(el) el.disabled = !editable;
     });
+    setStatusButtonsDisabled(!editable);
 
     // Tunggu data kategori/area/item kustom jika masih dimuat di background.
     try{ await _customDataReady; }catch(e){}
@@ -1015,7 +1039,7 @@
     document.getElementById('SparePartUnit').value = report.SparePartUnit || '';
     document.getElementById('Type').value = report.Type || '';
     document.getElementById('Jumlah').value = report.Jumlah || '';
-    setInputSelectValue('Status', report.Status || 'Selesai');
+    setStatusValue(report.Status || '');
 
     setInputSelectValue('Kategori', report.Kategori || '');
     setInputSelectValue('AreaKerja', report.AreaKerja || '');
@@ -1772,7 +1796,7 @@ cardList.appendChild(card);
     appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
     appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
     refreshItemOptions();
-    document.getElementById('Status').value = 'Selesai';
+    setStatusValue('');
 
     // Data kustom tidak boleh menghambat login. Jalankan setelah UI sudah aktif.
     // Promise sengaja tidak di-await.
