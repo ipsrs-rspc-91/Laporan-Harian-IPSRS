@@ -272,6 +272,27 @@
   .empty-state .es-text{ font-size:var(--fs-sm); font-weight:600; }
   .readonlyPetugas{ background:#f1f4f5 !important; color:var(--muted) !important; cursor:not-allowed; }
 
+  /* Mode EDIT: dibedakan secara visual dari Form Input baru. */
+  #page-input.edit-mode > .card{
+    background:#fff8e7;
+    border-color:#e7c76a;
+  }
+  #page-input.edit-mode #inputPageTitle{
+    color:#8a5a00;
+  }
+  #page-input.edit-mode #inputPageDesc{
+    color:#8a6b2f;
+  }
+  #page-input.edit-mode input:not(.readonlyPetugas),
+  #page-input.edit-mode select,
+  #page-input.edit-mode textarea{
+    background:#fffdf5;
+  }
+  #page-input.edit-mode #btnSaveInput{
+    background:#b7791f;
+    border-color:#b7791f;
+  }
+
   /* ===================== LAPORAN / TABLE ===================== */
   .filters-bar{ display:flex; gap:var(--sp-2); flex-wrap:wrap; align-items:flex-end; margin-bottom:var(--sp-4); }
   .filters-bar .f-item{ min-width:140px; }
