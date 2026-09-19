@@ -894,11 +894,19 @@
 
   function centerDateTimeSelectOption_(selectEl){
     if(!selectEl || !selectEl.options || !selectEl.options.length) return;
-    const selected=selectEl.options[selectEl.selectedIndex];
-    if(!selected) return;
-    // Posisi pilihan dibuat tepat di tengah area scroll.
-    const target=selected.offsetTop - Math.max(0,(selectEl.clientHeight-selected.offsetHeight)/2);
-    selectEl.scrollTop=Math.max(0,target);
+    const index=selectEl.selectedIndex;
+    if(index<0) return;
+
+    // Jangan memakai option.offsetTop karena pada native <select> Chrome
+    // nilainya tidak konsisten dan dapat membuat scroll lompat ke 17/36.
+    // Gunakan tinggi baris berdasarkan total scroll area agar pilihan
+    // benar-benar berada di tengah list.
+    const rowHeight=selectEl.scrollHeight/selectEl.options.length;
+    if(!Number.isFinite(rowHeight) || rowHeight<=0) return;
+
+    const target=(index*rowHeight)-((selectEl.clientHeight-rowHeight)/2);
+    const maxScroll=Math.max(0,selectEl.scrollHeight-selectEl.clientHeight);
+    selectEl.scrollTop=Math.max(0,Math.min(maxScroll,target));
   }
 
   function centerDateTimeDefaults_(){
@@ -1018,9 +1026,12 @@
     requestAnimationFrame(()=>{
       const h=document.getElementById('datetimeHour');
       const min=document.getElementById('datetimeMinute');
-      if(h && !h.value) h.value='12';
-      if(min && !min.value) min.value='30';
+      if(h) h.value='12';
+      if(min) min.value='30';
       centerDateTimeDefaults_();
+
+      // Satu frame tambahan setelah pane TIME selesai layout.
+      requestAnimationFrame(centerDateTimeDefaults_);
     });
   }
 
