@@ -63,6 +63,11 @@
 .datetime-calendar-pane,.datetime-time-pane{padding:20px}
 .datetime-calendar-pane{border-right:1px solid var(--border)}
 .datetime-pane-title{font-weight:800;margin-bottom:14px}
+.datetime-pane-hidden{display:none !important}
+.datetime-footer-hidden{display:none !important}
+.datetime-selection-message{margin-top:14px;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:700}
+.datetime-selection-warning{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.datetime-selection-ok{background:#f0fdf4;color:#166534;border:1px solid #86efac}
 .datetime-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .datetime-month-nav button,.datetime-picker-close{border:0;background:transparent;cursor:pointer;font-size:22px;padding:6px 10px;border-radius:8px}
 .datetime-month-nav button:hover,.datetime-picker-close:hover{background:#f1f5f9}
@@ -79,7 +84,7 @@
 .datetime-time-select:focus{border-color:var(--primary);outline:none}
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
 .datetime-picker-footer button{min-width:110px}
-@media(max-width:600px){.datetime-picker-backdrop{align-items:flex-end;padding:0}.datetime-picker-modal{width:100%;border-radius:16px 16px 0 0}.datetime-picker-body{grid-template-columns:1fr;max-height:70vh;overflow-y:auto}.datetime-calendar-pane{border-right:0;border-bottom:1px solid var(--border)}.datetime-day{width:34px;height:34px}.datetime-time-select{height:150px}}
+@media(max-width:600px){.datetime-picker-backdrop{align-items:flex-end;padding:0}.datetime-picker-modal{width:100%;border-radius:16px 16px 0 0}.datetime-calendar-pane,.datetime-time-pane{border-right:0;padding:18px 20px}.datetime-day{width:34px;height:34px}.datetime-time-wrap{grid-template-columns:1fr 1fr}.datetime-time-select{height:230px;font-size:20px}.datetime-selection-message{font-size:14px}}
 </style>
 <div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
   <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
@@ -99,7 +104,38 @@
         </div>
       </div>
     </div>
-    <div class="datetime-picker-footer"><button type="button" class="btn" onclick="closeDateTimePicker()">Batal</button><button type="button" class="btn btn-primary" onclick="applyDateTimePicker()">OK</button></div>
+<div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
+  <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
+    <div class="datetime-picker-head">
+      <span id="datetimePickerTitle">Pilih Tanggal</span>
+      <button type="button" class="datetime-picker-close" onclick="closeDateTimePicker()" aria-label="Tutup">×</button>
+    </div>
+
+    <div id="datetimeCalendarPane" class="datetime-calendar-pane">
+      <div class="datetime-pane-title">📅 Pilih Tanggal</div>
+      <div class="datetime-month-nav"><button type="button" onclick="changeDateTimeMonth(-1)">‹</button><span id="datetimeMonthTitle" class="datetime-month-title"></span><button type="button" onclick="changeDateTimeMonth(1)">›</button></div>
+      <div class="datetime-week"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div>
+      <div id="datetimeDays" class="datetime-days"></div>
+    </div>
+
+    <div id="datetimeTimePane" class="datetime-time-pane datetime-pane-hidden">
+      <div class="datetime-pane-title">🕐 Pilih Jam &amp; Menit</div>
+      <div class="datetime-time-wrap">
+        <div><div class="datetime-time-label">Jam</div><select id="datetimeHour" class="datetime-time-select" size="5"></select></div>
+        <div><div class="datetime-time-label">Menit</div><select id="datetimeMinute" class="datetime-time-select" size="5"></select></div>
+      </div>
+      <div id="datetimeTimeSelectionMessage" class="datetime-selection-message datetime-selection-warning">⚠ Silakan pilih jam terlebih dahulu</div>
+    </div>
+
+    <div id="datetimeFooterDate" class="datetime-picker-footer">
+      <button type="button" class="btn" onclick="closeDateTimePicker()">Batal</button>
+      <button id="datetimeGoTimeBtn" type="button" class="btn btn-primary" onclick="goToDateTimeTimeMode()" disabled>PUKUL →</button>
+    </div>
+
+    <div id="datetimeFooterTime" class="datetime-picker-footer datetime-footer-hidden">
+      <button type="button" class="btn" onclick="backToDateTimeDateMode()">Batal</button>
+      <button type="button" class="btn btn-primary" onclick="applyDateTimePicker()">OK</button>
+    </div>
   </div>
 </div>
 <div class="page-header">
