@@ -904,6 +904,9 @@
       const o=document.createElement('option'); o.value=pad2_(i); o.textContent=pad2_(i);
       min.appendChild(o);
     }
+    // Default visual berada di tengah agar mudah digeser ke atas/bawah.
+    h.value='12';
+    min.value='30';
     h.onchange=()=>selectDateTimeHour_(h.value);
     min.onchange=()=>selectDateTimeMinute_(min.value);
     h.onclick=()=>{ if(h.value) selectDateTimeHour_(h.value); };
@@ -1013,6 +1016,9 @@
     }
     if(!_dateTimeHourSelectedByUser || !_dateTimeMinuteSelectedByUser){
       updateDateTimePickerSelectionMessage_();
+      alert(!_dateTimeHourSelectedByUser
+        ? 'Jam wajib diisi. Silakan pilih jam terlebih dahulu.'
+        : 'Menit wajib diisi. Silakan pilih menit terlebih dahulu.');
       return;
     }
     const hour=document.getElementById('datetimeHour')?.value||'12';
