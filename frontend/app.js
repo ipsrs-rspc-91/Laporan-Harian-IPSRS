@@ -1069,10 +1069,19 @@
         <td>${escapeHtml(row.Kategori)}</td>
         <td>${escapeHtml(row.AreaKerja)}</td>
         <td>${escapeHtml(row.Item)}</td>
-        <td class="report-action"><button class="btn" type="button" onclick="event.stopPropagation();openEditModalForReport(window.__IPSRS_REPORTS['${escapeHtml(String(row.ID))}'])">✏️ Edit</button></td>
+        <td class="report-action"><button class="btn" type="button">✏️ Edit</button></td>
       `;
       tr.className = row.Status === 'Selesai' ? 'report-row-selesai' : (row.Status === 'Belum' ? 'report-row-belum' : 'report-row-proses');
-      tr.onclick = () => openEditModalForReport(row);
+
+      // Baris laporan tidak membuka form. Hanya tombol Edit yang membuka mode EDIT.
+      const editBtn = tr.querySelector('.report-action button');
+      if(editBtn){
+        editBtn.addEventListener('click', function(event){
+          event.preventDefault();
+          event.stopPropagation();
+          openEditModalForReport(row);
+        });
+      }
       tbody.appendChild(tr);
 
       const card = document.createElement('div');
@@ -1107,7 +1116,7 @@ card.innerHTML = `
   </div>
 `;
 
-card.onclick = () => openEditModalForReport(row);
+// Kartu laporan tidak membuka edit saat area kartu diklik.
 cardList.appendChild(card);
     });
   }
