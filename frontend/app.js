@@ -1001,7 +1001,11 @@
     const hasExistingDate=!!tanggal?.value;
     if(hour) hour.value=hm?pad2_(hm[1]):'12';
     if(minute){const mm=hm?Number(hm[2]):30;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
-    _dateTimeDateSelectedByUser=hasExistingDate;
+    // Tanggal yang tampil saat picker dibuka (tanggal laporan yang sudah ada,
+    // atau hari ini untuk laporan baru) dianggap sebagai tanggal terpilih.
+    // Ini sesuai dengan tanggal yang sudah terlihat/ditandai pada kalender,
+    // sehingga tombol OK tidak harus didahului klik tanggal lain.
+    _dateTimeDateSelectedByUser=true;
     _dateTimeHourSelectedByUser=hasExistingTime;
     _dateTimeMinuteSelectedByUser=hasExistingTime;
     renderDateTimePickerCalendar_();
