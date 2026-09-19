@@ -854,6 +854,9 @@
 
   let _dateTimePickerDate = null;
   let _dateTimePickerMonth = null;
+  let _dateTimePickerMode = 'DATE';
+  let _dateTimeHourSelectedByUser = false;
+  let _dateTimeMinuteSelectedByUser = false;
 
   function pad2_(n){ return String(n).padStart(2,'0'); }
 
@@ -878,7 +881,11 @@
       if(d.getMonth()!==m) b.classList.add('other-month');
       if(selected&&d.getFullYear()===selected.getFullYear()&&d.getMonth()===selected.getMonth()&&d.getDate()===selected.getDate()) b.classList.add('selected');
       b.textContent=d.getDate();
-      b.addEventListener('click',()=>{_dateTimePickerDate=new Date(d);renderDateTimePickerCalendar_();});
+      b.addEventListener('click',()=>{
+        _dateTimePickerDate=new Date(d);
+        renderDateTimePickerCalendar_();
+        updateDateTimePickerFooter_();
+      });
       days.appendChild(b);
     }
   }
@@ -887,25 +894,104 @@
     const h=document.getElementById('datetimeHour'), min=document.getElementById('datetimeMinute');
     if(!h||!min) return;
     h.innerHTML=''; min.innerHTML='';
-    for(let i=0;i<24;i++){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);h.appendChild(o);}
-    for(let i=0;i<60;i++){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);min.appendChild(o);}
+    for(let i=0;i<24;i++){
+      const o=document.createElement('option'); o.value=pad2_(i); o.textContent=pad2_(i);
+      h.appendChild(o);
+    }
+    for(let i=0;i<60;i++){
+      const o=document.createElement('option'); o.value=pad2_(i); o.textContent=pad2_(i);
+      min.appendChild(o);
+    }
+    h.onchange=()=>selectDateTimeHour_(h.value);
+    min.onchange=()=>selectDateTimeMinute_(min.value);
+    h.onclick=()=>{ if(h.value) selectDateTimeHour_(h.value); };
+    min.onclick=()=>{ if(min.value) selectDateTimeMinute_(min.value); };
+  }
+
+  function setDateTimePickerMode_(mode){
+    _dateTimePickerMode=mode==='TIME'?'TIME':'DATE';
+    const calendarPane=document.getElementById('datetimeCalendarPane');
+    const timePane=document.getElementById('datetimeTimePane');
+    const title=document.getElementById('datetimePickerTitle');
+    const footerDate=document.getElementById('datetimeFooterDate');
+    const footerTime=document.getElementById('datetimeFooterTime');
+    if(calendarPane) calendarPane.classList.toggle('datetime-pane-hidden',_dateTimePickerMode!=='DATE');
+    if(timePane) timePane.classList.toggle('datetime-pane-hidden',_dateTimePickerMode!=='TIME');
+    if(title) title.textContent=_dateTimePickerMode==='DATE'?'Pilih Tanggal':'Pilih Jam & Menit';
+    if(footerDate) footerDate.classList.toggle('datetime-footer-hidden',_dateTimePickerMode!=='DATE');
+    if(footerTime) footerTime.classList.toggle('datetime-footer-hidden',_dateTimePickerMode!=='TIME');
+    if(_dateTimePickerMode==='TIME') updateDateTimePickerSelectionMessage_();
+  }
+
+  function updateDateTimePickerFooter_(){
+    const btn=document.getElementById('datetimeGoTimeBtn');
+    if(btn) btn.disabled=!_dateTimePickerDate;
+  }
+
+  function updateDateTimePickerSelectionMessage_(){
+    const msg=document.getElementById('datetimeTimeSelectionMessage');
+    const hour=document.getElementById('datetimeHour');
+    const minute=document.getElementById('datetimeMinute');
+    if(!msg||!hour||!minute) return;
+    if(_dateTimeHourSelectedByUser){
+      msg.className='datetime-selection-message datetime-selection-ok';
+      msg.textContent='✓ Pukul sudah dipilih: '+hour.value+':'+minute.value;
+    }else{
+      msg.className='datetime-selection-message datetime-selection-warning';
+      msg.textContent='⚠ Silakan pilih jam terlebih dahulu';
+    }
+  }
+
+  function selectDateTimeHour_(value){
+    const hour=document.getElementById('datetimeHour');
+    if(hour) hour.value=value;
+    _dateTimeHourSelectedByUser=true;
+    updateDateTimePickerSelectionMessage_();
+  }
+
+  function selectDateTimeMinute_(value){
+    const minute=document.getElementById('datetimeMinute');
+    if(minute) minute.value=value;
+    _dateTimeMinuteSelectedByUser=true;
+    updateDateTimePickerSelectionMessage_();
   }
 
   function openDateTimePicker(){
     const tanggal=document.getElementById('Tanggal'), pukul=document.getElementById('Pukul');
     if(tanggal?.disabled||pukul?.disabled) return;
     const base=parseDateOnly_(tanggal?.value)||new Date();
-    _dateTimePickerDate=new Date(base); _dateTimePickerMonth=new Date(base.getFullYear(),base.getMonth(),1);
+    _dateTimePickerDate=new Date(base);
+    _dateTimePickerMonth=new Date(base.getFullYear(),base.getMonth(),1);
     populateDateTimePickerOptions_();
     const hm=String(pukul?.value||'').match(/^(\d{1,2}):(\d{2})/);
     const hour=document.getElementById('datetimeHour'), minute=document.getElementById('datetimeMinute');
-    if(hour) hour.value=hm?pad2_(hm[1]):'08';
+    const hasExistingTime=!!hm;
+    if(hour) hour.value=hm?pad2_(hm[1]):'12';
     if(minute){const mm=hm?Number(hm[2]):0;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
+    _dateTimeHourSelectedByUser=hasExistingTime;
+    _dateTimeMinuteSelectedByUser=hasExistingTime;
     renderDateTimePickerCalendar_();
     document.getElementById('datetimePickerBackdrop')?.classList.remove('hidden');
+    setDateTimePickerMode_('DATE');
+    updateDateTimePickerFooter_();
   }
 
-  function closeDateTimePicker(){document.getElementById('datetimePickerBackdrop')?.classList.add('hidden');}
+  function closeDateTimePicker(){
+    document.getElementById('datetimePickerBackdrop')?.classList.add('hidden');
+  }
+
+  function goToDateTimeTimeMode(){
+    if(!_dateTimePickerDate){
+      alert('Silakan pilih tanggal terlebih dahulu.');
+      return;
+    }
+    setDateTimePickerMode_('TIME');
+  }
+
+  function backToDateTimeDateMode(){
+    setDateTimePickerMode_('DATE');
+    updateDateTimePickerFooter_();
+  }
 
   function changeDateTimeMonth(delta){
     if(!_dateTimePickerMonth) return;
@@ -915,11 +1001,19 @@
 
   function applyDateTimePicker(){
     if(!_dateTimePickerDate) return;
-    const hour=document.getElementById('datetimeHour')?.value||'08', minute=document.getElementById('datetimeMinute')?.value||'00';
+    if(!_dateTimeHourSelectedByUser){
+      updateDateTimePickerSelectionMessage_();
+      return;
+    }
+    const hour=document.getElementById('datetimeHour')?.value||'12';
+    const minute=document.getElementById('datetimeMinute')?.value||'00';
     const tanggal=_dateTimePickerDate.getFullYear()+'-'+pad2_(_dateTimePickerDate.getMonth()+1)+'-'+pad2_(_dateTimePickerDate.getDate());
-    const pukul=hour+':'+minute, t=document.getElementById('Tanggal'), p=document.getElementById('Pukul');
-    if(t) t.value=tanggal; if(p) p.value=pukul;
-    syncDateTimeDisplay_(); closeDateTimePicker();
+    const pukul=hour+':'+minute;
+    const t=document.getElementById('Tanggal'), p=document.getElementById('Pukul');
+    if(t) t.value=tanggal;
+    if(p) p.value=pukul;
+    syncDateTimeDisplay_();
+    closeDateTimePicker();
   }
 
   function syncDateTimeDisplay_(){
