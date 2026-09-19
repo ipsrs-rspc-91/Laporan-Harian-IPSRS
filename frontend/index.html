@@ -44,7 +44,7 @@
     window.__ipsrsPageReady = window.__ipsrsPageReady || {};
     window.__ipsrsPageReady.dashboard = null;
     window.__ipsrsPageReady.laporan = null;
-    async function fragment(id,url){const el=document.getElementById(id);if(!el)throw new Error('Mount point not found: '+id);const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');el.outerHTML=await r.text();return true;}
+    async function fragment(id,url){const el=document.getElementById(id);if(!el)throw new Error('Mount point not found: '+id);const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');el.outerHTML=await r.text();const mounted=document.getElementById(id);const pageName=id.replace(/^page-/,'');const activeNav=document.querySelector('.nav-item.active');if(mounted&&mounted.classList.contains('page')&&activeNav&&activeNav.dataset.page===pageName)mounted.classList.add('active');return true;}
     function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Gagal memuat '+src));document.body.appendChild(s);});}
     try{
       await Promise.all(Object.entries(initialMounts).map(([id,url])=>fragment(id,url)));
