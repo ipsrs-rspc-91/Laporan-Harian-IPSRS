@@ -78,8 +78,13 @@
     const b=bulan();
     let staff='';
 
+    const dashboardDrilldown = window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true;
+
     if(m==='saya'){
-      if(typeof CURRENT_SESSION !== 'undefined' && CURRENT_SESSION){
+      // Drill-down Dashboard perlu melihat data yang sama dengan KPI Dashboard,
+      // bukan hanya laporan pemilik akun. Tetap di mode "saya" supaya renderer
+      // Edit yang sudah ada tidak berubah dan backend tetap menjadi pengaman.
+      if(!dashboardDrilldown && typeof CURRENT_SESSION !== 'undefined' && CURRENT_SESSION){
         staff=String(CURRENT_SESSION.staff_id||'').trim();
       }
       clearSayaStaffFilter();
@@ -101,7 +106,12 @@
       }
 
       rawData=Array.isArray(json.data)?json.data:[];
+      if(dashboardDrilldown){
+        const statusEl=document.getElementById('FilterStatus');
+        if(statusEl) statusEl.value='__BELUM_SELESAI__';
+      }
       applyFilters();
+      if(dashboardDrilldown) window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN=false;
       setMsg('msgReport','Data tampil: '+rawData.length);
     }catch(err){
       if(mySerial!==requestSerial) return;
