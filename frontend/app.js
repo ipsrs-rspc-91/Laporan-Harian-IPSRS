@@ -22,6 +22,9 @@
   let ADMIN_STAFF_LIST = [];
   let adminSelectedStaffId = '';
   let rawData = [];
+  // Drill-down Dashboard -> Laporan. Hanya sebagai sinyal navigasi sementara;
+  // tidak mengubah hak akses/Edit yang sudah ada.
+  window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
   let statusChartInstance = null;
   let _historyLoadedForReportId = null;
   // Nilai placeholder untuk option "+ Tambah ... Baru" di dalam <select>
@@ -400,6 +403,14 @@
   }
 
   const PAGE_TITLES = { dashboard:'Dashboard', input:'Input Laporan', laporan:'Laporan' };
+
+  function openDashboardUnfinishedReports(){
+    // Dashboard -> Laporan: tampilkan seluruh laporan yang belum selesai
+    // sesuai konteks Dashboard, tetapi tetap memakai mode "saya" agar
+    // tombol Edit mengikuti mekanisme yang sudah ada.
+    window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = true;
+    goPage('laporan');
+  }
 
   function goPage(name, preserveInputMode){
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1056,6 +1067,7 @@
 
   function applyFilters(){
     const status = document.getElementById('FilterStatus').value;
+    const isDashboardUnfinishedFilter = status === '__BELUM_SELESAI__';
     const kategori = document.getElementById('FilterKategori').value;
     const area = document.getElementById('FilterArea').value;
     const bidang = document.getElementById('FilterBidang').value;
@@ -1063,7 +1075,9 @@
     const cari = document.getElementById('FilterCari').value.trim().toLowerCase();
 
     const viewData = rawData.filter(r => {
-      if(status && r.Status !== status) return false;
+      if(isDashboardUnfinishedFilter){
+        if(r.Status === 'Selesai') return false;
+      }else if(status && r.Status !== status) return false;
       if(kategori && r.Kategori !== kategori) return false;
       if(area && r.AreaKerja !== area) return false;
       if(bidang && r.Bidang !== bidang) return false;
@@ -1674,6 +1688,20 @@ cardList.appendChild(card);
     });
   }
 
+  function bindDashboardUnfinishedDrilldown(){
+    const valueEl = document.getElementById('statBelum');
+    if(!valueEl) return;
+    const card = valueEl.closest('.stat-card');
+    if(!card || card.dataset.ipsrsDrilldownBound === '1') return;
+    card.dataset.ipsrsDrilldownBound = '1';
+    card.style.cursor = 'pointer';
+    card.title = 'Lihat laporan yang belum selesai';
+    card.addEventListener('click', function(event){
+      event.preventDefault();
+      openDashboardUnfinishedReports();
+    });
+  }
+
   async function loadDashboard(){
     const bulan = document.getElementById('DashBulan').value;
     // SENGAJA tidak fallback ke adminSelectedStaffId (default punya tab Laporan)
@@ -1709,6 +1737,7 @@ cardList.appendChild(card);
       document.getElementById('statSelesai').innerText = d.selesai;
       document.getElementById('statBelum').innerText = d.belum;
       document.getElementById('statPersen').innerText = d.total ? Math.round(d.selesai / d.total * 100) + '%' : '0%';
+      bindDashboardUnfinishedDrilldown();
 
       const pencapaianOrder = ['Selesai','Sebagian','Belum Selesai','Ditunda','Tindak Lanjut','Belum Diisi'];
       const pencapaianBars = pencapaianOrder
