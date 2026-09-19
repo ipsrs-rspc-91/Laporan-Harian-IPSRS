@@ -434,11 +434,26 @@
   }
 
   /** Format 'YYYY-MM-DD' -> 'DD/MM/YYYY' untuk ditampilkan ke user. */
-  function formatTanggalDisplay(iso){
-    if(!iso) return '';
-    const parts = iso.toString().split('-');
-    if(parts.length !== 3) return iso;
-    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  function formatTanggalDisplay(value){
+    if(value === undefined || value === null || value === '') return '';
+
+    // Data Dashboard dari backend dapat berupa ISO datetime:
+    // 2026-09-18T17:00:00.000Z
+    // Ambil hanya bagian tanggal YYYY-MM-DD agar tidak ikut menampilkan
+    // jam/timezone dan tidak berubah tanggal karena konversi UTC.
+    const text = String(value).trim();
+    const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(isoMatch){
+      return isoMatch[3] + '/' + isoMatch[2] + '/' + isoMatch[1];
+    }
+
+    // Fallback untuk tanggal yang sudah berbentuk DD/MM/YYYY.
+    const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(slashMatch){
+      return slashMatch[1].padStart(2,'0') + '/' + slashMatch[2].padStart(2,'0') + '/' + slashMatch[3];
+    }
+
+    return text;
   }
 
   function buildMonthOptions(){
