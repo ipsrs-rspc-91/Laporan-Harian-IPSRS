@@ -88,24 +88,6 @@
 </style>
 <div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
   <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
-    <div class="datetime-picker-head"><span id="datetimePickerTitle">Pilih Tanggal &amp; Jam</span><button type="button" class="datetime-picker-close" onclick="closeDateTimePicker()" aria-label="Tutup">×</button></div>
-    <div class="datetime-picker-body">
-      <div class="datetime-calendar-pane">
-        <div class="datetime-pane-title">📅 Pilih Tanggal</div>
-        <div class="datetime-month-nav"><button type="button" onclick="changeDateTimeMonth(-1)">‹</button><span id="datetimeMonthTitle" class="datetime-month-title"></span><button type="button" onclick="changeDateTimeMonth(1)">›</button></div>
-        <div class="datetime-week"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div>
-        <div id="datetimeDays" class="datetime-days"></div>
-      </div>
-      <div class="datetime-time-pane">
-        <div class="datetime-pane-title">🕐 Pilih Jam &amp; Menit</div>
-        <div class="datetime-time-wrap">
-          <div><div class="datetime-time-label">Jam</div><select id="datetimeHour" class="datetime-time-select" size="5"></select></div>
-          <div><div class="datetime-time-label">Menit</div><select id="datetimeMinute" class="datetime-time-select" size="5"></select></div>
-        </div>
-      </div>
-    </div>
-<div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
-  <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
     <div class="datetime-picker-head">
       <span id="datetimePickerTitle">Pilih Tanggal</span>
       <button type="button" class="datetime-picker-close" onclick="closeDateTimePicker()" aria-label="Tutup">×</button>
