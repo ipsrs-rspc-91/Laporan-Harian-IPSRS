@@ -923,11 +923,19 @@
   }
 
   function syncDateTimeDisplay_(){
-    const t=document.getElementById('Tanggal')?.value||'', p=document.getElementById('Pukul')?.value||'', display=document.getElementById('TanggalWaktuText'), box=document.getElementById('TanggalWaktuDisplay');
-    if(!display||!box) return;
+    const t=document.getElementById('Tanggal')?.value||'', p=document.getElementById('Pukul')?.value||'';
+    const datePart=document.getElementById('TanggalWaktuDate'), timePart=document.getElementById('TanggalWaktuTime'), box=document.getElementById('TanggalWaktuDisplay');
+    if(!datePart||!timePart||!box) return;
     const d=parseDateOnly_(t);
-    if(d){display.textContent=pad2_(d.getDate())+'/'+pad2_(d.getMonth()+1)+'/'+d.getFullYear()+(p?'  |  '+p:'');box.classList.add('has-value');}
-    else{display.textContent='Pilih tanggal dan jam';box.classList.remove('has-value');}
+    if(d){
+      datePart.textContent=pad2_(d.getDate())+'/'+pad2_(d.getMonth()+1)+'/'+d.getFullYear();
+      timePart.textContent=p||'--:--';
+      box.classList.add('has-value');
+    }else{
+      datePart.textContent='Pilih tanggal';
+      timePart.textContent=p||'--:--';
+      box.classList.remove('has-value');
+    }
   }
 
   function getInputPayload(){
