@@ -1,13 +1,23 @@
 <section id="page-input" class="page active">
         <div class="page-header">
   <div>
-    <h1>Input Laporan</h1>
-    <div class="desc">Isi laporan kegiatan / perbaikan harian ini</div>
+    <h1 id="inputPageTitle">Input Laporan</h1>
+    <div class="desc" id="inputPageDesc">Isi laporan kegiatan / perbaikan harian ini</div>
   </div>
   <div class="pill" id="inputIdentityPill">-</div>
 </div>
 
 <div class="card">
+  <div id="inputPermissionNote" class="smallnote hidden" style="color:var(--danger); font-weight:700; margin-bottom:var(--sp-3);"></div>
+
+  <div id="inputHistoryPanel" class="hidden" style="background:var(--primary-light); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:var(--sp-3);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <b style="font-size:var(--fs-sm); color:var(--primary-dark);">Riwayat Perubahan (khusus KA IPSRS &amp; Administrasi)</b>
+      <button class="btn" style="padding:4px 10px; font-size:var(--fs-xs);" onclick="toggleHistoryList()">Tampilkan/Sembunyikan</button>
+    </div>
+    <div id="historyList" class="hidden" style="margin-top:var(--sp-2); max-height:220px; overflow-y:auto;"></div>
+  </div>
+
   <div class="form-grid">
     <div>
       <label for="Tanggal">Tanggal</label>
@@ -71,7 +81,7 @@
     </div>
   </div>
 
-  <button class="btn accent lg block" style="margin-top:var(--sp-4);" onclick="saveData()">Simpan Laporan</button>
+  <button id="btnSaveInput" class="btn accent lg block" style="margin-top:var(--sp-4);" onclick="saveData()">Simpan Laporan</button>
   <div id="msgInput" style="margin-top:var(--sp-2); font-size:var(--fs-base); font-weight:700;"></div>
 </div>
 
