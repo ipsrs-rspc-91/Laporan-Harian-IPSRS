@@ -421,7 +421,13 @@
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
     if(name === 'input' && !preserveInputMode) startCreateReportForm();
-    if(name === 'dashboard') loadDashboard();
+    if(name === 'dashboard'){
+      // Keluar dari drill-down mengembalikan Laporan ke keadaan normal.
+      window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
+      const statusFilter = document.getElementById('FilterStatus');
+      if(statusFilter && statusFilter.value === '__BELUM_SELESAI__') statusFilter.value = '';
+      loadDashboard();
+    }
     if(name === 'laporan') resetLaporanSubTabCache();
   }
 
