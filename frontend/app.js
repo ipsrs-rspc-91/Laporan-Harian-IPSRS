@@ -964,13 +964,13 @@
     if(!msg||!hour||!minute) return;
     if(_dateTimeHourSelectedByUser && _dateTimeMinuteSelectedByUser){
       msg.className='datetime-selection-message datetime-selection-ok';
-      msg.textContent='✓ Pukul sudah dipilih: '+hour.value+':'+minute.value;
+      msg.textContent='✓ Pukul telah dipilih: '+hour.value+':'+minute.value;
     }else if(!_dateTimeHourSelectedByUser){
       msg.className='datetime-selection-message datetime-selection-warning';
       msg.textContent='⚠ Silakan pilih jam terlebih dahulu';
     }else{
       msg.className='datetime-selection-message datetime-selection-warning';
-      msg.textContent='⚠ Silakan pilih menit terlebih dahulu';
+      msg.textContent='✓ Jam telah dipilih, silakan pilih menit';
     }
   }
 
