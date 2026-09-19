@@ -852,6 +852,84 @@
     });
   }
 
+  let _dateTimePickerDate = null;
+  let _dateTimePickerMonth = null;
+
+  function pad2_(n){ return String(n).padStart(2,'0'); }
+
+  function parseDateOnly_(value){
+    const s=String(value||'').trim();
+    const m=s.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    if(!m) return null;
+    const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
+    return Number.isNaN(d.getTime())?null:d;
+  }
+
+  function renderDateTimePickerCalendar_(){
+    const title=document.getElementById('datetimeMonthTitle'), days=document.getElementById('datetimeDays');
+    if(!title||!days||!_dateTimePickerMonth) return;
+    title.textContent=new Intl.DateTimeFormat('id-ID',{month:'long',year:'numeric'}).format(_dateTimePickerMonth);
+    const y=_dateTimePickerMonth.getFullYear(), m=_dateTimePickerMonth.getMonth(), first=new Date(y,m,1);
+    const start=new Date(y,m,1-first.getDay()), selected=_dateTimePickerDate;
+    days.innerHTML='';
+    for(let i=0;i<42;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i);
+      const b=document.createElement('button'); b.type='button'; b.className='datetime-day';
+      if(d.getMonth()!==m) b.classList.add('other-month');
+      if(selected&&d.getFullYear()===selected.getFullYear()&&d.getMonth()===selected.getMonth()&&d.getDate()===selected.getDate()) b.classList.add('selected');
+      b.textContent=d.getDate();
+      b.addEventListener('click',()=>{_dateTimePickerDate=new Date(d);renderDateTimePickerCalendar_();});
+      days.appendChild(b);
+    }
+  }
+
+  function populateDateTimePickerOptions_(){
+    const h=document.getElementById('datetimeHour'), min=document.getElementById('datetimeMinute');
+    if(!h||!min) return;
+    h.innerHTML=''; min.innerHTML='';
+    for(let i=0;i<24;i++){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);h.appendChild(o);}
+    for(let i=0;i<60;i+=5){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);min.appendChild(o);}
+  }
+
+  function openDateTimePicker(){
+    const tanggal=document.getElementById('Tanggal'), pukul=document.getElementById('Pukul');
+    if(tanggal?.disabled||pukul?.disabled) return;
+    const base=parseDateOnly_(tanggal?.value)||new Date();
+    _dateTimePickerDate=new Date(base); _dateTimePickerMonth=new Date(base.getFullYear(),base.getMonth(),1);
+    populateDateTimePickerOptions_();
+    const hm=String(pukul?.value||'').match(/^(\\d{1,2}):(\\d{2})/);
+    const hour=document.getElementById('datetimeHour'), minute=document.getElementById('datetimeMinute');
+    if(hour) hour.value=hm?pad2_(hm[1]):'08';
+    if(minute){const mm=hm?Number(hm[2]):0;minute.value=pad2_(Math.min(55,Math.round(mm/5)*5));}
+    renderDateTimePickerCalendar_();
+    document.getElementById('datetimePickerBackdrop')?.classList.remove('hidden');
+  }
+
+  function closeDateTimePicker(){document.getElementById('datetimePickerBackdrop')?.classList.add('hidden');}
+
+  function changeDateTimeMonth(delta){
+    if(!_dateTimePickerMonth) return;
+    _dateTimePickerMonth=new Date(_dateTimePickerMonth.getFullYear(),_dateTimePickerMonth.getMonth()+delta,1);
+    renderDateTimePickerCalendar_();
+  }
+
+  function applyDateTimePicker(){
+    if(!_dateTimePickerDate) return;
+    const hour=document.getElementById('datetimeHour')?.value||'08', minute=document.getElementById('datetimeMinute')?.value||'00';
+    const tanggal=_dateTimePickerDate.getFullYear()+'-'+pad2_(_dateTimePickerDate.getMonth()+1)+'-'+pad2_(_dateTimePickerDate.getDate());
+    const pukul=hour+':'+minute, t=document.getElementById('Tanggal'), p=document.getElementById('Pukul');
+    if(t) t.value=tanggal; if(p) p.value=pukul;
+    syncDateTimeDisplay_(); closeDateTimePicker();
+  }
+
+  function syncDateTimeDisplay_(){
+    const t=document.getElementById('Tanggal')?.value||'', p=document.getElementById('Pukul')?.value||'', display=document.getElementById('TanggalWaktuText'), box=document.getElementById('TanggalWaktuDisplay');
+    if(!display||!box) return;
+    const d=parseDateOnly_(t);
+    if(d){display.textContent=pad2_(d.getDate())+'/'+pad2_(d.getMonth()+1)+'/'+d.getFullYear()+(p?'  |  '+p:'');box.classList.add('has-value');}
+    else{display.textContent='Pilih tanggal dan jam';box.classList.remove('has-value');}
+  }
+
   function getInputPayload(){
     const payload = {
       Tanggal: document.getElementById('Tanggal').value,
@@ -972,6 +1050,9 @@
     resetInputFieldsAfterCreate();
     const tanggal = document.getElementById('Tanggal');
     if(tanggal) tanggal.value = todayLocalISO();
+    const pukul = document.getElementById('Pukul');
+    if(pukul) pukul.value = '';
+    syncDateTimeDisplay_();
     setMsg('msgInput','');
   }
 
@@ -1032,6 +1113,7 @@
     document.getElementById('Tanggal').value = report.Tanggal || '';
     document.getElementById('Pelapor').value = report.Pelapor || '';
     document.getElementById('Pukul').value = report.Pukul || '';
+    syncDateTimeDisplay_();
     document.getElementById('NoLK').value = report.NoLK || '';
     document.getElementById('Ruang').value = report.Ruang || '';
     document.getElementById('MasalahKegiatan').value = report.MasalahKegiatan || '';
