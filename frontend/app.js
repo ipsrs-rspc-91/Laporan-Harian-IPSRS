@@ -871,6 +871,8 @@
 
   function startCreateReportForm(){
     _reportFormMode = 'CREATE';
+    const inputPage = document.getElementById('page-input');
+    if(inputPage) inputPage.classList.remove('edit-mode');
     _editingReportId = null;
     _historyLoadedForReportId = null;
 
