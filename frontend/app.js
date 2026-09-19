@@ -933,8 +933,13 @@
     min.value='30';
     requestAnimationFrame(centerDateTimeDefaults_);
 
+    // onchange tidak selalu terpanggil jika user mengklik opsi yang
+    // kebetulan sudah terpilih (misalnya default 12 atau 30). Gunakan click
+    // juga agar klik langsung pada nilai default tetap dihitung sebagai pilihan.
     h.onchange=()=>selectDateTimeHour_(h.value);
     min.onchange=()=>selectDateTimeMinute_(min.value);
+    h.onclick=()=>selectDateTimeHour_(h.value);
+    min.onclick=()=>selectDateTimeMinute_(min.value);
   }
 
   function setDateTimePickerMode_(mode){
