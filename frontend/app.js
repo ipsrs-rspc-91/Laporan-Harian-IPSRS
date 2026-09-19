@@ -783,7 +783,7 @@
   // INPUT LAPORAN
   // ============================================================
   function getInputPayload(){
-    return {
+    const payload = {
       Tanggal: document.getElementById('Tanggal').value,
       Pelapor: document.getElementById('Pelapor').value.trim(),
       Pukul: document.getElementById('Pukul').value.trim(),
@@ -795,12 +795,15 @@
       Type: document.getElementById('Type').value.trim(),
       Jumlah: document.getElementById('Jumlah').value.trim(),
       Status: document.getElementById('Status').value,
-      Petugas: CURRENT_SESSION ? (CURRENT_SESSION.nama || CURRENT_SESSION.username) : '',
       Kategori: document.getElementById('Kategori').value,
       AreaKerja: document.getElementById('AreaKerja').value,
       Item: document.getElementById('Item').value,
       Keterangan: document.getElementById('Keterangan').value.trim()
     };
+    if(_reportFormMode !== 'EDIT'){
+      payload.Petugas = CURRENT_SESSION ? (CURRENT_SESSION.nama || CURRENT_SESSION.username) : '';
+    }
+    return payload;
   }
 
   function validateInputPayload(p){
@@ -1426,50 +1429,7 @@ cardList.appendChild(card);
     'MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Status',
     'Kategori','AreaKerja','Item','Keterangan'];
 
-  function openEditModalForReport(report){
-    if(!report) return;
-    _editingReportId = report.ID;
-    _historyLoadedForReportId = null;
-    document.getElementById('editModalSub').innerText = 'ID: ' + report.ID + '  \u00b7  Petugas: ' + (report.Petugas||'-') + '  \u00b7  ' + (report.Bidang||report.Shift||'-');
 
-    const editable = canEditReport(report);
-    EDIT_FIELD_IDS.forEach(id => { document.getElementById(id).disabled = !editable; });
-    document.getElementById('btnSaveEdit').classList.toggle('hidden', !editable);
-    const noteEl = document.getElementById('editPermissionNote');
-    if(!editable){
-      noteEl.classList.remove('hidden');
-      noteEl.innerText = 'Anda hanya dapat MELIHAT laporan ini (bukan milik Anda). Hanya pemilik laporan, Administrasi, atau KA IPSRS yang dapat mengedit.';
-    } else {
-      noteEl.classList.add('hidden');
-    }
-
-    const historyPanel = document.getElementById('historyPanel');
-    if(CURRENT_SESSION && (CURRENT_SESSION.role === 'KA_IPSRS' || CURRENT_SESSION.role === 'ADMINISTRASI')){
-      historyPanel.classList.remove('hidden');
-      document.getElementById('historyList').classList.add('hidden');
-      document.getElementById('historyList').innerHTML = '';
-    } else {
-      historyPanel.classList.add('hidden');
-    }
-    document.getElementById('Edit_Tanggal').value = report.Tanggal||'';
-    document.getElementById('Edit_Pelapor').value = report.Pelapor||'';
-    document.getElementById('Edit_Pukul').value = report.Pukul||'';
-    document.getElementById('Edit_NoLK').value = report.NoLK||'';
-    document.getElementById('Edit_Ruang').value = report.Ruang||'';
-    document.getElementById('Edit_MasalahKegiatan').value = report.MasalahKegiatan||'';
-    document.getElementById('Edit_Tindakan').value = report.Tindakan||'';
-    document.getElementById('Edit_SparePartUnit').value = report.SparePartUnit||'';
-    document.getElementById('Edit_Type').value = report.Type||'';
-    document.getElementById('Edit_Jumlah').value = report.Jumlah||'';
-    document.getElementById('Edit_Status').value = report.Status||'Selesai';
-    document.getElementById('Edit_Petugas').value = report.Petugas||'';
-    document.getElementById('Edit_Kategori').value = report.Kategori||'';
-    document.getElementById('Edit_AreaKerja').value = report.AreaKerja||'';
-    document.getElementById('Edit_Item').value = report.Item||'';
-    document.getElementById('Edit_Keterangan').value = report.Keterangan||'';
-    setMsg('msgEdit','');
-    document.getElementById('editModalBg').classList.add('show');
-  }
   function toggleHistoryList(){
     const list = document.getElementById('historyList');
     if(!list) return;
@@ -1510,9 +1470,6 @@ cardList.appendChild(card);
       list.innerHTML = '<div class="smallnote">Error: ' + escapeHtml(err && err.message ? err.message : err) + '</div>';
     }
   }
-
-  // Kompatibilitas jika ada kode lama yang masih memanggil saveEdit().
-  async function saveEdit(){ return saveData(); }
 
 
   // ============================================================
