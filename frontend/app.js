@@ -935,12 +935,15 @@
     const hour=document.getElementById('datetimeHour');
     const minute=document.getElementById('datetimeMinute');
     if(!msg||!hour||!minute) return;
-    if(_dateTimeHourSelectedByUser){
+    if(_dateTimeHourSelectedByUser && _dateTimeMinuteSelectedByUser){
       msg.className='datetime-selection-message datetime-selection-ok';
       msg.textContent='✓ Pukul sudah dipilih: '+hour.value+':'+minute.value;
-    }else{
+    }else if(!_dateTimeHourSelectedByUser){
       msg.className='datetime-selection-message datetime-selection-warning';
       msg.textContent='⚠ Silakan pilih jam terlebih dahulu';
+    }else{
+      msg.className='datetime-selection-message datetime-selection-warning';
+      msg.textContent='⚠ Silakan pilih menit terlebih dahulu';
     }
   }
 
@@ -970,7 +973,7 @@
     const hasExistingTime=!!hm;
     const hasExistingDate=!!tanggal?.value;
     if(hour) hour.value=hm?pad2_(hm[1]):'12';
-    if(minute){const mm=hm?Number(hm[2]):0;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
+    if(minute){const mm=hm?Number(hm[2]):30;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
     _dateTimeDateSelectedByUser=hasExistingDate;
     _dateTimeHourSelectedByUser=hasExistingTime;
     _dateTimeMinuteSelectedByUser=hasExistingTime;
@@ -1008,7 +1011,7 @@
       alert('Silakan pilih tanggal terlebih dahulu.');
       return;
     }
-    if(!_dateTimeHourSelectedByUser){
+    if(!_dateTimeHourSelectedByUser || !_dateTimeMinuteSelectedByUser){
       updateDateTimePickerSelectionMessage_();
       return;
     }
@@ -1115,7 +1118,7 @@
   }
 
   function resetInputFieldsAfterCreate(){
-    ['Pelapor','Pukul','NoLK','Ruang','MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Keterangan'].forEach(id => {
+    ['Tanggal','Pelapor','Pukul','NoLK','Ruang','MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Keterangan'].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
@@ -1160,7 +1163,7 @@
 
     resetInputFieldsAfterCreate();
     const tanggal = document.getElementById('Tanggal');
-    if(tanggal) tanggal.value = todayLocalISO();
+    if(tanggal) tanggal.value = '';
     const pukul = document.getElementById('Pukul');
     if(pukul) pukul.value = '';
     syncDateTimeDisplay_();
