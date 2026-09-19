@@ -1,4 +1,56 @@
-<section id="page-input" class="page active">
+<section id="page-input" class="page active">\n<style>
+  #page-input .status-choice-group{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:6px;
+  }
+  #page-input .status-choice{
+    appearance:none;
+    width:100%;
+    min-height:54px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    background:#fff;
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    padding:12px 14px;
+    font:inherit;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;
+  }
+  #page-input .status-choice:hover{
+    border-color:var(--text-muted);
+  }
+  #page-input .status-choice-icon{
+    font-size:20px;
+    line-height:1;
+  }
+  #page-input .status-choice-belum.is-selected{
+    background:#fff1f2;
+    border-color:#fca5a5;
+    color:#b91c1c;
+    box-shadow:0 0 0 1px rgba(185,28,28,.05);
+  }
+  #page-input .status-choice-selesai.is-selected{
+    background:#f0fdf4;
+    border-color:#86efac;
+    color:#166534;
+    box-shadow:0 0 0 1px rgba(22,101,52,.05);
+  }
+  #page-input .status-choice:disabled{
+    cursor:not-allowed;
+    opacity:.65;
+  }
+  @media (max-width:480px){
+    #page-input .status-choice{min-height:50px;padding:10px 8px;}
+  }
+</style>
+
         <div class="page-header">
   <div>
     <h1 id="inputPageTitle">Input Laporan</h1>
@@ -58,10 +110,18 @@
       <input id="Jumlah" type="number" min="0">
 
       <label for="Status">Status</label>
-      <select id="Status">
-        <option value="Selesai">Selesai</option>
-        <option value="Belum">Belum</option>
-      </select>
+      <input type="hidden" id="Status" value="">
+      <div class="status-choice-group" role="group" aria-label="Status pekerjaan">
+        <button type="button" class="status-choice status-choice-belum" data-status="Belum" onclick="selectInputStatus('Belum')">
+          <span class="status-choice-icon" aria-hidden="true">◷</span>
+          <span>Belum</span>
+        </button>
+        <button type="button" class="status-choice status-choice-selesai" data-status="Selesai" onclick="selectInputStatus('Selesai')">
+          <span class="status-choice-icon" aria-hidden="true">✓</span>
+          <span>Selesai</span>
+        </button>
+      </div>
+      <div class="smallnote">Pilih salah satu status pekerjaan.</div>
 
       <label for="Petugas">Petugas</label>
       <input id="Petugas" class="readonlyPetugas" readonly>
