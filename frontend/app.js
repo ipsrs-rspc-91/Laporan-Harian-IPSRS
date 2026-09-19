@@ -859,7 +859,7 @@
 
   function parseDateOnly_(value){
     const s=String(value||'').trim();
-    const m=s.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if(!m) return null;
     const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
     return Number.isNaN(d.getTime())?null:d;
@@ -888,7 +888,7 @@
     if(!h||!min) return;
     h.innerHTML=''; min.innerHTML='';
     for(let i=0;i<24;i++){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);h.appendChild(o);}
-    for(let i=0;i<60;i+=5){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);min.appendChild(o);}
+    for(let i=0;i<60;i++){const o=document.createElement('option');o.value=pad2_(i);o.textContent=pad2_(i);min.appendChild(o);}
   }
 
   function openDateTimePicker(){
@@ -897,10 +897,10 @@
     const base=parseDateOnly_(tanggal?.value)||new Date();
     _dateTimePickerDate=new Date(base); _dateTimePickerMonth=new Date(base.getFullYear(),base.getMonth(),1);
     populateDateTimePickerOptions_();
-    const hm=String(pukul?.value||'').match(/^(\\d{1,2}):(\\d{2})/);
+    const hm=String(pukul?.value||'').match(/^(\d{1,2}):(\d{2})/);
     const hour=document.getElementById('datetimeHour'), minute=document.getElementById('datetimeMinute');
     if(hour) hour.value=hm?pad2_(hm[1]):'08';
-    if(minute){const mm=hm?Number(hm[2]):0;minute.value=pad2_(Math.min(55,Math.round(mm/5)*5));}
+    if(minute){const mm=hm?Number(hm[2]):0;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
     renderDateTimePickerCalendar_();
     document.getElementById('datetimePickerBackdrop')?.classList.remove('hidden');
   }
@@ -956,6 +956,7 @@
 
   function validateInputPayload(p){
     if(!p.Tanggal) return 'Tanggal wajib diisi.';
+    if(!p.Pukul) return 'Jam wajib dipilih.';
     if(!p.Ruang) return 'Ruang wajib diisi.';
     if(!p.MasalahKegiatan) return 'Masalah/Kegiatan wajib diisi.';
     if(!p.Status) return 'Status wajib dipilih.';
@@ -1015,6 +1016,7 @@
     if(area) area.value = '';
     refreshItemOptions();
     setStatusValue('');
+    syncDateTimeDisplay_();
   }
 
   function startCreateReportForm(){
