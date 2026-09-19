@@ -51,7 +51,58 @@
   }
 </style>
 
-        <div class="page-header">
+        <style>
+#page-input .datetime-combined-input{min-height:48px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;cursor:pointer;color:var(--text-muted);transition:border-color .15s ease,box-shadow .15s ease}
+#page-input .datetime-combined-input:hover,#page-input .datetime-combined-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.08);outline:none}
+#page-input .datetime-combined-input.has-value{color:var(--text);font-weight:600}
+#page-input .datetime-calendar-icon{font-size:21px;color:var(--primary);flex:none}
+.datetime-picker-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+.datetime-picker-modal{width:min(760px,100%);background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(15,23,42,.28);overflow:hidden}
+.datetime-picker-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);font-weight:800;font-size:18px}
+.datetime-picker-body{display:grid;grid-template-columns:1.25fr 1fr;min-height:320px}
+.datetime-calendar-pane,.datetime-time-pane{padding:20px}
+.datetime-calendar-pane{border-right:1px solid var(--border)}
+.datetime-pane-title{font-weight:800;margin-bottom:14px}
+.datetime-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.datetime-month-nav button,.datetime-picker-close{border:0;background:transparent;cursor:pointer;font-size:22px;padding:6px 10px;border-radius:8px}
+.datetime-month-nav button:hover,.datetime-picker-close:hover{background:#f1f5f9}
+.datetime-month-title{font-weight:800}
+.datetime-week,.datetime-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.datetime-week{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.datetime-day{border:0;background:transparent;border-radius:50%;width:36px;height:36px;justify-self:center;cursor:pointer;color:var(--text);font:inherit}
+.datetime-day:hover{background:#eff6ff}
+.datetime-day.other-month{color:#cbd5e1}
+.datetime-day.selected{background:var(--primary);color:#fff;font-weight:800}
+.datetime-time-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.datetime-time-label{font-size:12px;color:var(--text-muted);margin-bottom:7px}
+.datetime-time-select{width:100%;height:180px;border:1px solid var(--border);border-radius:10px;padding:8px;font:inherit;font-size:18px;background:#fff}
+.datetime-time-select:focus{border-color:var(--primary);outline:none}
+.datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
+.datetime-picker-footer button{min-width:110px}
+@media(max-width:600px){.datetime-picker-backdrop{align-items:flex-end;padding:0}.datetime-picker-modal{width:100%;border-radius:16px 16px 0 0}.datetime-picker-body{grid-template-columns:1fr;max-height:70vh;overflow-y:auto}.datetime-calendar-pane{border-right:0;border-bottom:1px solid var(--border)}.datetime-day{width:34px;height:34px}.datetime-time-select{height:150px}}
+</style>
+<div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
+  <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
+    <div class="datetime-picker-head"><span id="datetimePickerTitle">Pilih Tanggal &amp; Jam</span><button type="button" class="datetime-picker-close" onclick="closeDateTimePicker()" aria-label="Tutup">×</button></div>
+    <div class="datetime-picker-body">
+      <div class="datetime-calendar-pane">
+        <div class="datetime-pane-title">📅 Pilih Tanggal</div>
+        <div class="datetime-month-nav"><button type="button" onclick="changeDateTimeMonth(-1)">‹</button><span id="datetimeMonthTitle" class="datetime-month-title"></span><button type="button" onclick="changeDateTimeMonth(1)">›</button></div>
+        <div class="datetime-week"><span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span></div>
+        <div id="datetimeDays" class="datetime-days"></div>
+      </div>
+      <div class="datetime-time-pane">
+        <div class="datetime-pane-title">🕐 Pilih Jam &amp; Menit</div>
+        <div class="datetime-time-wrap">
+          <div><div class="datetime-time-label">Jam</div><select id="datetimeHour" class="datetime-time-select" size="5"></select></div>
+          <div><div class="datetime-time-label">Menit</div><select id="datetimeMinute" class="datetime-time-select" size="5"></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="datetime-picker-footer"><button type="button" class="btn" onclick="closeDateTimePicker()">Batal</button><button type="button" class="btn btn-primary" onclick="applyDateTimePicker()">OK</button></div>
+  </div>
+</div>
+<div class="page-header">
   <div>
     <h1 id="inputPageTitle">Input Laporan</h1>
     <div class="desc" id="inputPageDesc">Isi laporan kegiatan / perbaikan harian ini</div>
@@ -72,22 +123,20 @@
 
   <div class="form-grid">
     <div>
-      <label for="Tanggal">Tanggal</label>
-      <input type="date" id="Tanggal">
+      <label for="TanggalWaktuDisplay">Tanggal &amp; Jam</label>
+      <div id="TanggalWaktuDisplay" class="datetime-combined-input" role="button" tabindex="0" onclick="openDateTimePicker()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDateTimePicker();}">
+        <span id="TanggalWaktuText">Pilih tanggal dan jam</span>
+        <span class="datetime-calendar-icon" aria-hidden="true">▣</span>
+      </div>
+      <input type="hidden" id="Tanggal">
+      <input type="hidden" id="Pukul">
+      <div class="smallnote">Klik sekali untuk memilih tanggal, jam, dan menit.</div>
 
       <label for="Pelapor">Pelapor</label>
       <input id="Pelapor" placeholder="Nama yang melapor">
 
-      <div class="field-row">
-        <div>
-          <label for="Pukul">Pukul</label>
-          <input id="Pukul" placeholder="HH:MM">
-        </div>
-        <div>
-          <label for="NoLK">No LK</label>
-          <input id="NoLK">
-        </div>
-      </div>
+      <label for="NoLK">No LK</label>
+      <input id="NoLK">
 
       <label for="Ruang">Ruang</label>
       <input id="Ruang" placeholder="Contoh: IGD, Ruang Anggrek">
