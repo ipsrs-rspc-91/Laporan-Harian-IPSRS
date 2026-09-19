@@ -1,4 +1,5 @@
-<section id="page-input" class="page active">\n<style>
+<section id="page-input" class="page active">
+<style>
   #page-input .status-choice-group{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -101,7 +102,7 @@
     </div>
 
     <div id="datetimeTimePane" class="datetime-time-pane datetime-pane-hidden">
-      <div class="datetime-pane-title">🕐 Pilih Jam &amp; Menit</div>
+      <div class="datetime-pane-title">🕐 Pilih Pukul</div>
       <div class="datetime-time-wrap">
         <div><div class="datetime-time-label">Jam</div><select id="datetimeHour" class="datetime-time-select" size="5"></select></div>
         <div><div class="datetime-time-label">Menit</div><select id="datetimeMinute" class="datetime-time-select" size="5"></select></div>
@@ -111,7 +112,7 @@
 
     <div id="datetimeFooterDate" class="datetime-picker-footer">
       <button type="button" class="btn" onclick="closeDateTimePicker()">Batal</button>
-      <button id="datetimeGoTimeBtn" type="button" class="btn btn-primary" onclick="goToDateTimeTimeMode()" disabled>PUKUL →</button>
+      <button id="datetimeGoTimeBtn" type="button" class="btn btn-primary" onclick="goToDateTimeTimeMode()" disabled>OK →</button>
     </div>
 
     <div id="datetimeFooterTime" class="datetime-picker-footer datetime-footer-hidden">
