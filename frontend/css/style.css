@@ -272,25 +272,43 @@
   .empty-state .es-text{ font-size:var(--fs-sm); font-weight:600; }
   .readonlyPetugas{ background:#f1f4f5 !important; color:var(--muted) !important; cursor:not-allowed; }
 
-  /* Mode EDIT: dibedakan secara visual dari Form Input baru. */
+  /* Mode EDIT:
+     - background/card tetap netral tanpa blok kuning
+     - warna amber dipindahkan ke field yang dapat diedit
+     - tombol Simpan Perubahan tetap hijau */
   #page-input.edit-mode > .card{
-    background:#fff8e7;
-    border-color:#e7c76a;
+    background:transparent;
+    border-color:transparent;
+    box-shadow:none;
   }
   #page-input.edit-mode #inputPageTitle{
-    color:#8a5a00;
+    color:var(--primary-dark);
   }
   #page-input.edit-mode #inputPageDesc{
-    color:#8a6b2f;
+    color:var(--muted);
   }
   #page-input.edit-mode input:not(.readonlyPetugas),
   #page-input.edit-mode select,
-  #page-input.edit-mode textarea{
-    background:#fffdf5;
+  #page-input.edit-mode textarea,
+  #page-input.edit-mode .datetime-combined-input{
+    background:#fff8e7;
+    border-color:#e7c76a;
+  }
+  #page-input.edit-mode input:not(.readonlyPetugas):focus,
+  #page-input.edit-mode select:focus,
+  #page-input.edit-mode textarea:focus,
+  #page-input.edit-mode .datetime-combined-input:focus,
+  #page-input.edit-mode .datetime-combined-input:hover{
+    border-color:var(--accent);
   }
   #page-input.edit-mode #btnSaveInput{
-    background:#b7791f;
-    border-color:#b7791f;
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  #page-input.edit-mode #btnSaveInput:hover{
+    background:var(--accent-dark);
+    border-color:var(--accent-dark);
   }
 
   /* ===================== LAPORAN / TABLE ===================== */
