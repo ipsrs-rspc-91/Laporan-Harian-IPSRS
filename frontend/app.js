@@ -917,22 +917,30 @@
 
   async function openEditModalForReport(report){
     if(!report) return;
+
     const editable = canEditReport(report);
     _reportFormMode = 'EDIT';
     _editingReportId = report.ID;
     _historyLoadedForReportId = null;
 
-    // Tunggu data kategori/area/item kustom jika inisialisasi background masih berjalan.
-    try{ await _customDataReady; }catch(e){}
+    // Aktifkan halaman Input EDIT terlebih dahulu agar tidak ada reset CREATE.
+    goPage('input', true);
+
+    const inputPage = document.getElementById('page-input');
+    if(inputPage) inputPage.classList.add('edit-mode');
 
     const title = document.getElementById('inputPageTitle');
     const desc = document.getElementById('inputPageDesc');
     const btn = document.getElementById('btnSaveInput');
     const note = document.getElementById('inputPermissionNote');
     const history = document.getElementById('inputHistoryPanel');
+
     if(title) title.innerText = 'Edit Laporan';
-    if(desc) desc.innerText = 'Periksa dan ubah data laporan yang dipilih';
-    if(btn){ btn.innerText = 'Simpan Perubahan'; btn.classList.toggle('hidden', !editable); }
+    if(desc) desc.innerText = 'Data laporan yang dipilih — periksa dan ubah bila diperlukan';
+    if(btn){
+      btn.innerText = 'Simpan Perubahan';
+      btn.classList.toggle('hidden', !editable);
+    }
     if(note){
       note.classList.toggle('hidden', editable);
       note.innerText = 'Anda hanya dapat MELIHAT laporan ini (bukan milik Anda). Hanya pemilik laporan, Administrasi, atau KA IPSRS yang dapat mengedit.';
@@ -942,9 +950,11 @@
       const el = document.getElementById(id);
       if(el) el.disabled = !editable;
     });
-    const petugas = document.getElementById('Petugas');
-    if(petugas){ petugas.disabled = false; petugas.readOnly = true; petugas.value = report.Petugas || ''; }
 
+    // Tunggu data kategori/area/item kustom jika masih dimuat di background.
+    try{ await _customDataReady; }catch(e){}
+
+    // Isi data laporan SETELAH halaman Input aktif.
     document.getElementById('Tanggal').value = report.Tanggal || '';
     document.getElementById('Pelapor').value = report.Pelapor || '';
     document.getElementById('Pukul').value = report.Pukul || '';
@@ -955,15 +965,21 @@
     document.getElementById('SparePartUnit').value = report.SparePartUnit || '';
     document.getElementById('Type').value = report.Type || '';
     document.getElementById('Jumlah').value = report.Jumlah || '';
-    document.getElementById('Status').value = report.Status || 'Selesai';
+    setInputSelectValue('Status', report.Status || 'Selesai');
 
-    // Gunakan dropdown dan dependency yang SAMA dengan Form Input:
-    // Kategori -> Area Kerja -> Item.
     setInputSelectValue('Kategori', report.Kategori || '');
     setInputSelectValue('AreaKerja', report.AreaKerja || '');
     refreshItemOptions();
     setInputSelectValue('Item', report.Item || '');
     document.getElementById('Keterangan').value = report.Keterangan || '';
+
+    const petugas = document.getElementById('Petugas');
+    if(petugas){
+      petugas.disabled = false;
+      petugas.readOnly = true;
+      petugas.value = report.Petugas || '';
+    }
+
     setMsg('msgInput','');
 
     if(history){
@@ -974,8 +990,6 @@
         document.getElementById('historyList').innerHTML = '';
       }
     }
-
-    goPage('input', true);
   }
 
   function closeEditModal(){
