@@ -938,7 +938,7 @@
     const footerTime=document.getElementById('datetimeFooterTime');
     if(calendarPane) calendarPane.classList.toggle('datetime-pane-hidden',_dateTimePickerMode!=='DATE');
     if(timePane) timePane.classList.toggle('datetime-pane-hidden',_dateTimePickerMode!=='TIME');
-    if(title) title.textContent=_dateTimePickerMode==='DATE'?'Pilih Tanggal':'Pilih Jam & Menit';
+    if(title) title.textContent=_dateTimePickerMode==='DATE'?'Pilih Tanggal':'Pilih Pukul';
     if(footerDate) footerDate.classList.toggle('datetime-footer-hidden',_dateTimePickerMode!=='DATE');
     if(footerTime) footerTime.classList.toggle('datetime-footer-hidden',_dateTimePickerMode!=='TIME');
     if(_dateTimePickerMode==='TIME') updateDateTimePickerSelectionMessage_();
@@ -1011,7 +1011,17 @@
       alert('Silakan pilih tanggal terlebih dahulu.');
       return;
     }
+
+    // Setelah pane TIME benar-benar tampil, paksa posisi scroll kembali
+    // ke default 12:30 agar 12 dan 30 berada di tengah.
     setDateTimePickerMode_('TIME');
+    requestAnimationFrame(()=>{
+      const h=document.getElementById('datetimeHour');
+      const min=document.getElementById('datetimeMinute');
+      if(h && !h.value) h.value='12';
+      if(min && !min.value) min.value='30';
+      centerDateTimeDefaults_();
+    });
   }
 
   function backToDateTimeDateMode(){
