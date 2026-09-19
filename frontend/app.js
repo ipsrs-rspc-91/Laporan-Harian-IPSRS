@@ -401,12 +401,15 @@
 
   const PAGE_TITLES = { dashboard:'Dashboard', input:'Input Laporan', laporan:'Laporan' };
 
-  function goPage(name){
+  function goPage(name, preserveInputMode){
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === name));
     closeUserMenu();
 
+    // Klik menu Form Input biasa selalu membuka mode CREATE baru.
+    // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
+    if(name === 'input' && !preserveInputMode) startCreateReportForm();
     if(name === 'dashboard') loadDashboard();
     if(name === 'laporan') resetLaporanSubTabCache();
   }
@@ -820,25 +823,161 @@
     const err = validateInputPayload(payload);
     if(err){ setMsg('msgInput', err, true); return; }
 
-    setMsg('msgInput', 'Menyimpan...');
+    const isEdit = _reportFormMode === 'EDIT' && !!_editingReportId;
+    setMsg('msgInput', isEdit ? 'Menyimpan perubahan...' : 'Menyimpan...');
     try{
-      const json = await authRun('apiCreateReport', payload);
+      const json = isEdit
+        ? await authRun('apiUpdateReport', _editingReportId, payload)
+        : await authRun('apiCreateReport', payload);
+
       if(json && json.ok){
-        setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
-        ['Pelapor','Pukul','NoLK','Ruang','MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Keterangan'].forEach(id => {
-          document.getElementById(id).value = '';
-        });
-        document.getElementById('Kategori').value = '';
-        document.getElementById('AreaKerja').value = '';
-        refreshItemOptions();
-        document.getElementById('Status').value = 'Selesai';
-        openSaveSuccessModal('Laporan berhasil disimpan (ID: ' + json.report_id + ').');
+        if(isEdit){
+          _laporanSubTabLoaded.monitoring = false;
+          _laporanSubTabLoaded.rekap = false;
+          const editedId = _editingReportId;
+          startCreateReportForm();
+          openSaveSuccessModal('Perubahan laporan berhasil disimpan (ID: ' + editedId + ').');
+          goPage('laporan');
+          loadReportsBySelectedMonth();
+        } else {
+          setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
+          resetInputFieldsAfterCreate();
+          openSaveSuccessModal('Laporan berhasil disimpan (ID: ' + json.report_id + ').');
+        }
       } else {
-        setMsg('msgInput', (json && json.msg) ? json.msg : 'Gagal menyimpan laporan.', true);
+        setMsg('msgInput', (json && json.msg) ? json.msg : (isEdit ? 'Gagal menyimpan perubahan.' : 'Gagal menyimpan laporan.'), true);
       }
     }catch(err){
       setMsg('msgInput', 'Error: ' + (err && err.message ? err.message : err), true);
     }
+  }
+
+  function resetInputFieldsAfterCreate(){
+    ['Pelapor','Pukul','NoLK','Ruang','MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Keterangan'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    const kategori = document.getElementById('Kategori');
+    const area = document.getElementById('AreaKerja');
+    if(kategori) kategori.value = '';
+    if(area) area.value = '';
+    refreshItemOptions();
+    const status = document.getElementById('Status');
+    if(status) status.value = 'Selesai';
+  }
+
+  function startCreateReportForm(){
+    _reportFormMode = 'CREATE';
+    _editingReportId = null;
+    _historyLoadedForReportId = null;
+
+    const title = document.getElementById('inputPageTitle');
+    const desc = document.getElementById('inputPageDesc');
+    const btn = document.getElementById('btnSaveInput');
+    const note = document.getElementById('inputPermissionNote');
+    const history = document.getElementById('inputHistoryPanel');
+    if(title) title.innerText = 'Input Laporan';
+    if(desc) desc.innerText = 'Isi laporan kegiatan / perbaikan harian ini';
+    if(btn){ btn.innerText = 'Simpan Laporan'; btn.classList.remove('hidden'); }
+    if(note) note.classList.add('hidden');
+    if(history) history.classList.add('hidden');
+
+    INPUT_EDITABLE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.disabled = false;
+    });
+    const petugas = document.getElementById('Petugas');
+    if(petugas){
+      petugas.disabled = false;
+      petugas.readOnly = true;
+      petugas.value = CURRENT_SESSION ? (CURRENT_SESSION.nama || CURRENT_SESSION.username || '') : '';
+    }
+
+    resetInputFieldsAfterCreate();
+    const tanggal = document.getElementById('Tanggal');
+    if(tanggal) tanggal.value = todayLocalISO();
+    setMsg('msgInput','');
+  }
+
+  function setInputSelectValue(id, value){
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const v = value == null ? '' : String(value);
+    if(v && !Array.from(sel.options).some(o => o.value === v)){
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.innerText = v;
+      sel.appendChild(opt);
+    }
+    sel.value = v;
+  }
+
+  async function openEditModalForReport(report){
+    if(!report) return;
+    const editable = canEditReport(report);
+    _reportFormMode = 'EDIT';
+    _editingReportId = report.ID;
+    _historyLoadedForReportId = null;
+
+    // Tunggu data kategori/area/item kustom jika inisialisasi background masih berjalan.
+    try{ await _customDataReady; }catch(e){}
+
+    const title = document.getElementById('inputPageTitle');
+    const desc = document.getElementById('inputPageDesc');
+    const btn = document.getElementById('btnSaveInput');
+    const note = document.getElementById('inputPermissionNote');
+    const history = document.getElementById('inputHistoryPanel');
+    if(title) title.innerText = 'Edit Laporan';
+    if(desc) desc.innerText = 'Periksa dan ubah data laporan yang dipilih';
+    if(btn){ btn.innerText = 'Simpan Perubahan'; btn.classList.toggle('hidden', !editable); }
+    if(note){
+      note.classList.toggle('hidden', editable);
+      note.innerText = 'Anda hanya dapat MELIHAT laporan ini (bukan milik Anda). Hanya pemilik laporan, Administrasi, atau KA IPSRS yang dapat mengedit.';
+    }
+
+    INPUT_EDITABLE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.disabled = !editable;
+    });
+    const petugas = document.getElementById('Petugas');
+    if(petugas){ petugas.disabled = false; petugas.readOnly = true; petugas.value = report.Petugas || ''; }
+
+    document.getElementById('Tanggal').value = report.Tanggal || '';
+    document.getElementById('Pelapor').value = report.Pelapor || '';
+    document.getElementById('Pukul').value = report.Pukul || '';
+    document.getElementById('NoLK').value = report.NoLK || '';
+    document.getElementById('Ruang').value = report.Ruang || '';
+    document.getElementById('MasalahKegiatan').value = report.MasalahKegiatan || '';
+    document.getElementById('Tindakan').value = report.Tindakan || '';
+    document.getElementById('SparePartUnit').value = report.SparePartUnit || '';
+    document.getElementById('Type').value = report.Type || '';
+    document.getElementById('Jumlah').value = report.Jumlah || '';
+    document.getElementById('Status').value = report.Status || 'Selesai';
+
+    // Gunakan dropdown dan dependency yang SAMA dengan Form Input:
+    // Kategori -> Area Kerja -> Item.
+    setInputSelectValue('Kategori', report.Kategori || '');
+    setInputSelectValue('AreaKerja', report.AreaKerja || '');
+    refreshItemOptions();
+    setInputSelectValue('Item', report.Item || '');
+    document.getElementById('Keterangan').value = report.Keterangan || '';
+    setMsg('msgInput','');
+
+    if(history){
+      const showHistory = CURRENT_SESSION && (CURRENT_SESSION.role === 'KA_IPSRS' || CURRENT_SESSION.role === 'ADMINISTRASI');
+      history.classList.toggle('hidden', !showHistory);
+      if(showHistory){
+        document.getElementById('historyList').classList.add('hidden');
+        document.getElementById('historyList').innerHTML = '';
+      }
+    }
+
+    goPage('input', true);
+  }
+
+  function closeEditModal(){
+    // Kompatibilitas dengan pemanggilan lama; Edit sekarang tidak memakai modal.
+    startCreateReportForm();
   }
 
   // ============================================================
@@ -1278,10 +1417,14 @@ cardList.appendChild(card);
   // EDIT LAPORAN
   // ============================================================
   let _editingReportId = null;
+  let _reportFormMode = 'CREATE';
+  let _customDataReady = Promise.resolve();
 
-  const EDIT_FIELD_IDS = ['Edit_Tanggal','Edit_Pelapor','Edit_Pukul','Edit_NoLK','Edit_Ruang',
-    'Edit_MasalahKegiatan','Edit_Tindakan','Edit_SparePartUnit','Edit_Type','Edit_Jumlah',
-    'Edit_Status','Edit_Kategori','Edit_AreaKerja','Edit_Item','Edit_Keterangan'];
+  // Satu form dipakai untuk CREATE dan EDIT. Hanya mode, ID laporan,
+  // data awal, dan endpoint penyimpanan yang berbeda.
+  const INPUT_EDITABLE_IDS = ['Tanggal','Pelapor','Pukul','NoLK','Ruang',
+    'MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Status',
+    'Kategori','AreaKerja','Item','Keterangan'];
 
   function openEditModalForReport(report){
     if(!report) return;
@@ -1327,13 +1470,9 @@ cardList.appendChild(card);
     setMsg('msgEdit','');
     document.getElementById('editModalBg').classList.add('show');
   }
-  function closeEditModal(){
-    document.getElementById('editModalBg').classList.remove('show');
-    _editingReportId = null;
-  }
-
   function toggleHistoryList(){
     const list = document.getElementById('historyList');
+    if(!list) return;
     const willShow = list.classList.contains('hidden');
     list.classList.toggle('hidden');
     if(willShow && _historyLoadedForReportId !== _editingReportId){
@@ -1343,6 +1482,7 @@ cardList.appendChild(card);
 
   async function loadReportHistory(){
     const list = document.getElementById('historyList');
+    if(!list) return;
     list.innerHTML = '<div class="smallnote">Memuat riwayat...</div>';
     try{
       const json = await authRun('apiGetReportHistory', _editingReportId);
@@ -1359,11 +1499,11 @@ cardList.appendChild(card);
       json.data.forEach(h => {
         const changedFields = Object.keys(h.after).filter(k => h.before[k] !== h.after[k] && k !== 'ID');
         const diffHtml = changedFields.length
-          ? changedFields.map(k => `<div style="font-size:11.5px; margin-top:3px;"><b>${escapeHtml(k)}:</b> <span style="color:var(--danger);">${escapeHtml(h.before[k])}</span> &rarr; <span style="color:var(--success);">${escapeHtml(h.after[k])}</span></div>`).join('')
+          ? changedFields.map(k => '<div style="font-size:11.5px; margin-top:3px;"><b>' + escapeHtml(k) + ':</b> <span style="color:var(--danger);">' + escapeHtml(h.before[k]) + '</span> &rarr; <span style="color:var(--success);">' + escapeHtml(h.after[k]) + '</span></div>').join('')
           : '<div class="smallnote">Tidak ada field yang berubah.</div>';
         const row = document.createElement('div');
         row.style.cssText = 'background:#fff; border:1px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;';
-        row.innerHTML = `<div style="font-size:11.5px; font-weight:700;">${escapeHtml(h.edited_at)} oleh ${escapeHtml(h.edited_by_username)} (${escapeHtml(h.edited_by_staff_id)})</div>${diffHtml}`;
+        row.innerHTML = '<div style="font-size:11.5px; font-weight:700;">' + escapeHtml(h.edited_at) + ' oleh ' + escapeHtml(h.edited_by_username) + ' (' + escapeHtml(h.edited_by_staff_id) + ')</div>' + diffHtml;
         list.appendChild(row);
       });
     }catch(err){
@@ -1371,42 +1511,9 @@ cardList.appendChild(card);
     }
   }
 
-  async function saveEdit(){
-    if(!_editingReportId){ setMsg('msgEdit','Tidak ada laporan yang dipilih.', true); return; }
-    setMsg('msgEdit','Menyimpan perubahan...');
-    const payload = {
-      Tanggal: document.getElementById('Edit_Tanggal').value,
-      Pelapor: document.getElementById('Edit_Pelapor').value.trim(),
-      Pukul: document.getElementById('Edit_Pukul').value.trim(),
-      NoLK: document.getElementById('Edit_NoLK').value.trim(),
-      Ruang: document.getElementById('Edit_Ruang').value.trim(),
-      MasalahKegiatan: document.getElementById('Edit_MasalahKegiatan').value.trim(),
-      Tindakan: document.getElementById('Edit_Tindakan').value.trim(),
-      SparePartUnit: document.getElementById('Edit_SparePartUnit').value.trim(),
-      Type: document.getElementById('Edit_Type').value.trim(),
-      Jumlah: document.getElementById('Edit_Jumlah').value.trim(),
-      Status: document.getElementById('Edit_Status').value,
-      Kategori: document.getElementById('Edit_Kategori').value.trim(),
-      AreaKerja: document.getElementById('Edit_AreaKerja').value.trim(),
-      Item: document.getElementById('Edit_Item').value.trim(),
-      Keterangan: document.getElementById('Edit_Keterangan').value.trim()
-    };
-    try{
-      const json = await authRun('apiUpdateReport', _editingReportId, payload);
-      if(json && json.ok){
-        setMsg('msgEdit','Perubahan tersimpan.');
-        _laporanSubTabLoaded.monitoring = false;
-        _laporanSubTabLoaded.rekap = false;
-        closeEditModal();
-        openSaveSuccessModal('Perubahan laporan berhasil disimpan.');
-        loadReportsBySelectedMonth();
-      } else {
-        setMsg('msgEdit', (json && json.msg) ? json.msg : 'Gagal menyimpan.', true);
-      }
-    }catch(err){
-      setMsg('msgEdit', 'Error: ' + (err && err.message ? err.message : err), true);
-    }
-  }
+  // Kompatibilitas jika ada kode lama yang masih memanggil saveEdit().
+  async function saveEdit(){ return saveData(); }
+
 
   // ============================================================
   // ADMIN: DAFTAR PETUGAS
@@ -1621,7 +1728,7 @@ cardList.appendChild(card);
 
     // Data kustom tidak boleh menghambat login. Jalankan setelah UI sudah aktif.
     // Promise sengaja tidak di-await.
-    Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()])
+    _customDataReady = Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()])
       .then(() => {
         appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
         appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
