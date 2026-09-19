@@ -892,6 +892,21 @@
     }
   }
 
+  function centerDateTimeSelectOption_(selectEl){
+    if(!selectEl || !selectEl.options || !selectEl.options.length) return;
+    const selected=selectEl.options[selectEl.selectedIndex];
+    if(!selected) return;
+    // Posisi pilihan dibuat tepat di tengah area scroll.
+    const target=selected.offsetTop - Math.max(0,(selectEl.clientHeight-selected.offsetHeight)/2);
+    selectEl.scrollTop=Math.max(0,target);
+  }
+
+  function centerDateTimeDefaults_(){
+    const h=document.getElementById('datetimeHour'), min=document.getElementById('datetimeMinute');
+    centerDateTimeSelectOption_(h);
+    centerDateTimeSelectOption_(min);
+  }
+
   function populateDateTimePickerOptions_(){
     const h=document.getElementById('datetimeHour'), min=document.getElementById('datetimeMinute');
     if(!h||!min) return;
@@ -904,13 +919,14 @@
       const o=document.createElement('option'); o.value=pad2_(i); o.textContent=pad2_(i);
       min.appendChild(o);
     }
-    // Default visual berada di tengah agar mudah digeser ke atas/bawah.
+
+    // Default 12:30 dan posisikan 12 serta 30 tepat di tengah area scroll.
     h.value='12';
     min.value='30';
+    requestAnimationFrame(centerDateTimeDefaults_);
+
     h.onchange=()=>selectDateTimeHour_(h.value);
     min.onchange=()=>selectDateTimeMinute_(min.value);
-    h.onclick=()=>{ if(h.value) selectDateTimeHour_(h.value); };
-    min.onclick=()=>{ if(min.value) selectDateTimeMinute_(min.value); };
   }
 
   function setDateTimePickerMode_(mode){
