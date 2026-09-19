@@ -14,6 +14,8 @@
   let requestFailed = false;
   let hideTimer = null;
   let navigationBusy = false;
+  let dashboardTimerInterval = null;
+  let dashboardTimerStartedAt = 0;
 
   function ensureOverlay(){
     let overlay = document.getElementById('dashboardLoadingOverlay');
@@ -23,11 +25,11 @@
     overlay.id = 'dashboardLoadingOverlay';
     overlay.setAttribute('role','status');
     overlay.setAttribute('aria-live','polite');
-    overlay.innerHTML = '<div class="dashboard-loading-card"><div class="dashboard-loading-spinner" aria-hidden="true"></div><div class="dashboard-loading-title">Memuat Dashboard</div><div class="dashboard-loading-text" id="dashboardLoadingText">Menyiapkan dashboard...</div></div>';
+    overlay.innerHTML = '<div class="dashboard-loading-card"><div class="dashboard-loading-spinner" aria-hidden="true"></div><div class="dashboard-loading-title">Memuat Dashboard</div><div class="dashboard-loading-text" id="dashboardLoadingText">Menyiapkan dashboard...</div><div class="dashboard-loading-duration" id="dashboardLoadingDuration" style="display:none" aria-hidden="true">⏱ 0,0 detik</div></div>';
 
     const style = document.createElement('style');
     style.id = 'dashboardLoadingStyle';
-    style.textContent = '#dashboardLoadingOverlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(255,255,255,.72);backdrop-filter:blur(2px)}#dashboardLoadingOverlay.show{display:flex}.dashboard-loading-card{min-width:250px;max-width:360px;padding:24px 28px;border:1px solid var(--border,#dbe3e8);border-radius:16px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.12);text-align:center}.dashboard-loading-spinner{width:38px;height:38px;margin:0 auto 14px;border:4px solid #dbe7ea;border-top-color:#0f6172;border-radius:50%;animation:dashboardLoadingSpin .8s linear infinite}.dashboard-loading-title{font-size:16px;font-weight:800;color:#17323a}.dashboard-loading-text{margin-top:6px;font-size:12px;color:#64747a}@keyframes dashboardLoadingSpin{to{transform:rotate(360deg)}}@media(max-width:700px){.dashboard-loading-card{min-width:230px;padding:21px 22px}}';
+    style.textContent = '#dashboardLoadingOverlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(255,255,255,.72);backdrop-filter:blur(2px)}#dashboardLoadingOverlay.show{display:flex}.dashboard-loading-card{min-width:250px;max-width:360px;padding:24px 28px;border:1px solid var(--border,#dbe3e8);border-radius:16px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.12);text-align:center}.dashboard-loading-spinner{width:38px;height:38px;margin:0 auto 14px;border:4px solid #dbe7ea;border-top-color:#0f6172;border-radius:50%;animation:dashboardLoadingSpin .8s linear infinite}.dashboard-loading-title{font-size:16px;font-weight:800;color:#17323a}.dashboard-loading-text{margin-top:6px;font-size:12px;color:#64747a}.dashboard-loading-duration{margin-top:10px;font-size:13px;font-weight:800;color:#0f6172;letter-spacing:.1px}@keyframes dashboardLoadingSpin{to{transform:rotate(360deg)}}@media(max-width:700px){.dashboard-loading-card{min-width:230px;padding:21px 22px}}';
     document.head.appendChild(style);
     document.body.appendChild(overlay);
     return overlay;
@@ -36,6 +38,35 @@
   function setText(text){
     const el = document.getElementById('dashboardLoadingText');
     if(el) el.textContent = text;
+  }
+
+  function isKaIpsrs(){
+    return typeof CURRENT_SESSION !== 'undefined' &&
+           CURRENT_SESSION &&
+           CURRENT_SESSION.role === 'KA_IPSRS';
+  }
+
+  function stopDashboardTimer_(){
+    if(dashboardTimerInterval){
+      clearInterval(dashboardTimerInterval);
+      dashboardTimerInterval = null;
+    }
+  }
+
+  function startDashboardTimer_(){
+    stopDashboardTimer_();
+    const el = document.getElementById('dashboardLoadingDuration');
+    if(!isKaIpsrs() || !el) return;
+
+    el.style.display = 'block';
+    el.setAttribute('aria-hidden','false');
+    dashboardTimerStartedAt = performance.now();
+    el.textContent = '⏱ 0,0 detik';
+
+    dashboardTimerInterval = setInterval(function(){
+      const seconds = (performance.now() - dashboardTimerStartedAt) / 1000;
+      el.textContent = '⏱ ' + seconds.toFixed(1).replace('.',',') + ' detik';
+    }, 100);
   }
 
   function showLoading(text){
@@ -47,9 +78,11 @@
     if(hideTimer) clearTimeout(hideTimer);
     setText(text || 'Menyiapkan dashboard...');
     ensureOverlay().classList.add('show');
+    startDashboardTimer_();
   }
 
   function hideLoading(){
+    stopDashboardTimer_();
     loadingActive = false;
     navigationBusy = false;
     if(hideTimer) clearTimeout(hideTimer);
@@ -58,6 +91,7 @@
   }
 
   function showError(text){
+    stopDashboardTimer_();
     loadingActive = false;
     navigationBusy = false;
     if(hideTimer) clearTimeout(hideTimer);
