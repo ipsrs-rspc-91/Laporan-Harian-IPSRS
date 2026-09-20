@@ -45,7 +45,13 @@
   }
 
   function pageLaporanReady(){
-    return !!document.getElementById('page-laporan');
+    var page = document.getElementById('page-laporan');
+    if(!page) return false;
+
+    // Jangan menginisialisasi tab Laporan ketika user baru selesai login
+    // dan masih berada di Form Input. Inisialisasi hanya saat halaman
+    // Laporan benar-benar sedang aktif/dibuka.
+    return page.classList.contains('active');
   }
 
   function sessionToken(){
