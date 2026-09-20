@@ -162,6 +162,11 @@
 @media(max-width:600px){
   .datetime-picker-backdrop{align-items:flex-end;padding:0}
   .datetime-picker-modal{width:100%;height:88vh;max-height:88vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column}
+  /* Mode TANGGAL: lebih ringkas dan proporsional; mode PUKUL tetap memakai layout tinggi penuh. */
+  .datetime-picker-modal:not(.datetime-time-mode){height:auto;max-height:72vh}
+  .datetime-picker-modal:not(.datetime-time-mode) .datetime-picker-body{display:block;flex:none}
+  .datetime-picker-modal:not(.datetime-time-mode) .datetime-calendar-pane{padding:14px 18px 10px}
+  .datetime-picker-modal:not(.datetime-time-mode) .datetime-picker-footer{margin-top:0;flex-shrink:0}
   .datetime-picker-head.datetime-time-mode{padding:8px 20px;border-bottom:0;min-height:0}
   .datetime-picker-head.datetime-time-mode #datetimePickerTitle{display:none}
   .datetime-picker-modal.datetime-time-mode .datetime-time-pane{flex:1;min-height:0;box-sizing:border-box}
