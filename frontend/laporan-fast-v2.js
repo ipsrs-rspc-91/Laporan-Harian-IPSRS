@@ -79,6 +79,7 @@
     let staff='';
 
     const dashboardDrilldown = window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true;
+    const daftarUnfinishedDrilldown = window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN === true;
 
     if(m==='saya'){
       // Drill-down Dashboard perlu melihat data yang sama dengan KPI Dashboard,
@@ -109,12 +110,13 @@
       }
 
       rawData=Array.isArray(json.data)?json.data:[];
-      if(dashboardDrilldown){
+      if(dashboardDrilldown || daftarUnfinishedDrilldown){
         const statusEl=document.getElementById('FilterStatus');
         if(statusEl) statusEl.value='__BELUM_SELESAI__';
       }
       applyFilters();
       if(dashboardDrilldown) window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN=false;
+      if(daftarUnfinishedDrilldown) window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN=false;
       setMsg('msgReport','Data tampil: '+rawData.length);
     }catch(err){
       if(mySerial!==requestSerial) return;
