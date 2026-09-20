@@ -1210,11 +1210,25 @@
     const err = validateInputPayload(payload);
     if(err){ setMsg('msgInput', err, true); return; }
 
-    const isEdit = _reportFormMode === 'EDIT' && !!_editingReportId;
+    const inputPage = document.getElementById('page-input');
+    const inputPageIsEdit = !!(inputPage && inputPage.classList.contains('edit-mode'));
+    const isEditMode = _reportFormMode === 'EDIT' || inputPageIsEdit;
+    const editingReportId = String(_editingReportId || '').trim();
+
+    // FAIL-SAFE: halaman EDIT tidak boleh pernah jatuh menjadi CREATE.
+    // Jika state EDIT kehilangan report ID, batalkan penyimpanan agar tidak
+    // membuat baris/laporan baru secara tidak sengaja.
+    if(isEditMode && !editingReportId){
+      setMsg('msgInput', 'ID laporan EDIT tidak ditemukan. Penyimpanan dibatalkan untuk mencegah duplikasi.', true);
+      alert('ID laporan EDIT tidak ditemukan. Penyimpanan dibatalkan. Silakan buka laporan kembali dari menu Laporan.');
+      return;
+    }
+
+    const isEdit = isEditMode;
     setMsg('msgInput', isEdit ? 'Menyimpan perubahan...' : 'Menyimpan...');
     try{
       const json = isEdit
-        ? await authRun('apiUpdateReport', _editingReportId, payload)
+        ? await authRun('apiUpdateReport', editingReportId, payload)
         : await authRun('apiCreateReport', payload);
 
       if(json && json.ok){
