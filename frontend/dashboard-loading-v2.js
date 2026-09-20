@@ -56,7 +56,7 @@
   function startDashboardTimer_(){
     stopDashboardTimer_();
     const el = document.getElementById('dashboardLoadingDuration');
-    if(!isKaIpsrs() || !el) return;
+    if(!el) return;
 
     el.style.display = 'block';
     el.setAttribute('aria-hidden','false');
