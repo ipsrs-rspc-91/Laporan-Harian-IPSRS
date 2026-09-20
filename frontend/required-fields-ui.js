@@ -34,8 +34,13 @@
 
   function isReplacementCategory(){
     const sel = document.getElementById('Kategori');
-    const value = sel ? String(sel.value || '').trim().toLowerCase() : '';
-    return value.includes('spare part baru') || value.includes('unit baru');
+    const value = sel ? String(sel.value || '').trim() : '';
+
+    // Spare Part / Unit, Type, dan Jumlah hanya wajib bila
+    // kategori secara eksplisit mengandung kata "baru".
+    // Contoh: "Spare Part Baru" / "Unit Baru".
+    // Perbaikan/penggantian dengan spare part kanibal tidak dipaksa.
+    return /\bbaru\b/i.test(value);
   }
 
   function updateRequiredFieldVisuals(){
