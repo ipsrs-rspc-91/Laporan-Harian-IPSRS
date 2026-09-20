@@ -1,4 +1,4 @@
-/* Laporan Loading State v20260916-2
+/* Laporan Loading State v20260920-1
  * Standard modal loading spinner for all Laporan sub-tabs.
  * - Laporan Saya
  * - Monitoring Harian
@@ -15,6 +15,8 @@
   var OVERLAY_ID='ipsrsLaporanLoadingOverlay';
   var activeName='';
   var safetyTimer=null;
+  var loadingTimer=null;
+  var loadingStartedAt=0;
 
   function el(id){ return document.getElementById(id); }
 
@@ -34,13 +36,19 @@
     s.textContent=''
       + '#'+OVERLAY_ID+'{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;background:rgba(15,23,42,.20)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(430px,calc(100vw - 40px));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:28px 28px 26px;border:1px solid rgba(226,232,240,.95);border-radius:16px;background:rgba(255,255,255,.98);box-shadow:0 18px 55px rgba(15,23,42,.22);text-align:center;}\n'
-      + '#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:52px;height:52px;border:5px solid #dbe4ee;border-top-color:#0f6f8c;border-right-color:#0f6f8c;border-radius:50%;animation:ipsrsLaporanSpin .78s linear infinite;box-sizing:border-box;}\n'
+      + '#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:68px;height:68px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:2px;}\n'
+  + '#'+OVERLAY_ID+' .ipsrs-lightning{font-size:54px;line-height:1;display:inline-block;position:relative;z-index:2;color:#f5b400;text-shadow:0 0 4px rgba(245,180,0,.35);animation:ipsrsLightningFlash .62s ease-in-out infinite;}\n'
+  + '#'+OVERLAY_ID+' .ipsrs-lightning-ring{position:absolute;inset:4px;border:2px solid rgba(15,111,140,.22);border-radius:50%;animation:ipsrsLightningRing 1.15s ease-out infinite;}\n'
+  + '#'+OVERLAY_ID+' .ipsrs-lightning-ring2{position:absolute;inset:10px;border:1px dashed rgba(15,111,140,.18);border-radius:50%;animation:ipsrsLightningRing2 1.15s ease-out infinite .18s;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-title{font-size:18px;font-weight:800;color:#16324a;line-height:1.3;margin-top:2px;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-detail{font-size:13px;color:#64748b;line-height:1.5;max-width:330px;}\n'
+  + '#'+OVERLAY_ID+' .ipsrs-loading-timer{font-size:14px;font-weight:800;color:#0f6f8c;letter-spacing:.5px;min-width:78px;margin-top:2px;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-error{border-color:#fecaca;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-error .ipsrs-loading-title{color:#b91c1c;}\n'
-      + '@keyframes ipsrsLaporanSpin{to{transform:rotate(360deg);}}\n'
-      + '@media(max-width:600px){#'+OVERLAY_ID+'{padding:16px}#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(360px,calc(100vw - 32px));padding:24px 20px 22px}#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:46px;height:46px}#'+OVERLAY_ID+' .ipsrs-loading-title{font-size:16px}#'+OVERLAY_ID+' .ipsrs-loading-detail{font-size:12px}}';
+      + '@keyframes ipsrsLightningFlash{0%,100%{transform:scale(1) rotate(-3deg);opacity:.72;}18%{transform:scale(1.15) rotate(3deg);opacity:1;}34%{transform:scale(.92) rotate(-2deg);opacity:.78;}52%{transform:scale(1.10) rotate(2deg);opacity:1;}72%{transform:scale(.97) rotate(-1deg);opacity:.88;}}\n'
+  + '@keyframes ipsrsLightningRing{0%{transform:scale(.62);opacity:.65;}100%{transform:scale(1.22);opacity:0;}}\n'
+  + '@keyframes ipsrsLightningRing2{0%{transform:scale(.72) rotate(0deg);opacity:.55;}100%{transform:scale(1.16) rotate(90deg);opacity:0;}}\n'
+      + '@media(max-width:600px){#'+OVERLAY_ID+'{padding:16px}#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(360px,calc(100vw - 32px));padding:24px 20px 22px}#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:58px;height:58px}#'+OVERLAY_ID+' .ipsrs-lightning{font-size:46px}#'+OVERLAY_ID+' .ipsrs-loading-title{font-size:16px}#'+OVERLAY_ID+' .ipsrs-loading-detail{font-size:12px}}';
     document.head.appendChild(s);
   }
 
@@ -53,6 +61,26 @@
 
   function getOverlay(){ return el(OVERLAY_ID); }
 
+  function startTimer(){
+    loadingStartedAt=Date.now();
+    if(loadingTimer) clearInterval(loadingTimer);
+    loadingTimer=setInterval(function(){
+      var timerEl=el('ipsrsLoadingTimer');
+      if(!timerEl) return;
+      var seconds=Math.floor((Date.now()-loadingStartedAt)/1000);
+      timerEl.textContent=String(seconds).padStart(2,'0')+' detik';
+    },250);
+  }
+
+  function stopTimer(){
+    if(loadingTimer){
+      clearInterval(loadingTimer);
+      loadingTimer=null;
+    }
+    loadingStartedAt=0;
+  }
+
+
   function show(name){
     if(!labels[name]) return;
     installStyle();
@@ -64,11 +92,17 @@
     o.setAttribute('role','status');
     o.setAttribute('aria-live','polite');
     o.innerHTML='<div class="ipsrs-loading-box">'
-      +'<div class="ipsrs-loading-spinner" aria-hidden="true"></div>'
+      +'<div class="ipsrs-loading-spinner" aria-hidden="true">'
+      +'<div class="ipsrs-lightning-ring"></div>'
+      +'<div class="ipsrs-lightning-ring2"></div>'
+      +'<div class="ipsrs-lightning">⚡</div>'
+      +'</div>'
+      +'<div class="ipsrs-loading-timer" id="ipsrsLoadingTimer">00 detik</div>'
       +'<div class="ipsrs-loading-title">'+escapeHtml(labels[name][0])+'</div>'
       +'<div class="ipsrs-loading-detail">'+escapeHtml(labels[name][1])+'</div>'
       +'</div>';
     document.body.appendChild(o);
+    startTimer();
 
     if(safetyTimer) clearTimeout(safetyTimer);
     safetyTimer=setTimeout(function(){
@@ -80,11 +114,13 @@
     var o=getOverlay();
     if(o) o.remove();
     if(safetyTimer){ clearTimeout(safetyTimer); safetyTimer=null; }
+    stopTimer();
     activeName='';
   }
 
   function showError(name,message){
     installStyle();
+    stopTimer();
     var old=getOverlay();
     if(old) old.remove();
     var o=document.createElement('div');
