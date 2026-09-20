@@ -312,6 +312,33 @@
   }
 
   /* ===================== LAPORAN / TABLE ===================== */
+  /* ===================== COLLAPSIBLE LAPORAN FILTERS ===================== */
+  .laporan-filter-details{ width:100%; }
+  .laporan-filter-details > summary{
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    width:100%;
+    box-sizing:border-box;
+    padding:11px 14px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#f7fbfc;
+    color:var(--primary-dark);
+    font-size:var(--fs-sm);
+    font-weight:800;
+    cursor:pointer;
+    user-select:none;
+  }
+  .laporan-filter-details > summary::-webkit-details-marker{ display:none; }
+  .laporan-filter-details > summary:hover{ border-color:var(--accent); background:#f2fafb; }
+  .laporan-filter-details[open] > summary{ border-radius:12px 12px 0 0; margin-bottom:12px; }
+  .filter-summary-icon{ font-size:16px; line-height:1; }
+  .filter-summary-arrow{ margin-left:auto; font-size:16px; transition:transform .15s ease; }
+  .laporan-filter-details[open] .filter-summary-arrow{ transform:rotate(180deg); }
+  .laporan-filter-details .filters-bar{ margin:0 0 2px; padding:0 2px 2px; }
+
   .filters-bar{ display:flex; gap:var(--sp-2); flex-wrap:wrap; align-items:flex-end; margin-bottom:var(--sp-4); }
   .filters-bar .f-item{ min-width:140px; }
   .filters-bar label{ margin:0 0 5px; }
