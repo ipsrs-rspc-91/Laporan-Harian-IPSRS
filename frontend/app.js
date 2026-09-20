@@ -28,6 +28,8 @@
   // Target tab khusus drill-down Dashboard -> Belum Selesai.
   // Nilai normal tetap "saya"; hanya drill-down ini yang diarahkan ke Daftar Laporan.
   window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
+  // Drill-down dari kartu "Belum" pada Daftar Laporan.
+  window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
   let statusChartInstance = null;
   let _historyLoadedForReportId = null;
   // Nilai placeholder untuk option "+ Tambah ... Baru" di dalam <select>
@@ -1573,6 +1575,40 @@
     setMsg('msgReport', 'Data tampil: ' + viewData.length + ' dari ' + rawData.length);
   }
 
+  function openDaftarUnfinishedReports(){
+    // Kartu "Belum" pada Daftar Laporan selalu menampilkan pekerjaan yang
+    // belum selesai, tetapi tetap dalam scope data yang diizinkan backend.
+    const statusEl = document.getElementById('FilterStatus');
+    if(statusEl) statusEl.value = '__BELUM_SELESAI__';
+
+    const daftarPanel = document.getElementById('subtab-daftar');
+    const daftarAktif = daftarPanel && !daftarPanel.classList.contains('hidden');
+
+    if(daftarAktif && Array.isArray(rawData) && rawData.length){
+      if(typeof applyFilters === 'function') applyFilters();
+      return;
+    }
+
+    // Bila kartu diklik saat tab lain aktif, pindah ke Daftar Laporan dan
+    // minta loader menerapkan filter setelah data selesai diambil.
+    window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = true;
+    if(typeof goLaporanSubTab === 'function') goLaporanSubTab('daftar');
+  }
+
+  function bindDaftarUnfinishedDrilldown(){
+    const valueEl = document.getElementById('lapBelum');
+    if(!valueEl) return;
+    const card = valueEl.closest('.stat-card');
+    if(!card || card.dataset.ipsrsUnfinishedBound === '1') return;
+    card.dataset.ipsrsUnfinishedBound = '1';
+    card.style.cursor = 'pointer';
+    card.title = 'Lihat pekerjaan yang belum selesai';
+    card.addEventListener('click', function(event){
+      event.preventDefault();
+      openDaftarUnfinishedReports();
+    });
+  }
+
   function renderLaporanSummary(rows, bulan){
     const total = rows.length;
     const selesai = rows.filter(r => r.Status === 'Selesai').length;
@@ -1582,6 +1618,7 @@
     if(el('lapSelesai')) el('lapSelesai').innerText = selesai;
     if(el('lapBelum')) el('lapBelum').innerText = belum;
     if(el('lapBulanIni')) el('lapBulanIni').innerText = bulan || '-';
+    bindDaftarUnfinishedDrilldown();
   }
 
   function renderReportTable(viewData){
