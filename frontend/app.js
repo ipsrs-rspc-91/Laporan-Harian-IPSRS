@@ -1610,7 +1610,7 @@
     if(sayaAktif){
       if(statusEl) statusEl.value = '__BELUM_SELESAI__';
       window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN = true;
-      if(Array.isArray(rawData)){
+      if(Array.isArray(rawData) && rawData.length){
         if(typeof applyFilters === 'function') applyFilters();
         window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN = false;
       }else if(typeof loadReportsBySelectedMonth === 'function'){
