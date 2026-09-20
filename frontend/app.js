@@ -1313,6 +1313,21 @@
     setMsg('msgInput','');
   }
 
+  function getReportField_(report, names){
+    if(!report) return '';
+    const list=Array.isArray(names)?names:[names];
+    for(let i=0;i<list.length;i++){
+      const key=list[i];
+      if(Object.prototype.hasOwnProperty.call(report,key) &&
+         report[key] !== null &&
+         report[key] !== undefined &&
+         String(report[key]).trim() !== ''){
+        return report[key];
+      }
+    }
+    return '';
+  }
+
   function setInputSelectValue(id, value){
     const sel = document.getElementById(id);
     if(!sel) return;
@@ -1399,31 +1414,61 @@
     }
 
     // Isi data laporan segera setelah halaman Input aktif.
-    document.getElementById('Tanggal').value = report.Tanggal || '';
-    document.getElementById('Pelapor').value = report.Pelapor || '';
-    document.getElementById('Pukul').value = report.Pukul || '';
-    syncDateTimeDisplay_();
-    document.getElementById('NoLK').value = report.NoLK || '';
-    document.getElementById('Ruang').value = report.Ruang || '';
-    document.getElementById('MasalahKegiatan').value = report.MasalahKegiatan || '';
-    document.getElementById('Tindakan').value = report.Tindakan || '';
-    document.getElementById('SparePartUnit').value = report.SparePartUnit || '';
-    document.getElementById('Type').value = report.Type || '';
-    document.getElementById('Jumlah').value = report.Jumlah || '';
-    setStatusValue(report.Status || '');
+    // Backend utama mengirim legacy shape (Tanggal, Pelapor, dst.), tetapi
+    // fallback lowercase disiapkan agar EDIT tetap kompatibel bila deployment
+    // GAS yang sedang aktif mengembalikan nama kolom native.
+    const editData = {
+      Tanggal: getReportField_(report, ['Tanggal','tanggal']),
+      Pelapor: getReportField_(report, ['Pelapor','pelapor']),
+      Pukul: getReportField_(report, ['Pukul','pukul']),
+      NoLK: getReportField_(report, ['NoLK','nolk','no_lk']),
+      Ruang: getReportField_(report, ['Ruang','ruang']),
+      MasalahKegiatan: getReportField_(report, ['MasalahKegiatan','masalah_kegiatan']),
+      Tindakan: getReportField_(report, ['Tindakan','tindakan']),
+      SparePartUnit: getReportField_(report, ['SparePartUnit','spare_part_unit']),
+      Type: getReportField_(report, ['Type','type']),
+      Jumlah: getReportField_(report, ['Jumlah','jumlah']),
+      Status: getReportField_(report, ['Status','status']),
+      Kategori: getReportField_(report, ['Kategori','kategori']),
+      AreaKerja: getReportField_(report, ['AreaKerja','area_kerja']),
+      Item: getReportField_(report, ['Item','item']),
+      Keterangan: getReportField_(report, ['Keterangan','keterangan']),
+      Petugas: getReportField_(report, ['Petugas','nama_snapshot','petugas'])
+    };
 
-    setInputSelectValue('Kategori', report.Kategori || '');
-    setInputSelectValue('AreaKerja', report.AreaKerja || '');
+    document.getElementById('Tanggal').value = editData.Tanggal || '';
+    document.getElementById('Pelapor').value = editData.Pelapor || '';
+    document.getElementById('Pukul').value = editData.Pukul || '';
+    syncDateTimeDisplay_();
+    document.getElementById('NoLK').value = editData.NoLK || '';
+    document.getElementById('Ruang').value = editData.Ruang || '';
+    document.getElementById('MasalahKegiatan').value = editData.MasalahKegiatan || '';
+    document.getElementById('Tindakan').value = editData.Tindakan || '';
+    document.getElementById('SparePartUnit').value = editData.SparePartUnit || '';
+    document.getElementById('Type').value = editData.Type || '';
+    document.getElementById('Jumlah').value = editData.Jumlah || '';
+    setStatusValue(editData.Status || '');
+
+    setInputSelectValue('Kategori', editData.Kategori || '');
+    setInputSelectValue('AreaKerja', editData.AreaKerja || '');
     refreshItemOptions();
-    setInputSelectValue('Item', report.Item || '');
-    document.getElementById('Keterangan').value = report.Keterangan || '';
+    setInputSelectValue('Item', editData.Item || '');
+    document.getElementById('Keterangan').value = editData.Keterangan || '';
 
     const petugas = document.getElementById('Petugas');
     if(petugas){
       petugas.disabled = false;
       petugas.readOnly = true;
-      petugas.value = report.Petugas || '';
+      petugas.value = editData.Petugas || '';
     }
+
+    console.info('[EDIT] Data laporan dipetakan ke form:', {
+      id: resolvedReportId,
+      tanggal: editData.Tanggal,
+      pelapor: editData.Pelapor,
+      ruang: editData.Ruang,
+      status: editData.Status
+    });
 
     setMsg('msgInput','');
 
