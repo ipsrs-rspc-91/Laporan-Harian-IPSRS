@@ -145,6 +145,10 @@
           payload.token = args[0] || '';
         }
         break;
+      case 'apiGetReportById':
+        payload.token = args[0] || '';
+        payload.reportId = args[1] || '';
+        break;
       case 'apiCreateReport':
         payload.token = args[0] || '';
         payload.payload = args[1] || {};
