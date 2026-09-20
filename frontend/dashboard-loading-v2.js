@@ -239,10 +239,10 @@
   const originalGoPage = window.goPage;
   if(typeof originalGoPage !== 'function') return;
 
-  window.goPage = function(name){
+  window.goPage = function(name, preserveInputMode){
     if(name !== 'dashboard'){
       hideLoading();
-      return originalGoPage(name);
+      return originalGoPage(name, preserveInputMode);
     }
 
     if(navigationBusy) return;
@@ -268,7 +268,7 @@
         setText('Sedang mengambil data statistik...');
         try{
           // 3) goPage asli menampilkan page dan memanggil loadDashboard().
-          originalGoPage(name);
+          originalGoPage(name, preserveInputMode);
         }catch(err){
           console.error('Dashboard navigation error:', err);
           showError('Gagal memuat Dashboard.');
