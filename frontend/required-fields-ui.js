@@ -4,7 +4,7 @@
 (function(){
   'use strict';
 
-  const REQUIRED_IDS = ['Ruang','MasalahKegiatan','Kategori','AreaKerja'];
+  const REQUIRED_IDS = ['Ruang','MasalahKegiatan','Tindakan','Kategori','AreaKerja','Item'];
   const DYNAMIC_IDS = ['SparePartUnit','Type','Jumlah'];
 
   function fieldBox(id){
@@ -44,9 +44,11 @@
     setRequiredVisual('Pukul', true);
     setRequiredVisual('Ruang', true);
     setRequiredVisual('MasalahKegiatan', true);
+    setRequiredVisual('Tindakan', true);
     setRequiredVisual('Status', true);
     setRequiredVisual('Kategori', true);
     setRequiredVisual('AreaKerja', true);
+    setRequiredVisual('Item', true);
 
     // Field penggantian hanya wajib pada kategori yang memang menyatakan
     // ada Spare Part Baru / Unit Baru.
