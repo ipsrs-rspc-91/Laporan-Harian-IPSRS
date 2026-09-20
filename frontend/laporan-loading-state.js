@@ -11,7 +11,7 @@
 (function(){
   'use strict';
 
-  var STYLE_ID='ipsrs-laporan-loading-style-v2';
+  var STYLE_ID='ipsrs-laporan-loading-style-v3';
   var OVERLAY_ID='ipsrsLaporanLoadingOverlay';
   var activeName='';
   var safetyTimer=null;
@@ -36,8 +36,8 @@
     s.textContent=''
       + '#'+OVERLAY_ID+'{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;background:rgba(15,23,42,.20)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(430px,calc(100vw - 40px));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:28px 28px 26px;border:1px solid rgba(226,232,240,.95);border-radius:16px;background:rgba(255,255,255,.98);box-shadow:0 18px 55px rgba(15,23,42,.22);text-align:center;}\n'
-      + '#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:68px;height:68px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:2px;}\n'
-  + '#'+OVERLAY_ID+' .ipsrs-lightning{font-size:54px;line-height:1;display:inline-block;position:relative;z-index:2;color:#f5b400;text-shadow:0 0 4px rgba(245,180,0,.35);animation:ipsrsLightningFlash .62s ease-in-out infinite;}\n'
+      + '#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:82px;height:82px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:2px;}\n'
+  + '#'+OVERLAY_ID+' .ipsrs-lightning{font-size:54px;line-height:1;display:inline-block;position:relative;z-index:4;color:#f5b400;text-shadow:0 0 4px rgba(245,180,0,.35);animation:ipsrsLightningFlash .62s ease-in-out infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc{position:absolute;width:78px;height:78px;border:4px solid transparent;border-top-color:#0f6f8c;border-right-color:#38bdf8;border-radius:50%;animation:ipsrsArcSpin .9s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc2{position:absolute;width:64px;height:64px;border:3px dashed rgba(56,189,248,.8);border-radius:50%;animation:ipsrsArcSpinReverse .75s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc3{position:absolute;width:88px;height:88px;border:2px solid transparent;border-left-color:rgba(245,180,0,.75);border-bottom-color:rgba(245,180,0,.35);border-radius:50%;animation:ipsrsArcSpin 1.35s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-charge-ring{position:absolute;inset:1px;border:5px solid rgba(15,111,140,.12);border-top-color:#0f6f8c;border-right-color:#38bdf8;border-radius:50%;animation:ipsrsChargeSpin 1.05s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-neon-bolt{font-size:58px;filter:drop-shadow(0 0 5px rgba(56,189,248,.85)) drop-shadow(0 0 13px rgba(15,111,140,.55));animation:ipsrsNeonPulse .72s ease-in-out infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-2 .ipsrs-lightning{color:#38bdf8;text-shadow:0 0 6px rgba(56,189,248,.9),0 0 15px rgba(15,111,140,.55);}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-3 .ipsrs-lightning{color:#0f6f8c;}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-4 .ipsrs-lightning{color:#7dd3fc;}\n'
   + '#'+OVERLAY_ID+' .ipsrs-lightning-ring{position:absolute;inset:4px;border:2px solid rgba(15,111,140,.22);border-radius:50%;animation:ipsrsLightningRing 1.15s ease-out infinite;}\n'
   + '#'+OVERLAY_ID+' .ipsrs-lightning-ring2{position:absolute;inset:10px;border:1px dashed rgba(15,111,140,.18);border-radius:50%;animation:ipsrsLightningRing2 1.15s ease-out infinite .18s;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-title{font-size:18px;font-weight:800;color:#16324a;line-height:1.3;margin-top:2px;}\n'
@@ -47,7 +47,7 @@
       + '#'+OVERLAY_ID+' .ipsrs-loading-error .ipsrs-loading-title{color:#b91c1c;}\n'
       + '@keyframes ipsrsLightningFlash{0%,100%{transform:scale(1) rotate(-3deg);opacity:.72;}18%{transform:scale(1.15) rotate(3deg);opacity:1;}34%{transform:scale(.92) rotate(-2deg);opacity:.78;}52%{transform:scale(1.10) rotate(2deg);opacity:1;}72%{transform:scale(.97) rotate(-1deg);opacity:.88;}}\n'
   + '@keyframes ipsrsLightningRing{0%{transform:scale(.62);opacity:.65;}100%{transform:scale(1.22);opacity:0;}}\n'
-  + '@keyframes ipsrsLightningRing2{0%{transform:scale(.72) rotate(0deg);opacity:.55;}100%{transform:scale(1.16) rotate(90deg);opacity:0;}}\n'
+  + '@keyframes ipsrsLightningRing2{0%{transform:scale(.72) rotate(0deg);opacity:.55;}100%{transform:scale(1.16) rotate(90deg);opacity:0;}}\n'      + '@keyframes ipsrsArcSpin{to{transform:rotate(360deg);}}\n'      + '@keyframes ipsrsArcSpinReverse{to{transform:rotate(-360deg);}}\n'      + '@keyframes ipsrsChargeSpin{to{transform:rotate(360deg);}}\n'      + '@keyframes ipsrsNeonPulse{0%,100%{transform:scale(.92) rotate(-4deg);opacity:.72;}50%{transform:scale(1.12) rotate(4deg);opacity:1;}}\n'
       + '@media(max-width:600px){#'+OVERLAY_ID+'{padding:16px}#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(360px,calc(100vw - 32px));padding:24px 20px 22px}#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:58px;height:58px}#'+OVERLAY_ID+' .ipsrs-lightning{font-size:46px}#'+OVERLAY_ID+' .ipsrs-loading-title{font-size:16px}#'+OVERLAY_ID+' .ipsrs-loading-detail{font-size:12px}}';
     document.head.appendChild(s);
   }
@@ -91,12 +91,15 @@
     o.id=OVERLAY_ID;
     o.setAttribute('role','status');
     o.setAttribute('aria-live','polite');
-    o.innerHTML='<div class="ipsrs-loading-box">'
-      +'<div class="ipsrs-loading-spinner" aria-hidden="true">'
-      +'<div class="ipsrs-lightning-ring"></div>'
-      +'<div class="ipsrs-lightning-ring2"></div>'
-      +'<div class="ipsrs-lightning">⚡</div>'
-      +'</div>'
+    var modelClass=name==='saya'?'ipsrs-loading-model-1':(name==='monitoring'?'ipsrs-loading-model-2':(name==='rekap'?'ipsrs-loading-model-3':'ipsrs-loading-model-4'));
+    var visual=name==='saya'
+      ?'<div class="ipsrs-loading-spinner" aria-hidden="true"><div class="ipsrs-lightning-ring"></div><div class="ipsrs-lightning-ring2"></div><div class="ipsrs-lightning">⚡</div></div>'
+      :(name==='monitoring'
+        ?'<div class="ipsrs-loading-spinner" aria-hidden="true"><div class="ipsrs-electric-arc"></div><div class="ipsrs-electric-arc2"></div><div class="ipsrs-electric-arc3"></div><div class="ipsrs-lightning">⚡</div></div>'
+        :(name==='rekap'
+          ?'<div class="ipsrs-loading-spinner" aria-hidden="true"><div class="ipsrs-charge-ring"></div><div class="ipsrs-lightning">⚡</div></div>'
+          :'<div class="ipsrs-loading-spinner" aria-hidden="true"><div class="ipsrs-neon-bolt">⚡</div></div>'));
+    o.innerHTML='<div class="ipsrs-loading-box '+modelClass+'">'+visual
       +'<div class="ipsrs-loading-timer" id="ipsrsLoadingTimer">00 detik</div>'
       +'<div class="ipsrs-loading-title">'+escapeHtml(labels[name][0])+'</div>'
       +'<div class="ipsrs-loading-detail">'+escapeHtml(labels[name][1])+'</div>'
