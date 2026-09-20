@@ -28,28 +28,29 @@
       <div class="topbar-brand"><div class="logo-box"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><span class="topbar-brand-text"><h2>LAPORAN HARIAN IPSRS</h2><span>RS. Puri Cinere</span></span></div>
       <nav class="topbar-nav">
         <button class="nav-item" data-page="input" onclick="goPage('input')" title="Form Input"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="m8 16 4-4 3 3-4 4H8v-3Z"></path><path d="m14 12 2-2 2 2-2 2"></path></svg><span>Form Input</span></button>
-        <button class="nav-item" data-page="laporan" onclick="goPage('laporan')" title="Laporan"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M8 17v-4"></path><path d="M12 17v-7"></path><path d="M16 17v-2"></path></svg><span>Laporan</span></button>
+        <button class="nav-item" data-page="laporan" onclick="goPage('laporan')" title="Laporan"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 1-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="M8 17v-4"></path><path d="M12 17v-7"></path><path d="M16 17v-2"></path></svg><span>Laporan</span></button>
         <button class="nav-item" data-page="dashboard" onclick="goPage('dashboard')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span>Dashboard</span></button>
       </nav>
-      <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" class="logout-direct" onclick="try{doLogout()}catch(e){try{sessionStorage.removeItem('ipsrs_session_v1')}catch(_e){};location.reload();}" title="Keluar dari aplikasi" aria-label="Keluar dari aplikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg><span>Keluar</span></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button type="button" class="btn block" onclick="openPwModal()">Ganti Password</button></div></div>
+      <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" class="logout-direct" onclick="try{doLogout()}catch(e){try{sessionStorage.removeItem('ipsrs_session_v1')}catch(_e){};location.reload();}" title="Keluar dari aplikasi" aria-label="Keluar dari aplikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg><span>Keluar</span></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button type="button" class="btn block" onclick="openPwModal()">Ganti Password</button></div></div>
     </header>
     <div class="user-menu-backdrop" id="userMenuBackdrop" onclick="closeUserMenu()"></div>
     <main class="content"><section id="page-input" class="page active"></section><section id="page-dashboard" class="page"></section><section id="page-laporan" class="page"></section></main>
   </div>
   <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
   <style>
-    /* Required-field indicator: clean red border only, no background color. */
+    /* Required-field indicator: soft red border only, no background color. */
     #page-input .ipsrs-required-field {
-      border-color: #dc2626 !important;
+      border: 1px solid #e7a3a3 !important;
+      background: transparent !important;
     }
     #page-input .ipsrs-required-field:focus {
-      border-color: #dc2626 !important;
-      box-shadow: 0 0 0 2px rgba(220,38,38,.08) !important;
+      border-color: #d98c8c !important;
+      box-shadow: 0 0 0 2px rgba(217,140,140,.08) !important;
     }
     #page-input .ipsrs-required-label::after {
       content: " *";
-      color: #dc2626;
-      font-weight: 700;
+      color: #d98c8c;
+      font-weight: 600;
     }
   </style>
   <script>
@@ -77,7 +78,7 @@
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
       Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan]).catch(e=>console.warn('Deferred page load:',e));
-      window.__ipsrsChartReady = script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js').catch(e=>{ console.warn('Deferred Chart.js load:',e); throw e; });
+      window.__ipsrsChartReady = script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js').catch(e=>{ console.warn('Deferred Chart.js load:', e); throw e; });
     }
     catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
   })();
