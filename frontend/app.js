@@ -420,7 +420,7 @@
 
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
-    if(name === 'input' && !preserveInputMode) startCreateReportForm();
+    if(name === 'input' && !preserveInputMode) startCreateReportForm(true);
     if(name === 'dashboard'){
       // Keluar dari drill-down mengembalikan Laporan ke keadaan normal.
       window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
@@ -1236,7 +1236,7 @@
           _laporanSubTabLoaded.monitoring = false;
           _laporanSubTabLoaded.rekap = false;
           const editedId = _editingReportId;
-          startCreateReportForm();
+          startCreateReportForm(true);
           openSaveSuccessModal('Perubahan laporan berhasil disimpan (ID: ' + editedId + ').');
           goPage('laporan');
           loadReportsBySelectedMonth();
@@ -1267,7 +1267,14 @@
     syncDateTimeDisplay_();
   }
 
-  function startCreateReportForm(){
+  function startCreateReportForm(forceCreate){
+    // Jangan izinkan reset CREATE tak sengaja saat proses EDIT masih aktif.
+    // Navigasi Input normal dan reset setelah simpan memanggil forceCreate=true.
+    if(!forceCreate && _reportFormMode === 'EDIT' && _editingReportId){
+      console.warn('[EDIT] startCreateReportForm() diabaikan karena EDIT masih aktif:', _editingReportId);
+      return;
+    }
+    _editTransitionToken = null;
     _reportFormMode = 'CREATE';
     const inputPage = document.getElementById('page-input');
     if(inputPage) inputPage.classList.remove('edit-mode');
@@ -1347,6 +1354,8 @@
     const editable = canEditReport(report);
     _reportFormMode = 'EDIT';
     _editingReportId = resolvedReportId;
+    _editTransitionToken = resolvedReportId + '|' + Date.now() + '|' + Math.random().toString(36).slice(2);
+    const editTransitionToken = _editTransitionToken;
     _historyLoadedForReportId = null;
 
     // Aktifkan halaman Input EDIT terlebih dahulu agar tidak ada reset CREATE.
@@ -1380,6 +1389,15 @@
 
     // Tunggu data kategori/area/item kustom jika masih dimuat di background.
     try{ await _customDataReady; }catch(e){}
+
+    // Jika selama await terjadi navigasi/reset lain, batalkan kelanjutan EDIT
+    // agar data lama tidak masuk ke form CREATE.
+    if(_editTransitionToken !== editTransitionToken ||
+       _reportFormMode !== 'EDIT' ||
+       String(_editingReportId || '').trim() !== resolvedReportId){
+      console.warn('[EDIT] Transisi EDIT dibatalkan karena state berubah.');
+      return;
+    }
 
     // Isi data laporan SETELAH halaman Input aktif.
     document.getElementById('Tanggal').value = report.Tanggal || '';
@@ -1422,7 +1440,7 @@
 
   function closeEditModal(){
     // Kompatibilitas dengan pemanggilan lama; Edit sekarang tidak memakai modal.
-    startCreateReportForm();
+    startCreateReportForm(true);
   }
 
   // ============================================================
@@ -1882,6 +1900,7 @@ cardList.appendChild(card);
   // EDIT LAPORAN
   // ============================================================
   let _editingReportId = null;
+  let _editTransitionToken = null;
   let _reportFormMode = 'CREATE';
   let _customDataReady = Promise.resolve();
 
