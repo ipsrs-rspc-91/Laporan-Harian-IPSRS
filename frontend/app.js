@@ -25,6 +25,9 @@
   // Drill-down Dashboard -> Laporan. Hanya sebagai sinyal navigasi sementara;
   // tidak mengubah hak akses/Edit yang sudah ada.
   window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
+  // Target tab khusus drill-down Dashboard -> Belum Selesai.
+  // Nilai normal tetap "saya"; hanya drill-down ini yang diarahkan ke Daftar Laporan.
+  window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
   let statusChartInstance = null;
   let _historyLoadedForReportId = null;
   // Nilai placeholder untuk option "+ Tambah ... Baru" di dalam <select>
@@ -409,10 +412,11 @@
   const PAGE_TITLES = { dashboard:'Dashboard', input:'Input Laporan', laporan:'Laporan' };
 
   function openDashboardUnfinishedReports(){
-    // Dashboard -> Laporan: tampilkan seluruh laporan yang belum selesai
-    // sesuai konteks Dashboard, tetapi tetap memakai mode "saya" agar
-    // tombol Edit mengikuti mekanisme yang sudah ada.
+    // Dashboard -> Laporan -> Daftar Laporan:
+    // tampilkan seluruh laporan dalam scope hak akses user, lalu filter
+    // status "Belum Selesai". Laporan Saya tetap khusus laporan user login.
     window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = true;
+    window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = 'daftar';
     goPage('laporan');
   }
 
@@ -1698,8 +1702,18 @@ cardList.appendChild(card);
     _laporanSubTabLoaded.rekap = false;
     _laporanSubTabLoaded.daftar = false;
     _laporanSubTabLoaded.saya = false;
-    _laporanMode = 'saya';
-    goLaporanSubTab('saya');
+
+    // Default normal tetap Laporan Saya. Namun drill-down dari Dashboard
+    // Belum Selesai secara eksplisit meminta Daftar Laporan agar sumber data
+    // mencakup seluruh petugas sesuai hak akses backend.
+    const drilldownTarget = window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar'
+      ? 'daftar'
+      : 'saya';
+    _laporanMode = drilldownTarget;
+    goLaporanSubTab(drilldownTarget);
+
+    // Target hanya berlaku untuk satu navigasi drill-down.
+    window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
   }
 
   // ============================================================
