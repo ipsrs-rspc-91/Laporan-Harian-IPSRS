@@ -67,8 +67,8 @@
     loadingTimer=setInterval(function(){
       var timerEl=el('ipsrsLoadingTimer');
       if(!timerEl) return;
-      var seconds=Math.floor((Date.now()-loadingStartedAt)/1000);
-      timerEl.textContent=String(seconds)+' detik';
+      var seconds=(Date.now()-loadingStartedAt)/1000;
+      timerEl.textContent=seconds.toFixed(1).replace('.',',')+' detik';
     },250);
   }
 
@@ -100,7 +100,7 @@
           ?'<div class="ipsrs-loading-spinner" aria-hidden="true"><div class="ipsrs-charge-ring"></div><div class="ipsrs-lightning">⚡</div></div>'
           :'<div class="ipsrs-loading-spinner" aria-hidden="true"><div class="ipsrs-neon-bolt">⚡</div></div>'));
     o.innerHTML='<div class="ipsrs-loading-box '+modelClass+'">'+visual
-      +'<div class="ipsrs-loading-timer" id="ipsrsLoadingTimer">0 detik</div>'
+      +'<div class="ipsrs-loading-timer" id="ipsrsLoadingTimer">0,0 detik</div>'
       +'<div class="ipsrs-loading-title">'+escapeHtml(labels[name][0])+'</div>'
       +'<div class="ipsrs-loading-detail">'+escapeHtml(labels[name][1])+'</div>'
       +'</div>';
