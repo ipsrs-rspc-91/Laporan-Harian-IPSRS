@@ -1032,18 +1032,22 @@
       min.appendChild(o);
     }
 
-    // Default 12:30 dan posisikan 12 serta 30 tepat di tengah area scroll.
+    // Default tampilan 12:30, tetapi BELUM dianggap sebagai pilihan manual user.
+    // Ini penting pada Android/mobile: user tetap boleh langsung memilih 12
+    // atau 30 tanpa harus memilih angka lain terlebih dahulu.
     h.value='12';
     min.value='30';
+    _dateTimeHourSelectedByUser=false;
+    _dateTimeMinuteSelectedByUser=false;
     requestAnimationFrame(centerDateTimeDefaults_);
 
-    // onchange tidak selalu terpanggil jika user mengklik opsi yang
-    // kebetulan sudah terpilih (misalnya default 12 atau 30). Gunakan click
-    // juga agar klik langsung pada nilai default tetap dihitung sebagai pilihan.
+    // change menangani pilihan normal. click juga dipakai sebagai fallback
+    // untuk native select Android ketika user memilih nilai yang kebetulan
+    // sama dengan nilai default (12 atau 30), sehingga pilihan tetap tercatat.
     h.onchange=()=>selectDateTimeHour_(h.value);
     min.onchange=()=>selectDateTimeMinute_(min.value);
-    h.onclick=()=>selectDateTimeHour_(h.value);
-    min.onclick=()=>selectDateTimeMinute_(min.value);
+    h.addEventListener('click',()=>selectDateTimeHour_(h.value));
+    min.addEventListener('click',()=>selectDateTimeMinute_(min.value));
   }
 
   function setDateTimePickerMode_(mode){
