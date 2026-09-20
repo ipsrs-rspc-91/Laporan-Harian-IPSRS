@@ -30,6 +30,9 @@
   window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
   // Drill-down dari kartu "Belum" pada Daftar Laporan.
   window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
+  // Penanda navigasi internal agar drill-down Dashboard tidak di-reset
+  // sebelum loader sempat menerapkan filter "Belum Selesai".
+  window.__IPSRS_LAPORAN_INTERNAL_NAV = false;
   let statusChartInstance = null;
   let _historyLoadedForReportId = null;
   // Nilai placeholder untuk option "+ Tambah ... Baru" di dalam <select>
@@ -248,12 +251,26 @@
     return json;
   }
 
+  function resetLaporanUnfinishedState(){
+    // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
+    window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
+    window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
+    window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
+    const statusEl = document.getElementById('FilterStatus');
+    if(statusEl) statusEl.value = '';
+  }
+
   async function authRun(fnName, ...args){
     const s = getSession();
-    if(!s){ showLoginScreen('Sesi tidak ditemukan, silakan login kembali.'); throw new Error('Belum login'); }
+    if(!s){
+      resetLaporanUnfinishedState();
+      showLoginScreen('Sesi tidak ditemukan, silakan login kembali.');
+      throw new Error('Belum login');
+    }
     const json = await gsRun(fnName, s.token, ...args);
     if(json && json.ok === false && /sesi tidak valid/i.test(json.msg||'')){
       clearSession();
+      resetLaporanUnfinishedState();
       showLoginScreen('Sesi berakhir, silakan login kembali.');
     }
     return json;
@@ -263,6 +280,9 @@
   // LOGIN / LOGOUT / PASSWORD
   // ============================================================
   function showLoginScreen(msg){
+    // Saat logout, sesi habis, atau koneksi tidak tersedia, jangan bawa
+    // filter drill-down "Belum Selesai" ke sesi/layar berikutnya.
+    resetLaporanUnfinishedState();
     const authLoading = document.getElementById('authLoading');
     if(authLoading) authLoading.classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
@@ -331,6 +351,7 @@
     // tetap dikirim, tapi berjalan di latar belakang tanpa diTUNGGU UI.
     const s = getSession();
     clearSession();
+    resetLaporanUnfinishedState();
     closeUserMenu();
     showLoginScreen('Anda sudah keluar. Silakan login kembali.');
     if(s && s.token){ gsRun('apiLogout', s.token).catch(function(e){}); }
@@ -432,8 +453,8 @@
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
     if(name === 'input' && !preserveInputMode) startCreateReportForm(true);
     if(name === 'dashboard'){
-      // Keluar dari drill-down mengembalikan Laporan ke keadaan normal.
-      window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
+      // Dashboard adalah titik keluar dari drill-down Laporan.
+      resetLaporanUnfinishedState();
       const statusFilter = document.getElementById('FilterStatus');
       if(statusFilter && statusFilter.value === '__BELUM_SELESAI__') statusFilter.value = '';
       loadDashboard();
@@ -1712,6 +1733,11 @@ cardList.appendChild(card);
   let _laporanMode = 'saya';
 
   function goLaporanSubTab(name){
+    // Klik manual menu/submenu Laporan selalu menjadi titik reset filter.
+    // Drill-down Dashboard dikecualikan hanya selama navigasi internal.
+    if(!window.__IPSRS_LAPORAN_INTERNAL_NAV){
+      resetLaporanUnfinishedState();
+    }
     const panelName = (name === 'saya' || name === 'daftar') ? 'daftar' : name;
     document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.add('hidden'));
     document.getElementById('subtab-' + panelName).classList.remove('hidden');
@@ -1747,7 +1773,12 @@ cardList.appendChild(card);
       ? 'daftar'
       : 'saya';
     _laporanMode = drilldownTarget;
-    goLaporanSubTab(drilldownTarget);
+    window.__IPSRS_LAPORAN_INTERNAL_NAV = true;
+    try{
+      goLaporanSubTab(drilldownTarget);
+    }finally{
+      window.__IPSRS_LAPORAN_INTERNAL_NAV = false;
+    }
 
     // Target hanya berlaku untuk satu navigasi drill-down.
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
@@ -2356,6 +2387,12 @@ cardList.appendChild(card);
     // loadRememberedCredentials() supaya user tinggal klik, bukan mengetik ulang.
     showLoginScreen();
   }
+
+  // Jika browser kehilangan koneksi, reset state drill-down agar setelah
+  // koneksi/session pulih aplikasi kembali ke daftar normal.
+  window.addEventListener('offline', function(){
+    resetLaporanUnfinishedState();
+  });
 
   loadRememberedCredentials();
   checkAuthAndInit();
