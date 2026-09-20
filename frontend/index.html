@@ -57,7 +57,7 @@
       await script('./dashboard-loading-v2.js?v=20260920-KA-TIMER2');
       await script('./access-visibility-fix.js?v=20260917-REPORT-FIX1');
       await script('./laporan-fast-v2.js?v=20260917-REPORT-FIX1');
-      await script('./laporan-loading-state.js?v=20260920-LIGHTNING1');
+      await script('./laporan-loading-state.js?v=20260920-LIGHTNING2');
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
       Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan]).catch(e=>console.warn('Deferred page load:',e));
