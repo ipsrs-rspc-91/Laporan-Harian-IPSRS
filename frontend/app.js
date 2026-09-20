@@ -1060,10 +1060,12 @@
     // Chrome Android dapat memperlakukan native select/option secara berbeda,
     // termasuk ketika user mengetuk nilai yang sama dengan nilai aktif.
     // Daftar tombol memberi event click yang konsisten pada touch screen.
-    renderDateTimeOptionList_(h,24,'12',selectDateTimeHour_);
-    renderDateTimeOptionList_(min,60,'30',selectDateTimeMinute_);
-    _dateTimeHourSelectedByUser=true;
-    _dateTimeMinuteSelectedByUser=true;
+    // Laporan baru tidak boleh otomatis memilih 12:30.
+    // Jam dan menit harus dipilih oleh user.
+    renderDateTimeOptionList_(h,24,null,selectDateTimeHour_);
+    renderDateTimeOptionList_(min,60,null,selectDateTimeMinute_);
+    _dateTimeHourSelectedByUser=false;
+    _dateTimeMinuteSelectedByUser=false;
     requestAnimationFrame(centerDateTimeDefaults_);
   }
 
@@ -1128,20 +1130,24 @@
     const hour=document.getElementById('datetimeHour'), minute=document.getElementById('datetimeMinute');
     const hasExistingTime=!!hm;
     const hasExistingDate=!!tanggal?.value;
-    const hourValue=hm?pad2_(hm[1]):'12';
-    const minuteValue=hm?pad2_(Math.max(0,Math.min(59,Number(hm[2])))):'30';
-    setDateTimeListValue_('datetimeHour', hourValue);
-    setDateTimeListValue_('datetimeMinute', minuteValue);
+    // Hanya laporan EDIT yang sudah memiliki waktu yang langsung dipilih.
+    // Laporan baru tetap kosong sampai user memilih Jam dan Menit.
+    if(hm){
+      const hourValue=pad2_(hm[1]);
+      const minuteValue=pad2_(Math.max(0,Math.min(59,Number(hm[2]))));
+      setDateTimeListValue_('datetimeHour', hourValue);
+      setDateTimeListValue_('datetimeMinute', minuteValue);
+    }
     // Tanggal yang tampil saat picker dibuka (tanggal laporan yang sudah ada,
     // atau hari ini untuk laporan baru) dianggap sebagai tanggal terpilih.
     // Ini sesuai dengan tanggal yang sudah terlihat/ditandai pada kalender,
     // sehingga tombol OK tidak harus didahului klik tanggal lain.
     _dateTimeDateSelectedByUser=true;
 
-    // Untuk laporan baru, 12:30 adalah default yang langsung valid.
-    // Untuk laporan EDIT, pertahankan waktu yang tersimpan sebagai valid.
-    _dateTimeHourSelectedByUser=true;
-    _dateTimeMinuteSelectedByUser=true;
+    // Valid hanya jika laporan EDIT memang memiliki waktu tersimpan.
+    // Laporan baru harus memilih Jam dan Menit terlebih dahulu.
+    _dateTimeHourSelectedByUser=hasExistingTime;
+    _dateTimeMinuteSelectedByUser=hasExistingTime;
     renderDateTimePickerCalendar_();
     document.getElementById('datetimePickerBackdrop')?.classList.remove('hidden');
     setDateTimePickerMode_('DATE');
