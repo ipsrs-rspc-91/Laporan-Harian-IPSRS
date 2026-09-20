@@ -38,18 +38,18 @@
   </div>
   <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
   <style>
-    /* Required-field indicator: soft red border only, no background color. */
+    /* Required-field indicator: softer red/pink box, clearly visible without harsh color. */
     #page-input .ipsrs-required-field {
-      border: 1px solid #e7a3a3 !important;
-      background: transparent !important;
+      border: 1px solid #e2b4b4 !important;
+      background: #fffafa !important;
     }
     #page-input .ipsrs-required-field:focus {
-      border-color: #d98c8c !important;
-      box-shadow: 0 0 0 2px rgba(217,140,140,.08) !important;
+      border-color: #cc8f8f !important;
+      box-shadow: 0 0 0 2px rgba(204,143,143,.08) !important;
     }
     #page-input .ipsrs-required-label::after {
       content: " *";
-      color: #d98c8c;
+      color: #cc8f8f;
       font-weight: 600;
     }
   </style>
