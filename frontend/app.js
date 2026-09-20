@@ -30,6 +30,9 @@
   window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
   // Drill-down dari kartu "Belum" pada Daftar Laporan.
   window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
+  // Drill-down dari kartu "Belum" saat berada di Laporan Saya.
+  // Tetap terbatas pada staff_id user yang sedang login.
+  window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN = false;
   // Penanda navigasi internal agar drill-down Dashboard tidak di-reset
   // sebelum loader sempat menerapkan filter "Belum Selesai".
   window.__IPSRS_LAPORAN_INTERNAL_NAV = false;
@@ -256,6 +259,7 @@
     window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
     window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
+    window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN = false;
     const statusEl = document.getElementById('FilterStatus');
     if(statusEl) statusEl.value = '';
   }
@@ -1597,21 +1601,33 @@
   }
 
   function openDaftarUnfinishedReports(){
-    // Kartu "Belum" pada Daftar Laporan selalu menampilkan pekerjaan yang
-    // belum selesai, tetapi tetap dalam scope data yang diizinkan backend.
+    // Saat kartu "Belum" diklik dari Laporan Saya, tetap di Laporan Saya
+    // dan tetap memakai data staff_id user yang sedang login.
+    const panel = document.getElementById('subtab-daftar');
+    const sayaAktif = panel && !panel.classList.contains('hidden') && _laporanMode === 'saya';
     const statusEl = document.getElementById('FilterStatus');
+
+    if(sayaAktif){
+      if(statusEl) statusEl.value = '__BELUM_SELESAI__';
+      window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN = true;
+      if(Array.isArray(rawData)){
+        if(typeof applyFilters === 'function') applyFilters();
+        window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN = false;
+      }else if(typeof loadReportsBySelectedMonth === 'function'){
+        loadReportsBySelectedMonth();
+      }
+      return;
+    }
+
+    // Saat kartu "Belum" diklik dari Daftar Laporan, tampilkan pekerjaan
+    // yang belum selesai dalam scope data yang diizinkan backend.
     if(statusEl) statusEl.value = '__BELUM_SELESAI__';
-
-    const daftarPanel = document.getElementById('subtab-daftar');
-    const daftarAktif = daftarPanel && !daftarPanel.classList.contains('hidden');
-
+    const daftarAktif = panel && !panel.classList.contains('hidden');
     if(daftarAktif && Array.isArray(rawData) && rawData.length){
       if(typeof applyFilters === 'function') applyFilters();
       return;
     }
 
-    // Bila kartu diklik saat tab lain aktif, pindah ke Daftar Laporan dan
-    // minta loader menerapkan filter setelah data selesai diambil.
     window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = true;
     if(typeof goLaporanSubTab === 'function') goLaporanSubTab('daftar');
   }
