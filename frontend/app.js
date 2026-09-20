@@ -1324,8 +1324,18 @@
 
     // Ambil ID laporan dari beberapa nama field backend yang mungkin dipakai.
     // report_id adalah nama kolom native REPORTS; ID dipakai oleh renderer lama.
+    const reportIdKey = Object.keys(report).find(function(k){
+      return /^(report[_ ]?id|id[_ ]?report)$/i.test(String(k).trim()) ||
+             (/report/i.test(k) && /id/i.test(k));
+    });
+
     const resolvedReportId = String(
-      report.ID ?? report.report_id ?? report.ReportID ?? report.id ?? ''
+      report.ID ??
+      report.report_id ??
+      report.ReportID ??
+      report.id ??
+      (reportIdKey ? report[reportIdKey] : '') ??
+      ''
     ).trim();
 
     if(!resolvedReportId){
