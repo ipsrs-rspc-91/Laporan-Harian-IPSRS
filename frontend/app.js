@@ -1387,11 +1387,10 @@
     });
     setStatusButtonsDisabled(!editable);
 
-    // Tunggu data kategori/area/item kustom jika masih dimuat di background.
-    try{ await _customDataReady; }catch(e){}
-
-    // Jika selama await terjadi navigasi/reset lain, batalkan kelanjutan EDIT
-    // agar data lama tidak masuk ke form CREATE.
+    // JANGAN menunggu data Kategori/Area/Item kustom di sini.
+    // Data master kustom dimuat di background dan tidak boleh menghambat
+    // pengisian laporan EDIT. Jika salah satu API master lambat, form EDIT
+    // tetap harus langsung menampilkan data laporan yang dipilih.
     if(_editTransitionToken !== editTransitionToken ||
        _reportFormMode !== 'EDIT' ||
        String(_editingReportId || '').trim() !== resolvedReportId){
@@ -1399,7 +1398,7 @@
       return;
     }
 
-    // Isi data laporan SETELAH halaman Input aktif.
+    // Isi data laporan segera setelah halaman Input aktif.
     document.getElementById('Tanggal').value = report.Tanggal || '';
     document.getElementById('Pelapor').value = report.Pelapor || '';
     document.getElementById('Pukul').value = report.Pukul || '';
@@ -2185,7 +2184,19 @@ cardList.appendChild(card);
       .then(() => {
         appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
         appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
+
+        // Jangan menghapus Item yang sedang dipilih pada form EDIT ketika
+        // data kustom selesai dimuat di background.
+        const selectedItemBeforeRefresh =
+          (_reportFormMode === 'EDIT' && document.getElementById('Item'))
+            ? document.getElementById('Item').value
+            : '';
+
         refreshItemOptions();
+
+        if(_reportFormMode === 'EDIT' && selectedItemBeforeRefresh){
+          setInputSelectValue('Item', selectedItemBeforeRefresh);
+        }
       })
       .catch(() => {});
   }
