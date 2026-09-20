@@ -161,10 +161,10 @@
 .datetime-time-option:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 @media(max-width:600px){
   .datetime-picker-backdrop{align-items:flex-end;padding:0}
-  .datetime-picker-modal{width:100%;height:82vh;max-height:82vh;border-radius:18px 18px 0 0}
+  .datetime-picker-modal{width:100%;height:88vh;max-height:88vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column}
   .datetime-picker-head.datetime-time-mode{padding:8px 20px;border-bottom:0;min-height:0}
   .datetime-picker-head.datetime-time-mode #datetimePickerTitle{display:none}
-  .datetime-picker-body{min-height:0}
+  .datetime-picker-body{display:flex;flex:1;min-height:0;height:auto}
   .datetime-calendar-pane,.datetime-time-pane{border-right:0;padding:16px 18px}
   .datetime-day{width:34px;height:34px}
   .datetime-time-pane{display:flex;flex-direction:column;min-height:0}
