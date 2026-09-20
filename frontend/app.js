@@ -1074,10 +1074,12 @@
     const calendarPane=document.getElementById('datetimeCalendarPane');
     const timePane=document.getElementById('datetimeTimePane');
     const title=document.getElementById('datetimePickerTitle');
+    const head=document.querySelector('.datetime-picker-head');
     const footerDate=document.getElementById('datetimeFooterDate');
     const footerTime=document.getElementById('datetimeFooterTime');
     if(calendarPane) calendarPane.classList.toggle('datetime-pane-hidden',_dateTimePickerMode!=='DATE');
     if(timePane) timePane.classList.toggle('datetime-pane-hidden',_dateTimePickerMode!=='TIME');
+    if(head) head.classList.toggle('datetime-time-mode',_dateTimePickerMode==='TIME');
     if(title) title.textContent=_dateTimePickerMode==='DATE'?'Pilih Tanggal':'Pilih Pukul';
     if(footerDate) footerDate.classList.toggle('datetime-footer-hidden',_dateTimePickerMode!=='DATE');
     if(footerTime) footerTime.classList.toggle('datetime-footer-hidden',_dateTimePickerMode!=='TIME');
