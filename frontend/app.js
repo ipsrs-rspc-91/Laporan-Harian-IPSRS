@@ -1236,7 +1236,7 @@
     if(!String(p.Item || '').trim()) missing.push('Item');
 
     // Tiga field ini hanya wajib jika kategori mengandung kata "baru".
-    if(/\\bbaru\\b/i.test(String(p.Kategori || ''))){
+    if(/\bbaru\b/i.test(String(p.Kategori || ''))){
       if(!String(p.SparePartUnit || '').trim()) missing.push('Spare Part / Unit');
       if(!String(p.Type || '').trim()) missing.push('Type');
       if(!String(p.Jumlah || '').trim()) missing.push('Jumlah');
