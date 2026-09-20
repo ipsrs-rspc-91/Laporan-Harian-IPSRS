@@ -68,7 +68,7 @@
       var timerEl=el('ipsrsLoadingTimer');
       if(!timerEl) return;
       var seconds=Math.floor((Date.now()-loadingStartedAt)/1000);
-      timerEl.textContent=String(seconds).padStart(2,'0')+' detik';
+      timerEl.textContent=String(seconds)+' detik';
     },250);
   }
 
