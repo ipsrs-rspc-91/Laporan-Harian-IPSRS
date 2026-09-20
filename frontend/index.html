@@ -37,6 +37,21 @@
     <main class="content"><section id="page-input" class="page active"></section><section id="page-dashboard" class="page"></section><section id="page-laporan" class="page"></section></main>
   </div>
   <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
+  <style>
+    /* Required-field indicator: clean red border only, no background color. */
+    #page-input .ipsrs-required-field {
+      border-color: #dc2626 !important;
+    }
+    #page-input .ipsrs-required-field:focus {
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 2px rgba(220,38,38,.08) !important;
+    }
+    #page-input .ipsrs-required-label::after {
+      content: " *";
+      color: #dc2626;
+      font-weight: 700;
+    }
+  </style>
   <script>
   (async function(){
     const initialMounts={loginScreen:'pages/Page_Login.html', 'page-input':'pages/Page_Input.html'};
