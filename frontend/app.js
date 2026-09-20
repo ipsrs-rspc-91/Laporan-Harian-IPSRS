@@ -1322,9 +1322,21 @@
   async function openEditModalForReport(report){
     if(!report) return;
 
+    // Ambil ID laporan dari beberapa nama field backend yang mungkin dipakai.
+    // report_id adalah nama kolom native REPORTS; ID dipakai oleh renderer lama.
+    const resolvedReportId = String(
+      report.ID ?? report.report_id ?? report.ReportID ?? report.id ?? ''
+    ).trim();
+
+    if(!resolvedReportId){
+      alert('ID laporan tidak ditemukan. Form EDIT dibatalkan agar tidak berisiko membuat duplikat.');
+      console.error('[EDIT] Report tanpa ID:', report);
+      return;
+    }
+
     const editable = canEditReport(report);
     _reportFormMode = 'EDIT';
-    _editingReportId = report.ID;
+    _editingReportId = resolvedReportId;
     _historyLoadedForReportId = null;
 
     // Aktifkan halaman Input EDIT terlebih dahulu agar tidak ada reset CREATE.
