@@ -15,39 +15,42 @@
 
 <!-- ===================== MONITORING HARIAN ===================== -->
 <div id="subtab-monitoring" class="sub-tab-panel hidden">
-  <div class="card" style="margin-bottom:var(--sp-4);">
-    <div class="filters-bar">
-      <div class="f-item">
-        <label>Bulan</label>
-        <select id="MonBulan" onchange="loadStaffMonitoring()"></select>
+  <div class="card laporan-filter-card" style="margin-bottom:var(--sp-4);">
+    <details class="laporan-filter-details">
+      <summary><span class="filter-summary-icon">☰</span><span>Filter Monitoring Harian</span><span class="filter-summary-arrow">▾</span></summary>
+      <div class="filters-bar">
+        <div class="f-item">
+          <label>Bulan</label>
+          <select id="MonBulan" onchange="loadStaffMonitoring()"></select>
+        </div>
+        <div class="f-item">
+          <label>Tanggal</label>
+          <input type="date" id="MonTanggal" onchange="loadStaffMonitoring()">
+        </div>
+        <div class="f-item">
+          <label>Status Hari Ini</label>
+          <select id="MonFilterStatus" onchange="renderStaffMonitoring()">
+            <option value="">Semua status</option>
+            <option value="SUDAH_ISI">Sudah isi</option>
+            <option value="BELUM_ISI">Belum isi</option>
+            <option value="BELUM_TERJADI">Belum terjadi</option>
+            <option value="TIDAK_WAJIB">Tidak wajib</option>
+          </select>
+        </div>
+        <div class="f-item">
+          <label>Bidang</label>
+          <select id="MonFilterBidang" onchange="renderStaffMonitoring()"><option value="">Semua bidang</option></select>
+        </div>
+        <div class="f-item">
+          <label>Shift</label>
+          <select id="MonFilterShift" onchange="renderStaffMonitoring()"><option value="">Semua shift</option></select>
+        </div>
+        <div class="f-item" style="flex:1; min-width:160px;">
+          <label>Cari Nama</label>
+          <input id="MonFilterCari" placeholder="Cari nama staf..." oninput="renderStaffMonitoring()">
+        </div>
       </div>
-      <div class="f-item">
-        <label>Tanggal</label>
-        <input type="date" id="MonTanggal" onchange="loadStaffMonitoring()">
-      </div>
-      <div class="f-item">
-        <label>Status Hari Ini</label>
-        <select id="MonFilterStatus" onchange="renderStaffMonitoring()">
-          <option value="">Semua status</option>
-          <option value="SUDAH_ISI">Sudah isi</option>
-          <option value="BELUM_ISI">Belum isi</option>
-          <option value="BELUM_TERJADI">Belum terjadi</option>
-          <option value="TIDAK_WAJIB">Tidak wajib</option>
-        </select>
-      </div>
-      <div class="f-item">
-        <label>Bidang</label>
-        <select id="MonFilterBidang" onchange="renderStaffMonitoring()"><option value="">Semua bidang</option></select>
-      </div>
-      <div class="f-item">
-        <label>Shift</label>
-        <select id="MonFilterShift" onchange="renderStaffMonitoring()"><option value="">Semua shift</option></select>
-      </div>
-      <div class="f-item" style="flex:1; min-width:160px;">
-        <label>Cari Nama</label>
-        <input id="MonFilterCari" placeholder="Cari nama staf..." oninput="renderStaffMonitoring()">
-      </div>
-    </div>
+    </details>
   </div>
 
   <div class="stat-grid" id="monSummaryGrid" style="margin-bottom:var(--sp-4);"></div>
@@ -122,6 +125,8 @@
   </div>
 
   <div class="card">
+    <details class="laporan-filter-details">
+      <summary><span class="filter-summary-icon">☰</span><span>Filter Laporan</span><span class="filter-summary-arrow">▾</span></summary>
     <div class="filters-bar">
       <div class="f-item">
         <label>Bulan</label>
@@ -164,6 +169,9 @@
         </button>
       </div>
     </div>
+
+
+    </details>
 
     <div id="msgReport" style="font-size:var(--fs-sm); color:var(--muted); font-weight:600; margin-bottom:var(--sp-2);"></div>
 
