@@ -173,7 +173,9 @@
 }
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
 .datetime-picker-footer button{min-width:110px}
-@media(max-width:600px){.datetime-picker-backdrop{align-items:flex-end;padding:0}.datetime-picker-modal{width:100%;border-radius:16px 16px 0 0}.datetime-calendar-pane,.datetime-time-pane{border-right:0;padding:18px 20px}.datetime-day{width:34px;height:34px}.datetime-time-wrap{grid-template-columns:1fr 1fr}.datetime-time-select{height:230px;font-size:20px}.datetime-selection-message{font-size:14px}}
+/* Footer layout only; mobile time-picker sizing is defined in the main mobile block above. */
+.datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
+.datetime-picker-footer button{min-width:110px}
 </style>
 <div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
   <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
