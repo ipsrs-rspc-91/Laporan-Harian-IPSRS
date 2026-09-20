@@ -1348,8 +1348,6 @@
   async function openEditModalForReport(report){
     if(!report) return;
 
-    // Ambil ID laporan dari beberapa nama field backend yang mungkin dipakai.
-    // report_id adalah nama kolom native REPORTS; ID dipakai oleh renderer lama.
     const reportIdKey = Object.keys(report).find(function(k){
       return /^(report[_ ]?id|id[_ ]?report)$/i.test(String(k).trim()) ||
              (/report/i.test(k) && /id/i.test(k));
@@ -1370,14 +1368,12 @@
       return;
     }
 
-    const editable = canEditReport(report);
     _reportFormMode = 'EDIT';
     _editingReportId = resolvedReportId;
     _editTransitionToken = resolvedReportId + '|' + Date.now() + '|' + Math.random().toString(36).slice(2);
     const editTransitionToken = _editTransitionToken;
     _historyLoadedForReportId = null;
 
-    // Aktifkan halaman Input EDIT terlebih dahulu agar tidak ada reset CREATE.
     goPage('input', true);
 
     const inputPage = document.getElementById('page-input');
@@ -1390,7 +1386,50 @@
     const history = document.getElementById('inputHistoryPanel');
 
     if(title) title.innerText = 'Edit Laporan';
-    if(desc) desc.innerText = 'Data laporan yang dipilih — periksa dan ubah bila diperlukan';
+    if(desc) desc.innerText = 'Mengambil data laporan terbaru...';
+    if(btn){ btn.innerText = 'Memuat...'; btn.classList.add('hidden'); }
+    if(note){ note.classList.add('hidden'); note.innerText = ''; }
+
+    INPUT_EDITABLE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.disabled = true;
+    });
+    setStatusButtonsDisabled(true);
+
+    setMsg('msgInput','Mengambil data laporan terbaru...');
+
+    let latest = null;
+    try{
+      const json = await authRun('apiGetReportById', resolvedReportId);
+
+      if(_editTransitionToken !== editTransitionToken ||
+         _reportFormMode !== 'EDIT' ||
+         String(_editingReportId || '').trim() !== resolvedReportId){
+        console.warn('[EDIT] Transisi EDIT dibatalkan karena state berubah.');
+        return;
+      }
+
+      if(!json || !json.ok){
+        throw new Error((json && json.msg) ? json.msg : 'Gagal mengambil data laporan terbaru.');
+      }
+
+      latest = json.data || json.report || null;
+      if(!latest){
+        throw new Error('Data laporan terbaru tidak ditemukan.');
+      }
+    }catch(err){
+      if(_editTransitionToken !== editTransitionToken) return;
+      if(title) title.innerText = 'Edit Laporan';
+      if(desc) desc.innerText = 'Gagal mengambil data laporan terbaru.';
+      setMsg('msgInput', 'Gagal memuat laporan: ' + (err && err.message ? err.message : err), true);
+      console.error('[EDIT] Gagal mengambil laporan terbaru:', err);
+      return;
+    }
+
+    const editable = canEditReport(latest);
+
+    if(title) title.innerText = 'Edit Laporan';
+    if(desc) desc.innerText = 'ID: ' + resolvedReportId + ' · Petugas: ' + (getReportField_(latest, ['Petugas','nama_snapshot','petugas']) || '-') + ' · Data terbaru dari server';
     if(btn){
       btn.innerText = 'Simpan Perubahan';
       btn.classList.toggle('hidden', !editable);
@@ -1406,38 +1445,23 @@
     });
     setStatusButtonsDisabled(!editable);
 
-    // JANGAN menunggu data Kategori/Area/Item kustom di sini.
-    // Data master kustom dimuat di background dan tidak boleh menghambat
-    // pengisian laporan EDIT. Jika salah satu API master lambat, form EDIT
-    // tetap harus langsung menampilkan data laporan yang dipilih.
-    if(_editTransitionToken !== editTransitionToken ||
-       _reportFormMode !== 'EDIT' ||
-       String(_editingReportId || '').trim() !== resolvedReportId){
-      console.warn('[EDIT] Transisi EDIT dibatalkan karena state berubah.');
-      return;
-    }
-
-    // Isi data laporan segera setelah halaman Input aktif.
-    // Backend utama mengirim legacy shape (Tanggal, Pelapor, dst.), tetapi
-    // fallback lowercase disiapkan agar EDIT tetap kompatibel bila deployment
-    // GAS yang sedang aktif mengembalikan nama kolom native.
     const editData = {
-      Tanggal: getReportField_(report, ['Tanggal','tanggal']),
-      Pelapor: getReportField_(report, ['Pelapor','pelapor']),
-      Pukul: getReportField_(report, ['Pukul','pukul']),
-      NoLK: getReportField_(report, ['NoLK','nolk','no_lk']),
-      Ruang: getReportField_(report, ['Ruang','ruang']),
-      MasalahKegiatan: getReportField_(report, ['MasalahKegiatan','masalah_kegiatan']),
-      Tindakan: getReportField_(report, ['Tindakan','tindakan']),
-      SparePartUnit: getReportField_(report, ['SparePartUnit','spare_part_unit']),
-      Type: getReportField_(report, ['Type','type']),
-      Jumlah: getReportField_(report, ['Jumlah','jumlah']),
-      Status: getReportField_(report, ['Status','status']),
-      Kategori: getReportField_(report, ['Kategori','kategori']),
-      AreaKerja: getReportField_(report, ['AreaKerja','area_kerja']),
-      Item: getReportField_(report, ['Item','item']),
-      Keterangan: getReportField_(report, ['Keterangan','keterangan']),
-      Petugas: getReportField_(report, ['Petugas','nama_snapshot','petugas'])
+      Tanggal: getReportField_(latest, ['Tanggal','tanggal']),
+      Pelapor: getReportField_(latest, ['Pelapor','pelapor']),
+      Pukul: getReportField_(latest, ['Pukul','pukul']),
+      NoLK: getReportField_(latest, ['NoLK','nolk','no_lk']),
+      Ruang: getReportField_(latest, ['Ruang','ruang']),
+      MasalahKegiatan: getReportField_(latest, ['MasalahKegiatan','masalah_kegiatan']),
+      Tindakan: getReportField_(latest, ['Tindakan','tindakan']),
+      SparePartUnit: getReportField_(latest, ['SparePartUnit','spare_part_unit']),
+      Type: getReportField_(latest, ['Type','type']),
+      Jumlah: getReportField_(latest, ['Jumlah','jumlah']),
+      Status: getReportField_(latest, ['Status','status']),
+      Kategori: getReportField_(latest, ['Kategori','kategori']),
+      AreaKerja: getReportField_(latest, ['AreaKerja','area_kerja']),
+      Item: getReportField_(latest, ['Item','item']),
+      Keterangan: getReportField_(latest, ['Keterangan','keterangan']),
+      Petugas: getReportField_(latest, ['Petugas','nama_snapshot','petugas'])
     };
 
     document.getElementById('Tanggal').value = editData.Tanggal || '';
@@ -1466,7 +1490,7 @@
       petugas.value = editData.Petugas || '';
     }
 
-    console.info('[EDIT] Data laporan dipetakan ke form:', {
+    console.info('[EDIT] Data laporan terbaru dipetakan ke form:', {
       id: resolvedReportId,
       tanggal: editData.Tanggal,
       pelapor: editData.Pelapor,
