@@ -1488,7 +1488,15 @@
 
     window.__IPSRS_REPORTS = window.__IPSRS_REPORTS || {};
     viewData.forEach(row => {
-      window.__IPSRS_REPORTS[String(row.ID)] = row;
+      // Normalisasi ID laporan dari backend. REPORTS menggunakan field report_id.
+      const resolvedReportId = String(
+        row.ID ?? row.report_id ?? row.ReportID ?? row.id ?? ''
+      ).trim();
+
+      // Simpan sebagai ID juga agar seluruh alur frontend memakai satu nama field.
+      if(resolvedReportId) row.ID = resolvedReportId;
+
+      window.__IPSRS_REPORTS[resolvedReportId] = row;
       const tr = document.createElement('tr');
       const bidangShift = row.Bidang || row.Shift || '-';
       tr.innerHTML = `
