@@ -1032,22 +1032,20 @@
       min.appendChild(o);
     }
 
-    // Default tampilan 12:30, tetapi BELUM dianggap sebagai pilihan manual user.
-    // Ini penting pada Android/mobile: user tetap boleh langsung memilih 12
-    // atau 30 tanpa harus memilih angka lain terlebih dahulu.
+    // Default 12:30. Nilai default langsung dianggap valid, sehingga
+    // pada Android user tidak dipaksa memilih angka lain terlebih dahulu
+    // hanya untuk dapat kembali ke 12 atau 30.
     h.value='12';
     min.value='30';
-    _dateTimeHourSelectedByUser=false;
-    _dateTimeMinuteSelectedByUser=false;
+    _dateTimeHourSelectedByUser=true;
+    _dateTimeMinuteSelectedByUser=true;
     requestAnimationFrame(centerDateTimeDefaults_);
 
-    // change menangani pilihan normal. click juga dipakai sebagai fallback
-    // untuk native select Android ketika user memilih nilai yang kebetulan
-    // sama dengan nilai default (12 atau 30), sehingga pilihan tetap tercatat.
+    // Gunakan property handler agar listener tidak menumpuk setiap picker
+    // dibuka. onchange tetap menangani perubahan nilai yang benar-benar
+    // dilakukan user.
     h.onchange=()=>selectDateTimeHour_(h.value);
     min.onchange=()=>selectDateTimeMinute_(min.value);
-    h.addEventListener('click',()=>selectDateTimeHour_(h.value));
-    min.addEventListener('click',()=>selectDateTimeMinute_(min.value));
   }
 
   function setDateTimePickerMode_(mode){
@@ -1138,16 +1136,12 @@
       return;
     }
 
-    // Setelah pane TIME benar-benar tampil, paksa posisi scroll kembali
-    // ke default 12:30 agar 12 dan 30 berada di tengah.
+    // Tampilkan mode waktu tanpa menimpa nilai waktu yang sudah ada.
+    // populateDateTimePickerOptions_() sudah menetapkan default 12:30 untuk
+    // laporan baru; laporan yang memiliki waktu tetap mempertahankan waktunya.
     setDateTimePickerMode_('TIME');
     requestAnimationFrame(()=>{
-      const h=document.getElementById('datetimeHour');
-      const min=document.getElementById('datetimeMinute');
-      if(h) h.value='12';
-      if(min) min.value='30';
       centerDateTimeDefaults_();
-
       // Satu frame tambahan setelah pane TIME selesai layout.
       requestAnimationFrame(centerDateTimeDefaults_);
     });
