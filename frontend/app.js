@@ -997,18 +997,10 @@
   }
 
   function centerDateTimeSelectOption_(selectEl){
-    if(!selectEl || !selectEl.options || !selectEl.options.length) return;
-    const index=selectEl.selectedIndex;
-    if(index<0) return;
-
-    // Jangan memakai option.offsetTop karena pada native <select> Chrome
-    // nilainya tidak konsisten dan dapat membuat scroll lompat ke 17/36.
-    // Gunakan tinggi baris berdasarkan total scroll area agar pilihan
-    // benar-benar berada di tengah list.
-    const rowHeight=selectEl.scrollHeight/selectEl.options.length;
-    if(!Number.isFinite(rowHeight) || rowHeight<=0) return;
-
-    const target=(index*rowHeight)-((selectEl.clientHeight-rowHeight)/2);
+    if(!selectEl) return;
+    const selected=selectEl.querySelector('.datetime-time-option.selected');
+    if(!selected) return;
+    const target=selected.offsetTop - Math.max(0,(selectEl.clientHeight-selected.offsetHeight)/2);
     const maxScroll=Math.max(0,selectEl.scrollHeight-selectEl.clientHeight);
     selectEl.scrollTop=Math.max(0,Math.min(maxScroll,target));
   }
@@ -1019,33 +1011,60 @@
     centerDateTimeSelectOption_(min);
   }
 
+  function renderDateTimeOptionList_(container, count, selectedValue, onSelect){
+    if(!container) return;
+    container.innerHTML='';
+    const frag=document.createDocumentFragment();
+    for(let i=0;i<count;i++){
+      const value=pad2_(i);
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='datetime-time-option' + (value===selectedValue ? ' selected' : '');
+      btn.dataset.value=value;
+      btn.setAttribute('role','option');
+      btn.setAttribute('aria-selected', value===selectedValue ? 'true' : 'false');
+      btn.textContent=value;
+      btn.addEventListener('click', function(){ onSelect(value); });
+      frag.appendChild(btn);
+    }
+    container.appendChild(frag);
+  }
+
+  function getDateTimeListValue_(id, fallback){
+    const el=document.getElementById(id);
+    const selected=el?.querySelector('.datetime-time-option.selected');
+    return selected ? selected.dataset.value : fallback;
+  }
+
+  function setDateTimeListValue_(id, value){
+    const el=document.getElementById(id);
+    if(!el) return;
+    const target=pad2_(Number(value));
+    el.querySelectorAll('.datetime-time-option').forEach(btn=>{
+      const selected=btn.dataset.value===target;
+      btn.classList.toggle('selected',selected);
+      btn.setAttribute('aria-selected',selected?'true':'false');
+    });
+    const selected=el.querySelector('.datetime-time-option.selected');
+    if(selected){
+      const top=selected.offsetTop - Math.max(0,(el.clientHeight-selected.offsetHeight)/2);
+      el.scrollTop=Math.max(0,Math.min(el.scrollHeight-el.clientHeight,top));
+    }
+  }
+
   function populateDateTimePickerOptions_(){
     const h=document.getElementById('datetimeHour'), min=document.getElementById('datetimeMinute');
     if(!h||!min) return;
-    h.innerHTML=''; min.innerHTML='';
-    for(let i=0;i<24;i++){
-      const o=document.createElement('option'); o.value=pad2_(i); o.textContent=pad2_(i);
-      h.appendChild(o);
-    }
-    for(let i=0;i<60;i++){
-      const o=document.createElement('option'); o.value=pad2_(i); o.textContent=pad2_(i);
-      min.appendChild(o);
-    }
 
-    // Default 12:30. Nilai default langsung dianggap valid, sehingga
-    // pada Android user tidak dipaksa memilih angka lain terlebih dahulu
-    // hanya untuk dapat kembali ke 12 atau 30.
-    h.value='12';
-    min.value='30';
+    // Native <select size="5"> sengaja tidak dipakai lagi.
+    // Chrome Android dapat memperlakukan native select/option secara berbeda,
+    // termasuk ketika user mengetuk nilai yang sama dengan nilai aktif.
+    // Daftar tombol memberi event click yang konsisten pada touch screen.
+    renderDateTimeOptionList_(h,24,'12',selectDateTimeHour_);
+    renderDateTimeOptionList_(min,60,'30',selectDateTimeMinute_);
     _dateTimeHourSelectedByUser=true;
     _dateTimeMinuteSelectedByUser=true;
     requestAnimationFrame(centerDateTimeDefaults_);
-
-    // Gunakan property handler agar listener tidak menumpuk setiap picker
-    // dibuka. onchange tetap menangani perubahan nilai yang benar-benar
-    // dilakukan user.
-    h.onchange=()=>selectDateTimeHour_(h.value);
-    min.onchange=()=>selectDateTimeMinute_(min.value);
   }
 
   function setDateTimePickerMode_(mode){
@@ -1075,27 +1094,25 @@
     if(!msg||!hour||!minute) return;
     if(_dateTimeHourSelectedByUser && _dateTimeMinuteSelectedByUser){
       msg.className='datetime-selection-message datetime-selection-ok';
-      msg.textContent='✓ Pukul telah dipilih: '+hour.value+':'+minute.value;
+      msg.textContent='✓ Pukul telah dipilih: '+getDateTimeListValue_('datetimeHour','12')+':'+getDateTimeListValue_('datetimeMinute','30');
     }else if(!_dateTimeHourSelectedByUser){
       msg.className='datetime-selection-message datetime-selection-warning';
       msg.textContent='⚠ Silakan pilih jam terlebih dahulu';
     }else{
       msg.className='datetime-selection-message datetime-selection-warning';
-      msg.innerHTML='<span class="datetime-selection-hour-ok">✓ Jam '+hour.value+' telah dipilih</span>' +
+      msg.innerHTML='<span class="datetime-selection-hour-ok">✓ Jam '+getDateTimeListValue_('datetimeHour','12')+' telah dipilih</span>' +
         '<span class="datetime-selection-minute-warning"> · Silakan pilih menit</span>';
     }
   }
 
   function selectDateTimeHour_(value){
-    const hour=document.getElementById('datetimeHour');
-    if(hour) hour.value=value;
+    setDateTimeListValue_('datetimeHour', value);
     _dateTimeHourSelectedByUser=true;
     updateDateTimePickerSelectionMessage_();
   }
 
   function selectDateTimeMinute_(value){
-    const minute=document.getElementById('datetimeMinute');
-    if(minute) minute.value=value;
+    setDateTimeListValue_('datetimeMinute', value);
     _dateTimeMinuteSelectedByUser=true;
     updateDateTimePickerSelectionMessage_();
   }
@@ -1111,8 +1128,10 @@
     const hour=document.getElementById('datetimeHour'), minute=document.getElementById('datetimeMinute');
     const hasExistingTime=!!hm;
     const hasExistingDate=!!tanggal?.value;
-    if(hour) hour.value=hm?pad2_(hm[1]):'12';
-    if(minute){const mm=hm?Number(hm[2]):30;minute.value=pad2_(Math.max(0,Math.min(59,mm)));}
+    const hourValue=hm?pad2_(hm[1]):'12';
+    const minuteValue=hm?pad2_(Math.max(0,Math.min(59,Number(hm[2])))):'30';
+    setDateTimeListValue_('datetimeHour', hourValue);
+    setDateTimeListValue_('datetimeMinute', minuteValue);
     // Tanggal yang tampil saat picker dibuka (tanggal laporan yang sudah ada,
     // atau hari ini untuk laporan baru) dianggap sebagai tanggal terpilih.
     // Ini sesuai dengan tanggal yang sudah terlihat/ditandai pada kalender,
@@ -1173,8 +1192,8 @@
         : 'Menit wajib diisi. Silakan pilih menit terlebih dahulu.');
       return;
     }
-    const hour=document.getElementById('datetimeHour')?.value||'12';
-    const minute=document.getElementById('datetimeMinute')?.value||'00';
+    const hour=getDateTimeListValue_('datetimeHour','12');
+    const minute=getDateTimeListValue_('datetimeMinute','00');
     const tanggal=_dateTimePickerDate.getFullYear()+'-'+pad2_(_dateTimePickerDate.getMonth()+1)+'-'+pad2_(_dateTimePickerDate.getDate());
     const pukul=hour+':'+minute;
     const t=document.getElementById('Tanggal'), p=document.getElementById('Pukul');
