@@ -862,11 +862,80 @@
   function pad2_(n){ return String(n).padStart(2,'0'); }
 
   function parseDateOnly_(value){
+
     const s=String(value||'').trim();
-    const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if(!s) return null;
+
+    // ISO date-time dari Google Apps Script / Google Sheets.
+    // Contoh:
+    // 2026-09-19T17:00:00.000Z
+    // dikonversi ke tanggal lokal Asia/Jakarta.
+    const isoDateTime =
+      s.match(
+        /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d+)?)?(?:Z|[+-]\\d{2}:?\\d{2})$/
+      );
+
+    if(isoDateTime){
+
+      const parsed=new Date(s);
+
+      if(Number.isNaN(parsed.getTime())){
+        return null;
+      }
+
+      const parts =
+        new Intl.DateTimeFormat(
+          'en-GB',
+          {
+            timeZone:'Asia/Jakarta',
+            year:'numeric',
+            month:'2-digit',
+            day:'2-digit'
+          }
+        ).formatToParts(parsed);
+
+      const get =
+        type =>
+          parts.find(
+            p => p.type === type
+          )?.value || '';
+
+      const year=Number(get('year'));
+      const month=Number(get('month'));
+      const day=Number(get('day'));
+
+      const d =
+        new Date(
+          year,
+          month-1,
+          day
+        );
+
+      return Number.isNaN(d.getTime())
+        ? null
+        : d;
+    }
+
+    // Format date-only normal:
+    // YYYY-MM-DD
+    const m =
+      s.match(
+        /^(\\d{4})-(\\d{2})-(\\d{2})$/
+      );
+
     if(!m) return null;
-    const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
-    return Number.isNaN(d.getTime())?null:d;
+
+    const d =
+      new Date(
+        Number(m[1]),
+        Number(m[2])-1,
+        Number(m[3])
+      );
+
+    return Number.isNaN(d.getTime())
+      ? null
+      : d;
   }
 
   function renderDateTimePickerCalendar_(){
