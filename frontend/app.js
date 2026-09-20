@@ -873,7 +873,7 @@
     // dikonversi ke tanggal lokal Asia/Jakarta.
     const isoDateTime =
       s.match(
-        /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d+)?)?(?:Z|[+-]\\d{2}:?\\d{2})$/
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/
       );
 
     if(isoDateTime){
@@ -921,7 +921,7 @@
     // YYYY-MM-DD
     const m =
       s.match(
-        /^(\\d{4})-(\\d{2})-(\\d{2})$/
+        /^(\d{4})-(\d{2})-(\d{2})$/
       );
 
     if(!m) return null;
