@@ -89,7 +89,10 @@
       }
       clearSayaStaffFilter();
     }else{
-      staff=adminStaff();
+      // Drill-down Dashboard -> Belum Selesai harus memakai Daftar Laporan
+      // tanpa filter petugas, sehingga seluruh laporan yang boleh dilihat user
+      // ikut diperiksa. Hak akses tetap ditentukan backend apiGetReports().
+      staff=dashboardDrilldown ? '' : adminStaff();
     }
 
     setMsg('msgReport','Memuat data...');
