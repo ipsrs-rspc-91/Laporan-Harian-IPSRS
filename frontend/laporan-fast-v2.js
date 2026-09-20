@@ -238,7 +238,7 @@
   // Lapisan terakhir untuk mencegah tombol Edit pada Daftar Laporan jika ada
   // renderer lain yang menambahkannya setelah render utama selesai.
   document.addEventListener('click',function(ev){
-    if(mode()!=='daftar') return;
+    if(mode()!=='daftar' || isKaIpsrs()) return;
     const btn=ev.target && ev.target.closest ? ev.target.closest('button') : null;
     if(!btn) return;
     const t=String(btn.textContent||'').toLowerCase();
