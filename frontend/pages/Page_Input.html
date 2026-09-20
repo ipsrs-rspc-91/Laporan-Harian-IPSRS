@@ -113,24 +113,26 @@
 .datetime-day:hover{background:#eff6ff}
 .datetime-day.other-month{color:#cbd5e1}
 .datetime-day.selected{background:#dcfce7;color:#166534;font-weight:800;box-shadow:inset 0 0 0 1px #86efac}
-.datetime-time-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.datetime-time-label{font-size:12px;color:var(--text-muted);margin-bottom:7px}
-.datetime-time-select{width:100%;height:180px;border:1px solid var(--border);border-radius:10px;padding:8px;font:inherit;font-size:18px;background:#fff}
-.datetime-time-select:focus{border-color:var(--primary);outline:none}
-/* Pilihan aktif jam/menit harus tetap hijau, termasuk saat select sedang fokus. */
-.datetime-time-select option:checked,
-.datetime-time-select:focus option:checked,
-.datetime-time-select option[selected]{
-  background-color:#dcfce7 !important;
-  color:#166534 !important;
-  -webkit-text-fill-color:#166534 !important;
-  text-shadow:0 0 0 #166534 !important;
-  font-weight:800 !important;
-  background-image:linear-gradient(#dcfce7,#dcfce7) !important;
-}
-.datetime-time-select option:hover{
-  background-color:#f0fdf4 !important;
-  color:#166534 !important;
+.datetime-time-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.datetime-time-label{font-size:14px;color:var(--text-muted);margin-bottom:9px;font-weight:700}
+.datetime-time-select{width:100%;height:300px;border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff;box-sizing:border-box}
+.datetime-time-list{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.datetime-time-option{display:flex;align-items:center;justify-content:center;width:100%;height:48px;min-height:48px;margin:0 0 8px;padding:0;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;color:#111827;font:inherit;font-size:20px;line-height:1;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+.datetime-time-option:last-child{margin-bottom:0}
+.datetime-time-option:hover{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.datetime-time-option:active{transform:scale(.98)}
+.datetime-time-option.selected{background:#dcfce7;color:#166534;border-color:#86efac;font-weight:800;box-shadow:inset 0 0 0 1px #86efac}
+.datetime-time-option:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media(max-width:600px){
+  .datetime-picker-backdrop{align-items:flex-end;padding:0}
+  .datetime-picker-modal{width:100%;max-height:94vh;border-radius:18px 18px 0 0}
+  .datetime-picker-body{min-height:0}
+  .datetime-calendar-pane,.datetime-time-pane{border-right:0;padding:16px 18px}
+  .datetime-day{width:34px;height:34px}
+  .datetime-time-wrap{grid-template-columns:1fr 1fr;gap:14px}
+  .datetime-time-select{height:330px;padding:9px}
+  .datetime-time-option{height:52px;min-height:52px;margin-bottom:9px;font-size:21px;border-radius:12px}
+  .datetime-selection-message{font-size:14px;margin-top:12px;padding:11px 12px}
 }
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
 .datetime-picker-footer button{min-width:110px}
