@@ -165,11 +165,13 @@
   .datetime-picker-body{min-height:0}
   .datetime-calendar-pane,.datetime-time-pane{border-right:0;padding:16px 18px}
   .datetime-day{width:34px;height:34px}
-  .datetime-time-wrap{grid-template-columns:1fr 1fr;gap:14px}
-  .datetime-time-select{height:330px;padding:10px}
-  .datetime-time-list{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:40px;gap:6px}
+  .datetime-time-pane{display:flex;flex-direction:column;min-height:0}
+  .datetime-time-wrap{grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0;align-items:stretch}
+  .datetime-time-wrap > div{display:flex;flex-direction:column;min-height:0}
+  .datetime-time-select{height:auto;padding:10px;flex:1;min-height:0}
+  .datetime-time-list{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr;gap:6px;overflow:visible;height:100%;min-height:0}
   .datetime-time-list#datetimeMinute{grid-template-columns:repeat(5,minmax(0,1fr))}
-  .datetime-time-option{height:40px;min-height:40px;font-size:18px;border-radius:9px}
+  .datetime-time-option{height:auto;min-height:0;font-size:18px;border-radius:9px}
   .datetime-selection-message{font-size:14px;margin-top:12px;padding:11px 12px}
 }
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
