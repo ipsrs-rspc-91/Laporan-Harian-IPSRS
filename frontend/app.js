@@ -975,7 +975,8 @@
       msg.textContent='⚠ Silakan pilih jam terlebih dahulu';
     }else{
       msg.className='datetime-selection-message datetime-selection-warning';
-      msg.textContent='✓ Jam telah dipilih, silakan pilih menit';
+      msg.innerHTML='<span class="datetime-selection-hour-ok">✓ Jam '+hour.value+' telah dipilih</span>' +
+        '<span class="datetime-selection-minute-warning"> · Silakan pilih menit</span>';
     }
   }
 
