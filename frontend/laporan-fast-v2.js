@@ -150,19 +150,31 @@
   }
 
   // -------------------------------------------------------------------
-  // DAFTAR LAPORAN = READ ONLY
-  // Pasang wrapper secara deterministik. app.js sudah dimuat sebelum file ini,
-  // tetapi wrapper juga diverifikasi melalui MutationObserver agar tetap aman
-  // bila urutan mount halaman berubah di kemudian hari.
+  // DAFTAR LAPORAN — EDIT KHUSUS KA IPSRS
+  // Renderer utama app.js tetap dipakai. Saat tab Daftar aktif, tombol Edit
+  // hanya dipertahankan untuk KA IPSRS; peran lain tetap read-only di UI.
+  // Detail laporan baru diambil oleh openEditModalForReport() setelah tombol
+  // Edit diklik (on-demand), sehingga tidak menambah request saat daftar dibuka.
   // -------------------------------------------------------------------
+  function isKaIpsrs(){
+    try{
+      const s=typeof getSession==='function' ? getSession() : null;
+      return !!(s && String(s.role||'').trim().toUpperCase()==='KA_IPSRS');
+    }catch(e){ return false; }
+  }
+
   function installRendererPolicy(){
-    if(rendererWrapped || typeof window.renderReportTable !== 'function') return;
+    if(rendererWrapped || typeof window.renderReportTable!=='function') return;
 
     const originalRenderReportTable=window.renderReportTable;
     window.renderReportTable=function(viewData){
       originalRenderReportTable.apply(this,arguments);
 
       if(mode()!=='daftar') return;
+
+      // KA IPSRS: pertahankan tombol Edit dari renderer utama.
+      // User lain: Daftar Laporan tetap read-only.
+      if(isKaIpsrs()) return;
 
       const tbody=document.getElementById('reportTableBody');
       if(tbody){
