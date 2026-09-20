@@ -1118,8 +1118,11 @@
     // Ini sesuai dengan tanggal yang sudah terlihat/ditandai pada kalender,
     // sehingga tombol OK tidak harus didahului klik tanggal lain.
     _dateTimeDateSelectedByUser=true;
-    _dateTimeHourSelectedByUser=hasExistingTime;
-    _dateTimeMinuteSelectedByUser=hasExistingTime;
+
+    // Untuk laporan baru, 12:30 adalah default yang langsung valid.
+    // Untuk laporan EDIT, pertahankan waktu yang tersimpan sebagai valid.
+    _dateTimeHourSelectedByUser=true;
+    _dateTimeMinuteSelectedByUser=true;
     renderDateTimePickerCalendar_();
     document.getElementById('datetimePickerBackdrop')?.classList.remove('hidden');
     setDateTimePickerMode_('DATE');
