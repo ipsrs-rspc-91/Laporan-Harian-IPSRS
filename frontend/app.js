@@ -1223,14 +1223,49 @@
     return payload;
   }
 
+  function getMissingRequiredFields(p){
+    const missing = [];
+    if(!String(p.Tanggal || '').trim()) missing.push('Tanggal');
+    if(!String(p.Pukul || '').trim()) missing.push('Jam');
+    if(!String(p.Ruang || '').trim()) missing.push('Ruangan');
+    if(!String(p.MasalahKegiatan || '').trim()) missing.push('Masalah/Kegiatan');
+    if(!String(p.Tindakan || '').trim()) missing.push('Tindakan');
+    if(!String(p.Status || '').trim()) missing.push('Status');
+    if(!String(p.Kategori || '').trim()) missing.push('Kategori');
+    if(!String(p.AreaKerja || '').trim()) missing.push('Area Kerja');
+    if(!String(p.Item || '').trim()) missing.push('Item');
+
+    // Tiga field ini hanya wajib jika kategori mengandung kata "baru".
+    if(/\\bbaru\\b/i.test(String(p.Kategori || ''))){
+      if(!String(p.SparePartUnit || '').trim()) missing.push('Spare Part / Unit');
+      if(!String(p.Type || '').trim()) missing.push('Type');
+      if(!String(p.Jumlah || '').trim()) missing.push('Jumlah');
+    }
+    return missing;
+  }
+
+  function openRequiredFieldsModal(fields){
+    const bg = document.getElementById('requiredFieldsModalBg');
+    const list = document.getElementById('requiredFieldsModalList');
+    if(!bg || !list) return;
+    list.innerHTML = fields.map(function(field){
+      return '<li><span class="required-modal-dot"></span><span>' +
+        String(field).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+        ' <strong>wajib diisi</strong>.</span></li>';
+    }).join('');
+    bg.classList.add('show');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeRequiredFieldsModal(){
+    const bg = document.getElementById('requiredFieldsModalBg');
+    if(bg) bg.classList.remove('show');
+    document.body.classList.remove('modal-open');
+  }
+
   function validateInputPayload(p){
-    if(!p.Tanggal) return 'Tanggal wajib diisi.';
-    if(!p.Pukul) return 'Jam wajib dipilih.';
-    if(!p.Ruang) return 'Ruang wajib diisi.';
-    if(!p.MasalahKegiatan) return 'Masalah/Kegiatan wajib diisi.';
-    if(!p.Status) return 'Status wajib dipilih.';
-    if(!p.Kategori) return 'Kategori wajib dipilih.';
-    if(!p.AreaKerja) return 'Area kerja wajib dipilih.';
+    const missing = getMissingRequiredFields(p);
+    if(missing.length) return missing[0] + ' wajib diisi.';
     // Jaga-jaga di frontend (validasi sesungguhnya tetap di backend, lihat
     // Reports.gs: validateReportPayload_): placeholder "+ Tambah ... Baru"
     // tidak pernah boleh lolos sebagai nilai laporan.
@@ -1242,6 +1277,12 @@
 
   async function saveData(){
     const payload = getInputPayload();
+    const missingRequired = getMissingRequiredFields(payload);
+    if(missingRequired.length){
+      openRequiredFieldsModal(missingRequired);
+      setMsg('msgInput', missingRequired[0] + ' wajib diisi.', true);
+      return;
+    }
     const err = validateInputPayload(payload);
     if(err){ setMsg('msgInput', err, true); return; }
 
