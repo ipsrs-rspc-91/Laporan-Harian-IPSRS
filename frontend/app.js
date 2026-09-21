@@ -2410,7 +2410,7 @@ cardList.appendChild(card);
     try{
       const [statsJson, monJson] = await Promise.all([
         authRun('apiDashboardStats', bulan, staffFilter),
-        authRun('apiGetStaffMonitoring')
+        authRun('apiGetStaffMonitoring', bulan, todayLocalISO())
       ]);
 
       if(monJson && monJson.ok){
