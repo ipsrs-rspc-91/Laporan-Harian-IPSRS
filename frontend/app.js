@@ -407,15 +407,11 @@
     document.getElementById('dashStaffFilterWrap').classList.remove('hidden');
     document.getElementById('dashStaffCard').classList.remove('hidden');
 
-    // Default filter Petugas = diri sendiri (bukan "Semua Petugas") supaya
-    // begitu buka tab Laporan, yang langsung tampil adalah laporan milik
-    // petugas yang login -- bukan gabungan semua orang. Tetap bisa diganti
-    // ke "Semua Petugas" kapan saja lewat panel Filter Petugas (ini cuma
-    // nilai AWAL, bukan pembatasan akses -- prinsip "semua boleh melihat
-    // semua" di atas tetap berlaku).
-    adminSelectedStaffId = CURRENT_SESSION.staff_id || '';
+    // Default Daftar Laporan = semua petugas.
+    // Pengguna tetap dapat memilih petugas tertentu melalui dropdown.
+    adminSelectedStaffId = '';
     const pill = document.getElementById('adminStaffActivePill');
-    if(pill) pill.innerText = 'Menampilkan: ' + (CURRENT_SESSION.staff_id||'-') + ' - ' + nama;
+    if(pill) pill.innerText = 'Menampilkan: Semua Petugas';
   }
 
   function canEditReport(report){
@@ -2223,30 +2219,33 @@ cardList.appendChild(card);
         ADMIN_STAFF_LIST = (json.data || []).filter(st =>
   String(st.status || '').trim().toLowerCase() === 'aktif'
 );
-        renderAdminStaffGrid();
+        renderAdminStaffSelect();
         renderDashStaffSelect();
       }
     }catch(e){}
   }
+  function renderAdminStaffSelect(){
+    const sel = document.getElementById('adminStaffSelect');
+    if(!sel) return;
+    const current = adminSelectedStaffId || '';
+    sel.innerHTML = '<option value="">Semua Petugas</option>';
+    ADMIN_STAFF_LIST.forEach(st => {
+      const opt = document.createElement('option');
+      opt.value = st.staff_id;
+      opt.innerText = st.staff_id + ' - ' + (st.nama||'') + ' (' + (st.total_laporan||0) + ' laporan)';
+      sel.appendChild(opt);
+    });
+    sel.value = current;
+  }
+
+  // Dipertahankan untuk kompatibilitas struktur lama; panel Daftar Laporan
+  // sekarang menggunakan dropdown agar ringkas di HP.
   function renderAdminStaffGrid(){
     const grid = document.getElementById('adminStaffGrid');
     if(!grid) return;
     grid.innerHTML = '';
-    const allChip = document.createElement('div');
-    allChip.className = 'staff-chip' + (adminSelectedStaffId==='' ? ' active' : '');
-    allChip.innerHTML = '<div><div class="sc-name">Semua Petugas</div><div class="sc-meta">Gabungan seluruh laporan</div></div>';
-    allChip.onclick = () => selectAdminStaff('');
-    grid.appendChild(allChip);
-
-    ADMIN_STAFF_LIST.forEach(st => {
-      const chip = document.createElement('div');
-      chip.className = 'staff-chip' + (adminSelectedStaffId===st.staff_id ? ' active' : '');
-      const ctx = (st.role_label||st.role||'-') + (st.bidang ? ' \u00b7 ' + st.bidang : '') + (st.shift ? ' \u00b7 ' + st.shift : '');
-      chip.innerHTML = `<div><div class="sc-name">${escapeHtml(st.staff_id)} &mdash; ${escapeHtml(st.nama||'')}</div><div class="sc-meta">${escapeHtml(ctx)}</div></div><div class="sc-count">${st.total_laporan||0}</div>`;
-      chip.onclick = () => selectAdminStaff(st.staff_id);
-      grid.appendChild(chip);
-    });
   }
+
   function renderDashStaffSelect(){
     const sel = document.getElementById('DashStaff');
     if(!sel) return;
@@ -2273,7 +2272,7 @@ cardList.appendChild(card);
         pill.innerText = 'Menampilkan: ' + staffId + (st ? ' - ' + st.nama : '');
       }
     }
-    renderAdminStaffGrid();
+    renderAdminStaffSelect();
     const dashSel = document.getElementById('DashStaff');
     if(dashSel) dashSel.value = staffId;
     applyFilters();
