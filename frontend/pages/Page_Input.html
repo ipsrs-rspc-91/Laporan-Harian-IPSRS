@@ -225,13 +225,39 @@
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
 .datetime-picker-footer button{min-width:110px}
 
-  /* Desktop: modal waktu tampil penuh tanpa scroll internal. */
+  /* Desktop: modal waktu tampil penuh tanpa scroll internal.
+     Grid dipadatkan sedikit agar seluruh menit 00-59 + footer tetap masuk
+     pada layar desktop yang lebih pendek. */
   @media (min-width: 769px){
     .datetime-picker-modal.datetime-time-mode{
       height:auto;
       max-height:none;
       overflow:hidden;
       touch-action:auto;
+    }
+    .datetime-picker-modal.datetime-time-mode .datetime-time-pane{
+      padding:12px 18px;
+    }
+    .datetime-picker-modal.datetime-time-mode .datetime-time-wrap{
+      gap:12px;
+    }
+    .datetime-picker-modal.datetime-time-mode .datetime-time-list{
+      grid-auto-rows:34px;
+      gap:5px;
+    }
+    .datetime-picker-modal.datetime-time-mode .datetime-time-option{
+      height:34px;
+      min-height:34px;
+      font-size:16px;
+      border-radius:8px;
+    }
+    .datetime-picker-modal.datetime-time-mode .datetime-selection-message{
+      margin-top:8px;
+      padding:8px 10px;
+      font-size:13px;
+    }
+    .datetime-picker-modal.datetime-time-mode .datetime-picker-footer{
+      padding:10px 18px;
     }
   }
 </style>
