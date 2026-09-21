@@ -197,7 +197,7 @@
   .datetime-picker-modal{width:100%;height:82vh;max-height:82vh;border-radius:28px;display:flex;flex-direction:column}
   /* Mode TANGGAL: lebih ringkas dan proporsional; mode PUKUL tetap memakai layout tinggi penuh. */
   .datetime-picker-modal:not(.datetime-time-mode){height:auto;max-height:72vh}
-  .datetime-picker-modal.datetime-time-mode{height:82vh;max-height:82vh;border-radius:28px}
+  .datetime-picker-modal.datetime-time-mode{height:min(82vh,calc(100dvh - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;border-radius:28px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y}
   .datetime-picker-modal:not(.datetime-time-mode) .datetime-picker-body{display:block;flex:none}
   .datetime-picker-modal:not(.datetime-time-mode) .datetime-calendar-pane{padding:14px 18px 10px}
   .datetime-picker-modal:not(.datetime-time-mode) .datetime-picker-footer{margin-top:0;flex-shrink:0}
