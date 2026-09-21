@@ -1018,9 +1018,19 @@
     // Menit yang paling umum digunakan ditempatkan di posisi strategis
     // agar 00, 15, 30, 45 dapat dipilih dengan cepat tanpa mencari.
     const minutePriority=['00','15','30','45'];
-    const values=(container.id==='datetimeMinute')
-      ? minutePriority.concat(Array.from({length:count},(_,i)=>pad2_(i)).filter(v=>!minutePriority.includes(v)))
-      : Array.from({length:count},(_,i)=>pad2_(i));
+    const allValues=Array.from({length:count},(_,i)=>pad2_(i));
+    let values;
+    if(container.id==='datetimeMinute'){
+      // Tempatkan 00/15/30/45 di area tengah grid agar mudah ditemukan.
+      // Semua menit lainnya tetap tersedia dan urut.
+      const normalValues=allValues.filter(v=>!minutePriority.includes(v));
+      const insertAt=Math.floor(normalValues.length/2)-3; // posisi awal baris tengah
+      values=normalValues.slice(0,insertAt)
+        .concat(minutePriority)
+        .concat(normalValues.slice(insertAt));
+    }else{
+      values=allValues;
+    }
     values.forEach(value=>{
       const btn=document.createElement('button');
       const isCommonMinute=container.id==='datetimeMinute' && minutePriority.includes(value);
