@@ -1015,18 +1015,26 @@
     if(!container) return;
     container.innerHTML='';
     const frag=document.createDocumentFragment();
-    for(let i=0;i<count;i++){
-      const value=pad2_(i);
+    // Menit yang paling umum digunakan ditempatkan di posisi strategis
+    // agar 00, 15, 30, 45 dapat dipilih dengan cepat tanpa mencari.
+    const minutePriority=['00','15','30','45'];
+    const values=(container.id==='datetimeMinute')
+      ? minutePriority.concat(Array.from({length:count},(_,i)=>pad2_(i)).filter(v=>!minutePriority.includes(v)))
+      : Array.from({length:count},(_,i)=>pad2_(i));
+    values.forEach(value=>{
       const btn=document.createElement('button');
+      const isCommonMinute=container.id==='datetimeMinute' && minutePriority.includes(value);
       btn.type='button';
-      btn.className='datetime-time-option' + (value===selectedValue ? ' selected' : '');
+      btn.className='datetime-time-option'
+        + (value===selectedValue ? ' selected' : '')
+        + (isCommonMinute ? ' datetime-minute-common' : '');
       btn.dataset.value=value;
       btn.setAttribute('role','option');
       btn.setAttribute('aria-selected', value===selectedValue ? 'true' : 'false');
       btn.textContent=value;
       btn.addEventListener('click', function(){ onSelect(value); });
       frag.appendChild(btn);
-    }
+    });
     container.appendChild(frag);
   }
 
