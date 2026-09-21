@@ -120,8 +120,13 @@
       <b style="font-size:var(--fs-base);">Filter Petugas</b>
       <div class="pill" id="adminStaffActivePill">Menampilkan: -</div>
     </div>
-    <div class="smallnote">Semua peran bisa melihat seluruh laporan. Pilih petugas untuk melihat rekap khusus miliknya, atau "Semua Petugas" untuk gabungan.</div>
-    <div class="staff-grid" id="adminStaffGrid"></div>
+    <div class="smallnote">Semua peran bisa melihat seluruh laporan. Default menampilkan gabungan semua petugas. Gunakan daftar pilihan di bawah jika ingin melihat petugas tertentu.</div>
+    <div class="admin-staff-select-wrap">
+      <label for="adminStaffSelect">Pilih Petugas</label>
+      <select id="adminStaffSelect" onchange="selectAdminStaff(this.value)">
+        <option value="">Semua Petugas</option>
+      </select>
+    </div>
   </div>
 
   <div class="card">
