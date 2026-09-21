@@ -224,6 +224,16 @@
 /* Footer layout only; mobile time-picker sizing is defined in the main mobile block above. */
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
 .datetime-picker-footer button{min-width:110px}
+
+  /* Desktop: modal waktu tampil penuh tanpa scroll internal. */
+  @media (min-width: 769px){
+    .datetime-picker-modal.datetime-time-mode{
+      height:auto;
+      max-height:none;
+      overflow:hidden;
+      touch-action:auto;
+    }
+  }
 </style>
 <div id="datetimePickerBackdrop" class="datetime-picker-backdrop hidden" onclick="if(event.target===this)closeDateTimePicker()">
   <div class="datetime-picker-modal" role="dialog" aria-modal="true" aria-labelledby="datetimePickerTitle">
