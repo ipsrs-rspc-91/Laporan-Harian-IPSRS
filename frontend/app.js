@@ -1649,6 +1649,15 @@
         return;
       }
       rawData = json.data || [];
+
+      // Jika apiListStaff belum tersedia untuk role tertentu, bangun
+      // fallback dropdown dari data laporan yang memang sudah boleh dilihat.
+      if(!Array.isArray(ADMIN_STAFF_LIST) || ADMIN_STAFF_LIST.length === 0){
+        syncAdminStaffFromReports_();
+      }else{
+        renderAdminStaffSelect();
+      }
+
       applyFilters();
     }catch(err){
       setMsg('msgReport', 'Error: ' + (err && err.message ? err.message : err), true);
@@ -2222,6 +2231,30 @@ cardList.appendChild(card);
       }
     }catch(e){}
   }
+  function syncAdminStaffFromReports_(){
+    const map = {};
+    (Array.isArray(rawData) ? rawData : []).forEach(row => {
+      const staffId = String(row.StaffID || row.staff_id || '').trim();
+      if(!staffId) return;
+      if(!map[staffId]){
+        map[staffId] = {
+          staff_id: staffId,
+          nama: row.Petugas || row.Nama || row.nama || staffId,
+          jabatan: row.Jabatan || row.jabatan || '',
+          role: row.Role || row.role || '',
+          role_label: row.RoleLabel || row.role_label || '',
+          bidang: row.Bidang || row.bidang || '',
+          shift: row.Shift || row.shift || '',
+          status: 'Aktif',
+          total_laporan: 0
+        };
+      }
+      map[staffId].total_laporan++;
+    });
+    ADMIN_STAFF_LIST = Object.keys(map).map(k => map[k]);
+    renderAdminStaffSelect();
+  }
+
   function renderAdminStaffSelect(){
     const sel = document.getElementById('adminStaffSelect');
     if(!sel) return;
