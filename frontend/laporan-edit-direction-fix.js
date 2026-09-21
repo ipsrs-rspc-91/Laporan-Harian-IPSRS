@@ -169,7 +169,11 @@
       return promise;
     };
     window.__ipsrsApiReadCacheInstalled=true;
-    window.__ipsrsClearLaporanApiCache=function(){apiCache={};};
+    window.__ipsrsClearLaporanApiCache=function(fnName, args){
+      if(!fnName){ apiCache={}; return; }
+      var key=fnName+'|'+JSON.stringify(Array.isArray(args)?args:[]);
+      delete apiCache[key];
+    };
   }
 
   function isManagement(){
