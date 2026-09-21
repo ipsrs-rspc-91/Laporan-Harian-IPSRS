@@ -2216,9 +2216,7 @@ cardList.appendChild(card);
     try{
       const json = await authRun('apiListStaff');
       if(json && json.ok){
-        ADMIN_STAFF_LIST = (json.data || []).filter(st =>
-  String(st.status || '').trim().toLowerCase() === 'aktif'
-);
+        ADMIN_STAFF_LIST = Array.isArray(json.data) ? json.data : [];
         renderAdminStaffSelect();
         renderDashStaffSelect();
       }
