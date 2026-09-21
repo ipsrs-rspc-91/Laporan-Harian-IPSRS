@@ -452,6 +452,11 @@
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
     if(name === 'input' && !preserveInputMode) startCreateReportForm(true);
+    if(name !== 'dashboard'){
+      // Batalkan secara logis request Dashboard yang masih berjalan agar
+      // response lama tidak menulis kembali ke DOM setelah pindah halaman.
+      window.__ipsrsDashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
+    }
     if(name === 'dashboard'){
       // Dashboard adalah titik keluar dari drill-down Laporan.
       resetLaporanUnfinishedState();
@@ -2403,6 +2408,11 @@ cardList.appendChild(card);
   }
 
   async function loadDashboard(){
+    // Lindungi Dashboard dari race condition: jika user klik Dashboard,
+    // ganti petugas/bulan, lalu request lama selesai belakangan, hasil lama
+    // tidak boleh menimpa KPI terbaru.
+    const dashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
+    window.__ipsrsDashboardLoadSeq = dashboardLoadSeq;
     const bulan = document.getElementById('DashBulan').value;
     // SENGAJA tidak fallback ke adminSelectedStaffId (default punya tab Laporan)
     // -- Dashboard punya pilihan sendiri lewat dropdown #DashStaff, default "Semua Petugas".
@@ -2420,6 +2430,9 @@ cardList.appendChild(card);
         authRun('apiDashboardStats', bulan, staffFilter),
         authRun('apiGetStaffMonitoring', bulan, todayLocalISO())
       ]);
+
+      // Request yang lebih baru sudah berjalan: abaikan response request lama.
+      if(dashboardLoadSeq !== window.__ipsrsDashboardLoadSeq) return;
 
       if(monJson && monJson.ok){
         // Terapkan filter petugas yang sama dengan yang dipakai statsJson, supaya
