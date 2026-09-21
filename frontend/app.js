@@ -1357,6 +1357,14 @@
         : await authRun('apiCreateReport', payload);
 
       if(json && json.ok){
+        // FIX: Laporan baru/edit membuat status "sudah isi hari ini" berubah
+        // di server, tapi cache read 30 detik di browser (laporan-edit-
+        // direction-fix.js) tidak tahu itu. Tanpa ini, tab Monitoring Harian
+        // / Rekap / Daftar bisa menampilkan status "Belum Isi" yang sudah
+        // basi selama sampai 30 detik setelah laporan tersimpan.
+        if(typeof window.__ipsrsClearLaporanApiCache === 'function'){
+          window.__ipsrsClearLaporanApiCache();
+        }
         if(isEdit){
           _laporanSubTabLoaded.monitoring = false;
           _laporanSubTabLoaded.rekap = false;
@@ -1908,6 +1916,12 @@ cardList.appendChild(card);
   async function loadStaffMonitoring(){
     const bulan = document.getElementById('MonBulan').value;
     const tanggal = document.getElementById('MonTanggal').value;
+    // FIX: samakan perilaku dengan loadDashboard() -- Monitoring Harian
+    // harus selalu membaca status terbaru, bukan hasil cache read 30 detik
+    // yang bisa tertinggal dari laporan yang baru saja masuk.
+    if(typeof window.__ipsrsClearLaporanApiCache === 'function'){
+      window.__ipsrsClearLaporanApiCache('apiGetStaffMonitoring', [bulan, tanggal]);
+    }
     setMsg('monMsg', 'Memuat data monitoring...');
     try{
       const json = await authRun('apiGetStaffMonitoring', bulan, tanggal);
@@ -2552,4 +2566,3 @@ cardList.appendChild(card);
 
   loadRememberedCredentials();
   checkAuthAndInit();
-
