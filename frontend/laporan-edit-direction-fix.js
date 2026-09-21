@@ -179,20 +179,16 @@
     }catch(e){return false;}
   }
 
-  var prefetchStarted=false;
+  // P0 PERFORMANCE FIX v20260921:
+  // Jangan melakukan prefetch beberapa API saat halaman Laporan baru tersedia.
+  // Prefetch sebelumnya menembakkan hingga 4 request backend sekaligus.
+  // Semua request tersebut mengakses GAS/Spreadsheet walaupun user belum
+  // membuka tab yang membutuhkan datanya. Cache tetap dipertahankan agar
+  // request yang benar-benar dibutuhkan dapat dibagi antar pemanggil.
+  // Data sekarang dimuat LAZY hanya ketika tab dibuka.
   function prefetchLaporanData(){
-    if(prefetchStarted||typeof authRun!=='function')return;
-    if(!ensureLaporanControls())return;
-    prefetchStarted=true;
-    var bulan=(el('FilterBulan')||{}).value||'';
-    var tanggal=(el('MonTanggal')||{}).value||'';
-    var jobs=[
-      authRun('apiGetReports',bulan,'','',''),
-      authRun('apiGetStaffMonitoring',bulan,tanggal)
-    ];
-    if(isManagement())jobs.push(authRun('apiGetMonthlyRecap',bulan));
-    if(typeof window.loadAdminStaffListIfNeeded==='function')jobs.push(authRun('apiListStaff'));
-    Promise.all(jobs).catch(function(e){console.warn('[ERR-UI-LAPORAN-PREFETCH-001] prefetchLaporanData()',e);});
+    // Compatibility shim: beberapa script lama mungkin masih memanggil nama ini.
+    return false;
   }
 
   function setLoading(name,on){
@@ -266,12 +262,11 @@
     return true;
   };
 
-  /* Prefetch immediately after Page Laporan exists. The three server calls
-     run in parallel and are shared with the tab calls through the cache. */
+  // P0: inisialisasi Laporan harus ringan. Tidak ada prefetch backend di sini.
+  // Request dilakukan lazy oleh goLaporanSubTab() ketika tab benar-benar dibuka.
   function startWhenLaporanReady(){
     if(!el('page-laporan')){setTimeout(startWhenLaporanReady,100);return;}
     refresh();
-    setTimeout(prefetchLaporanData,50);
   }
 
   installResponsiveHeaderFix();
@@ -282,5 +277,5 @@
   obs.observe(document.body,{childList:true,subtree:true});
   if(document.readyState!=='loading')startWhenLaporanReady();
   else document.addEventListener('DOMContentLoaded',startWhenLaporanReady);
-  setTimeout(function(){if(el('page-laporan'))prefetchLaporanData();},1200);
+  // Tidak ada delayed prefetch. Hindari request backend tanpa aksi user.
 })();
