@@ -343,7 +343,33 @@
   .filters-bar .f-item{ min-width:140px; }
   .filters-bar label{ margin:0 0 5px; }
 
-  .admin-staff-panel{ margin-bottom:var(--sp-4); }
+  .admin-staff-select-wrap{
+  margin-top:var(--sp-3);
+}
+.admin-staff-select-wrap label{
+  display:block;
+  margin-bottom:6px;
+  font-size:var(--fs-sm);
+  font-weight:700;
+  color:var(--text);
+}
+.admin-staff-select-wrap select{
+  width:100%;
+  min-height:46px;
+  padding:10px 12px;
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  color:var(--text);
+  font-size:var(--fs-sm);
+  font-weight:700;
+  box-sizing:border-box;
+}
+.admin-staff-select-wrap select:focus{
+  border-color:var(--primary);
+  outline:2px solid rgba(0,123,140,.12);
+}
+.admin-staff-panel{ margin-bottom:var(--sp-4); }
   .staff-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:var(--sp-2); margin-top:var(--sp-2); }
   .staff-chip{ display:flex; justify-content:space-between; align-items:center; gap:var(--sp-2); padding:10px 12px; border-radius:11px; border:1.5px solid var(--border); background:#fafcfc; cursor:pointer; transition:all .15s; }
   .staff-chip:hover{ border-color:var(--accent); }
