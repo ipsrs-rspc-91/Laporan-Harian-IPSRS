@@ -295,8 +295,7 @@
   #page-input.edit-mode input:not([type="hidden"]),
   #page-input.edit-mode select,
   #page-input.edit-mode textarea,
-  #page-input.edit-mode .datetime-combined-input,
-  #page-input.edit-mode .status-choice{
+  #page-input.edit-mode .datetime-combined-input{
     background:#fff8e7;
     border-color:#e7c76a;
   }
@@ -309,22 +308,11 @@
     cursor:not-allowed;
   }
 
-  /* Jangan mengubah warna teks status menjadi hijau/merah hanya karena
-     status terpilih; background amber tetap menjadi penanda MODE EDIT. */
-  #page-input.edit-mode .status-choice-belum.is-selected,
-  #page-input.edit-mode .status-choice-selesai.is-selected{
-    background:#fff8e7;
-    border-color:#e7c76a;
-    color:var(--text);
-    box-shadow:none;
-  }
-
   #page-input.edit-mode input:not([type="hidden"]):focus,
   #page-input.edit-mode select:focus,
   #page-input.edit-mode textarea:focus,
   #page-input.edit-mode .datetime-combined-input:focus,
-  #page-input.edit-mode .datetime-combined-input:hover,
-  #page-input.edit-mode .status-choice:focus{
+  #page-input.edit-mode .datetime-combined-input:hover{
     border-color:var(--accent);
   }
 
