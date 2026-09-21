@@ -233,15 +233,16 @@
 .datetime-picker-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
 .datetime-picker-footer button{min-width:110px}
 
-  /* Desktop: modal waktu tampil penuh tanpa scroll internal.
-     Grid dipadatkan sedikit agar seluruh menit 00-59 + footer tetap masuk
-     pada layar desktop yang lebih pendek. */
+  /* Desktop: modal waktu dibatasi tinggi viewport dan dapat di-scroll
+     agar footer Batal/OK selalu dapat dijangkau pada layar pendek. */
   @media (min-width: 769px){
     .datetime-picker-modal.datetime-time-mode{
       height:auto;
-      max-height:none;
-      overflow:hidden;
-      touch-action:auto;
+      max-height:calc(100dvh - 32px);
+      overflow-y:auto;
+      overflow-x:hidden;
+      touch-action:pan-y;
+      -webkit-overflow-scrolling:touch;
     }
     .datetime-picker-modal.datetime-time-mode .datetime-time-pane{
       padding:12px 18px;
