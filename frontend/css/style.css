@@ -300,10 +300,11 @@
     border-color:#e7c76a;
   }
 
-  /* Petugas tetap readonly, hanya warna background mengikuti mode EDIT. */
+  /* Petugas mengikuti tampilan existing Form Input:
+     tetap readonly/abu-abu, tidak ikut amber pada mode EDIT. */
   #page-input.edit-mode .readonlyPetugas{
-    background:#fff8e7 !important;
-    border-color:#e7c76a !important;
+    background:#f1f4f5 !important;
+    border-color:var(--border) !important;
     color:var(--muted) !important;
     cursor:not-allowed;
   }
