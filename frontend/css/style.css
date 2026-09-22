@@ -792,3 +792,14 @@
     font-size:12.5px;
   }
 }
+
+
+/* Dashboard — timestamp laporan terbaru */
+.recent-time{
+  margin-top:3px;
+  font-size:10.5px;
+  line-height:1.35;
+  font-weight:700;
+}
+.recent-time-work{ color:var(--primary-dark); }
+.recent-time-input{ color:var(--muted); font-weight:600; }
