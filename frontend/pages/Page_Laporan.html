@@ -41,10 +41,8 @@
           <label>Bidang</label>
           <select id="MonFilterBidang" onchange="renderStaffMonitoring()"><option value="">Semua bidang</option></select>
         </div>
-        <div class="f-item">
-          <label>Shift</label>
-          <select id="MonFilterShift" onchange="renderStaffMonitoring()"><option value="">Semua shift</option></select>
-        </div>
+        <!-- Filter "Shift" dihapus (P1 §3.6): konsep Shift sudah dihapus
+             total dari backend, filter ini tidak pernah berfungsi. -->
         <div class="f-item" style="flex:1; min-width:160px;">
           <label>Cari Nama</label>
           <input id="MonFilterCari" placeholder="Cari nama staf..." oninput="renderStaffMonitoring()">
@@ -87,7 +85,7 @@
       <div class="table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Nama</th><th>Jabatan</th><th>Bidang/Shift</th><th>Hari Isi</th><th>Hari Belum Isi</th><th>Total Transaksi</th></tr>
+            <tr><th>Nama</th><th>Jabatan</th><th>Bidang</th><th>Hari Isi</th><th>Hari Belum Isi</th><th>Total Transaksi</th></tr>
           </thead>
           <tbody id="rekapStaffBody"></tbody>
         </table>
@@ -158,10 +156,8 @@
         <label>Bidang</label>
         <select id="FilterBidang" onchange="applyFilters()"><option value="">Semua bidang</option></select>
       </div>
-      <div class="f-item">
-        <label>Shift</label>
-        <select id="FilterShift" onchange="applyFilters()"><option value="">Semua shift</option></select>
-      </div>
+      <!-- Filter "Shift" dihapus (P1 §3.6): konsep Shift sudah dihapus total
+           dari backend, filter ini tidak pernah berfungsi. -->
       <div class="f-item" style="flex:1; min-width:180px;">
         <label>Cari</label>
         <input id="FilterCari" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
@@ -198,7 +194,7 @@
             <thead>
               <tr>
                 <th>Tanggal</th><th>Pukul</th><th>Ruang</th><th>No LK</th><th>Masalah/Kegiatan</th>
-                <th>Tindakan</th><th>Petugas</th><th>Bidang/Shift</th><th>Status</th><th>Kategori</th><th>Area Kerja</th><th>Item</th><th>Aksi</th>
+                <th>Tindakan</th><th>Petugas</th><th>Bidang</th><th>Status</th><th>Kategori</th><th>Area Kerja</th><th>Item</th><th>Aksi</th>
               </tr>
             </thead>
             <tbody id="reportTableBody"></tbody>
