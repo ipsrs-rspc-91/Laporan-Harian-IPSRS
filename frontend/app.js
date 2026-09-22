@@ -23,13 +23,8 @@
     STAF: 'Staf',
     PETUGAS_SHIFT: 'Petugas Shift'
   };
-  const TRIAL_MAINTENANCE_KA_STAFF_ID = 'KAIPSRS';
-  const TRIAL_MAINTENANCE_ROLE = 'KA_IPSRS';
-  function isTrialKaIpsrs_(username){ return String(username||'').trim().toUpperCase() === TRIAL_MAINTENANCE_KA_STAFF_ID; }
-  function isTrialSessionAllowed_(session){
-    return !!session && (String(session.staff_id||'').trim().toUpperCase() === TRIAL_MAINTENANCE_KA_STAFF_ID || String(session.role||'').trim().toUpperCase() === TRIAL_MAINTENANCE_ROLE);
-  }
-  function showTrialMaintenance_(msgEl){ if(msgEl) msgEl.innerText = 'Maintenance'; }
+  function isTrialSessionAllowed_(session){ return !!session && !!session.staff_id; }
+  function showTrialMaintenance_(msgEl){ if(msgEl){} }
   let CURRENT_SESSION = null;
   let ADMIN_STAFF_LIST = [];
   let adminSelectedStaffId = '';
@@ -133,136 +128,104 @@
   }
 
   // ============================================================
-  // HTTP API WRAPPER — GitHub Pages -> Google Apps Script Web App
+  // SUPABASE API WRAPPER
   // ============================================================
-  function getApiUrl(){
-    const url = (window.IPSRS_API_URL || '').trim();
-    if(!url || /GANTI_DENGAN_URL/i.test(url)){
-      throw new Error('URL backend belum dikonfigurasi. Isi IPSRS_API_URL di config.js.');
+  function getSupabaseClient_(){
+    if(!window.IPSRS_SUPABASE_CLIENT){
+      if(!window.supabase || !window.IPSRS_SUPABASE_URL || !window.IPSRS_SUPABASE_PUBLISHABLE_KEY){
+        throw new Error('Supabase client belum siap.');
+      }
+      window.IPSRS_SUPABASE_CLIENT = window.supabase.createClient(
+        window.IPSRS_SUPABASE_URL,
+        window.IPSRS_SUPABASE_PUBLISHABLE_KEY,
+        { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
+      );
     }
-    return url;
+    return window.IPSRS_SUPABASE_CLIENT;
   }
 
-  async function gsRun(fnName, ...args){
-    const payload = {};
+  function legacyLoginUrl_(){ return window.IPSRS_API_URL || 'https://script.google.com/macros/s/AKfycbzC7caqnB_sDXgNV5sW1nKbl4m2JM22qK-zWIx_VQnI4I2icZcLldatvq9UsqMEHf1Z/exec'; }
+
+  function staffAuthEmail_(staffId){
+    return String(staffId||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'-') + (window.IPSRS_SUPABASE_EMAIL_DOMAIN || '@auth.ipsrs.local');
+  }
+
+  async function callLegacyLogin_(username,password){
+    const response=await fetch(legacyLoginUrl_(),{
+      method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'apiLogin',data:{username,password}})
+    });
+    const text=await response.text();
+    let json;
+    try{ json=JSON.parse(text); }catch(e){ throw new Error('Respons backend lama bukan JSON yang valid. HTTP '+response.status); }
+    return json;
+  }
+
+  async function gsRun(fnName,...args){
+    // apiLogin hanya dipakai sebagai jembatan migrasi akun yang BELUM
+    // terhubung ke Supabase Auth. Setelah akun terhubung, jalur ini tidak
+    // pernah dipakai lagi untuk operasi aplikasi.
+    if(fnName==='apiLogin') return callLegacyLogin_(args[0]||'',args[1]||'');
+
+    const s=getSession();
+    const token=s && s.token ? s.token : null;
+    if(!token) throw new Error('Sesi Supabase tidak ditemukan.');
+
+    const payload={};
     switch(fnName){
-      case 'apiLogin':
-        payload.username = args[0] || '';
-        payload.password = args[1] || '';
-        break;
       case 'apiLogout':
       case 'apiWhoAmI':
-      case 'apiChangePassword':
-      case 'apiGetReportHistory':
       case 'apiListStaff':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
-        if(fnName === 'apiChangePassword'){
-          payload.token = args[0] || '';
-          payload.oldPassword = args[1] || '';
-          payload.newPassword = args[2] || '';
-        }else if(fnName === 'apiGetReportHistory'){
-          payload.token = args[0] || '';
-          payload.reportId = args[1] || '';
-        }else{
-          payload.token = args[0] || '';
-        }
-        break;
+        payload.token=token; break;
+      case 'apiChangePassword':
+        payload.token=token; payload.oldPassword=args[0]||''; payload.newPassword=args[1]||''; break;
+      case 'apiGetReportHistory':
+        payload.token=token; payload.reportId=args[0]||''; break;
       case 'apiGetReportById':
-        payload.token = args[0] || '';
-        payload.reportId = args[1] || '';
-        break;
+        payload.token=token; payload.reportId=args[0]||''; break;
       case 'apiCreateReport':
-        payload.token = args[0] || '';
-        payload.payload = args[1] || {};
-        break;
+        payload.token=token; payload.payload=args[0]||{}; break;
       case 'apiGetReports':
-        payload.token = args[0] || '';
-        payload.bulan = args[1] || '';
-        payload.staffIdFilter = args[2] || null;
-        payload.bidangFilter = args[3] || null;
-        // shiftFilter dihapus (P1 §3.6) -- backend tidak pernah memprosesnya.
-        break;
+        payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; break;
       case 'apiUpdateReport':
-        payload.token = args[0] || '';
-        payload.reportId = args[1] || '';
-        payload.payload = args[2] || {};
-        break;
+        payload.token=token; payload.reportId=args[0]||''; payload.payload=args[1]||{}; break;
       case 'apiDashboardStats':
-        payload.token = args[0] || '';
-        payload.bulan = args[1] || '';
-        payload.staffIdFilter = args[2] || null;
-        payload.bidangFilter = args[3] || null;
-        // shiftFilter dihapus (P1 §3.6) -- backend tidak pernah memprosesnya.
-        break;
+        payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; break;
       case 'apiGetStaffMonitoring':
-        payload.token = args[0] || '';
-        payload.bulan = args[1] || '';
-        payload.tanggal = args[2] || '';
-        break;
+        payload.token=token; payload.bulan=args[0]||''; payload.tanggal=args[1]||''; break;
       case 'apiGetStaffDailyStatus':
-        payload.token = args[0] || '';
-        payload.staffId = args[1] || '';
-        payload.bulan = args[2] || '';
-        break;
+        payload.token=token; payload.staffId=args[0]||''; payload.bulan=args[1]||''; break;
       case 'apiGetMonthlyRecap':
-        payload.token = args[0] || '';
-        payload.bulan = args[1] || '';
-        break;
+        payload.token=token; payload.bulan=args[0]||''; break;
       case 'apiGetAuditLog':
-        payload.token = args[0] || '';
-        payload.reportId = args[1] || '';
-        break;
+        payload.token=token; payload.reportId=args[0]||''; break;
       case 'apiGetStaffReports':
-        payload.token = args[0] || '';
-        payload.staffId = args[1] || '';
-        payload.bulan = args[2] || '';
-        break;
+        payload.token=token; payload.staffId=args[0]||''; payload.bulan=args[1]||''; break;
       case 'apiGetStaffPerformance':
-        payload.token = args[0] || '';
-        payload.staffId = args[1] || '';
-        payload.bulan = args[2] || '';
-        break;
+        payload.token=token; payload.staffId=args[0]||''; payload.bulan=args[1]||''; break;
       case 'apiTambahKategori':
-        payload.token = args[0] || '';
-        payload.nama = args[1] || '';
-        payload.staticList = Array.isArray(args[2]) ? args[2] : [];
-        break;
+        payload.token=token; payload.nama=args[0]||''; payload.staticList=Array.isArray(args[1])?args[1]:[]; break;
       case 'apiTambahAreaKerja':
-        payload.token = args[0] || '';
-        payload.nama = args[1] || '';
-        payload.staticList = Array.isArray(args[2]) ? args[2] : [];
-        break;
+        payload.token=token; payload.nama=args[0]||''; payload.staticList=Array.isArray(args[1])?args[1]:[]; break;
       case 'apiGetItemKustom':
-        payload.token = args[0] || '';
-        payload.area = args[1] || '';
-        payload.nama = args[2] || '';
-        payload.existingItemsForArea = Array.isArray(args[3]) ? args[3] : [];
-        break;
+        payload.token=token; payload.area=args[0]||''; payload.nama=args[1]||''; payload.existingItemsForArea=Array.isArray(args[2])?args[2]:[]; break;
       case 'apiTambahItem':
-        payload.token = args[0] || '';
-        payload.area = args[1] || '';
-        payload.nama = args[2] || '';
-        payload.existingItemsForArea = Array.isArray(args[3]) ? args[3] : [];
-        break;
-      default:
-        throw new Error('Action API tidak dikenal: ' + fnName);
+        payload.token=token; payload.area=args[0]||''; payload.nama=args[1]||''; payload.existingItemsForArea=Array.isArray(args[2])?args[2]:[]; break;
+      default: throw new Error('Action API tidak dikenal: '+fnName);
     }
 
-    const response = await fetch(getApiUrl(), {
-      method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: fnName, data: payload })
+    const response=await fetch(window.IPSRS_SUPABASE_API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
+      body:JSON.stringify({action:fnName,data:payload})
     });
-
-    const text = await response.text();
+    const text=await response.text();
     let json;
-    try{ json = JSON.parse(text); }
-    catch(e){ throw new Error('Respons backend bukan JSON yang valid. HTTP ' + response.status); }
-    if(!response.ok && (!json || json.ok !== false)){
-      throw new Error('HTTP ' + response.status);
-    }
+    try{ json=JSON.parse(text); }catch(e){ throw new Error('Respons Supabase bukan JSON yang valid. HTTP '+response.status); }
+    if(!response.ok && (!json || json.ok!==false)) throw new Error('HTTP '+response.status);
     return json;
   }
 
@@ -312,48 +275,63 @@
     document.getElementById('appShell').classList.remove('hidden');
   }
 
-  async function performLogin(username, password, remember, msgEl, autoMode){
-    if(!isTrialKaIpsrs_(username)){
-      showTrialMaintenance_(msgEl);
-      return false;
-    }
+  async function performLogin(username,password,remember,msgEl,autoMode){
     if(!username || !password){
-      if(msgEl) msgEl.innerText = 'Username dan password wajib diisi.';
+      if(msgEl) msgEl.innerText='Username dan password wajib diisi.';
       return false;
     }
-    if(msgEl) msgEl.innerText = autoMode ? 'Masuk otomatis...' : 'Memeriksa...';
+    if(msgEl) msgEl.innerText=autoMode?'Masuk otomatis...':'Memeriksa...';
+    const client=getSupabaseClient_();
+    const email=staffAuthEmail_(username);
     try{
-      const json = await gsRun('apiLogin', username, password);
-      if(json && json.ok){
-        if(!isTrialSessionAllowed_(json)){
-          showTrialMaintenance_(msgEl);
+      // Jalur utama: Supabase Auth.
+      let signIn=await client.auth.signInWithPassword({email,password});
+      if(signIn.error){
+        // Jalur migrasi SATU KALI: verifikasi password terhadap GAS,
+        // lalu membuat akun Auth Supabase dengan password yang sama.
+        const legacy=await callLegacyLogin_(username,password);
+        if(!legacy || !legacy.ok){
+          if(msgEl) msgEl.innerText=(legacy&&legacy.msg)?legacy.msg:'Login gagal.';
+          if(autoMode) clearRememberedCredentials();
           return false;
         }
-        setSession(json);
-        if(remember){ saveRememberedCredentials(username, password); }
-        else{ clearRememberedCredentials(); }
-        if(msgEl) msgEl.innerText = '';
-        document.getElementById('loginPassword').value = '';
-        applyIdentityToUI();
-        await afterAuthReady();
-        // Tampilkan aplikasi setelah seluruh inisialisasi selesai.
-        // Sebelumnya appShell ditampilkan sebelum afterAuthReady(), sehingga
-        // user bisa klik Laporan saat inisialisasi masih berjalan.
-        // afterAuthReady() lalu memanggil goPage('input') beberapa detik
-        // kemudian dan menimpa halaman yang sedang dibuka user.
-        hideLoginScreen();
-        goPage('input');
-        return true;
-      } else {
-        if(msgEl) msgEl.innerText = (json && json.msg) ? json.msg : 'Login gagal.';
-        // Kredensial "Ingat Saya" tersimpan sudah tidak valid (mis. password
-        // diganti) -- hapus supaya tidak terus-menerus mencoba auto-login
-        // dengan kredensial yang salah setiap kali app dibuka.
-        if(autoMode) clearRememberedCredentials();
-        return false;
+        const signUp=await client.auth.signUp({email,password,options:{data:{staff_id:username}}});
+        if(signUp.error && !/already registered|user already exists/i.test(signUp.error.message||'')){
+          throw signUp.error;
+        }
+        signIn=signUp.data && signUp.data.session
+          ? {data:signUp.data,error:null}
+          : await client.auth.signInWithPassword({email,password});
+        if(signIn.error) throw signIn.error;
+        const linkToken=signIn.data.session.access_token;
+        const linkResponse=await fetch(window.IPSRS_SUPABASE_LINK_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+linkToken},
+          body:JSON.stringify({staff_id:username})
+        });
+        const linkJson=await linkResponse.json().catch(()=>null);
+        if(!linkResponse.ok || !linkJson || !linkJson.ok) throw new Error((linkJson&&linkJson.msg)||'Gagal menghubungkan akun Supabase dengan petugas.');
       }
+      const session=signIn.data.session;
+      if(!session) throw new Error('Sesi Supabase tidak terbentuk.');
+      const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},
+        body:JSON.stringify({action:'apiWhoAmI',data:{token:session.access_token}})
+      });
+      const whoJson=await who.json().catch(()=>null);
+      if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
+      setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
+      if(remember) saveRememberedCredentials(username,password); else clearRememberedCredentials();
+      if(msgEl) msgEl.innerText='';
+      document.getElementById('loginPassword').value='';
+      applyIdentityToUI();
+      await afterAuthReady();
+      hideLoginScreen();
+      goPage('input');
+      return true;
     }catch(err){
-      if(msgEl) msgEl.innerText = 'Error: ' + (err && err.message ? err.message : err);
+      if(msgEl) msgEl.innerText='Error: '+(err&&err.message?err.message:err);
       return false;
     }
   }
@@ -367,18 +345,12 @@
   }
 
   function doLogout(){
-    // PENTING: showLoginScreen() dipanggil LANGSUNG di sini (bukan setelah
-    // `await gsRun('apiLogout', ...)`) -- versi sebelumnya menunggu balasan
-    // server dulu baru mengganti layar, jadi kalau GAS sedang lambat, tombol
-    // "Keluar" terasa "tidak bereaksi" selama itu. Sesi lokal (token) dihapus
-    // dan layar login ditampilkan SEKETIKA; penghapusan baris sesi di server
-    // tetap dikirim, tapi berjalan di latar belakang tanpa diTUNGGU UI.
-    const s = getSession();
+    const client=getSupabaseClient_();
     clearSession();
     resetLaporanUnfinishedState();
     closeUserMenu();
     showLoginScreen('Anda sudah keluar. Silakan login kembali.');
-    if(s && s.token){ gsRun('apiLogout', s.token).catch(function(e){}); }
+    client.auth.signOut().catch(function(){});
   }
 
   function openPwModal(){
@@ -2574,46 +2546,31 @@ cardList.appendChild(card);
   }
 
   async function checkAuthAndInit(){
-    const s = getSession();
-    if(s && s.token){
-      if(!isTrialSessionAllowed_(s)){
-        clearSession();
-        showLoginScreen('Maintenance');
-        return;
-      }
-      CURRENT_SESSION = s;
-      try{
-        const json = await gsRun('apiWhoAmI', s.token);
-        if(json && json.ok){
-          const refreshedSession = Object.assign({}, s, json);
-          if(!isTrialSessionAllowed_(refreshedSession)){
-            clearSession();
-            showLoginScreen('Maintenance');
-            return;
-          }
-          setSession(refreshedSession);
+    const client=getSupabaseClient_();
+    try{
+      const auth=await client.auth.getSession();
+      const session=auth.data && auth.data.session;
+      if(session && session.access_token){
+        const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},
+          body:JSON.stringify({action:'apiWhoAmI',data:{token:session.access_token}})
+        });
+        const json=await who.json().catch(()=>null);
+        if(who.ok && json && json.ok){
+          setSession(Object.assign({},json,{token:session.access_token,refresh_token:session.refresh_token}));
           await afterAuthReady();
           hideLoginScreen();
           goPage('input');
           return;
-        } else {
-          clearSession();
-          showLoginScreen('Sesi berakhir, silakan login kembali.');
-          return;
         }
-      }catch(err){
-        showLoginScreen('Tidak dapat menghubungi server: ' + (err && err.message ? err.message : err));
-        return;
       }
+      clearSession();
+      showLoginScreen();
+    }catch(err){
+      clearSession();
+      showLoginScreen('Tidak dapat menghubungi Supabase: '+(err&&err.message?err.message:err));
     }
-
-    // Tidak ada sesi aktif (sessionStorage kosong/berakhir, mis. browser baru
-    // dibuka lagi). Form login tetap ditampilkan dan user WAJIB klik tombol
-    // "Masuk" sendiri -- TIDAK ADA login otomatis diam-diam lagi (dihapus atas
-    // permintaan: auto-login dianggap berisiko keamanan). Username/password
-    // "Ingat Saya" (kalau ada) tetap terisi otomatis di form oleh
-    // loadRememberedCredentials() supaya user tinggal klik, bukan mengetik ulang.
-    showLoginScreen();
   }
 
   // Jika browser kehilangan koneksi, reset state drill-down agar setelah
