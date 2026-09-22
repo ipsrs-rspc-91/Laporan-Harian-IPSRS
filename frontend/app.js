@@ -179,6 +179,8 @@
       case 'apiListStaff':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
+      case 'apiGetAccessControl':
+      case 'apiListEditPermissions':
         payload.token=token; break;
       case 'apiChangePassword':
         payload.token=token; payload.oldPassword=args[0]||''; payload.newPassword=args[1]||''; break;
@@ -214,6 +216,10 @@
         payload.token=token; payload.area=args[0]||''; payload.nama=args[1]||''; payload.existingItemsForArea=Array.isArray(args[2])?args[2]:[]; break;
       case 'apiTambahItem':
         payload.token=token; payload.area=args[0]||''; payload.nama=args[1]||''; payload.existingItemsForArea=Array.isArray(args[2])?args[2]:[]; break;
+      case 'apiSetAccessSetting':
+        payload.token=token; payload.key=args[0]||''; payload.value=args[1]||''; break;
+      case 'apiSetEditPermission':
+        payload.token=token; payload.grantedToStaffId=args[0]||''; payload.targetStaffId=args[1]||''; payload.isActive=args[2]; break;
       default: throw new Error('Action API tidak dikenal: '+fnName);
     }
 
