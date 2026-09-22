@@ -314,7 +314,7 @@
         const linkResponse=await fetch(window.IPSRS_SUPABASE_LINK_URL,{
           method:'POST',
           headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+linkToken},
-          body:JSON.stringify({staff_id:username})
+          body:JSON.stringify({staff_id:legacy.staff_id||username,username})
         });
         const linkJson=await linkResponse.json().catch(()=>null);
         if(!linkResponse.ok || !linkJson || !linkJson.ok) throw new Error((linkJson&&linkJson.msg)||'Gagal menghubungkan akun Supabase dengan petugas.');
