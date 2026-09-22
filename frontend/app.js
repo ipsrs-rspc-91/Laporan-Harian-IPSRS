@@ -2289,9 +2289,9 @@ cardList.appendChild(card);
     return ['aktif','active'].includes(status);
   }
 
-  function getStaffUsernameForFilter_(st){
-    // Prioritaskan username; fallback ke staff_id untuk data lama.
-    return String((st && (st.username || st.Username || st.staff_id)) || '').trim();
+  function getStaffNameForFilter_(st){
+    // Dropdown menampilkan nama petugas; staff_id tetap menjadi value internal.
+    return String((st && (st.nama || st.Nama || st.name || st.staff_name || st.staff_id)) || '').trim();
   }
 
   function renderAdminStaffSelect(){
@@ -2303,12 +2303,13 @@ cardList.appendChild(card);
     ADMIN_STAFF_LIST
       .filter(isActiveStaffForFilter_)
       .forEach(st => {
-        const username = getStaffUsernameForFilter_(st);
-        if(!username) return;
+        const namaPetugas = getStaffNameForFilter_(st);
+        if(!namaPetugas) return;
         const opt = document.createElement('option');
         opt.value = st.staff_id;
-        // Dropdown dibuat ringkas: tampilkan username saja.
-        opt.innerText = username;
+        // Yang terlihat di dropdown: nama petugas saja.
+        // Value internal tetap staff_id agar filter laporan tidak berubah.
+        opt.innerText = namaPetugas;
         sel.appendChild(opt);
       });
 
@@ -2350,7 +2351,7 @@ cardList.appendChild(card);
       if(!staffId) pill.innerText = 'Menampilkan: Semua Petugas';
       else{
         const st = ADMIN_STAFF_LIST.find(x => x.staff_id === staffId);
-        pill.innerText = 'Menampilkan: ' + getStaffUsernameForFilter_(st);
+        pill.innerText = 'Menampilkan: ' + getStaffNameForFilter_(st);
       }
     }
     renderAdminStaffSelect();
