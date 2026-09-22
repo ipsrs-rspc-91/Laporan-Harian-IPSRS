@@ -10,7 +10,12 @@
   // dipakai di HP/PC pribadi milik petugas sendiri, bukan perangkat bersama.
   const REMEMBER_KEY = 'ipsrs_remember_v1';
   const BIDANG_LIST = ['ME', 'Sipil', 'Workshop', 'Elektromedik', 'Kesling'];
-  const SHIFT_LIST = ['Pagi', 'Siang', 'Malam'];
+  // CATATAN (P1 §3.6): SHIFT_LIST dihapus. Konsep "Shift" sudah dihapus total
+  // dari backend (lihat komentar "TAHAP 2: Tidak ada lagi shiftFilter" di
+  // Reports.js/Api_Core.js/Api_Staff.js) -- filter Shift di UI tidak pernah
+  // mempengaruhi hasil query, murni dekorasi kosong yang membingungkan
+  // pengguna. PETUGAS_SHIFT di bawah ini tetap ada karena itu nama ROLE, bukan
+  // konsep shift kerja yang sudah dihapus.
   const ROLE_LABELS_CLIENT = {
     KA_IPSRS: 'KA IPSRS',
     ADMINISTRASI: 'Administrasi IPSRS',
@@ -169,7 +174,7 @@
         payload.bulan = args[1] || '';
         payload.staffIdFilter = args[2] || null;
         payload.bidangFilter = args[3] || null;
-        payload.shiftFilter = args[4] || null;
+        // shiftFilter dihapus (P1 §3.6) -- backend tidak pernah memprosesnya.
         break;
       case 'apiUpdateReport':
         payload.token = args[0] || '';
@@ -181,7 +186,7 @@
         payload.bulan = args[1] || '';
         payload.staffIdFilter = args[2] || null;
         payload.bidangFilter = args[3] || null;
-        payload.shiftFilter = args[4] || null;
+        // shiftFilter dihapus (P1 §3.6) -- backend tidak pernah memprosesnya.
         break;
       case 'apiGetStaffMonitoring':
         payload.token = args[0] || '';
@@ -387,7 +392,11 @@
   function roleContextLabel(session){
     const roleLabel = ROLE_LABELS_CLIENT[session.role] || session.role;
     if(session.role === 'KASIE' || session.role === 'STAF') return roleLabel + ' \u00b7 ' + (session.bidang||'-');
-    if(session.role === 'PETUGAS_SHIFT') return roleLabel + ' \u00b7 ' + (session.shift||'-');
+    // (P1 §3.6) session.shift tidak pernah ada di backend (SESSIONS tanpa
+    // kolom shift, lihat Config.js/Auth.js) -- untuk PETUGAS_SHIFT tampilkan
+    // Bidang saja, sama seperti KASIE/STAF, alih-alih field shift yang selalu
+    // kosong.
+    if(session.role === 'PETUGAS_SHIFT') return roleLabel + ' \u00b7 ' + (session.bidang||'-');
     return roleLabel;
   }
 
@@ -586,12 +595,8 @@
       opt.value = b; opt.innerText = b;
       bidangSel.appendChild(opt);
     });
-    const shiftSel = document.getElementById('FilterShift');
-    SHIFT_LIST.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s; opt.innerText = s;
-      shiftSel.appendChild(opt);
-    });
+    // Dropdown "Shift" dihapus dari HTML (P1 §3.6); tidak ada lagi elemen
+    // #FilterShift untuk diisi di sini.
 
     const monBidangSel = document.getElementById('MonFilterBidang');
     BIDANG_LIST.forEach(b => {
@@ -599,12 +604,8 @@
       opt.value = b; opt.innerText = b;
       monBidangSel.appendChild(opt);
     });
-    const monShiftSel = document.getElementById('MonFilterShift');
-    SHIFT_LIST.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s; opt.innerText = s;
-      monShiftSel.appendChild(opt);
-    });
+    // Dropdown "Shift" pada Monitoring dihapus dari HTML (P1 §3.6); tidak ada
+    // lagi elemen #MonFilterShift untuk diisi di sini.
   }
   /**
    * Kategori kustom (dibuat lewat option "+ Tambah Kategori Baru") disimpan
@@ -1683,7 +1684,8 @@
     const kategori = document.getElementById('FilterKategori').value;
     const area = document.getElementById('FilterArea').value;
     const bidang = document.getElementById('FilterBidang').value;
-    const shift = document.getElementById('FilterShift').value;
+    // Filter "Shift" dihapus (P1 §3.6) -- elemen #FilterShift tidak ada lagi
+    // di HTML, dan backend tidak pernah memproses parameter shift.
     const cari = document.getElementById('FilterCari').value.trim().toLowerCase();
 
     const viewData = rawData.filter(r => {
@@ -1693,7 +1695,6 @@
       if(kategori && r.Kategori !== kategori) return false;
       if(area && r.AreaKerja !== area) return false;
       if(bidang && r.Bidang !== bidang) return false;
-      if(shift && r.Shift !== shift) return false;
       if(adminSelectedStaffId && r.StaffID !== adminSelectedStaffId) return false;
       if(cari){
         const hay = [r.Ruang, r.MasalahKegiatan, r.Tindakan, r.Item, r.NoLK, r.Petugas].join(' ').toLowerCase();
@@ -1783,7 +1784,9 @@
 
       window.__IPSRS_REPORTS[resolvedReportId] = row;
       const tr = document.createElement('tr');
-      const bidangShift = row.Bidang || row.Shift || '-';
+      // Kolom "Bidang/Shift" (P1 §3.6): konsep Shift sudah dihapus dari
+      // backend, jadi kolom ini sekarang murni menampilkan Bidang.
+      const bidang = row.Bidang || '-';
       tr.innerHTML = `
         <td>${escapeHtml(formatTanggalDisplay(row.Tanggal))}</td>
         <td>${escapeHtml(row.Pukul)}</td>
@@ -1792,7 +1795,7 @@
         <td>${escapeHtml(row.MasalahKegiatan)}</td>
         <td>${escapeHtml(row.Tindakan)}</td>
         <td>${escapeHtml(row.Petugas)}</td>
-        <td>${escapeHtml(bidangShift)}</td>
+        <td>${escapeHtml(bidang)}</td>
         <td><span class="pill ${row.Status==='Selesai'?'success':'warning'}">${escapeHtml(row.Status)}</span></td>
         <td>${escapeHtml(row.Kategori)}</td>
         <td>${escapeHtml(row.AreaKerja)}</td>
@@ -1942,13 +1945,13 @@ cardList.appendChild(card);
   function renderStaffMonitoring(){
     const status = document.getElementById('MonFilterStatus').value;
     const bidang = document.getElementById('MonFilterBidang').value;
-    const shift = document.getElementById('MonFilterShift').value;
+    // Filter "Shift" dihapus (P1 §3.6) -- elemen #MonFilterShift tidak ada
+    // lagi di HTML, dan backend tidak pernah memproses parameter shift.
     const cari = document.getElementById('MonFilterCari').value.trim().toLowerCase();
 
     const view = _monData.filter(s => {
       if(status && s.status_hari_ini !== status) return false;
       if(bidang && s.bidang !== bidang) return false;
-      if(shift && s.shift !== shift) return false;
       if(cari && s.nama.toLowerCase().indexOf(cari) === -1) return false;
       return true;
     });
@@ -2010,7 +2013,9 @@ cardList.appendChild(card);
       const statusLabel = s.status_hari_ini === 'SUDAH_ISI' ? 'Sudah Isi'
         : (s.status_hari_ini === 'BELUM_ISI' ? 'Belum Isi'
         : (s.status_hari_ini === 'BELUM_TERJADI' ? 'Belum Terjadi' : 'Tidak Wajib'));
-      const bidangShift = s.bidang || s.shift || '-';
+      // Kartu Monitoring (P1 §3.6): konsep Shift sudah dihapus dari backend,
+      // jadi ini sekarang murni menampilkan Bidang.
+      const bidang = s.bidang || '-';
       const sdmBadge = s.status !== 'Aktif'
         ? `<span class="pill muted" style="margin-left:6px;">${escapeHtml(s.status)}</span>` : '';
       card.innerHTML = `
@@ -2023,7 +2028,7 @@ cardList.appendChild(card);
             <span class="status-dot ${dotClass}"></span>${statusLabel}
           </span>
         </div>
-        <div class="smc-meta">${escapeHtml(s.role_label)} &middot; ${escapeHtml(bidangShift)}</div>
+        <div class="smc-meta">${escapeHtml(s.role_label)} &middot; ${escapeHtml(bidang)}</div>
         <div class="smc-stats">
           <div class="smc-stat"><div class="v">${s.laporan_hari_ini}</div><div class="l">Hari Ini</div></div>
           <div class="smc-stat"><div class="v">${s.sudah_isi_hari_bulan_ini}</div><div class="l">Hari Isi</div></div>
@@ -2045,7 +2050,8 @@ cardList.appendChild(card);
   async function openStaffDetailModal(staff){
     document.getElementById('staffDetailName').innerText = staff.nama;
     document.getElementById('staffDetailMeta').innerText =
-      (staff.jabatan || staff.role_label) + ' \u00b7 ' + (staff.bidang || staff.shift || '-') + ' \u00b7 staff_id: ' + staff.staff_id;
+      // (P1 §3.6) staff.shift tidak pernah ada di backend -- tampilkan Bidang saja.
+      (staff.jabatan || staff.role_label) + ' \u00b7 ' + (staff.bidang || '-') + ' \u00b7 staff_id: ' + staff.staff_id;
     document.getElementById('staffDetailCalendar').innerHTML = '<div class="smallnote">Memuat kalender...</div>';
     document.getElementById('staffDetailReports').innerHTML = '';
     document.getElementById('staffDetailModalBg').classList.add('show');
@@ -2155,7 +2161,7 @@ cardList.appendChild(card);
         <tr>
           <td>${escapeHtml(s.nama)}</td>
           <td>${escapeHtml(s.jabatan||s.role_label)}</td>
-          <td>${escapeHtml(s.bidang||s.shift||'-')}</td>
+          <td>${escapeHtml(s.bidang||'-')}</td>
           <td>${s.sudah_isi_hari_bulan_ini}</td>
           <td>${s.belum_isi_hari_bulan_ini}</td>
           <td>${s.total_transaksi_bulan_ini}</td>
@@ -2263,7 +2269,7 @@ cardList.appendChild(card);
           role: row.Role || row.role || '',
           role_label: row.RoleLabel || row.role_label || '',
           bidang: row.Bidang || row.bidang || '',
-          shift: row.Shift || row.shift || '',
+          // shift dihapus (P1 §3.6) -- field ini tidak pernah dikirim backend.
           status: 'Aktif',
           total_laporan: 0
         };
