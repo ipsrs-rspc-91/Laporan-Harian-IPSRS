@@ -1,2 +1,7 @@
-// Isi URL Web App Apps Script setelah deployment. Jangan masukkan credential/token di sini.
-window.IPSRS_API_URL = 'https://script.google.com/macros/s/AKfycbzC7caqnB_sDXgNV5sW1nKbl4m2JM22qK-zWIx_VQnI4I2icZcLldatvq9UsqMEHf1Z/exec';
+// Supabase public configuration. Publishable key is safe for browser use when RLS/auth is enforced.
+window.IPSRS_SUPABASE_URL = 'https://tcrmlhfsroyhaxdfwyll.supabase.co';
+window.IPSRS_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_TtDuzNo7h_668fq_7x4Sog_ZvYcFgmq';
+window.IPSRS_SUPABASE_API_URL = window.IPSRS_SUPABASE_URL + '/functions/v1/ipsrs-api';
+window.IPSRS_SUPABASE_BOOTSTRAP_URL = window.IPSRS_SUPABASE_URL + '/functions/v1/ipsrs-legacy-bootstrap';
+window.IPSRS_SUPABASE_LINK_URL = window.IPSRS_SUPABASE_URL + '/functions/v1/ipsrs-link-account';
+window.IPSRS_SUPABASE_EMAIL_DOMAIN = '@auth.ipsrs.local';
