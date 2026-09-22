@@ -23,6 +23,13 @@
     STAF: 'Staf',
     PETUGAS_SHIFT: 'Petugas Shift'
   };
+  const TRIAL_MAINTENANCE_KA_STAFF_ID = 'KAIPSRS';
+  const TRIAL_MAINTENANCE_ROLE = 'KA_IPSRS';
+  function isTrialKaIpsrs_(username){ return String(username||'').trim().toUpperCase() === TRIAL_MAINTENANCE_KA_STAFF_ID; }
+  function isTrialSessionAllowed_(session){
+    return !!session && (String(session.staff_id||'').trim().toUpperCase() === TRIAL_MAINTENANCE_KA_STAFF_ID || String(session.role||'').trim().toUpperCase() === TRIAL_MAINTENANCE_ROLE);
+  }
+  function showTrialMaintenance_(msgEl){ if(msgEl) msgEl.innerText = 'Maintenance'; }
   let CURRENT_SESSION = null;
   let ADMIN_STAFF_LIST = [];
   let adminSelectedStaffId = '';
@@ -306,6 +313,10 @@
   }
 
   async function performLogin(username, password, remember, msgEl, autoMode){
+    if(!isTrialKaIpsrs_(username)){
+      showTrialMaintenance_(msgEl);
+      return false;
+    }
     if(!username || !password){
       if(msgEl) msgEl.innerText = 'Username dan password wajib diisi.';
       return false;
@@ -314,6 +325,10 @@
     try{
       const json = await gsRun('apiLogin', username, password);
       if(json && json.ok){
+        if(!isTrialSessionAllowed_(json)){
+          showTrialMaintenance_(msgEl);
+          return false;
+        }
         setSession(json);
         if(remember){ saveRememberedCredentials(username, password); }
         else{ clearRememberedCredentials(); }
@@ -2561,11 +2576,22 @@ cardList.appendChild(card);
   async function checkAuthAndInit(){
     const s = getSession();
     if(s && s.token){
+      if(!isTrialSessionAllowed_(s)){
+        clearSession();
+        showLoginScreen('Maintenance');
+        return;
+      }
       CURRENT_SESSION = s;
       try{
         const json = await gsRun('apiWhoAmI', s.token);
         if(json && json.ok){
-          setSession(Object.assign({}, s, json));
+          const refreshedSession = Object.assign({}, s, json);
+          if(!isTrialSessionAllowed_(refreshedSession)){
+            clearSession();
+            showLoginScreen('Maintenance');
+            return;
+          }
+          setSession(refreshedSession);
           await afterAuthReady();
           hideLoginScreen();
           goPage('input');
