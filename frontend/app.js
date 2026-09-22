@@ -534,6 +534,60 @@
     return text;
   }
 
+  // ============================================================
+  // WAKTU LAPORAN — tanggal/jam pekerjaan vs waktu input ke sistem
+  // ============================================================
+  function getReportCreatedAt_(row){
+    if(!row) return '';
+    return row.CreatedAt ?? row.created_at ?? row.CreatedAtServer ??
+      row.created_at_server ?? row.InputAt ?? row.input_at ??
+      row.WaktuInput ?? row.waktu_input ?? row.TanggalInput ?? row.tanggal_input ?? '';
+  }
+
+  function formatPukulDisplay_(value){
+    if(value === undefined || value === null || value === '') return '';
+    const text=String(value).trim().replace('.', ':');
+    const m=text.match(/^(\d{1,2}):(\d{2})/);
+    return m ? String(m[1]).padStart(2,'0')+':'+m[2] : text;
+  }
+
+  function formatDateTimeDisplay_(value){
+    if(value === undefined || value === null || value === '') return '';
+    const text=String(value).trim();
+
+    const iso=text.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/);
+    if(iso){
+      const d=new Date(text);
+      if(!Number.isNaN(d.getTime())){
+        const parts=new Intl.DateTimeFormat('en-GB',{
+          timeZone:'Asia/Jakarta', day:'2-digit', month:'2-digit',
+          year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false
+        }).formatToParts(d);
+        const get=t=>parts.find(p=>p.type===t)?.value||'';
+        return get('day')+'/'+get('month')+'/'+get('year')+' • '+get('hour')+':'+get('minute');
+      }
+    }
+
+    let m=text.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    if(m) return m[3]+'/'+m[2]+'/'+m[1]+' • '+m[4]+':'+m[5];
+
+    m=text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})[ T](\d{1,2}):(\d{2})/);
+    if(m) return String(m[1]).padStart(2,'0')+'/'+String(m[2]).padStart(2,'0')+'/'+m[3]+' • '+String(m[4]).padStart(2,'0')+':'+m[5];
+
+    return text;
+  }
+
+  function formatWorkDateTime_(row){
+    const date=formatTanggalDisplay(row && row.Tanggal);
+    const time=formatPukulDisplay_(row && row.Pukul);
+    if(date && time) return date+' • '+time;
+    return date || time || '-';
+  }
+
+  function formatInputDateTime_(row){
+    return formatDateTimeDisplay_(getReportCreatedAt_(row)) || '-';
+  }
+
   function buildMonthOptions(){
     const now = new Date();
     const opts = [];
@@ -1788,8 +1842,8 @@
       // backend, jadi kolom ini sekarang murni menampilkan Bidang.
       const bidang = row.Bidang || '-';
       tr.innerHTML = `
-        <td>${escapeHtml(formatTanggalDisplay(row.Tanggal))}</td>
-        <td>${escapeHtml(row.Pukul)}</td>
+        <td class="report-work-datetime"><span class="report-datetime-main">${escapeHtml(formatWorkDateTime_(row))}</span></td>
+        <td class="report-input-datetime"><span class="report-datetime-main">${escapeHtml(formatInputDateTime_(row))}</span></td>
         <td>${escapeHtml(row.Ruang)}</td>
         <td>${escapeHtml(row.NoLK)}</td>
         <td>${escapeHtml(row.MasalahKegiatan)}</td>
@@ -1821,14 +1875,23 @@ card.className = 'rcard';
 card.innerHTML = `
   <div class="rc-top">
     <div class="rc-title">
-      <span class="rc-date">${escapeHtml(formatTanggalDisplay(row.Tanggal))}</span>
-      <span class="rc-separator" aria-hidden="true"></span>
       <span class="rc-room">${escapeHtml(row.Ruang)}</span>
     </div>
 
     <span class="pill ${row.Status === 'Selesai' ? 'success' : 'warning'}">
       ${escapeHtml(row.Status)}
     </span>
+  </div>
+
+  <div class="rc-datetime-grid">
+    <div class="rc-datetime-item rc-datetime-work">
+      <span class="rc-datetime-label">📅 Pekerjaan</span>
+      <span class="rc-datetime-value">${escapeHtml(formatWorkDateTime_(row))}</span>
+    </div>
+    <div class="rc-datetime-item rc-datetime-input">
+      <span class="rc-datetime-label">🕘 Diinput ke sistem</span>
+      <span class="rc-datetime-value">${escapeHtml(formatInputDateTime_(row))}</span>
+    </div>
   </div>
 
   <div class="rc-line">
