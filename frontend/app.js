@@ -2280,18 +2280,43 @@ cardList.appendChild(card);
     renderAdminStaffSelect();
   }
 
+  function isActiveStaffForFilter_(st){
+    // Hanya petugas aktif yang boleh muncul di dropdown Daftar Laporan.
+    // Status yang tidak dikenal tetap dipertahankan untuk kompatibilitas
+    // dengan data lama yang belum memiliki kolom status.
+    const status = String(st && st.status || '').trim().toLowerCase();
+    if(!status) return true;
+    return ['aktif','active'].includes(status);
+  }
+
+  function getStaffUsernameForFilter_(st){
+    // Prioritaskan username; fallback ke staff_id untuk data lama.
+    return String((st && (st.username || st.Username || st.staff_id)) || '').trim();
+  }
+
   function renderAdminStaffSelect(){
     const sel = document.getElementById('adminStaffSelect');
     if(!sel) return;
     const current = adminSelectedStaffId || '';
     sel.innerHTML = '<option value="">Semua Petugas</option>';
-    ADMIN_STAFF_LIST.forEach(st => {
-      const opt = document.createElement('option');
-      opt.value = st.staff_id;
-      opt.innerText = st.staff_id + ' - ' + (st.nama||'') + ' (' + (st.total_laporan||0) + ' laporan)';
-      sel.appendChild(opt);
-    });
-    sel.value = current;
+
+    ADMIN_STAFF_LIST
+      .filter(isActiveStaffForFilter_)
+      .forEach(st => {
+        const username = getStaffUsernameForFilter_(st);
+        if(!username) return;
+        const opt = document.createElement('option');
+        opt.value = st.staff_id;
+        // Dropdown dibuat ringkas: tampilkan username saja.
+        opt.innerText = username;
+        sel.appendChild(opt);
+      });
+
+    // Jika petugas yang sebelumnya dipilih sudah tidak aktif, kembalikan
+    // pilihan ke Semua Petugas agar tidak tersisa filter yang tidak valid.
+    const stillExists = Array.from(sel.options).some(opt => opt.value === current);
+    sel.value = stillExists ? current : '';
+    if(!stillExists && current) adminSelectedStaffId = '';
   }
 
   // Dipertahankan untuk kompatibilitas struktur lama; panel Daftar Laporan
@@ -2325,7 +2350,7 @@ cardList.appendChild(card);
       if(!staffId) pill.innerText = 'Menampilkan: Semua Petugas';
       else{
         const st = ADMIN_STAFF_LIST.find(x => x.staff_id === staffId);
-        pill.innerText = 'Menampilkan: ' + staffId + (st ? ' - ' + st.nama : '');
+        pill.innerText = 'Menampilkan: ' + getStaffUsernameForFilter_(st);
       }
     }
     renderAdminStaffSelect();
