@@ -2,24 +2,13 @@
 (function(){
   let mounted=false, staffCache=[];
   function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  async function callAccessApi(action, ...args){
-    const s=typeof getSession==='function'?getSession():null;
-    if(!s||!s.token) throw new Error('Sesi tidak ditemukan, silakan login kembali.');
-    const p={token:s.token};
-    if(action==='apiSetAccessSetting'){p.key=args[0]||'';p.value=args[1]||'';}
-    else if(action==='apiSetEditPermission'){p.grantedToStaffId=args[0]||'';p.targetStaffId=args[1]||'';p.isActive=args[2];}
-    const url=(typeof getApiUrl==='function'?getApiUrl():(window.IPSRS_API_URL||'')).trim();
-    const response=await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,data:p})});
-    const text=await response.text();let json;try{json=JSON.parse(text);}catch(e){throw new Error('Respons backend bukan JSON yang valid. HTTP '+response.status);}
-    return json;
+  async function callAccessApi(action,...args){
+    if(typeof authRun!=='function') throw new Error('API Supabase belum siap.');
+    return authRun(action,...args);
   }
   async function callAccessRead(action){
-    const s=typeof getSession==='function'?getSession():null;
-    if(!s||!s.token) throw new Error('Sesi tidak ditemukan, silakan login kembali.');
-    const url=(typeof getApiUrl==='function'?getApiUrl():(window.IPSRS_API_URL||'')).trim();
-    const response=await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:action,data:{token:s.token}})});
-    const text=await response.text();let json;try{json=JSON.parse(text);}catch(e){throw new Error('Respons backend bukan JSON yang valid. HTTP '+response.status);}
-    return json;
+    if(typeof authRun!=='function') throw new Error('API Supabase belum siap.');
+    return authRun(action);
   }
   function mount(){
     if(mounted||typeof getSession!=='function')return;

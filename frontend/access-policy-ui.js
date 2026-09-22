@@ -11,12 +11,8 @@
     if(loadedForToken === s.token) return;
     loadedForToken = s.token;
     try{
-      const r = await (async function(){
-        const url = (typeof getApiUrl==='function'?getApiUrl():(window.IPSRS_API_URL||'')).trim();
-        const response = await fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'apiGetAccessControl',data:{token:s.token}})});
-        return JSON.parse(await response.text());
-      })();
-      if(r && r.ok) adminEditActive = r.administrasi_edit === 'AKTIF';
+      const r=await authRun('apiGetAccessControl');
+      if(r && r.ok) adminEditActive=r.administrasi_edit==='AKTIF';
     }catch(e){ /* Backend tetap menjadi otoritas keamanan. */ }
   }
 
