@@ -149,40 +149,16 @@
   }
 
   function getApiUrl(){ return window.IPSRS_SUPABASE_API_URL || ''; }
-  function legacyLoginUrl_(){ return window.IPSRS_API_URL || 'https://script.google.com/macros/s/AKfycbzC7caqnB_sDXgNV5sW1nKbl4m2JM22qK-zWIx_VQnI4I2icZcLldatvq9UsqMEHf1Z/exec'; }
-
   function staffAuthEmail_(staffId){
     const raw=String(staffId||'').trim().toLowerCase();
     const authUser=raw==='herry'?'herry':raw;
     return authUser.replace(/[^a-z0-9._-]/g,'-') + (window.IPSRS_SUPABASE_EMAIL_DOMAIN || '@auth.ipsrs.local');
   }
 
-  async function callLegacyLogin_(username,password){
-    // Kompatibilitas satu kali selama cutover:
-    // username resmi baru KA IPSRS = "Herry" (sesuai daftar akun terbaru).
-    // Backend GAS lama masih dapat menyimpan alias lama "kaipsrs".
-    // Alias hanya dikirim ke backend lama untuk verifikasi password;
-    // identitas akun di Supabase tetap menggunakan username "Herry".
-    const legacyUsername = String(username||'').trim().toLowerCase() === 'herry'
-      ? 'kaipsrs'
-      : username;
-    const response=await fetch(legacyLoginUrl_(),{
-      method:'POST',redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'apiLogin',data:{username:legacyUsername,password}})
-    });
-    const text=await response.text();
-    let json;
-    try{ json=JSON.parse(text); }catch(e){ throw new Error('Respons backend lama bukan JSON yang valid. HTTP '+response.status); }
-    return json;
-  }
-
   async function gsRun(fnName,...args){
     // apiLogin hanya dipakai sebagai jembatan migrasi akun yang BELUM
     // terhubung ke Supabase Auth. Setelah akun terhubung, jalur ini tidak
     // pernah dipakai lagi untuk operasi aplikasi.
-    if(fnName==='apiLogin') return callLegacyLogin_(args[0]||'',args[1]||'');
-
     const s=getSession();
     const token=s && s.token ? s.token : null;
     if(!token) throw new Error('Sesi Supabase tidak ditemukan.');
@@ -305,42 +281,8 @@
     const client=getSupabaseClient_();
     const email=staffAuthEmail_(username);
     try{
-      // Saat maintenance, jangan lagi bergantung pada login GAS lama.
-      // Akun uji ditentukan setelah identitas Supabase berhasil diverifikasi.
-      // Ini penting karena username resmi baru Herry -> staff_id KAIPSRS,
-      // sementara backend GAS lama dapat memiliki alias yang sudah berbeda.
-      // Jalur utama: Supabase Auth.
-      let signIn=await client.auth.signInWithPassword({email,password});
-      if(signIn.error){
-        // CUTOVER AUTH: jangan pernah membuat akun dari browser dengan signUp().
-        // Password lama diverifikasi oleh backend legacy, lalu Edge Function
-        // server-side melakukan provisioning Auth Admin dan menghubungkan
-        // auth_user_id ke STAFF. Ini mencegah email-rate-limit dan menjaga
-        // service/secret key tetap berada di server.
-        const authBridgeUsername = String(username||'').trim().toLowerCase()==='herry' ? 'KAIPSRS' : username;
-        const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
-          },
-          body:JSON.stringify({
-            username:authBridgeUsername,
-            password:password,
-            legacy_url:legacyLoginUrl_()
-          })
-        });
-        const bridgeJson=await bridgeResponse.json().catch(()=>null);
-        if(!bridgeResponse.ok || !bridgeJson || !bridgeJson.ok){
-          if(msgEl) msgEl.innerText=(bridgeJson&&bridgeJson.msg)
-            ? bridgeJson.msg
-            : 'Akun belum diprovisikan ke Supabase Auth.';
-          if(autoMode) clearRememberedCredentials();
-          return false;
-        }
-        signIn=await client.auth.signInWithPassword({email,password});
-        if(signIn.error) throw signIn.error;
-      }
+      const signIn=await client.auth.signInWithPassword({email,password});
+      if(signIn.error) throw signIn.error;
       const session=signIn.data.session;
       if(!session) throw new Error('Sesi Supabase tidak terbentuk.');
       const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
