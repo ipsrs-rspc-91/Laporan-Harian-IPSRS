@@ -295,24 +295,16 @@
     const client=getSupabaseClient_();
     const email=staffAuthEmail_(username);
     try{
-      // Saat maintenance, autentikasi tetap menggunakan username/password
-      // LAMA, tetapi verifikasi dilakukan server-side oleh Edge Function.
-      // Tidak ada perubahan username/password saat migrasi.
+      // Saat maintenance, tetap gunakan username/password LAMA.
+      // Legacy dipakai hanya untuk memverifikasi kredensial dan role; setelah
+      // itu sesi aplikasi sepenuhnya berpindah ke Supabase Auth.
       if(IPSRS_MAINTENANCE_MODE){
-        const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
-          },
-          body:JSON.stringify({username,password})
-        });
-        const bridgeJson=await bridgeResponse.json().catch(()=>null);
-        if(!bridgeResponse.ok || !bridgeJson || !bridgeJson.ok){
-          if(msgEl) msgEl.innerText=(bridgeJson&&bridgeJson.msg)?bridgeJson.msg:'Login gagal.';
+        const testLegacy=await callLegacyLogin_(username,password);
+        if(!testLegacy || !testLegacy.ok){
+          if(msgEl) msgEl.innerText=(testLegacy&&testLegacy.msg)?testLegacy.msg:'Login gagal.';
           return false;
         }
-        if(String(bridgeJson.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
+        if(String(testLegacy.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
           if(msgEl) msgEl.innerText='Sistem sedang maintenance.';
           return false;
         }
@@ -328,24 +320,15 @@
           if(autoMode) clearRememberedCredentials();
           return false;
         }
-        // Jalur migrasi SATU KALI: verifikasi password ke GAS melalui
-        // Edge Function server-side, lalu buat/update akun Supabase Auth.
-        // Tidak memakai auth.signUp() agar tidak terkena email confirmation/rate limit.
-        const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
-          },
-          body:JSON.stringify({
-            username,
-            password,
-            legacy_url:legacyLoginUrl_()
-          })
+        // Jalur migrasi SATU KALI: legacy sudah memverifikasi password.
+        // Buat akun Supabase Auth dengan username/password LAMA, lalu login.
+        const signUp=await client.auth.signUp({
+          email,
+          password,
+          options:{data:{staff_id:legacy.staff_id||username,username}}
         });
-        const bridgeJson=await bridgeResponse.json().catch(()=>null);
-        if(!bridgeResponse.ok || !bridgeJson || !bridgeJson.ok){
-          throw new Error((bridgeJson&&bridgeJson.msg)||'Gagal membuat akun Supabase Auth.');
+        if(signUp.error && !/already registered|already exists|user already registered/i.test(signUp.error.message||'')){
+          throw signUp.error;
         }
         signIn=await client.auth.signInWithPassword({email,password});
         if(signIn.error) throw signIn.error;
