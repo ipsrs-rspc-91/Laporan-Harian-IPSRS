@@ -379,8 +379,27 @@
 
   function canEditReport(report){
     if(!CURRENT_SESSION || !report) return false;
+
+    // Frontend hanya menentukan apakah UI menampilkan kontrol EDIT.
+    // Otorisasi final tetap di backend (apiGetReportById / apiUpdateReport).
     if(CURRENT_SESSION.role === 'KA_IPSRS') return true;
-    return String(report.StaffID||'') === String(CURRENT_SESSION.staff_id||'');
+
+    const ownerId = String(
+      report.StaffID ??
+      report.staff_id ??
+      report.StaffIDSnapshot ??
+      report.staff_id_snapshot ??
+      ''
+    ).trim();
+
+    if(ownerId && ownerId === String(CURRENT_SESSION.staff_id||'').trim()) return true;
+
+    // ADMINISTRASI_EDIT adalah setting server-side. Jika backend mengirim
+    // CanEdit=true, gunakan nilai tersebut agar UI tidak berbeda dengan server.
+    if(report.CanEdit === true || report.canEdit === true) return true;
+
+    // Delegated permission juga diputuskan server. Jangan menebak dari role.
+    return false;
   }
 
   function toggleUserMenu(){
