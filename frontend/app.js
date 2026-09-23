@@ -2885,9 +2885,4 @@ cardList.appendChild(card);
   });
 
   loadRememberedCredentials();
-  // Setelah login-fast.js terpasang, biarkan Password Manager mengisi password
-  // ke form bila Remember Me aktif. Tidak melakukan submit otomatis.
-  setTimeout(function(){
-    try{ if(typeof window.restoreBrowserCredential_==='function') window.restoreBrowserCredential_(); }catch(_e){}
-  },0);
   checkAuthAndInit();
