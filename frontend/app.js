@@ -2653,7 +2653,7 @@ cardList.appendChild(card);
     try{
       const [statsJson, monJson] = await Promise.all([
         authRun('apiDashboardStats', bulan, staffFilter),
-        authRun('apiGetStaffMonitoring', bulan, todayLocalISO())
+        authRun('apiGetStaffMonitoring', bulan, todayLocalISO(), staffFilter)
       ]);
 
       // Request yang lebih baru sudah berjalan: abaikan response request lama.
