@@ -23,7 +23,10 @@
     if(s.role === 'KA_IPSRS') return true;
     if(String(report.StaffID||'') === String(s.staff_id||'')) return true;
     if(String(report.Role||'') === 'KA_IPSRS') return false;
-    return hasEditPermission;
+    // Backend mengirim CanEdit sebagai sumber kebenaran UI per laporan.
+    // Jangan gunakan has_edit_permission global karena izin dapat berbeda
+    // untuk setiap target laporan.
+    return report.CanEdit === true;
   };
 
   function refresh(){
