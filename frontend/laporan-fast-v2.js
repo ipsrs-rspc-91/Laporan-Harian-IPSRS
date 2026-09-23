@@ -6,7 +6,7 @@
  * 1) Laporan Saya -> 1 request server dengan staff_id user login.
  * 2) Daftar Laporan -> 1 request server dengan staff filter yang dipilih.
  * 3) Tidak ada prefetch tab lain.
- * 4) Tidak ada cache TTL yang bisa menampilkan data basi.
+ * 4) Read cache sangat pendek (3 detik) untuk klik berulang; cache dibersihkan setelah create/edit.
  * 5) Hanya request yang SEDANG berjalan yang dideduplikasi.
  * 6) Filter status/kategori/area/bidang/pencarian tetap client-side.
  * 7) Laporan Saya memakai renderer utama app.js dan tombol Edit tetap tersedia.
@@ -28,6 +28,8 @@
   window.__IPSRS_LAPORAN_FAST_V2_FIX1 = true;
 
   const inflight = new Map();
+  const responseCache = new Map();
+  const RESPONSE_CACHE_TTL = 3000;
   let requestSerial = 0;
   let rendererWrapped = false;
 
@@ -64,9 +66,12 @@
 
   function requestReports(month,staff){
     const key=requestKey(month,staff);
+    const cached=responseCache.get(key);
+    if(cached && (Date.now()-cached.at)<RESPONSE_CACHE_TTL) return Promise.resolve(cached.value);
     if(inflight.has(key)) return inflight.get(key);
 
     const p=authRun('apiGetReports',month||'',staff||'','','')
+      .then(function(value){ responseCache.set(key,{at:Date.now(),value:value}); return value; })
       .finally(function(){ inflight.delete(key); });
     inflight.set(key,p);
     return p;
@@ -249,7 +254,15 @@
     }
   },true);
 
-  window.__invalidateLaporanFastCache=function(){ /* kompatibilitas; tidak ada TTL cache */ };
+  function clearReportCache(fnName,args){
+    if(!fnName){ responseCache.clear(); return; }
+    if(fnName!=='apiGetReports') return;
+    if(!Array.isArray(args) || args.length<2){ responseCache.clear(); return; }
+    responseCache.delete(requestKey(args[0],args[1]));
+  }
+
+  window.__ipsrsClearLaporanApiCache=clearReportCache;
+  window.__invalidateLaporanFastCache=clearReportCache;
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',function(){
