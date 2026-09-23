@@ -365,9 +365,10 @@
         return false;
       }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
-      // Catat login hanya setelah Supabase Auth + identitas petugas berhasil.
-      // Kegagalan pencatatan tidak boleh menghalangi petugas masuk ke aplikasi.
-      try{ await authRun('apiRecordLogin'); }catch(_e){}
+      // Catat login di background. WhoAmI sudah memvalidasi sesi/identitas;
+      // pencatatan audit tidak boleh menahan pengguna masuk ke aplikasi.
+      // Kegagalan audit tidak mengubah hasil login yang sudah berhasil.
+      Promise.resolve().then(()=>authRun('apiRecordLogin')).catch(()=>{});
       if(remember) saveRememberedCredentials(username); else clearRememberedCredentials();
       if(msgEl) msgEl.innerText='';
       document.getElementById('loginPassword').value='';
@@ -2671,10 +2672,11 @@ cardList.appendChild(card);
     refreshItemOptions();
     setStatusValue('');
 
-    // Data kustom tidak boleh menghambat login. Jalankan setelah UI sudah aktif.
-    // Promise sengaja tidak di-await.
+    // Data kustom tidak boleh berebut koneksi dengan proses login/halaman pertama.
+    // Mulai sedikit setelah UI aktif; data bawaan tetap langsung tersedia.
     startIpsrsHeartbeat_();
-    _customDataReady = Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()])
+    _customDataReady = new Promise(resolve => setTimeout(resolve, 1200))
+      .then(() => Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()]))
       .then(() => {
         appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
         appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
