@@ -410,8 +410,12 @@
       }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
       // Simpan preferensi Remember Me hanya setelah password benar dan identitas
-      // berhasil diverifikasi. Password sendiri ditangani Password Manager.
+      // berhasil diverifikasi. Serahkan username+password ke password manager
+      // SEBELUM field password dikosongkan di bawah.
       if(remember) saveRememberedCredentials(username);
+      if(remember && typeof window.storeBrowserCredential_==='function'){
+        await window.storeBrowserCredential_(username,password,true);
+      }
       // Catat login di background. WhoAmI sudah memvalidasi sesi/identitas;
       // pencatatan audit tidak boleh menahan pengguna masuk ke aplikasi.
       // Kegagalan audit tidak mengubah hasil login yang sudah berhasil.
@@ -451,11 +455,8 @@
     resetLaporanUnfinishedState();
     closeUserMenu();
     showLoginScreen('Anda sudah keluar. Silakan login kembali.');
-    // Setelah logout, kembalikan kredensial ke form bila Remember Me aktif.
-    // Hanya mengisi form; TIDAK menekan tombol MASUK.
-    setTimeout(function(){
-      try{ if(typeof window.restoreBrowserCredential_==='function') window.restoreBrowserCredential_(); }catch(_e){}
-    },0);
+    // Logout hanya mengakhiri sesi. Password manager browser tidak dipanggil
+    // untuk login otomatis.
     client.auth.signOut({scope:'local'}).catch(function(){}).finally(function(){
       resetSupabaseClient_();
     });
