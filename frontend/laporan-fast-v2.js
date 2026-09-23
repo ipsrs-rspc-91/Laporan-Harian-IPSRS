@@ -112,7 +112,7 @@
         rawData=[];
         if(typeof renderReportTable==='function') renderReportTable([]);
         setMsg('msgReport',(json&&json.msg)||'Gagal memuat data.',true);
-        return;
+        return false;
       }
 
       rawData=Array.isArray(json.data)?json.data:[];
@@ -125,10 +125,12 @@
       if(daftarUnfinishedDrilldown) window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN=false;
       if(sayaUnfinishedDrilldown) window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN=false;
       setMsg('msgReport','Data tampil: '+rawData.length);
+      return true;
     }catch(err){
-      if(mySerial!==requestSerial) return;
+      if(mySerial!==requestSerial) return false;
       setMsg('msgReport','Error: '+(err&&err.message?err.message:err),true);
       console.error('[LAPORAN_ULTRA]',err);
+      return false;
     }
   }
 
