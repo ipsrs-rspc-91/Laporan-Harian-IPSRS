@@ -267,7 +267,7 @@
       showLoginScreen('Sesi tidak ditemukan, silakan login kembali.');
       throw new Error('Belum login');
     }
-    const json = await gsRun(fnName, s.token, ...args);
+    const json = await gsRun(fnName, ...args);
     if(json && json.ok === false && /sesi tidak valid/i.test(json.msg||'')){
       clearSession();
       resetLaporanUnfinishedState();
