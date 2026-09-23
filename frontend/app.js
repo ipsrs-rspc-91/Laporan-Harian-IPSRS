@@ -156,10 +156,18 @@
   }
 
   async function callLegacyLogin_(username,password){
+    // Kompatibilitas satu kali selama cutover:
+    // username resmi baru KA IPSRS = "Herry" (sesuai daftar akun terbaru).
+    // Backend GAS lama masih dapat menyimpan alias lama "kaipsrs".
+    // Alias hanya dikirim ke backend lama untuk verifikasi password;
+    // identitas akun di Supabase tetap menggunakan username "Herry".
+    const legacyUsername = String(username||'').trim().toLowerCase() === 'herry'
+      ? 'kaipsrs'
+      : username;
     const response=await fetch(legacyLoginUrl_(),{
       method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'apiLogin',data:{username,password}})
+      body:JSON.stringify({action:'apiLogin',data:{username:legacyUsername,password}})
     });
     const text=await response.text();
     let json;
