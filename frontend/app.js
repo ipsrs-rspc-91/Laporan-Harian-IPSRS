@@ -12,6 +12,7 @@
   // Password TIDAK pernah disimpan. Sesi yang bertahan antar pembukaan browser
   // dikelola oleh Supabase Auth melalui persisted session/refresh token.
   const REMEMBER_KEY = 'ipsrs_remember_v2';
+  const REMEMBER_LEGACY_KEY = 'ipsrs_remember_v1';
   const BIDANG_LIST = ['ME', 'Sipil', 'Workshop', 'Elektromedik', 'Kesling', 'Shift'];
   // CATATAN (P1 §3.6): SHIFT_LIST dihapus. Konsep "Shift" sudah dihapus total
   // dari backend (lihat komentar "TAHAP 2: Tidak ada lagi shiftFilter" di
@@ -78,7 +79,7 @@
   // ============================================================
   function isRememberMeEnabled_(){
     try{
-      const raw=localStorage.getItem(REMEMBER_KEY);
+      const raw=localStorage.getItem(REMEMBER_KEY) || localStorage.getItem(REMEMBER_LEGACY_KEY);
       if(!raw) return false;
       const payload=JSON.parse(raw);
       // Kompatibilitas: username lama dianggap Remember Me aktif.
@@ -94,11 +95,19 @@
     }catch(e){}
   }
   function clearRememberedCredentials(){
-    try{ localStorage.removeItem(REMEMBER_KEY); }catch(e){}
+    try{
+      localStorage.removeItem(REMEMBER_KEY);
+      localStorage.removeItem(REMEMBER_LEGACY_KEY);
+    }catch(e){}
   }
   function loadRememberedCredentials(){
     try{
-      const raw=localStorage.getItem(REMEMBER_KEY); if(!raw) return;
+      let raw=localStorage.getItem(REMEMBER_KEY);
+      if(!raw){
+        raw=localStorage.getItem(REMEMBER_LEGACY_KEY);
+        if(raw) localStorage.setItem(REMEMBER_KEY,raw);
+      }
+      if(!raw) return;
       const payload=JSON.parse(raw);
       const username=decodeURIComponent(escape(atob(payload.u||'')));
       const uEl=document.getElementById('loginUsername');
