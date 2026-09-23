@@ -305,20 +305,10 @@
     const client=getSupabaseClient_();
     const email=staffAuthEmail_(username);
     try{
-      // Saat maintenance, tetap gunakan username/password LAMA.
-      // Legacy dipakai hanya untuk memverifikasi kredensial dan role; setelah
-      // itu sesi aplikasi sepenuhnya berpindah ke Supabase Auth.
-      if(IPSRS_MAINTENANCE_MODE){
-        const testLegacy=await callLegacyLogin_(username,password);
-        if(!testLegacy || !testLegacy.ok){
-          if(msgEl) msgEl.innerText=(testLegacy&&testLegacy.msg)?testLegacy.msg:'Login gagal.';
-          return false;
-        }
-        if(String(testLegacy.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
-          if(msgEl) msgEl.innerText='Sistem sedang maintenance.';
-          return false;
-        }
-      }
+      // Saat maintenance, jangan lagi bergantung pada login GAS lama.
+      // Akun uji ditentukan setelah identitas Supabase berhasil diverifikasi.
+      // Ini penting karena username resmi baru Herry -> staff_id KAIPSRS,
+      // sementara backend GAS lama dapat memiliki alias yang sudah berbeda.
       // Jalur utama: Supabase Auth.
       let signIn=await client.auth.signInWithPassword({email,password});
       if(signIn.error){
@@ -360,6 +350,15 @@
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
+      // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
+      // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
+      // bukan terhadap backend GAS lama.
+      if(IPSRS_MAINTENANCE_MODE && String(whoJson.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
+        await client.auth.signOut().catch(()=>{});
+        if(msgEl) msgEl.innerText='Sistem sedang maintenance.';
+        if(autoMode) clearRememberedCredentials();
+        return false;
+      }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
       if(remember) saveRememberedCredentials(username,password); else clearRememberedCredentials();
       if(msgEl) msgEl.innerText='';
