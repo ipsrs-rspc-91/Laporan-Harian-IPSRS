@@ -5,7 +5,7 @@
   // ============================================================
   // MODE MAINTENANCE SEMENTARA: seluruh akses login dinonaktifkan.
   // Ubah ke false setelah maintenance selesai.
-  const IPSRS_MAINTENANCE_MODE = true;
+  const IPSRS_MAINTENANCE_MODE = false;
   const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';
   const SESSION_KEY = 'ipsrs_session_v1';
   // "Ingat saya": disimpan di localStorage (bukan sessionStorage) supaya
@@ -13,7 +13,7 @@
   // di sini hanya disamarkan (base64), BUKAN dienkripsi -- jadi hanya untuk
   // dipakai di HP/PC pribadi milik petugas sendiri, bukan perangkat bersama.
   const REMEMBER_KEY = 'ipsrs_remember_v1';
-  const BIDANG_LIST = ['ME', 'Sipil', 'Workshop', 'Elektromedik', 'Kesling'];
+  const BIDANG_LIST = ['ME', 'Sipil', 'Workshop', 'Elektromedik', 'Kesling', 'Shift'];
   // CATATAN (P1 §3.6): SHIFT_LIST dihapus. Konsep "Shift" sudah dihapus total
   // dari backend (lihat komentar "TAHAP 2: Tidak ada lagi shiftFilter" di
   // Reports.js/Api_Core.js/Api_Staff.js) -- filter Shift di UI tidak pernah
@@ -74,29 +74,19 @@
   // ============================================================
   // "INGAT SAYA" -- simpan username/password di localStorage HP/PC
   // ============================================================
-  function saveRememberedCredentials(username, password){
-    try{
-      const payload = { u: btoa(unescape(encodeURIComponent(username))), p: btoa(unescape(encodeURIComponent(password))) };
-      localStorage.setItem(REMEMBER_KEY, JSON.stringify(payload));
-    }catch(e){}
+  function saveRememberedCredentials(username){
+    try{ localStorage.setItem(REMEMBER_KEY, JSON.stringify({u:btoa(unescape(encodeURIComponent(username)))})); }catch(e){}
   }
   function clearRememberedCredentials(){
     try{ localStorage.removeItem(REMEMBER_KEY); }catch(e){}
   }
   function loadRememberedCredentials(){
     try{
-      const raw = localStorage.getItem(REMEMBER_KEY);
-      if(!raw) return;
-      const payload = JSON.parse(raw);
-      const username = decodeURIComponent(escape(atob(payload.u)));
-      const password = decodeURIComponent(escape(atob(payload.p)));
-      const uEl = document.getElementById('loginUsername');
-      const pEl = document.getElementById('loginPassword');
-      const rEl = document.getElementById('loginRemember');
-      if(uEl) uEl.value = username;
-      if(pEl) pEl.value = password;
-      if(rEl) rEl.checked = true;
-    }catch(e){}
+      const raw=localStorage.getItem(REMEMBER_KEY); if(!raw) return;
+      const payload=JSON.parse(raw); const username=decodeURIComponent(escape(atob(payload.u||'')));
+      const uEl=document.getElementById('loginUsername'); const rEl=document.getElementById('loginRemember');
+      if(uEl) uEl.value=username; if(rEl) rEl.checked=true;
+    }catch(e){ clearRememberedCredentials(); }
   }
 
   function escapeHtml(str){
@@ -299,7 +289,7 @@
         return false;
       }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
-      if(remember) saveRememberedCredentials(username,password); else clearRememberedCredentials();
+      if(remember) saveRememberedCredentials(username); else clearRememberedCredentials();
       if(msgEl) msgEl.innerText='';
       document.getElementById('loginPassword').value='';
       applyIdentityToUI();
