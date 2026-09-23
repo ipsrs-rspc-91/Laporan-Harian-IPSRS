@@ -89,4 +89,10 @@
       return ok;
     }finally{clearProgress(msgEl);if(b){b.disabled=disabled;b.innerHTML=old;b.removeAttribute('aria-busy');}}
   };
+
+  // Jalankan sekali setelah login-fast.js selesai dimuat.
+  // Hanya mengisi username/password ke form; tidak pernah auto-submit.
+  setTimeout(function(){
+    try{ window.restoreBrowserCredential_(); }catch(_e){}
+  },0);
 })();
