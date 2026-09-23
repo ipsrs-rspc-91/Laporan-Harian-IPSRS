@@ -1,0 +1,42 @@
+<section id="page-online" class="page">
+<style>
+  #page-online .online-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+  #page-online .online-title h1{margin:0 0 5px;font-size:22px}
+  #page-online .online-title .desc{color:#64748b;font-size:13px}
+  #page-online .online-refresh{border:1px solid #d7dee8;background:#fff;border-radius:9px;padding:9px 13px;font:inherit;font-weight:700;cursor:pointer}
+  #page-online .online-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  #page-online .online-summary-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 15px;min-width:150px}
+  #page-online .online-summary-label{font-size:11px;color:#64748b}
+  #page-online .online-summary-value{font-size:20px;font-weight:800;margin-top:3px}
+  #page-online .online-list{display:grid;gap:10px}
+  #page-online .online-user-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:13px 14px;display:grid;grid-template-columns:minmax(190px,1fr) auto;gap:10px 14px}
+  #page-online .online-user-main{display:flex;align-items:center;gap:10px;min-width:0}
+  #page-online .online-dot{width:10px;height:10px;border-radius:50%;background:#94a3b8;flex:none}
+  #page-online .online-dot.is-online{background:#16a34a;box-shadow:0 0 0 3px #dcfce7}
+  #page-online .online-name{font-weight:800}
+  #page-online .online-meta{font-size:11px;color:#64748b;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #page-online .online-status{font-size:11px;font-weight:800;color:#64748b;align-self:center}
+  #page-online .online-status.is-online{color:#15803d}
+  #page-online .online-details{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:10px;padding-top:9px;border-top:1px solid #eef2f7;font-size:12px;color:#475569}
+  #page-online .online-details b{font-size:10px;color:#64748b;font-weight:700}
+  #page-online .device-text{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  @media(max-width:700px){
+    #page-online .online-head{align-items:center}
+    #page-online .online-title h1{font-size:19px}
+    #page-online .online-user-card{grid-template-columns:1fr auto}
+    #page-online .online-details{grid-template-columns:1fr 1fr}
+    #page-online .online-details>div:last-child{grid-column:1/-1}
+  }
+</style>
+<div class="online-head">
+  <div class="online-title">
+    <h1>Petugas Online</h1>
+    <div class="desc">Status koneksi petugas aktif dan riwayat login terakhir.</div>
+  </div>
+  <button class="online-refresh" type="button" onclick="loadOnlineUsers()">↻ Refresh</button>
+</div>
+<div class="online-summary">
+  <div class="online-summary-card"><div class="online-summary-label">Status Online</div><div id="onlineUsersMeta" class="online-summary-value" style="font-size:13px;">Memuat...</div></div>
+</div>
+<div id="onlineUsersList" class="online-list"></div>
+</section>
