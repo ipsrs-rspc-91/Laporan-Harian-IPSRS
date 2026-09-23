@@ -1,0 +1,19 @@
+{
+  "name": "Laporan Harian IPSRS",
+  "short_name": "Laporan IPSRS",
+  "description": "Laporan Harian IPSRS RS Puri Cinere",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
