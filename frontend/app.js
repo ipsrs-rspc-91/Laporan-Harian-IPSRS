@@ -438,7 +438,7 @@
     // HARD GUARD: autentikasi hanya boleh dipicu oleh klik pengguna nyata.
     // Pemanggilan programatis/script otomatis ditolak.
     if(event && typeof event.preventDefault==='function') event.preventDefault();
-    if(!event || event.type!=='click' || event.isTrusted!==true){
+    if(!event || !['click','submit'].includes(event.type) || event.isTrusted!==true){
       const msgEl=document.getElementById('loginMsg');
       if(msgEl) msgEl.innerText='Silakan tekan tombol MASUK untuk login.';
       return false;
