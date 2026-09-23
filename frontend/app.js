@@ -156,9 +156,6 @@
   }
 
   async function gsRun(fnName,...args){
-    // apiLogin hanya dipakai sebagai jembatan migrasi akun yang BELUM
-    // terhubung ke Supabase Auth. Setelah akun terhubung, jalur ini tidak
-    // pernah dipakai lagi untuk operasi aplikasi.
     const s=getSession();
     const token=s && s.token ? s.token : null;
     if(!token) throw new Error('Sesi Supabase tidak ditemukan.');
