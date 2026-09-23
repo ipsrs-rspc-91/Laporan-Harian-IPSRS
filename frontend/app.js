@@ -30,6 +30,8 @@
   function isTrialSessionAllowed_(session){ return !!session && !!session.staff_id; }
   function showTrialMaintenance_(msgEl){ if(msgEl){} }
   let CURRENT_SESSION = null;
+  let IPSRS_HEARTBEAT_TIMER = null;
+  let IPSRS_ONLINE_REFRESH_TIMER = null;
   let ADMIN_STAFF_LIST = [];
   let adminSelectedStaffId = '';
   let rawData = [];
@@ -154,6 +156,9 @@
     switch(fnName){
       case 'apiLogout':
       case 'apiWhoAmI':
+      case 'apiRecordLogin':
+      case 'apiHeartbeat':
+      case 'apiGetOnlineUsers':
       case 'apiListStaff':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
@@ -279,6 +284,9 @@
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
+      // Catat login hanya setelah Supabase Auth + identitas petugas berhasil.
+      // Kegagalan pencatatan tidak boleh menghalangi petugas masuk ke aplikasi.
+      try{ await authRun('apiRecordLogin'); }catch(_e){}
       // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
       // bukan terhadap backend GAS lama.
@@ -313,6 +321,9 @@
 
   function doLogout(){
     const client=getSupabaseClient_();
+    try{ gsRun('apiLogout').catch(function(){}); }catch(_e){}
+    stopIpsrsHeartbeat_();
+    if(IPSRS_ONLINE_REFRESH_TIMER){ clearInterval(IPSRS_ONLINE_REFRESH_TIMER); IPSRS_ONLINE_REFRESH_TIMER=null; }
     clearSession();
     resetLaporanUnfinishedState();
     closeUserMenu();
@@ -375,6 +386,9 @@
     adminSelectedStaffId = '';
     const pill = document.getElementById('adminStaffActivePill');
     if(pill) pill.innerText = 'Menampilkan: Semua Petugas';
+
+    const onlineNav=document.getElementById('nav-online-users');
+    if(onlineNav) onlineNav.classList.toggle('hidden', CURRENT_SESSION.role !== 'KA_IPSRS');
   }
 
   function canEditReport(report){
@@ -414,7 +428,62 @@
     document.getElementById('userMenuBackdrop').classList.remove('show');
   }
 
-  const PAGE_TITLES = { dashboard:'Dashboard', input:'Input Laporan', laporan:'Laporan' };
+  const PAGE_TITLES = { dashboard:'Dashboard', input:'Input Laporan', laporan:'Laporan', online:'Aktivitas Petugas' };
+
+  function stopIpsrsHeartbeat_(){
+    if(IPSRS_HEARTBEAT_TIMER){ clearInterval(IPSRS_HEARTBEAT_TIMER); IPSRS_HEARTBEAT_TIMER=null; }
+  }
+
+  function startIpsrsHeartbeat_(){
+    stopIpsrsHeartbeat_();
+    if(!CURRENT_SESSION) return;
+    const beat=()=>{ if(CURRENT_SESSION) authRun('apiHeartbeat').catch(()=>{}); };
+    beat();
+    IPSRS_HEARTBEAT_TIMER=setInterval(beat,60000);
+  }
+
+  function formatLoginDateTime_(value){
+    if(!value) return 'Belum pernah login';
+    const d=new Date(value);
+    if(Number.isNaN(d.getTime())) return '-';
+    return d.toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+
+  function formatLastSeen_(value){
+    if(!value) return '-';
+    const d=new Date(value), now=Date.now(), sec=Math.max(0,Math.floor((now-d.getTime())/1000));
+    if(sec<60) return sec+' detik lalu';
+    const min=Math.floor(sec/60);
+    if(min<60) return min+' menit lalu';
+    return formatLoginDateTime_(value);
+  }
+
+  async function loadOnlineUsers(){
+    if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
+    const box=document.getElementById('onlineUsersList');
+    const meta=document.getElementById('onlineUsersMeta');
+    if(!box) return;
+    box.innerHTML='<div class="empty-state"><div class="es-text">Memuat status petugas...</div></div>';
+    try{
+      const j=await authRun('apiGetOnlineUsers');
+      if(!j || !j.ok) throw new Error((j&&j.msg)||'Gagal memuat status petugas.');
+      const rows=Array.isArray(j.data)?j.data:[];
+      const onlineCount=rows.filter(x=>x.online).length;
+      if(meta) meta.innerText=onlineCount+' online dari '+rows.length+' petugas aktif · diperbarui '+formatLoginDateTime_(j.server_time);
+      if(!rows.length){ box.innerHTML=emptyStateHtml('Belum ada petugas aktif.'); return; }
+      box.innerHTML=rows.map(x=>{
+        const status=x.online?'ONLINE':'OFFLINE';
+        const device=x.last_login_device?escapeHtml(x.last_login_device):'-';
+        return '<div class="online-user-card">'
+          +'<div class="online-user-main"><div class="online-dot '+(x.online?'is-online':'')+'"></div><div><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
+          +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
+          +'<div class="online-details"><div><b>Login terakhir</b><br>'+formatLoginDateTime_(x.last_login_at)+'</div><div><b>Aktivitas terakhir</b><br>'+formatLastSeen_(x.last_seen_at)+'</div><div><b>Perangkat / browser</b><br><span class="device-text" title="'+device+'">'+device+'</span></div></div>'
+          +'</div>';
+      }).join('');
+    }catch(e){
+      box.innerHTML=emptyStateHtml('Gagal memuat data: '+escapeHtml(e&&e.message?e.message:e));
+    }
+  }
 
   function openDashboardUnfinishedReports(){
     // Dashboard -> Laporan -> Daftar Laporan:
@@ -447,6 +516,15 @@
       loadDashboard();
     }
     if(name === 'laporan') resetLaporanSubTabCache();
+    if(name === 'online'){
+      if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
+      loadOnlineUsers();
+      if(IPSRS_ONLINE_REFRESH_TIMER) clearInterval(IPSRS_ONLINE_REFRESH_TIMER);
+      IPSRS_ONLINE_REFRESH_TIMER=setInterval(()=>{ if(CURRENT_SESSION && CURRENT_SESSION.role==='KA_IPSRS' && document.getElementById('page-online')?.classList.contains('active')) loadOnlineUsers(); },30000);
+    }else if(IPSRS_ONLINE_REFRESH_TIMER){
+      clearInterval(IPSRS_ONLINE_REFRESH_TIMER);
+      IPSRS_ONLINE_REFRESH_TIMER=null;
+    }
   }
 
   // ============================================================
@@ -2516,6 +2594,7 @@ cardList.appendChild(card);
 
     // Data kustom tidak boleh menghambat login. Jalankan setelah UI sudah aktif.
     // Promise sengaja tidak di-await.
+    startIpsrsHeartbeat_();
     _customDataReady = Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()])
       .then(() => {
         appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
