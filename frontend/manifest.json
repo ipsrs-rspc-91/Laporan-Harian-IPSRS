@@ -1,6 +1,6 @@
 {
-  "name": "Laporan Harian IPSRS",
-  "short_name": "Laporan IPSRS",
+  "name": "IPSRS",
+  "short_name": "IPSRS",
   "description": "Laporan Harian IPSRS RS Puri Cinere",
   "start_url": "./",
   "scope": "./",
