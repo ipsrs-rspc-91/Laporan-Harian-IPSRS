@@ -2,6 +2,7 @@
 (function(){
   const originalCanEditReport = window.canEditReport;
   let adminEditActive = false;
+  let hasEditPermission = false;
   let loadedForToken = '';
 
   async function loadPolicy(){
@@ -12,7 +13,7 @@
     loadedForToken = s.token;
     try{
       const r=await authRun('apiGetAccessControl');
-      if(r && r.ok) adminEditActive=r.administrasi_edit==='AKTIF';
+      if(r && r.ok){ adminEditActive=r.administrasi_edit==='AKTIF'; hasEditPermission=!!r.has_edit_permission; }
     }catch(e){ /* Backend tetap menjadi otoritas keamanan. */ }
   }
 
@@ -21,11 +22,8 @@
     if(!s || !report) return false;
     if(s.role === 'KA_IPSRS') return true;
     if(String(report.StaffID||'') === String(s.staff_id||'')) return true;
-    if(s.role === 'ADMINISTRASI'){
-      if(String(report.Role||'') === 'KA_IPSRS') return false;
-      return adminEditActive;
-    }
-    return typeof originalCanEditReport === 'function' ? originalCanEditReport(report) : false;
+    if(String(report.Role||'') === 'KA_IPSRS') return false;
+    return hasEditPermission;
   };
 
   function refresh(){
