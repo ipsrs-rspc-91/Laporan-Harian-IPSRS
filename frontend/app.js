@@ -2846,36 +2846,11 @@ cardList.appendChild(card);
   }
 
   async function checkAuthAndInit(){
-    if(IPSRS_MAINTENANCE_MODE){
-      clearSession();
-      showLoginScreen();
-      return;
-    }
-    const client=getSupabaseClient_();
-    try{
-      const auth=await client.auth.getSession();
-      const session=auth.data && auth.data.session;
-      if(session && session.access_token){
-        const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},
-          body:JSON.stringify({action:'apiWhoAmI',data:{token:session.access_token}})
-        });
-        const json=await who.json().catch(()=>null);
-        if(who.ok && json && json.ok){
-          setSession(Object.assign({},json,{token:session.access_token,refresh_token:session.refresh_token}));
-          await afterAuthReady();
-          hideLoginScreen();
-          goPage('input');
-          return;
-        }
-      }
-      clearSession();
-      showLoginScreen();
-    }catch(err){
-      clearSession();
-      showLoginScreen('Tidak dapat menghubungi Supabase: '+(err&&err.message?err.message:err));
-    }
+    // Startup SELALU berhenti di halaman login.
+    // Tidak ada auto-login dari Supabase session maupun sessionStorage aplikasi.
+    // Pengguna tetap harus menekan tombol MASUK.
+    clearSession();
+    showLoginScreen();
   }
 
   // Jika browser kehilangan koneksi, reset state drill-down agar setelah
