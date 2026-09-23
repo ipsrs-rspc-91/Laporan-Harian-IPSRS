@@ -379,8 +379,8 @@
 
   function canEditReport(report){
     if(!CURRENT_SESSION || !report) return false;
-    if(CURRENT_SESSION.role === 'KA_IPSRS' || CURRENT_SESSION.role === 'ADMINISTRASI') return true;
-    return report.StaffID === CURRENT_SESSION.staff_id;
+    if(CURRENT_SESSION.role === 'KA_IPSRS') return true;
+    return String(report.StaffID||'') === String(CURRENT_SESSION.staff_id||'');
   }
 
   function toggleUserMenu(){
