@@ -2585,13 +2585,21 @@ cardList.appendChild(card);
     grid.innerHTML = '';
   }
 
+  function isDashboardStaffForFilter_(st){
+    // Dashboard mengikuti aturan hak & wewenang yang berlaku:
+    // hanya akun KA IPSRS yang tidak ditampilkan sebagai pilihan petugas.
+    // Role lain (ADMINISTRASI, KASIE, STAF, PETUGAS_SHIFT, dll.) tetap tersedia.
+    const role = String(st && (st.role || st.Role || '') || '').trim().toUpperCase();
+    return role !== 'KA_IPSRS';
+  }
+
   function renderDashStaffSelect(){
     const sel = document.getElementById('DashStaff');
     if(!sel) return;
     const current = sel.value;
     sel.innerHTML = '<option value="">Semua Petugas</option>';
     ADMIN_STAFF_LIST
-      .filter(isActiveStaffForFilter_)
+      .filter(isDashboardStaffForFilter_)
       .forEach(st => {
         const namaPetugas = getStaffNameForFilter_(st);
         if(!namaPetugas) return;
