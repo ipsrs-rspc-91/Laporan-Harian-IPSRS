@@ -88,9 +88,6 @@
         return pageInput.contains(m.target) ||
           Array.from(m.addedNodes || []).some(function(n){
             return n.nodeType === 1 && (n === pageInput || pageInput.contains(n));
-          }) ||
-          Array.from(m.removedNodes || []).some(function(n){
-            return n.nodeType === 1;
           });
       });
       if(!relevant || visualUpdateQueued) return;
