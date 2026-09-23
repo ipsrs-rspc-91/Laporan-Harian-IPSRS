@@ -428,7 +428,7 @@
       Promise.resolve().then(()=>authRun('apiRecordLogin')).catch(()=>{});
 
       if(msgEl) msgEl.innerText='';
-      document.getElementById('loginPassword').value='';
+      // Password dipertahankan di field login agar tetap terisi setelah logout.
       applyIdentityToUI();
       await afterAuthReady();
       hideLoginScreen();
