@@ -216,8 +216,11 @@
 
   installRendererPolicy();
 
+  // Renderer utama dipasang sekali. Setelah berhasil dibungkus, tidak
+  // perlu lagi mengamati seluruh document.body pada setiap perubahan DOM.
   const rendererObserver=new MutationObserver(function(){
     installRendererPolicy();
+    if(rendererWrapped) rendererObserver.disconnect();
   });
   rendererObserver.observe(document.body,{childList:true,subtree:true});
 
