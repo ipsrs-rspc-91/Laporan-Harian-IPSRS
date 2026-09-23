@@ -174,6 +174,15 @@
       hideTimer = setTimeout(hideLoading, 180);
       return;
     }
+    // Jika loadDashboard memakai response cache/in-flight yang sudah selesai,
+    // tidak ada fetch baru sehingga requestStarted tetap false. Jangan biarkan
+    // loading menunggu sampai deadline 20 detik pada kondisi ini.
+    if(!requestStarted){
+      setTimeout(function(){
+        if(loadingActive && !requestStarted) hideLoading();
+      },80);
+      return;
+    }
     if(Date.now() >= deadline){
       showError('Dashboard membutuhkan waktu lebih lama dari biasanya. Silakan coba lagi.');
       return;
