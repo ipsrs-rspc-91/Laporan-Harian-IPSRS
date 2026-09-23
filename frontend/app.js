@@ -434,15 +434,24 @@
     }
   }
 
+  // HARD GUARD LOGIN: submit form tidak cukup untuk memulai autentikasi.
+  // Password Manager/browser dapat mengisi kredensial dan pada kondisi tertentu
+  // memicu submit tanpa klik tombol Masuk. Flag ini hanya diaktifkan oleh
+  // handler klik tombol Masuk yang terlihat di UI.
+  window.__IPSRS_LOGIN_BUTTON_CLICKED = false;
+
   async function doLogin(event){
-    // HARD GUARD: autentikasi hanya boleh dipicu oleh klik pengguna nyata.
-    // Pemanggilan programatis/script otomatis ditolak.
     if(event && typeof event.preventDefault==='function') event.preventDefault();
-    if(!event || !['click','submit'].includes(event.type) || event.isTrusted!==true){
+
+    const buttonClicked = window.__IPSRS_LOGIN_BUTTON_CLICKED === true;
+    window.__IPSRS_LOGIN_BUTTON_CLICKED = false;
+
+    if(!buttonClicked || !event || event.type !== 'submit' || event.isTrusted !== true){
       const msgEl=document.getElementById('loginMsg');
       if(msgEl) msgEl.innerText='Silakan tekan tombol MASUK untuk login.';
       return false;
     }
+
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const remember = document.getElementById('loginRemember').checked;
