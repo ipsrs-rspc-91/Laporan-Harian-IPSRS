@@ -21,8 +21,109 @@
   // Password TIDAK ditulis ke localStorage, sessionStorage, database, atau Supabase.
   // Password hanya ditangani oleh Password Manager browser/perangkat.
   // Tidak pernah ditulis ke localStorage, sessionStorage, database, atau Supabase.
+  // Password "Ingat Saya" disimpan hanya sebagai ciphertext AES-GCM di IndexedDB.
+  // Kunci AES dibuat non-extractable dan tidak pernah ditulis ke localStorage.
+  // Ini membuat aplikasi dapat mengisi ulang password setelah refresh/PWA restart
+  // tanpa menyimpan password plaintext di localStorage/sessionStorage/Supabase.
+  const IPSRS_CRED_DB='ipsrs-credential-v1';
+  const IPSRS_CRED_STORE='credential';
+  function openRememberedPasswordDb_(){
+    return new Promise((resolve,reject)=>{
+      if(!('indexedDB' in window)){reject(new Error('IndexedDB tidak tersedia'));return;}
+      const req=indexedDB.open(IPSRS_CRED_DB,1);
+      req.onupgradeneeded=function(){
+        const db=req.result;
+        if(!db.objectStoreNames.contains(IPSRS_CRED_STORE)) db.createObjectStore(IPSRS_CRED_STORE);
+      };
+      req.onsuccess=function(){resolve(req.result);};
+      req.onerror=function(){reject(req.error||new Error('Gagal membuka IndexedDB'));};
+    });
+  }
+  async function getRememberedPasswordKey_(){
+    const db=await openRememberedPasswordDb_();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(IPSRS_CRED_STORE,'readonly');
+      const req=tx.objectStore(IPSRS_CRED_STORE).get('key');
+      req.onsuccess=async function(){
+        try{
+          if(req.result){resolve(req.result);return;}
+          const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+          const wtx=db.transaction(IPSRS_CRED_STORE,'readwrite');
+          wtx.objectStore(IPSRS_CRED_STORE).put(key,'key');
+          wtx.oncomplete=function(){resolve(key);};
+          wtx.onerror=function(){reject(wtx.error||new Error('Gagal menyimpan kunci kredensial'));};
+        }catch(e){reject(e);}
+      };
+      req.onerror=function(){reject(req.error||new Error('Gagal membaca kunci kredensial'));};
+    });
+  }
+  function bytesToB64_(bytes){
+    let s='';
+    const arr=new Uint8Array(bytes);
+    for(let i=0;i<arr.length;i+=0x8000) s+=String.fromCharCode.apply(null,arr.subarray(i,i+0x8000));
+    return btoa(s);
+  }
+  function b64ToBytes_(b64){
+    const s=atob(b64),out=new Uint8Array(s.length);
+    for(let i=0;i<s.length;i++) out[i]=s.charCodeAt(i);
+    return out;
+  }
+  async function saveRememberedPassword_(username,password){
+    if(!username || !password) return false;
+    try{
+      const key=await getRememberedPasswordKey_();
+      const iv=crypto.getRandomValues(new Uint8Array(12));
+      const plain=new TextEncoder().encode(JSON.stringify({username:String(username),password:String(password)}));
+      const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain);
+      const db=await openRememberedPasswordDb_();
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction(IPSRS_CRED_STORE,'readwrite');
+        tx.objectStore(IPSRS_CRED_STORE).put({iv:bytesToB64_(iv),cipher:bytesToB64_(cipher)},'data');
+        tx.oncomplete=resolve;
+        tx.onerror=()=>reject(tx.error||new Error('Gagal menyimpan kredensial'));
+      });
+      return true;
+    }catch(_e){return false;}
+  }
+  window.clearRememberedPassword_=async function(){
+    try{
+      const db=await openRememberedPasswordDb_();
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction(IPSRS_CRED_STORE,'readwrite');
+        tx.objectStore(IPSRS_CRED_STORE).delete('data');
+        tx.oncomplete=resolve;
+        tx.onerror=()=>reject(tx.error);
+      });
+    }catch(_e){}
+  };
+  async function restoreRememberedPassword_(){
+    if(typeof window.isRememberMeEnabled_==='function' && !window.isRememberMeEnabled_()) return;
+    const usernameEl=document.getElementById('loginUsername');
+    const passwordEl=document.getElementById('loginPassword');
+    if(!passwordEl) return;
+    try{
+      const db=await openRememberedPasswordDb_();
+      const record=await new Promise((resolve,reject)=>{
+        const tx=db.transaction(IPSRS_CRED_STORE,'readonly');
+        const req=tx.objectStore(IPSRS_CRED_STORE).get('data');
+        req.onsuccess=()=>resolve(req.result||null);
+        req.onerror=()=>reject(req.error);
+      });
+      if(!record)return;
+      const key=await getRememberedPasswordKey_();
+      const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes_(record.iv)},key,b64ToBytes_(record.cipher));
+      const payload=JSON.parse(new TextDecoder().decode(plain));
+      if(usernameEl && payload.username && usernameEl.value.trim()!==String(payload.username).trim()){
+        return;
+      }
+      if(payload.password) passwordEl.value=String(payload.password);
+    }catch(_e){}
+  }
+
   window.storeBrowserCredential_=async function(username,password,remember){
     if(!remember || !username || !password) return false;
+    let stored=false;
+    try{ stored=await saveRememberedPassword_(username,password); }catch(_e){}
     try{
       if(
         window.isSecureContext &&
@@ -36,14 +137,15 @@
           name:String(username)
         });
         await navigator.credentials.store(credential);
-        return true;
+        stored=true;
       }
-    }catch(_e){
-      // Fallback: password manager native browser tetap dapat menawarkan
-      // penyimpanan pada alur login form.
-    }
-    return false;
+    }catch(_e){}
+    return stored;
   };
+
+  // Ambil kredensial tersimpan saat halaman login selesai dimuat.
+  // Hanya mengisi field; TIDAK memanggil doLogin/performLogin.
+  setTimeout(function(){ restoreRememberedPassword_(); },0);
 
   window.performLogin=async function(username,password,remember,msgEl,autoMode){
     if(!username||!password){clearProgress(msgEl);if(msgEl)msgEl.innerText='Username dan password wajib diisi.';return false;}
