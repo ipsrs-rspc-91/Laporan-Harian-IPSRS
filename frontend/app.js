@@ -9,8 +9,9 @@
   const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';
   const SESSION_KEY = 'ipsrs_session_v1';
   // "Ingat saya": preferensi + username disimpan di localStorage.
-  // Password TIDAK pernah disimpan. Sesi yang bertahan antar pembukaan browser
-  // dikelola oleh Supabase Auth melalui persisted session/refresh token.
+  // Password disimpan hanya melalui Password Manager browser/perangkat.
+  // Supabase session TIDAK dipersistenkan oleh fitur "Ingat Saya".
+  // Pengguna tetap harus menekan tombol MASUK setelah halaman login tampil.
   const REMEMBER_KEY = 'ipsrs_remember_v2';
   const REMEMBER_LEGACY_KEY = 'ipsrs_remember_v1';
   const BIDANG_LIST = ['ME', 'Sipil', 'Workshop', 'Elektromedik', 'Kesling', 'Shift'];
@@ -75,7 +76,7 @@
 
   // ============================================================
   // ============================================================
-  // "INGAT SAYA" -- ingat sesi, BUKAN menyimpan password
+  // "INGAT SAYA" -- username + password via Password Manager browser
   // ============================================================
   function isRememberMeEnabled_(){
     try{
@@ -162,7 +163,9 @@
         window.IPSRS_SUPABASE_PUBLISHABLE_KEY,
         {
           auth:{
-            persistSession:isRememberMeEnabled_(),
+            // Jangan kaitkan Remember Me dengan persisted Supabase session.
+            // Remember Me hanya mengatur kredensial pada Password Manager browser.
+            persistSession:false,
             autoRefreshToken:true,
             detectSessionInUrl:false
           }
@@ -377,9 +380,9 @@
       return false;
     }
     if(msgEl) msgEl.innerText=autoMode?'Masuk otomatis...':'Memeriksa...';
-    // Terapkan pilihan Remember Me sebelum client Supabase dibuat.
-    if(remember) saveRememberedCredentials(username);
-    else clearRememberedCredentials();
+    // Jangan menyimpan username sebelum autentikasi berhasil.
+    // Jika Remember Me tidak aktif, hapus preferensi aplikasi sekarang.
+    if(!remember) clearRememberedCredentials();
     resetSupabaseClient_();
 
     const client=getSupabaseClient_();
@@ -406,6 +409,9 @@
         return false;
       }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
+      // Simpan preferensi Remember Me hanya setelah password benar dan identitas
+      // berhasil diverifikasi. Password sendiri ditangani Password Manager.
+      if(remember) saveRememberedCredentials(username);
       // Catat login di background. WhoAmI sudah memvalidasi sesi/identitas;
       // pencatatan audit tidak boleh menahan pengguna masuk ke aplikasi.
       // Kegagalan audit tidak mengubah hasil login yang sudah berhasil.
@@ -441,6 +447,11 @@
     resetLaporanUnfinishedState();
     closeUserMenu();
     showLoginScreen('Anda sudah keluar. Silakan login kembali.');
+    // Setelah logout, kembalikan kredensial ke form bila Remember Me aktif.
+    // Hanya mengisi form; TIDAK menekan tombol MASUK.
+    setTimeout(function(){
+      try{ if(typeof window.restoreBrowserCredential_==='function') window.restoreBrowserCredential_(); }catch(_e){}
+    },0);
     client.auth.signOut({scope:'local'}).catch(function(){}).finally(function(){
       resetSupabaseClient_();
     });
@@ -461,7 +472,13 @@
     setMsg('pwMsg','Menyimpan...');
     try{
       const json = await authRun('apiChangePassword', oldPassword, newPassword);
-      if(json && json.ok){ setMsg('pwMsg','Password berhasil diganti.'); setTimeout(closePwModal, 900); }
+      if(json && json.ok){
+        if(typeof window.storeBrowserCredential_==='function' && isRememberMeEnabled_()){
+          window.storeBrowserCredential_(CURRENT_SESSION && CURRENT_SESSION.staff_id ? CURRENT_SESSION.staff_id : '', newPassword, true);
+        }
+        setMsg('pwMsg','Password berhasil diganti.');
+        setTimeout(closePwModal, 900);
+      }
       else setMsg('pwMsg', (json && json.msg) ? json.msg : 'Gagal mengganti password.', true);
     }catch(err){ setMsg('pwMsg', 'Error: ' + (err && err.message ? err.message : err), true); }
   }
@@ -2867,4 +2884,9 @@ cardList.appendChild(card);
   });
 
   loadRememberedCredentials();
+  // Setelah login-fast.js terpasang, biarkan Password Manager mengisi password
+  // ke form bila Remember Me aktif. Tidak melakukan submit otomatis.
+  setTimeout(function(){
+    try{ if(typeof window.restoreBrowserCredential_==='function') window.restoreBrowserCredential_(); }catch(_e){}
+  },0);
   checkAuthAndInit();
