@@ -44,40 +44,6 @@
     return false;
   };
 
-  // Kembalikan kredensial yang sudah disimpan ke form login.
-  // PENTING: fungsi ini hanya mengisi form dan TIDAK pernah menekan tombol MASUK.
-  window.restoreBrowserCredential_=async function(){
-    try{
-      const remember=document.getElementById('loginRemember');
-      const usernameEl=document.getElementById('loginUsername');
-      const passwordEl=document.getElementById('loginPassword');
-      if(!remember || !remember.checked || !usernameEl || !passwordEl) return false;
-
-      // Jangan menimpa autofill yang sudah diberikan browser.
-      if(passwordEl.value) return true;
-
-      if(
-        window.isSecureContext &&
-        navigator.credentials &&
-        typeof navigator.credentials.get === 'function'
-      ){
-        const credential=await navigator.credentials.get({
-          password:true,
-          mediation:'optional'
-        });
-        if(credential && credential.password){
-          if(!usernameEl.value && credential.id) usernameEl.value=credential.id;
-          passwordEl.value=credential.password;
-          return true;
-        }
-      }
-    }catch(_e){
-      // Browser/password manager tidak mendukung retrieval programatik.
-      // Form autocomplete tetap menjadi fallback.
-    }
-    return false;
-  };
-
   window.performLogin=async function(username,password,remember,msgEl,autoMode){
     if(!username||!password){clearProgress(msgEl);if(msgEl)msgEl.innerText='Username dan password wajib diisi.';return false;}
     const b=button(),old=b?b.innerHTML:'',disabled=b?b.disabled:false;
@@ -90,9 +56,4 @@
     }finally{clearProgress(msgEl);if(b){b.disabled=disabled;b.innerHTML=old;b.removeAttribute('aria-busy');}}
   };
 
-  // Jalankan sekali setelah login-fast.js selesai dimuat.
-  // Hanya mengisi username/password ke form; tidak pernah auto-submit.
-  setTimeout(function(){
-    try{ window.restoreBrowserCredential_(); }catch(_e){}
-  },0);
 })();
