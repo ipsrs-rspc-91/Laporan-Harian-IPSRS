@@ -2568,6 +2568,7 @@ cardList.appendChild(card);
 
     ADMIN_STAFF_LIST
       .filter(isActiveStaffForFilter_)
+      .sort((a,b) => getStaffNameForFilter_(a).localeCompare(getStaffNameForFilter_(b), 'id', {sensitivity:'base'}))
       .forEach(st => {
         const namaPetugas = getStaffNameForFilter_(st);
         if(!namaPetugas) return;
@@ -2610,6 +2611,7 @@ cardList.appendChild(card);
     ADMIN_STAFF_LIST
       .filter(isActiveStaffForFilter_)
       .filter(isDashboardStaffForFilter_)
+      .sort((a,b) => getStaffNameForFilter_(a).localeCompare(getStaffNameForFilter_(b), 'id', {sensitivity:'base'}))
       .forEach(st => {
         const namaPetugas = getStaffNameForFilter_(st);
         if(!namaPetugas) return;
