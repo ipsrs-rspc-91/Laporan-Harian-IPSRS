@@ -2471,12 +2471,13 @@ cardList.appendChild(card);
         .filter(x => x.value > 0);
       renderBarList('barPencapaian', pencapaianBars.length ? pencapaianBars : [{label:'Belum ada data', value:0}]);
 
-      renderBarList('barKategori', d.kategori);
-      renderBarList('barArea', d.area);
+      const sortDashboardBars = arr => (Array.isArray(arr) ? arr.slice().sort((a,b) => Number(b.value||0)-Number(a.value||0) || String(a.label||'').localeCompare(String(b.label||''),'id')) : []);
+      renderBarList('barKategori', sortDashboardBars(d.kategori));
+      renderBarList('barArea', sortDashboardBars(d.area));
       renderStatusChart(d.selesai, d.belum);
       renderRecentList(d.recent);
 
-      renderBarList('barStaff', d.staff.map(s => ({ label: (s.nama||s.staff_id), value: s.value })));
+      renderBarList('barStaff', (Array.isArray(d.staff) ? d.staff.slice() : []).sort((a,b) => Number(b.value||0)-Number(a.value||0) || String(a.nama||a.staff_id||'').localeCompare(String(b.nama||b.staff_id||''),'id')).map(s => ({ label: (s.nama||s.staff_id), value: s.value })));
     }catch(e){}
   }
 
