@@ -306,13 +306,26 @@
           if(autoMode) clearRememberedCredentials();
           return false;
         }
-        const signUp=await client.auth.signUp({email,password,options:{data:{staff_id:username}}});
-        if(signUp.error && !/already registered|user already exists/i.test(signUp.error.message||'')){
-          throw signUp.error;
+        // Jalur migrasi SATU KALI: verifikasi password ke GAS melalui
+        // Edge Function server-side, lalu buat/update akun Supabase Auth.
+        // Tidak memakai auth.signUp() agar tidak terkena email confirmation/rate limit.
+        const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
+          },
+          body:JSON.stringify({
+            username,
+            password,
+            legacy_url:legacyLoginUrl_()
+          })
+        });
+        const bridgeJson=await bridgeResponse.json().catch(()=>null);
+        if(!bridgeResponse.ok || !bridgeJson || !bridgeJson.ok){
+          throw new Error((bridgeJson&&bridgeJson.msg)||'Gagal membuat akun Supabase Auth.');
         }
-        signIn=signUp.data && signUp.data.session
-          ? {data:signUp.data,error:null}
-          : await client.auth.signInWithPassword({email,password});
+        signIn=await client.auth.signInWithPassword({email,password});
         if(signIn.error) throw signIn.error;
         const linkToken=signIn.data.session.access_token;
         const linkResponse=await fetch(window.IPSRS_SUPABASE_LINK_URL,{
