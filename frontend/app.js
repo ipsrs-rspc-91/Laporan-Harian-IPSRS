@@ -295,15 +295,24 @@
     const client=getSupabaseClient_();
     const email=staffAuthEmail_(username);
     try{
-      // Saat maintenance, verifikasi akun terhadap GAS terlebih dahulu.
-      // Hanya KA_IPSRS yang boleh melewati maintenance untuk pengujian.
+      // Saat maintenance, autentikasi tetap menggunakan username/password
+      // LAMA, tetapi verifikasi dilakukan server-side oleh Edge Function.
+      // Tidak ada perubahan username/password saat migrasi.
       if(IPSRS_MAINTENANCE_MODE){
-        const testLegacy=await callLegacyLogin_(username,password);
-        if(!testLegacy || !testLegacy.ok){
-          if(msgEl) msgEl.innerText=(testLegacy&&testLegacy.msg)?testLegacy.msg:'Login gagal.';
+        const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
+          },
+          body:JSON.stringify({username,password})
+        });
+        const bridgeJson=await bridgeResponse.json().catch(()=>null);
+        if(!bridgeResponse.ok || !bridgeJson || !bridgeJson.ok){
+          if(msgEl) msgEl.innerText=(bridgeJson&&bridgeJson.msg)?bridgeJson.msg:'Login gagal.';
           return false;
         }
-        if(String(testLegacy.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
+        if(String(bridgeJson.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
           if(msgEl) msgEl.innerText='Sistem sedang maintenance.';
           return false;
         }
