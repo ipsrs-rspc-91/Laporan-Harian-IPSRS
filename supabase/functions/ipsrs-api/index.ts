@@ -23,9 +23,36 @@ function dbp(p:any){const n=(v:any)=>v===""||v==null?null:Number(v);return{tangg
 async function staff(ctx:any,req?:Request){let uid=ctx.userClaims?.sub;let email=String(ctx.userClaims?.email||"").toLowerCase();if(!uid&&req){const h=req.headers.get("authorization")||"";const m=h.match(/^Bearer\s+(.+)$/i);if(m){const g=await ctx.supabaseAdmin.auth.getUser(m[1]);if(!g.error&&g.data?.user){uid=g.data.user.id;email=String(g.data.user.email||"").toLowerCase();}}}if(!uid)throw Error("Sesi tidak valid.");let {data,error}=await ctx.supabaseAdmin.from("staff").select("*").eq("auth_user_id",uid).maybeSingle();if(error)throw error;if(!data){const email=String(ctx.userClaims?.email||"").toLowerCase();const local=email.split("@")[0];const staffId=local==="kaipsrs"?"KAIPSRS":local;const r=await ctx.supabaseAdmin.from("staff").select("*").eq("staff_id",staffId).maybeSingle();if(r.error)throw r.error;data=r.data;if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);}if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");return data}
 async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){try{await db.from("audit_log").insert({username:s.staff_id,staff_id:s.staff_id,action:a,report_id:id,keterangan:k,field_changed:v.field_changed||null,old_value:v.old_value??null,new_value:v.new_value??null,version_before:v.version_before??null,version_after:v.version_after??null});}catch(_e){}}
 async function act(ctx:any,a:string,d:any,req?:Request){const db=ctx.supabaseAdmin,s=await staff(ctx,req);
-if(a==="apiWhoAmI")return{ok:true,token:d.token||"",username:s.staff_id,staff_id:s.staff_id,nama:s.nama,role:s.role,bidang:s.bidang,status:s.status,role_label:label(s.role)};
-if(a==="apiLogout")return{ok:true};
-if(a==="apiListStaff"){const {data,error}=await db.from("staff").select("staff_id,nama,jabatan,role,bidang,status,last_login_at,last_seen_at").order("staff_id");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({...x,role_label:label(x.role)}))}}
+if(a==="apiWhoAmI"){await db.from("staff").update({last_seen_at:new Date().toISOString()}).eq("staff_id",s.staff_id);return{ok:true,token:d.token||"",username:s.staff_id,staff_id:s.staff_id,nama:s.nama,role:s.role,bidang:s.bidang,status:s.status,role_label:label(s.role)};}
+if(a==="apiRecordLogin"){
+ const now=new Date().toISOString();
+ const ua=String(req?.headers.get("user-agent")||"").trim().slice(0,500);
+ const platform=String(req?.headers.get("sec-ch-ua-platform")||"").replace(/^"|"$/g,"").trim();
+ const device=[platform,ua].filter(Boolean).join(" | ").slice(0,500)||"Perangkat tidak diketahui";
+ const {error}=await db.from("staff").update({last_login_at:now,last_seen_at:now,last_login_device:device}).eq("staff_id",s.staff_id);
+ if(error)throw error;
+ await audit(db,s,"LOGIN",null,"Login berhasil",{new_value:device});
+ return{ok:true,last_login_at:now};
+}
+if(a==="apiHeartbeat"){
+ const now=new Date().toISOString();
+ const {error}=await db.from("staff").update({last_seen_at:now}).eq("staff_id",s.staff_id);
+ if(error)throw error;
+ return{ok:true,last_seen_at:now};
+}
+if(a==="apiGetOnlineUsers"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status online dan login terakhir."};
+ const {data,error}=await db.from("staff").select("staff_id,nama,jabatan,role,bidang,status,last_login_at,last_seen_at,last_login_device").eq("status","Aktif").order("nama");
+ if(error)throw error;
+ const now=Date.now(), threshold=3*60*1000;
+ return{ok:true,server_time:new Date(now).toISOString(),online_threshold_seconds:180,data:(data||[]).map((x:any)=>{
+   const seen=x.last_seen_at?Date.parse(x.last_seen_at):NaN;
+   const online=Number.isFinite(seen)&&(now-seen)<=threshold;
+   return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,bidang:x.bidang||"",role_label:label(x.role),online,last_seen_at:x.last_seen_at||null,last_login_at:x.last_login_at||null,last_login_device:x.last_login_device||null};
+ }).sort((a:any,b:any)=>Number(b.online)-Number(a.online)||String(a.nama||"").localeCompare(String(b.nama||""),"id"))};
+}
+if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
+if(a==="apiListStaff"){const {data,error}=await db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").order("staff_id");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({...x,role_label:label(x.role)}))}}
 if(a==="apiGetReports"){const z=range(d.bulan),ck=`reports:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;let q=db.from("reports").select("*").gte("tanggal",z.start).lte("tanggal",z.end).order("tanggal",{ascending:false}).order("pukul",{ascending:false});if(d.staffIdFilter)q=q.eq("staff_id",d.staffIdFilter);if(d.bidangFilter)q=q.eq("bidang_snapshot",d.bidangFilter);const {data,error}=await q;if(error)throw error;const visible=[];for(const r of data||[])if(await canViewReport(db,s,r)){const ce=await canEditReport(db,s,r);visible.push(map(r,ce.ok));}return cacheSet(ck,{ok:true,data:visible})}
 if(a==="apiGetReportById"){const {data,error}=await db.from("reports").select("*").eq("report_id",d.reportId).maybeSingle();if(error)throw error;if(!data)return{ok:false,msg:"Laporan tidak ditemukan."};if(!(await canViewReport(db,s,data)))return{ok:false,msg:"Anda tidak memiliki akses untuk melihat laporan ini."};const ce=await canEditReport(db,s,data);return{ok:true,data:map(data,ce.ok)}}
 if(a==="apiCreateReport"){const p=d.payload||{};const validation=validateReportPayload(p);if(validation)return{ok:false,msg:validation};const id=`RPT${Date.now()}-${crypto.randomUUID().replaceAll("-","").slice(0,6).toUpperCase()}`;const row={...dbp(p),report_id:id,staff_id:s.staff_id,nama_snapshot:s.nama,bidang_snapshot:s.bidang,role_snapshot:s.role,created_by_username:s.staff_id,created_by_staff_id:s.staff_id,created_by_name:s.nama,created_by_role:s.role,version:1};const {data,error}=await db.from("reports").insert(row).select("*").single();if(error)throw error;await audit(db,s,"CREATE_REPORT",id,"Membuat laporan baru",{version_after:1});cacheClear();await db.from("staff").update({last_seen_at:new Date().toISOString()}).eq("staff_id",s.staff_id);return{ok:true,report_id:id,data:map(data,true)}}
