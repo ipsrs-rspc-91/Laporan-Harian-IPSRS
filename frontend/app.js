@@ -33,6 +33,10 @@
   let CURRENT_SESSION = null;
   let IPSRS_HEARTBEAT_TIMER = null;
   let IPSRS_ONLINE_REFRESH_TIMER = null;
+  // Petugas Online: simpan snapshot terakhir agar refresh berkala tidak merender ulang
+  // DOM bila data yang terlihat belum berubah. Ini mencegah flicker dan mengurangi kerja browser.
+  let IPSRS_ONLINE_LAST_SNAPSHOT = '';
+  let IPSRS_ONLINE_REQUEST_ACTIVE = false;
   let ADMIN_STAFF_LIST = [];
   let adminSelectedStaffId = '';
   let rawData = [];
@@ -615,14 +619,30 @@
     const box=document.getElementById('onlineUsersList');
     const meta=document.getElementById('onlineUsersMeta');
     if(!box) return;
-    box.innerHTML='<div class="empty-state"><div class="es-text">Memuat status petugas...</div></div>';
+    // Jangan menumpuk request bila refresh sebelumnya belum selesai.
+    if(IPSRS_ONLINE_REQUEST_ACTIVE) return;
+    IPSRS_ONLINE_REQUEST_ACTIVE=true;
     try{
       const j=await authRun('apiGetOnlineUsers');
       if(!j || !j.ok) throw new Error((j&&j.msg)||'Gagal memuat status petugas.');
       const rows=Array.isArray(j.data)?j.data:[];
       const onlineCount=rows.filter(x=>x.online).length;
       if(meta) meta.innerText=onlineCount+' online dari '+rows.length+' petugas aktif · diperbarui '+formatLoginDateTime_(j.server_time);
-      if(!rows.length){ box.innerHTML=emptyStateHtml('Belum ada petugas aktif.'); return; }
+
+      // Snapshot hanya memakai data yang menentukan tampilan kartu. Jika sama,
+      // pertahankan DOM lama sehingga kartu tidak berkedip setiap 30 detik.
+      const snapshot=JSON.stringify(rows.map(x=>({
+        staff_id:x.staff_id||'', nama:x.nama||'', role:x.role||'', role_label:x.role_label||'',
+        bidang:x.bidang||'', online:!!x.online, last_login_at:x.last_login_at||'',
+        last_seen_at:x.last_seen_at||'', last_login_device:x.last_login_device||''
+      })));
+      if(snapshot===IPSRS_ONLINE_LAST_SNAPSHOT) return;
+      IPSRS_ONLINE_LAST_SNAPSHOT=snapshot;
+
+      if(!rows.length){
+        box.innerHTML=emptyStateHtml('Belum ada petugas aktif.');
+        return;
+      }
       box.innerHTML=rows.map(x=>{
         const status=x.online?'ONLINE':'OFFLINE';
         const device=x.last_login_device?escapeHtml(x.last_login_device):'-';
@@ -633,7 +653,11 @@
           +'</div>';
       }).join('');
     }catch(e){
-      box.innerHTML=emptyStateHtml('Gagal memuat data: '+escapeHtml(e&&e.message?e.message:e));
+      // Jangan menghapus daftar terakhir yang masih valid hanya karena satu
+      // request refresh gagal. Tampilkan error tanpa mengganti kartu yang ada.
+      if(meta) meta.innerText='Gagal memperbarui status petugas. Data terakhir tetap ditampilkan.';
+    }finally{
+      IPSRS_ONLINE_REQUEST_ACTIVE=false;
     }
   }
 
@@ -677,6 +701,7 @@
     }
     if(name === 'online'){
       if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
+      // Refresh pertama: hanya load data; fungsi sendiri menjaga DOM agar tidak flicker.
       loadOnlineUsers();
       if(IPSRS_ONLINE_REFRESH_TIMER) clearInterval(IPSRS_ONLINE_REFRESH_TIMER);
       IPSRS_ONLINE_REFRESH_TIMER=setInterval(()=>{ if(CURRENT_SESSION && CURRENT_SESSION.role==='KA_IPSRS' && document.getElementById('page-online')?.classList.contains('active')) loadOnlineUsers(); },30000);
