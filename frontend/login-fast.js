@@ -60,9 +60,9 @@
     if(b){b.disabled=true;b.innerHTML='⟳ Memproses...';b.setAttribute('aria-busy','true');}
     setProgress(msgEl,'Memeriksa akun Supabase...');
     try{
-      const ok=await originalPerformLogin(username,password,remember,msgEl,autoMode);
-      if(ok) await window.storeBrowserCredential_(username,password,remember);
-      return ok;
+      // Penyimpanan kredensial dilakukan di app.js setelah autentikasi
+      // berhasil dan sebelum field password dikosongkan.
+      return await originalPerformLogin(username,password,remember,msgEl,autoMode);
     }finally{clearProgress(msgEl);if(b){b.disabled=disabled;b.innerHTML=old;b.removeAttribute('aria-busy');}}
   };
 
