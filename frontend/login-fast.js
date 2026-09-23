@@ -17,11 +17,12 @@
   function setProgress(el,text){if(!el)return;el.classList.add('ipsrs-login-processing');el.innerHTML='<span class="ipsrs-login-spinner" aria-hidden="true"></span><span>'+text+'</span>';}
   function clearProgress(el){if(el)el.classList.remove('ipsrs-login-processing');}
   function button(){return document.querySelector('#ipsrsLoginForm button[type="submit"],#loginScreen #loginBtn,#loginScreen button[onclick*="doLogin"]');}
-  // Simpan username/password hanya melalui password manager browser/perangkat.
-  // Password TIDAK ditulis ke localStorage, sessionStorage, database, atau Supabase.
-  // Password hanya ditangani oleh Password Manager browser/perangkat.
-  // Tidak pernah ditulis ke localStorage, sessionStorage, database, atau Supabase.
-  // Password "Ingat Saya" disimpan hanya sebagai ciphertext AES-GCM di IndexedDB.
+  // Password "Ingat Saya" tidak pernah disimpan plaintext di localStorage,
+  // sessionStorage, database aplikasi, atau Supabase.
+  // Untuk mendukung refresh/PWA di perangkat yang tidak mendukung PasswordCredential,
+  // aplikasi menyimpan ciphertext AES-GCM di IndexedDB; browser Password Manager
+  // tetap digunakan sebagai jalur tambahan bila tersedia.
+  // Password tidak pernah dikirim ke backend sebagai data Remember Me.
   // Kunci AES dibuat non-extractable dan tidak pernah ditulis ke localStorage.
   // Ini membuat aplikasi dapat mengisi ulang password setelah refresh/PWA restart
   // tanpa menyimpan password plaintext di localStorage/sessionStorage/Supabase.
@@ -109,7 +110,23 @@
         req.onsuccess=()=>resolve(req.result||null);
         req.onerror=()=>reject(req.error);
       });
-      if(!record)return;
+      if(!record){
+        // Fallback ke Password Manager browser bila kredensial sudah tersimpan di sana.
+        try{
+          if(
+            window.isSecureContext &&
+            navigator.credentials &&
+            typeof navigator.credentials.get==='function'
+          ){
+            const credential=await navigator.credentials.get({password:true,mediation:'optional'});
+            if(credential && credential.type==='password'){
+              if(usernameEl && credential.id) usernameEl.value=String(credential.id);
+              if(credential.password) passwordEl.value=String(credential.password);
+            }
+          }
+        }catch(_e){}
+        return;
+      }
       const key=await getRememberedPasswordKey_();
       const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes_(record.iv)},key,b64ToBytes_(record.cipher));
       const payload=JSON.parse(new TextDecoder().decode(plain));
