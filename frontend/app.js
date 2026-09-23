@@ -416,8 +416,7 @@
       }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
       // Simpan preferensi Remember Me hanya setelah password benar dan identitas
-      // berhasil diverifikasi. Serahkan username+password ke password manager
-      // SEBELUM field password dikosongkan di bawah.
+      // berhasil diverifikasi. Serahkan username+password ke password manager.
       if(remember) saveRememberedCredentials(username);
       if(remember && typeof window.storeBrowserCredential_==='function'){
         await window.storeBrowserCredential_(username,password,true);
