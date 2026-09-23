@@ -3,8 +3,10 @@
   // SESSION (token disimpan di sessionStorage HANYA untuk menjaga
   // login antar aksi di tab yang sama -- data tetap 100% di server)
   // ============================================================
-  // MODE MAINTENANCE SEMENTARA: seluruh akses login dinonaktifkan.\n  // Ubah ke false setelah maintenance selesai.\n  const IPSRS_MAINTENANCE_MODE = true;
-  const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';\n  const SESSION_KEY = 'ipsrs_session_v1';
+  // MODE MAINTENANCE SEMENTARA: seluruh akses login dinonaktifkan.
+  // Ubah ke false setelah maintenance selesai.\n  const IPSRS_MAINTENANCE_MODE = true;
+  const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';
+  const SESSION_KEY = 'ipsrs_session_v1';
   // "Ingat saya": disimpan di localStorage (bukan sessionStorage) supaya
   // tetap ada walau tab/browser ditutup atau HP/PC di-restart. Password
   // di sini hanya disamarkan (base64), BUKAN dienkripsi -- jadi hanya untuk
