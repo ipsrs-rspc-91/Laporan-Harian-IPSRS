@@ -2287,12 +2287,16 @@ cardList.appendChild(card);
     if(!sel) return;
     const current = sel.value;
     sel.innerHTML = '<option value="">Semua Petugas</option>';
-    ADMIN_STAFF_LIST.forEach(st => {
-      const opt = document.createElement('option');
-      opt.value = st.staff_id;
-      opt.innerText = st.staff_id + ' - ' + (st.nama||'');
-      sel.appendChild(opt);
-    });
+    ADMIN_STAFF_LIST
+      .filter(isActiveStaffForFilter_)
+      .forEach(st => {
+        const namaPetugas = getStaffNameForFilter_(st);
+        if(!namaPetugas) return;
+        const opt = document.createElement('option');
+        opt.value = st.staff_id;
+        opt.innerText = namaPetugas;
+        sel.appendChild(opt);
+      });
     // SENGAJA tidak fallback ke adminSelectedStaffId di sini -- itu default
     // punya panel "Filter Petugas" di tab Laporan (default: diri sendiri).
     // Dashboard harus tetap default "Semua Petugas" sendiri, independen.
