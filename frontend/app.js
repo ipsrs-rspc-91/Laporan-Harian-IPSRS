@@ -2608,6 +2608,7 @@ cardList.appendChild(card);
     const current = sel.value;
     sel.innerHTML = '<option value="">Semua Petugas</option>';
     ADMIN_STAFF_LIST
+      .filter(isActiveStaffForFilter_)
       .filter(isDashboardStaffForFilter_)
       .forEach(st => {
         const namaPetugas = getStaffNameForFilter_(st);
