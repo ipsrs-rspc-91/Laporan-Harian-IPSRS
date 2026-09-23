@@ -284,9 +284,6 @@
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
-      // Catat login hanya setelah Supabase Auth + identitas petugas berhasil.
-      // Kegagalan pencatatan tidak boleh menghalangi petugas masuk ke aplikasi.
-      try{ await authRun('apiRecordLogin'); }catch(_e){}
       // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
       // bukan terhadap backend GAS lama.
@@ -297,6 +294,9 @@
         return false;
       }
       setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
+      // Catat login hanya setelah Supabase Auth + identitas petugas berhasil.
+      // Kegagalan pencatatan tidak boleh menghalangi petugas masuk ke aplikasi.
+      try{ await authRun('apiRecordLogin'); }catch(_e){}
       if(remember) saveRememberedCredentials(username); else clearRememberedCredentials();
       if(msgEl) msgEl.innerText='';
       document.getElementById('loginPassword').value='';
