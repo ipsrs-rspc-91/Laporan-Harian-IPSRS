@@ -185,31 +185,12 @@
     wrapLoader('loadStaffMonitoring','monitoring');
     wrapLoader('loadMonthlyRecap','rekap');
 
-    document.addEventListener('click',function(e){
-      var b=e.target && e.target.closest ? e.target.closest('.sub-tab') : null;
-      if(!b) return;
-      var name=b.getAttribute('data-subtab');
-      if(labels[name]) show(name);
-    },true);
-
-    var originalGo=window.goLaporanSubTab;
-    if(typeof originalGo==='function'&&!originalGo.__ipsrsLoadingGoV2){
-      var wrappedGo=function(name){
-        if(labels[name]) show(name);
-        try{
-          var result=originalGo.apply(this,arguments);
-          if(result && typeof result.then==='function'){
-            return result.then(function(v){clear();return v;},function(err){showError(name,err&&err.message?err.message:'Terjadi kesalahan.');throw err;});
-          }
-          return result;
-        }catch(err){
-          showError(name,err&&err.message?err.message:'Terjadi kesalahan.');
-          throw err;
-        }
-      };
-      wrappedGo.__ipsrsLoadingGoV2=true;
-      window.goLaporanSubTab=wrappedGo;
-    }
+    // Loading hanya ditampilkan ketika loader benar-benar melakukan request.
+    // Jangan tampilkan overlay hanya karena tab diklik: setelah optimasi navigasi,
+    // tab yang sudah pernah dimuat tidak melakukan request lagi. Jika overlay
+    // ditampilkan pada kondisi itu, tidak ada Promise loader yang memanggil clear()
+    // dan overlay dapat menutupi layar sampai safety timeout 30 detik.
+    // wrapLoader() di atas tetap menjadi satu-satunya sumber show/clear yang valid.
 
     window.__ipsrsShowLaporanLoading=show;
     window.__ipsrsClearLaporanLoading=clear;
