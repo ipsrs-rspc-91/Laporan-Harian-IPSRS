@@ -2039,7 +2039,32 @@ cardList.appendChild(card);
   // SUB-TAB HALAMAN LAPORAN (Monitoring Harian / Rekap Bulanan / Daftar Laporan)
   // ============================================================
   const _laporanSubTabLoaded = { monitoring: false, rekap: false, daftar: false, saya: false };
+  const _laporanSubTabLoading = { monitoring: false, rekap: false, daftar: false, saya: false };
   let _laporanMode = 'saya';
+
+  function loadLaporanSubTabOnce_(name, loader){
+    if(_laporanSubTabLoaded[name] || _laporanSubTabLoading[name]) return;
+    _laporanSubTabLoading[name] = true;
+    let result;
+    try{
+      result = loader();
+    }catch(err){
+      _laporanSubTabLoading[name] = false;
+      throw err;
+    }
+    if(result && typeof result.then === 'function'){
+      result.then(function(ok){
+        _laporanSubTabLoaded[name] = (ok !== false);
+      },function(){
+        _laporanSubTabLoaded[name] = false;
+      }).finally(function(){
+        _laporanSubTabLoading[name] = false;
+      });
+    }else{
+      _laporanSubTabLoaded[name] = (result !== false);
+      _laporanSubTabLoading[name] = false;
+    }
+  }
   // Laporan tidak perlu mengulang request setiap kali user bolak-balik menu.
   // Refresh hanya dipaksa saat pertama dibuka atau setelah data laporan berubah.
   let _laporanPageInitialized = false;
@@ -2062,19 +2087,18 @@ cardList.appendChild(card);
 
       // Jangan request ulang setiap kali user bolak-balik Laporan Saya/Daftar.
       // Data dimuat sekali per siklus dan di-invalidasi setelah create/edit.
-      if(!_laporanSubTabLoaded[name]){
-        _laporanSubTabLoaded[name] = true;
+      if(!_laporanSubTabLoaded[name] && !_laporanSubTabLoading[name]){
         // Panel petugas hanya diperlukan pada Daftar Laporan. Jangan panggil
         // apiListStaff saat login karena itu menambah waktu tunggu awal.
         if(name === 'daftar') loadAdminStaffListIfNeeded();
-        loadReportsBySelectedMonth();
+        loadLaporanSubTabOnce_(name, loadReportsBySelectedMonth);
       }
       return;
     }
-    if(!_laporanSubTabLoaded[name]){
-      _laporanSubTabLoaded[name] = true;
-      if(name === 'monitoring') loadStaffMonitoring();
-      if(name === 'rekap') loadMonthlyRecap();
+    if(name === 'monitoring'){
+      loadLaporanSubTabOnce_(name, loadStaffMonitoring);
+    }else if(name === 'rekap'){
+      loadLaporanSubTabOnce_(name, loadMonthlyRecap);
     }
   }
 
@@ -2133,13 +2157,15 @@ cardList.appendChild(card);
         setMsg('monMsg', (json && json.msg) ? json.msg : 'Gagal memuat data monitoring.', true);
         _monData = [];
         renderStaffMonitoring();
-        return;
+        return false;
       }
       _monData = json.data || [];
       _monSummary = { hari_wajib_terhitung: json.hari_wajib_terhitung || 0, tanggal: json.tanggal, bulan: json.bulan };
       renderStaffMonitoring();
+      return true;
     }catch(err){
       setMsg('monMsg', 'Error: ' + (err && err.message ? err.message : err), true);
+      return false;
     }
   }
 
@@ -2323,11 +2349,13 @@ cardList.appendChild(card);
       const json = await authRun('apiGetMonthlyRecap', bulan);
       if(!json || !json.ok){
         staffBody.innerHTML = '<tr><td colspan="6" class="smallnote">' + escapeHtml((json&&json.msg)||'Gagal memuat rekap.') + '</td></tr>';
-        return;
+        return false;
       }
       renderMonthlyRecap(json);
+      return true;
     }catch(err){
       staffBody.innerHTML = '<tr><td colspan="6" class="smallnote">Error: ' + escapeHtml(err && err.message ? err.message : err) + '</td></tr>';
+      return false;
     }
   }
 
