@@ -1553,8 +1553,8 @@
           startCreateReportForm(true);
           openSaveSuccessModal('Perubahan laporan berhasil disimpan (ID: ' + editedId + ').');
           goPage('laporan');
-          loadReportsBySelectedMonth();
         } else {
+          invalidateLaporanViews();
           setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
           resetInputFieldsAfterCreate();
           openSaveSuccessModal('Laporan berhasil disimpan (ID: ' + json.report_id + ').');
