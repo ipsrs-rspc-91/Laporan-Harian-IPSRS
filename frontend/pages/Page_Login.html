@@ -21,13 +21,13 @@
       Silakan masuk untuk mengakses Sistem Laporan Harian IPSRS.
     </div>
 
-    <div class="login-login">
+    <form class="login-login" id="ipsrsLoginForm" autocomplete="on" onsubmit="event.preventDefault();doLogin();">
       <label for="loginUsername">USERNAME</label>
-      <input id="loginUsername" type="text" autocomplete="username" placeholder="Username">
+      <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="Username">
 
       <label for="loginPassword">PASSWORD</label>
       <div class="password-wrap">
-        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Password">
         <button id="togglePassword" type="button" class="password-toggle" onclick="togglePasswordVisibility()" aria-label="Tampilkan password">👁</button>
       </div>
 
@@ -36,9 +36,9 @@
         <span>INGAT SAYA DI PERANGKAT INI</span>
       </label>
 
-      <button id="loginBtn" type="button" class="login-btn" onclick="doLogin()">Masuk <span aria-hidden="true">→</span></button>
+      <button id="loginBtn" type="submit" class="login-btn">Masuk <span aria-hidden="true">→</span></button>
       <div id="loginMsg" class="login-msg"></div>
-    </div>
+    </form>
   </div>
 
   <style>
