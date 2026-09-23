@@ -2056,11 +2056,16 @@ cardList.appendChild(card);
       _laporanMode = name;
       const staffPanel = document.getElementById('adminStaffPanel');
       if(staffPanel) staffPanel.classList.toggle('hidden', name !== 'daftar');
-      _laporanSubTabLoaded[name] = false;
-      // Panel petugas hanya diperlukan pada Daftar Laporan. Jangan panggil
-      // apiListStaff saat login karena itu menambah waktu tunggu awal.
-      if(name === 'daftar') loadAdminStaffListIfNeeded();
-      loadReportsBySelectedMonth();
+
+      // Jangan request ulang setiap kali user bolak-balik Laporan Saya/Daftar.
+      // Data dimuat sekali per siklus dan di-invalidasi setelah create/edit.
+      if(!_laporanSubTabLoaded[name]){
+        _laporanSubTabLoaded[name] = true;
+        // Panel petugas hanya diperlukan pada Daftar Laporan. Jangan panggil
+        // apiListStaff saat login karena itu menambah waktu tunggu awal.
+        if(name === 'daftar') loadAdminStaffListIfNeeded();
+        loadReportsBySelectedMonth();
+      }
       return;
     }
     if(!_laporanSubTabLoaded[name]){
