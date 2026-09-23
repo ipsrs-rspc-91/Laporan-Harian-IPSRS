@@ -3,7 +3,7 @@
   // SESSION (token disimpan di sessionStorage HANYA untuk menjaga
   // login antar aksi di tab yang sama -- data tetap 100% di server)
   // ============================================================
-  const SESSION_KEY = 'ipsrs_session_v1';
+  // MODE MAINTENANCE SEMENTARA: seluruh akses login dinonaktifkan.\n  // Ubah ke false setelah maintenance selesai.\n  const IPSRS_MAINTENANCE_MODE = true;\n  const SESSION_KEY = 'ipsrs_session_v1';
   // "Ingat saya": disimpan di localStorage (bukan sessionStorage) supaya
   // tetap ada walau tab/browser ditutup atau HP/PC di-restart. Password
   // di sini hanya disamarkan (base64), BUKAN dienkripsi -- jadi hanya untuk
@@ -283,6 +283,10 @@
   }
 
   async function performLogin(username,password,remember,msgEl,autoMode){
+    if(IPSRS_MAINTENANCE_MODE){
+      if(msgEl) msgEl.innerText='Sistem sedang maintenance. Login sementara dinonaktifkan.';
+      return false;
+    }
     if(!username || !password){
       if(msgEl) msgEl.innerText='Username dan password wajib diisi.';
       return false;
@@ -344,6 +348,7 @@
   }
 
   async function doLogin(){
+    if(IPSRS_MAINTENANCE_MODE) return false;
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const remember = document.getElementById('loginRemember').checked;
@@ -2553,6 +2558,11 @@ cardList.appendChild(card);
   }
 
   async function checkAuthAndInit(){
+    if(IPSRS_MAINTENANCE_MODE){
+      clearSession();
+      showLoginScreen();
+      return;
+    }
     const client=getSupabaseClient_();
     try{
       const auth=await client.auth.getSession();
