@@ -1,23 +1,23 @@
 <div id="loginScreen" class="hidden">
   <div class="maintenance-card">
-    <div class="login-logo">
-      <img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere">
+    <div class="maintenance-brand">
+      <div class="maintenance-logo">
+        <img src="./logo.png" alt="Logo RS Puri Cinere">
+      </div>
+      <div class="maintenance-hospital">RS. Puri Cinere</div>
+      <h1>LAPORAN HARIAN IPSRS</h1>
     </div>
-    <div class="sub">RS. Puri Cinere</div>
-    <h1>LAPORAN HARIAN IPSRS</h1>
 
     <div class="maintenance-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14.7 6.3a4.5 4.5 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4.5 4.5 0 0 0 5.4-5.4l-2.1 2.1-2.1-2.1Z"></path>
-        <path d="M15 15l4.5 4.5"></path>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.7 6.3a4.5 4.5 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4.5 4.5 0 0 0 5.4-5.4l-2.1 2.1-2.5-.5-.5-2.5-.01-.01 2.1-2.1Z"></path>
+        <path d="m15 15 4.5 4.5"></path>
       </svg>
     </div>
 
     <div class="maintenance-title">SEDANG MAINTENANCE</div>
     <div class="maintenance-text">
       Sistem Laporan Harian IPSRS sedang dalam proses pemeliharaan dan penyempurnaan.
-      <br>
-      <strong>Akses petugas sementara dinonaktifkan.</strong>
     </div>
 
     <div class="maintenance-login">
@@ -35,34 +35,198 @@
         <span>INGAT SAYA DI PERANGKAT INI</span>
       </label>
 
-      <button id="loginBtn" type="button" class="login-btn" onclick="doLogin()">Masuk</button>
+      <button id="loginBtn" type="button" class="login-btn" onclick="doLogin()">Masuk <span aria-hidden="true">→</span></button>
       <div id="loginMsg" class="login-msg"></div>
-    </div>
-
-    <div class="maintenance-note">
-      Akses login sementara dibatasi selama proses maintenance.
     </div>
   </div>
 
   <style>
-    .maintenance-card{text-align:center}
-    .maintenance-card .login-logo{margin-bottom:7px}
-    .maintenance-card h1,.maintenance-card .sub{text-align:center}
-    .maintenance-card .sub{color:#0da822;font-weight:600;font-size:1.2em}
-    .maintenance-icon{width:72px;height:72px;margin:22px auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#64748b}
-    .maintenance-icon svg{width:38px;height:38px}
-    .maintenance-title{font-size:1.35rem;font-weight:800;color:#0f172a;letter-spacing:.02em;margin-bottom:10px}
-    .maintenance-text{color:#475569;line-height:1.65;font-size:.96rem}
-    .maintenance-login{text-align:left;margin-top:18px}
-    .maintenance-login label:not(.remember-row){display:block;margin:9px 0 5px;color:#64748b;font-size:.78rem;font-weight:700}
-    .maintenance-login input[type="text"],.maintenance-login input[type="password"]{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d8e0e7;border-radius:9px;background:#fff;font-size:1rem}
-    .password-wrap{position:relative}
-    .password-wrap input{padding-right:44px!important}
-    .password-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:1.05rem;cursor:pointer;padding:7px}
-    .remember-row{display:flex;align-items:center;gap:8px;margin:11px 0;color:#475569;font-size:.8rem;font-weight:600}
-    .remember-row input{width:17px;height:17px}
-    .login-btn{width:100%;padding:12px;border:0;border-radius:9px;background:#0da822;color:#fff;font-weight:800;font-size:1rem;cursor:pointer}
-    .login-msg{text-align:center;min-height:20px;margin-top:9px;color:#c53d3d;font-size:.86rem;font-weight:600}
-    .maintenance-note{margin-top:16px;padding:12px 14px;border-radius:10px;background:#f8fafc;color:#64748b;font-size:.84rem;line-height:1.5}
+    /* Maintenance login: independent from legacy login styles. */
+    #loginScreen{
+      width:100%;
+      min-height:100vh;
+      min-height:100dvh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 16px;
+      box-sizing:border-box;
+      background:transparent;
+    }
+    #loginScreen.hidden{display:none!important}
+    #loginScreen .maintenance-card{
+      width:min(100%,560px);
+      box-sizing:border-box;
+      margin:0 auto;
+      padding:34px 38px 32px;
+      background:#fff;
+      border-radius:24px;
+      box-shadow:0 16px 45px rgba(0,0,0,.18);
+      text-align:center;
+      color:#163247;
+    }
+    #loginScreen .maintenance-brand{margin:0}
+    #loginScreen .maintenance-logo{
+      width:112px;
+      height:112px;
+      margin:0 auto 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#fff;
+      border-radius:18px;
+      overflow:hidden;
+    }
+    #loginScreen .maintenance-logo img{
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+    }
+    #loginScreen .maintenance-hospital{
+      margin:0 0 10px;
+      color:#08a52a;
+      font-size:1.42rem;
+      line-height:1.2;
+      font-weight:800;
+    }
+    #loginScreen .maintenance-card h1{
+      margin:0;
+      color:#123c55;
+      font-size:clamp(1.45rem,4vw,2rem);
+      line-height:1.2;
+      font-weight:850;
+      letter-spacing:.01em;
+    }
+    #loginScreen .maintenance-icon{
+      width:76px;
+      height:76px;
+      margin:24px auto 16px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#edf3f8;
+      color:#50667b;
+    }
+    #loginScreen .maintenance-icon svg{width:40px;height:40px}
+    #loginScreen .maintenance-title{
+      margin:0 0 10px;
+      color:#123c55;
+      font-size:1.45rem;
+      line-height:1.2;
+      font-weight:850;
+      letter-spacing:.01em;
+    }
+    #loginScreen .maintenance-text{
+      max-width:470px;
+      margin:0 auto;
+      color:#526678;
+      font-size:1rem;
+      line-height:1.55;
+      font-weight:500;
+    }
+    #loginScreen .maintenance-login{
+      width:100%;
+      margin-top:22px;
+      text-align:left;
+    }
+    #loginScreen .maintenance-login label:not(.remember-row){
+      display:block;
+      margin:12px 0 6px;
+      color:#40576a;
+      font-size:.82rem;
+      font-weight:800;
+      letter-spacing:.03em;
+    }
+    #loginScreen .maintenance-login input[type="text"],
+    #loginScreen .maintenance-login input[type="password"]{
+      width:100%;
+      height:52px;
+      box-sizing:border-box;
+      padding:0 14px;
+      border:1px solid #cbd8e3;
+      border-radius:11px;
+      background:#eef4ff;
+      color:#182b3a;
+      font-size:1rem;
+      outline:none;
+    }
+    #loginScreen .maintenance-login input:focus{
+      border-color:#6e9ab7;
+      box-shadow:0 0 0 3px rgba(64,120,153,.12);
+    }
+    #loginScreen .password-wrap{position:relative}
+    #loginScreen .password-wrap input{padding-right:48px}
+    #loginScreen .password-toggle{
+      position:absolute;
+      right:6px;
+      top:50%;
+      transform:translateY(-50%);
+      width:40px;
+      height:40px;
+      padding:0;
+      border:0;
+      background:transparent;
+      color:#607589;
+      cursor:pointer;
+      font-size:1.05rem;
+    }
+    #loginScreen .remember-row{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      margin:12px 0 16px;
+      color:#40576a;
+      font-size:.84rem;
+      font-weight:700;
+      cursor:pointer;
+    }
+    #loginScreen .remember-row input{
+      width:18px;
+      height:18px;
+      margin:0;
+      accent-color:#078fbd;
+    }
+    #loginScreen .login-btn{
+      width:100%;
+      min-height:52px;
+      padding:0 18px;
+      border:0;
+      border-radius:11px;
+      background:#08ad39;
+      color:#fff;
+      font-size:1.05rem;
+      font-weight:850;
+      cursor:pointer;
+      box-shadow:0 7px 18px rgba(8,173,57,.18);
+    }
+    #loginScreen .login-btn:hover{background:#079a33}
+    #loginScreen .login-btn span{margin-left:8px;font-size:1.25em}
+    #loginScreen .login-msg{
+      min-height:20px;
+      margin-top:9px;
+      text-align:center;
+      color:#bd3434;
+      font-size:.86rem;
+      font-weight:700;
+    }
+    @media(max-width:600px){
+      #loginScreen{padding:16px 12px;align-items:center}
+      #loginScreen .maintenance-card{
+        width:100%;
+        max-width:440px;
+        padding:25px 20px 24px;
+        border-radius:20px;
+      }
+      #loginScreen .maintenance-logo{width:86px;height:86px;border-radius:15px}
+      #loginScreen .maintenance-hospital{font-size:1.2rem;margin-bottom:8px}
+      #loginScreen .maintenance-card h1{font-size:1.35rem}
+      #loginScreen .maintenance-icon{width:68px;height:68px;margin:18px auto 13px}
+      #loginScreen .maintenance-icon svg{width:35px;height:35px}
+      #loginScreen .maintenance-title{font-size:1.25rem}
+      #loginScreen .maintenance-text{font-size:.92rem}
+      #loginScreen .maintenance-login{margin-top:17px}
+    }
   </style>
 </div>
