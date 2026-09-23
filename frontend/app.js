@@ -106,6 +106,10 @@
       localStorage.removeItem(REMEMBER_KEY);
       localStorage.removeItem(REMEMBER_LEGACY_KEY);
     }catch(e){}
+    // Hapus juga password tersimpan lokal yang dienkripsi oleh modul login.
+    try{
+      if(typeof window.clearRememberedPassword_==='function') window.clearRememberedPassword_();
+    }catch(e){}
   }
   function loadRememberedCredentials(){
     try{
