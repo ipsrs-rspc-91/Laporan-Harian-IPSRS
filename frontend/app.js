@@ -474,7 +474,8 @@
       const json = await authRun('apiChangePassword', oldPassword, newPassword);
       if(json && json.ok){
         if(typeof window.storeBrowserCredential_==='function' && isRememberMeEnabled_()){
-          window.storeBrowserCredential_(CURRENT_SESSION && CURRENT_SESSION.staff_id ? CURRENT_SESSION.staff_id : '', newPassword, true);
+          const loginUsername=document.getElementById('loginUsername');
+          window.storeBrowserCredential_(loginUsername && loginUsername.value ? loginUsername.value.trim() : (CURRENT_SESSION && CURRENT_SESSION.staff_id ? CURRENT_SESSION.staff_id : ''), newPassword, true);
         }
         setMsg('pwMsg','Password berhasil diganti.');
         setTimeout(closePwModal, 900);
