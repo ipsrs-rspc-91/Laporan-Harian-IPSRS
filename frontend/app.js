@@ -39,6 +39,8 @@
   let IPSRS_ONLINE_REQUEST_ACTIVE = false;
   let ADMIN_STAFF_LIST = [];
   let adminSelectedStaffId = '';
+  let _adminStaffListLoaded = false;
+  let _adminStaffListLoading = null;
   let rawData = [];
   // Drill-down Dashboard -> Laporan. Hanya sebagai sinyal navigasi sementara;
   // tidak mengubah hak akses/Edit yang sudah ada.
@@ -685,7 +687,11 @@
       window.__ipsrsDashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
     }
     if(name === 'dashboard'){
-      // Dashboard adalah titik keluar dari drill-down Laporan.
+      // Muat daftar petugas secara lazy saat Dashboard pertama kali dibuka.
+      // Tidak menambah beban login; request hanya dijalankan sekali per sesi.
+      loadAdminStaffListIfNeeded();
+      // Dashboard tetap boleh mulai memuat KPI tanpa menunggu dropdown selesai.
+      // Keduanya berjalan paralel agar perpindahan halaman tetap cepat.
       resetLaporanUnfinishedState();
       const statusFilter = document.getElementById('FilterStatus');
       if(statusFilter && statusFilter.value === '__BELUM_SELESAI__') statusFilter.value = '';
@@ -2538,14 +2544,31 @@ cardList.appendChild(card);
   // ============================================================
   async function loadAdminStaffListIfNeeded(){
     if(!CURRENT_SESSION) return;
-    try{
-      const json = await authRun('apiListStaff');
-      if(json && json.ok){
-        ADMIN_STAFF_LIST = Array.isArray(json.data) ? json.data : [];
-        renderAdminStaffSelect();
-        renderDashStaffSelect();
+    // Satu sumber data dipakai bersama Dashboard + Daftar Laporan.
+    // Hindari request ganda saat kedua halaman membutuhkan daftar yang sama.
+    if(_adminStaffListLoaded){
+      renderAdminStaffSelect();
+      renderDashStaffSelect();
+      return;
+    }
+    if(_adminStaffListLoading) return _adminStaffListLoading;
+
+    _adminStaffListLoading=(async()=>{
+      try{
+        const json=await authRun('apiListStaff');
+        if(json && json.ok){
+          ADMIN_STAFF_LIST=Array.isArray(json.data)?json.data:[];
+          _adminStaffListLoaded=true;
+          renderAdminStaffSelect();
+          renderDashStaffSelect();
+        }
+      }catch(e){
+        // Biarkan percobaan berikutnya mengulang request bila gagal.
+      }finally{
+        _adminStaffListLoading=null;
       }
-    }catch(e){}
+    })();
+    return _adminStaffListLoading;
   }
   function syncAdminStaffFromReports_(){
     const map = {};
