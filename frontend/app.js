@@ -1336,8 +1336,16 @@
     if(!String(p.AreaKerja || '').trim()) missing.push('Area Kerja');
     if(!String(p.Item || '').trim()) missing.push('Item');
 
-    // Tiga field ini hanya wajib jika kategori mengandung kata "baru".
-    if(/\bbaru\b/i.test(String(p.Kategori || ''))){
+    // Hanya kategori resmi Spare Part Baru / Unit Baru yang mewajibkan
+    // Spare Part / Unit, Type, dan Jumlah. Harus konsisten dengan backend.
+    const kategoriBaru = String(p.Kategori || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    const kategoriWajibBaru = new Set([
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)'
+    ]);
+    if(kategoriWajibBaru.has(kategoriBaru)){
       if(!String(p.SparePartUnit || '').trim()) missing.push('Spare Part / Unit');
       if(!String(p.Type || '').trim()) missing.push('Type');
       if(!String(p.Jumlah || '').trim()) missing.push('Jumlah');
