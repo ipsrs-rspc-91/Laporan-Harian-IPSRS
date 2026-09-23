@@ -1547,6 +1547,9 @@
         if(typeof window.__ipsrsClearLaporanApiCache === 'function'){
           window.__ipsrsClearLaporanApiCache();
         }
+        if(typeof window.__ipsrsClearDashboardCache === 'function'){
+          window.__ipsrsClearDashboardCache();
+        }
         if(isEdit){
           invalidateLaporanViews();
           const editedId = _editingReportId;
@@ -2656,6 +2659,41 @@ cardList.appendChild(card);
     });
   }
 
+  // Cache sangat pendek untuk navigasi Dashboard berulang. Tujuannya hanya
+  // menghindari request identik saat user bolak-balik menu dalam beberapa detik;
+  // cache dibersihkan segera setelah create/edit laporan.
+  const _dashboardResponseCache = new Map();
+  const _dashboardInflight = new Map();
+  const _DASHBOARD_CACHE_TTL = 3000;
+
+  function clearDashboardResponseCache(){
+    _dashboardResponseCache.clear();
+  }
+
+  window.__ipsrsClearDashboardCache = clearDashboardResponseCache;
+
+  function getDashboardDataCached_(bulan, staffFilter){
+    const key = String(bulan || '') + '|' + String(staffFilter || '');
+    const cached = _dashboardResponseCache.get(key);
+    if(cached && (Date.now() - cached.at) < _DASHBOARD_CACHE_TTL){
+      return Promise.resolve(cached.value);
+    }
+    if(_dashboardInflight.has(key)) return _dashboardInflight.get(key);
+
+    const p = Promise.all([
+      authRun('apiDashboardStats', bulan, staffFilter),
+      authRun('apiGetStaffMonitoring', bulan, todayLocalISO(), staffFilter)
+    ]).then(function(value){
+      _dashboardResponseCache.set(key,{at:Date.now(),value:value});
+      return value;
+    }).finally(function(){
+      _dashboardInflight.delete(key);
+    });
+
+    _dashboardInflight.set(key,p);
+    return p;
+  }
+
   async function loadDashboard(){
     // Lindungi Dashboard dari race condition: jika user klik Dashboard,
     // ganti petugas/bulan, lalu request lama selesai belakangan, hasil lama
@@ -2675,10 +2713,7 @@ cardList.appendChild(card);
       window.__ipsrsClearLaporanApiCache('apiGetStaffMonitoring', [bulan, todayLocalISO()]);
     }
     try{
-      const [statsJson, monJson] = await Promise.all([
-        authRun('apiDashboardStats', bulan, staffFilter),
-        authRun('apiGetStaffMonitoring', bulan, todayLocalISO(), staffFilter)
-      ]);
+      const [statsJson, monJson] = await getDashboardDataCached_(bulan, staffFilter);
 
       // Request yang lebih baru sudah berjalan: abaikan response request lama.
       if(dashboardLoadSeq !== window.__ipsrsDashboardLoadSeq) return;
