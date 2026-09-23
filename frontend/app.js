@@ -4,7 +4,8 @@
   // login antar aksi di tab yang sama -- data tetap 100% di server)
   // ============================================================
   // MODE MAINTENANCE SEMENTARA: seluruh akses login dinonaktifkan.
-  // Ubah ke false setelah maintenance selesai.\n  const IPSRS_MAINTENANCE_MODE = true;
+  // Ubah ke false setelah maintenance selesai.
+  const IPSRS_MAINTENANCE_MODE = true;
   const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';
   const SESSION_KEY = 'ipsrs_session_v1';
   // "Ingat saya": disimpan di localStorage (bukan sessionStorage) supaya
