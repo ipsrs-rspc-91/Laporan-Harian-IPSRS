@@ -1,51 +1,47 @@
 <div id="loginScreen" class="hidden">
-<div class="maintenance-card">
-  <div class="login-logo">
-    <img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere">
-  </div>
-  <div class="sub">RS. Puri Cinere</div>
-  <h1>LAPORAN HARIAN IPSRS</h1>
+  <div class="maintenance-card">
+    <div class="login-logo">
+      <img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere">
+    </div>
+    <div class="sub">RS. Puri Cinere</div>
+    <h1>LAPORAN HARIAN IPSRS</h1>
 
-  <div class="maintenance-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M14.7 6.3a4.5 4.5 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4.5 4.5 0 0 0 5.4-5.4l-2.1 2.1-2.5-.5-.5-2.5 2.1-2.1Z"></path>
-      <path d="M15 15l4.5 4.5"></path>
-    </svg>
-  </div>
-
-  <div class="maintenance-title">SEDANG MAINTENANCE</div>
-  <div class="maintenance-text">
-    Sistem Laporan Harian IPSRS sedang dalam proses pemeliharaan dan penyempurnaan.
-    <br>
-    <strong>Akses petugas sementara dinonaktifkan.</strong>
-  </div>
-
-  <div class="maintenance-test-box">
-    <div class="maintenance-test-title">🔐 Akses Pengujian KA IPSRS</div>
-    <div class="maintenance-test-text">
-      Hanya akun <strong>KA IPSRS</strong> yang dapat login selama tahap pengujian migrasi.
+    <div class="maintenance-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.7 6.3a4.5 4.5 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4.5 4.5 0 0 0 5.4-5.4l-2.1 2.1-2.1-2.1Z"></path>
+        <path d="M15 15l4.5 4.5"></path>
+      </svg>
     </div>
 
-    <label for="loginUsername">USERNAME</label>
-    <input id="loginUsername" type="text" autocomplete="username" placeholder="Username KA IPSRS">
-
-    <label for="loginPassword">PASSWORD</label>
-    <div class="password-wrap">
-      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
-      <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')" aria-label="Tampilkan password">👁</button>
+    <div class="maintenance-title">SEDANG MAINTENANCE</div>
+    <div class="maintenance-text">
+      Sistem Laporan Harian IPSRS sedang dalam proses pemeliharaan dan penyempurnaan.
+      <br>
+      <strong>Akses petugas sementara dinonaktifkan.</strong>
     </div>
 
-    <label class="remember-row">
-      <input id="loginRemember" type="checkbox">
-      <span>INGAT SAYA DI PERANGKAT INI</span>
-    </label>
+    <div class="maintenance-login">
+      <label for="loginUsername">USERNAME</label>
+      <input id="loginUsername" type="text" autocomplete="username" placeholder="Username">
 
-    <button id="loginBtn" type="button" class="login-btn" onclick="doLogin()">Masuk untuk Pengujian</button>
-    <div id="loginMsg" class="login-msg"></div>
-  </div>
+      <label for="loginPassword">PASSWORD</label>
+      <div class="password-wrap">
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
+        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')" aria-label="Tampilkan password">👁</button>
+      </div>
 
-  <div class="maintenance-note">
-    Petugas lain tetap melihat halaman maintenance sampai migrasi dan pengujian selesai.
+      <label class="remember-row">
+        <input id="loginRemember" type="checkbox">
+        <span>INGAT SAYA DI PERANGKAT INI</span>
+      </label>
+
+      <button id="loginBtn" type="button" class="login-btn" onclick="doLogin()">Masuk</button>
+      <div id="loginMsg" class="login-msg"></div>
+    </div>
+
+    <div class="maintenance-note">
+      Akses login sementara dibatasi selama proses maintenance.
+    </div>
   </div>
 
   <style>
@@ -57,11 +53,9 @@
     .maintenance-icon svg{width:38px;height:38px}
     .maintenance-title{font-size:1.35rem;font-weight:800;color:#0f172a;letter-spacing:.02em;margin-bottom:10px}
     .maintenance-text{color:#475569;line-height:1.65;font-size:.96rem}
-    .maintenance-test-box{text-align:left;margin-top:18px;padding:16px;border:1px solid #dbe3ea;border-radius:12px;background:#fafcfd}
-    .maintenance-test-title{text-align:center;font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:6px}
-    .maintenance-test-text{text-align:center;color:#64748b;font-size:.84rem;line-height:1.45;margin-bottom:13px}
-    .maintenance-test-box label:not(.remember-row){display:block;margin:9px 0 5px;color:#64748b;font-size:.78rem;font-weight:700}
-    .maintenance-test-box input[type="text"],.maintenance-test-box input[type="password"]{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d8e0e7;border-radius:9px;background:#fff;font-size:1rem}
+    .maintenance-login{text-align:left;margin-top:18px}
+    .maintenance-login label:not(.remember-row){display:block;margin:9px 0 5px;color:#64748b;font-size:.78rem;font-weight:700}
+    .maintenance-login input[type="text"],.maintenance-login input[type="password"]{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d8e0e7;border-radius:9px;background:#fff;font-size:1rem}
     .password-wrap{position:relative}
     .password-wrap input{padding-right:44px!important}
     .password-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:1.05rem;cursor:pointer;padding:7px}
@@ -71,81 +65,4 @@
     .login-msg{text-align:center;min-height:20px;margin-top:9px;color:#c53d3d;font-size:.86rem;font-weight:600}
     .maintenance-note{margin-top:16px;padding:12px 14px;border-radius:10px;background:#f8fafc;color:#64748b;font-size:.84rem;line-height:1.5}
   </style>
-</div>
-</div>
-    <div class="sub">RS. Puri Cinere</div>
-    <h1>LAPORAN HARIAN IPSRS</h1>
-
-    <div class="maintenance-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14.7 6.3a4.5 4.5 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4.5 4.5 0 0 0 5.4-5.4l-2.1 2.1-2.5-.5-.5-2.5 2.1-2.1Z"></path>
-        <path d="M15 15l4.5 4.5"></path>
-      </svg>
-    </div>
-
-    <div class="maintenance-title">SEDANG MAINTENANCE</div>
-    <div class="maintenance-text">
-      Sistem Laporan Harian IPSRS sedang dalam proses pemeliharaan dan penyempurnaan.
-      <br>
-      <strong>Untuk sementara seluruh akses login dinonaktifkan.</strong>
-    </div>
-
-    <div class="maintenance-note">
-      Mohon mencoba kembali setelah maintenance selesai.
-    </div>
-
-    <style>
-      .maintenance-card{
-        text-align:center;
-      }
-      .maintenance-card .login-logo{
-        margin-bottom:7px;
-      }
-      .maintenance-card h1,
-      .maintenance-card .sub{
-        text-align:center;
-      }
-      .maintenance-card .sub{
-        color:#0da822;
-        font-weight:600;
-        font-size:1.2em;
-      }
-      .maintenance-icon{
-        width:72px;
-        height:72px;
-        margin:22px auto 14px;
-        border-radius:50%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background:#f1f5f9;
-        color:#64748b;
-      }
-      .maintenance-icon svg{
-        width:38px;
-        height:38px;
-      }
-      .maintenance-title{
-        font-size:1.35rem;
-        font-weight:800;
-        color:#0f172a;
-        letter-spacing:.02em;
-        margin-bottom:10px;
-      }
-      .maintenance-text{
-        color:#475569;
-        line-height:1.65;
-        font-size:.96rem;
-      }
-      .maintenance-note{
-        margin-top:18px;
-        padding:12px 14px;
-        border-radius:10px;
-        background:#f8fafc;
-        color:#64748b;
-        font-size:.88rem;
-        line-height:1.5;
-      }
-    </style>
-  </div>
 </div>
