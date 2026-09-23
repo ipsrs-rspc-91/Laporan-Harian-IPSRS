@@ -325,6 +325,7 @@
         // server-side melakukan provisioning Auth Admin dan menghubungkan
         // auth_user_id ke STAFF. Ini mencegah email-rate-limit dan menjaga
         // service/secret key tetap berada di server.
+        const authBridgeUsername = String(username||'').trim().toLowerCase()==='herry' ? 'kaipsrs' : username;
         const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
           method:'POST',
           headers:{
@@ -332,8 +333,8 @@
             'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
           },
           body:JSON.stringify({
-            username,
-            credential:password,
+            username:authBridgeUsername,
+            password:password,
             legacy_url:legacyLoginUrl_()
           })
         });
