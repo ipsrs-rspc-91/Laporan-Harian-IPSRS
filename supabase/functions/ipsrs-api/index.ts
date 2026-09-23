@@ -11,16 +11,49 @@ function normalizeCategory(v:any){return String(v||"").trim().replace(/\s+/g," "
 function categoryKind(v:any){const n=normalizeCategory(v);return{spare:SPARE_PART_NEW_CATEGORIES.has(n),unit:UNIT_NEW_CATEGORIES.has(n)}}
 function isNewCategory(v:any){const k=categoryKind(v);return k.spare||k.unit}
 const reportCache=new Map<string,{at:number,value:any}>(); const CACHE_TTL=15000;
+const accessSettingCache=new Map<string,{at:number,value:string}>();
+const editPermissionCache=new Map<string,{at:number,value:boolean}>();
+const PERMISSION_CACHE_TTL=15000;
 function cacheGet(k:string){const x=reportCache.get(k);return x&&Date.now()-x.at<CACHE_TTL?x.value:null}
 function cacheSet(k:string,v:any){reportCache.set(k,{at:Date.now(),value:v});return v}
-function cacheClear(){reportCache.clear()}
+function cacheClear(){reportCache.clear();accessSettingCache.clear();editPermissionCache.clear()}
 function map(r:any,canEdit=false){return{CanEdit:!!canEdit,ID:r.report_id,report_id:r.report_id,StaffID:r.staff_id,Petugas:r.nama_snapshot||r.pelapor||r.created_by_name||r.staff_id,Nama:r.nama_snapshot||r.created_by_name||r.staff_id,Bidang:r.bidang_snapshot||"",Role:r.role_snapshot||"",RoleLabel:label(r.role_snapshot||""),Tanggal:r.tanggal,Pukul:r.pukul,NoLK:r.nolk,Ruang:r.ruang,MasalahKegiatan:r.masalah_kegiatan,Tindakan:r.tindakan,Status:r.status,Keterangan:r.keterangan,Kategori:r.kategori,AreaKerja:r.area_kerja,Item:r.item,SparePartUnit:r.spare_part_unit,Type:r.type,Jumlah:r.jumlah,created_at:r.created_at,updated_at:r.updated_at,created_by_username:r.created_by_username,created_by_staff_id:r.created_by_staff_id,created_by_name:r.created_by_name,created_by_role:r.created_by_role,updated_by_staff_id:r.updated_by_staff_id,updated_by_name:r.updated_by_name,updated_by_role:r.updated_by_role,version:r.version}}
 const REPORT_EDITABLE_FIELDS=["Tanggal","Pelapor","Pukul","NoLK","Ruang","MasalahKegiatan","Tindakan","Status","Keterangan","Kategori","AreaKerja","Item","SparePartUnit","Type","Jumlah","JadwalKerja","RencanaKegiatan","TargetPekerjaan","RealisasiPekerjaan","HasilPencapaian","StatusPencapaian","Kendala","TindakLanjut","WaktuMulai","WaktuSelesai"];
-async function accessSetting(db:any,key:string,def="NONAKTIF"){const {data,error}=await db.from("access_settings").select("value").eq("key",key).maybeSingle();if(error)throw error;return String(data?.value||def).toUpperCase();}
+async function accessSetting(db:any,key:string,def="NONAKTIF"){
+ const k=String(key||"");
+ const hit=accessSettingCache.get(k);
+ if(hit&&Date.now()-hit.at<PERMISSION_CACHE_TTL)return hit.value;
+ const {data,error}=await db.from("access_settings").select("value").eq("key",k).maybeSingle();
+ if(error)throw error;
+ const value=String(data?.value||def).toUpperCase();
+ accessSettingCache.set(k,{at:Date.now(),value});
+ return value;
+}
 function effectivePayload(old:any,p:any){const e:any={Tanggal:old.tanggal,Pelapor:old.pelapor,Pukul:old.pukul,NoLK:old.nolk,Ruang:old.ruang,MasalahKegiatan:old.masalah_kegiatan,Tindakan:old.tindakan,Status:old.status,Keterangan:old.keterangan,Kategori:old.kategori,AreaKerja:old.area_kerja,Item:old.item,SparePartUnit:old.spare_part_unit,Type:old.type,Jumlah:old.jumlah,JadwalKerja:old.jadwal_kerja,RencanaKegiatan:old.rencana_kegiatan,TargetPekerjaan:old.target_pekerjaan,RealisasiPekerjaan:old.realisasi_pekerjaan,HasilPencapaian:old.hasil_pencapaian,StatusPencapaian:old.status_pencapaian,Kendala:old.kendala,TindakLanjut:old.tindak_lanjut,WaktuMulai:old.waktu_mulai,WaktuSelesai:old.waktu_selesai};for(const k of REPORT_EDITABLE_FIELDS)if(Object.prototype.hasOwnProperty.call(p,k))e[k]=p[k];return e;}
 function validateReportPayload(p:any){for(const k of ["Kategori","AreaKerja","Item"])if(String(p[k]||"")==="__ADD_NEW__")return k+" belum boleh menggunakan penanda tambah baru.";const miss=["Tanggal","Item"].filter(k=>!String(p[k]??"").trim());if(!String(p.MasalahKegiatan??"").trim()&&!String(p.RealisasiPekerjaan??"").trim())miss.push("MasalahKegiatan atau RealisasiPekerjaan");if(miss.length)return miss[0]+" wajib diisi.";if(isNewCategory(p.Kategori)&&(!String(p.SparePartUnit??"").trim()||!String(p.Type??"").trim()||!String(p.Jumlah??"").trim()))return"Spare Part / Unit, Type, dan Jumlah wajib diisi untuk kategori Spare Part Baru / Unit Baru.";return null;}
 async function canViewReport(db:any,s:any,r:any){if(!r)return false;if(r.staff_id===s.staff_id)return true;if(s.role==="KA_IPSRS")return true;if(r.role_snapshot==="KA_IPSRS")return false;return(await accessSetting(db,"LAPORAN_TIM","AKTIF"))==="AKTIF";}
-async function canEditReport(db:any,s:any,r:any){if(!r)return{ok:false,reason:"Laporan tidak ditemukan."};if(s.role==="KA_IPSRS")return{ok:true};if(r.staff_id===s.staff_id)return{ok:true};if(r.role_snapshot==="KA_IPSRS")return{ok:false,reason:"Laporan KA IPSRS hanya dapat diedit oleh KA IPSRS."};if(s.role==="ADMINISTRASI"){if((await accessSetting(db,"ADMINISTRASI_EDIT","NONAKTIF"))==="AKTIF")return{ok:true};return{ok:false,reason:"Administrasi tidak memiliki izin edit laporan staf lain saat ADMINISTRASI_EDIT NONAKTIF."};}const {data,error}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(error)throw error;return data?{ok:true}:{ok:false,reason:"Anda tidak memiliki hak untuk mengedit laporan ini."};}
+async function canEditReport(db:any,s:any,r:any){
+ if(!r)return{ok:false,reason:"Laporan tidak ditemukan."};
+ if(s.role==="KA_IPSRS")return{ok:true};
+ if(r.staff_id===s.staff_id)return{ok:true};
+ if(r.role_snapshot==="KA_IPSRS")return{ok:false,reason:"Laporan KA IPSRS hanya dapat diedit oleh KA IPSRS."};
+ if(s.role==="ADMINISTRASI"){
+   if((await accessSetting(db,"ADMINISTRASI_EDIT","NONAKTIF"))==="AKTIF")return{ok:true};
+   return{ok:false,reason:"Administrasi tidak memiliki izin edit laporan staf lain saat ADMINISTRASI_EDIT NONAKTIF."};
+ }
+ const pk=String(s.staff_id||"");
+ const hit=editPermissionCache.get(pk);
+ let allowed:boolean;
+ if(hit&&Date.now()-hit.at<PERMISSION_CACHE_TTL){
+   allowed=hit.value;
+ }else{
+   const {data,error}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();
+   if(error)throw error;
+   allowed=!!data;
+   editPermissionCache.set(pk,{at:Date.now(),value:allowed});
+ }
+ return allowed?{ok:true}:{ok:false,reason:"Anda tidak memiliki hak untuk mengedit laporan ini."};
+}
 function dbp(p:any){const n=(v:any)=>v===""||v==null?null:Number(v);return{tanggal:p.Tanggal||null,pelapor:p.Pelapor||null,pukul:p.Pukul||null,nolk:p.NoLK||null,ruang:p.Ruang||null,masalah_kegiatan:p.MasalahKegiatan||null,tindakan:p.Tindakan||null,status:p.Status||null,keterangan:p.Keterangan||null,kategori:p.Kategori||null,area_kerja:p.AreaKerja||null,item:p.Item||null,spare_part_unit:p.SparePartUnit||null,type:p.Type||null,jumlah:n(p.Jumlah),jadwal_kerja:p.JadwalKerja||null,rencana_kegiatan:p.RencanaKegiatan||null,target_pekerjaan:p.TargetPekerjaan||null,realisasi_pekerjaan:p.RealisasiPekerjaan||null,hasil_pencapaian:p.HasilPencapaian||null,status_pencapaian:p.StatusPencapaian||null,kendala:p.Kendala||null,tindak_lanjut:p.TindakLanjut||null,waktu_mulai:p.WaktuMulai||null,waktu_selesai:p.WaktuSelesai||null}}
 async function staff(ctx:any,req?:Request){let uid=ctx.userClaims?.sub;let email=String(ctx.userClaims?.email||"").toLowerCase();if(!uid&&req){const h=req.headers.get("authorization")||"";const m=h.match(/^Bearer\s+(.+)$/i);if(m){const g=await ctx.supabaseAdmin.auth.getUser(m[1]);if(!g.error&&g.data?.user){uid=g.data.user.id;email=String(g.data.user.email||"").toLowerCase();}}}if(!uid)throw Error("Sesi tidak valid.");let {data,error}=await ctx.supabaseAdmin.from("staff").select("*").eq("auth_user_id",uid).maybeSingle();if(error)throw error;if(!data){const email=String(ctx.userClaims?.email||"").toLowerCase();const local=email.split("@")[0];const staffId=local==="kaipsrs"?"KAIPSRS":local;const r=await ctx.supabaseAdmin.from("staff").select("*").eq("staff_id",staffId).maybeSingle();if(r.error)throw r.error;data=r.data;if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);}if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");return data}
 async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){try{await db.from("audit_log").insert({username:s.staff_id,staff_id:s.staff_id,action:a,report_id:id,keterangan:k,field_changed:v.field_changed||null,old_value:v.old_value??null,new_value:v.new_value??null,version_before:v.version_before??null,version_after:v.version_after??null});}catch(_e){}}
