@@ -320,34 +320,33 @@
       // Jalur utama: Supabase Auth.
       let signIn=await client.auth.signInWithPassword({email,password});
       if(signIn.error){
-        // Jalur migrasi SATU KALI: verifikasi password terhadap GAS,
-        // lalu membuat akun Auth Supabase dengan password yang sama.
-        const legacy=await callLegacyLogin_(username,password);
-        if(!legacy || !legacy.ok){
-          if(msgEl) msgEl.innerText=(legacy&&legacy.msg)?legacy.msg:'Login gagal.';
+        // CUTOVER AUTH: jangan pernah membuat akun dari browser dengan signUp().
+        // Password lama diverifikasi oleh backend legacy, lalu Edge Function
+        // server-side melakukan provisioning Auth Admin dan menghubungkan
+        // auth_user_id ke STAFF. Ini mencegah email-rate-limit dan menjaga
+        // service/secret key tetap berada di server.
+        const bridgeResponse=await fetch(window.IPSRS_SUPABASE_AUTH_BRIDGE_URL,{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY
+          },
+          body:JSON.stringify({
+            username,
+            credential:password,
+            legacy_url:legacyLoginUrl_()
+          })
+        });
+        const bridgeJson=await bridgeResponse.json().catch(()=>null);
+        if(!bridgeResponse.ok || !bridgeJson || !bridgeJson.ok){
+          if(msgEl) msgEl.innerText=(bridgeJson&&bridgeJson.msg)
+            ? bridgeJson.msg
+            : 'Akun belum diprovisikan ke Supabase Auth.';
           if(autoMode) clearRememberedCredentials();
           return false;
         }
-        // Jalur migrasi SATU KALI: legacy sudah memverifikasi password.
-        // Buat akun Supabase Auth dengan username/password LAMA, lalu login.
-        const signUp=await client.auth.signUp({
-          email,
-          password,
-          options:{data:{staff_id:legacy.staff_id||username,username}}
-        });
-        if(signUp.error && !/already registered|already exists|user already registered/i.test(signUp.error.message||'')){
-          throw signUp.error;
-        }
         signIn=await client.auth.signInWithPassword({email,password});
         if(signIn.error) throw signIn.error;
-        const linkToken=signIn.data.session.access_token;
-        const linkResponse=await fetch(window.IPSRS_SUPABASE_LINK_URL,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+linkToken},
-          body:JSON.stringify({staff_id:legacy.staff_id||username,username})
-        });
-        const linkJson=await linkResponse.json().catch(()=>null);
-        if(!linkResponse.ok || !linkJson || !linkJson.ok) throw new Error((linkJson&&linkJson.msg)||'Gagal menghubungkan akun Supabase dengan petugas.');
       }
       const session=signIn.data.session;
       if(!session) throw new Error('Sesi Supabase tidak terbentuk.');
