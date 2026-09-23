@@ -430,12 +430,16 @@
     }
   }
 
-  async function doLogin(){
+  async function doLogin(event){
+    // Submit hanya boleh terjadi sebagai hasil aksi pengguna (klik Masuk).
+    // Navigasi/form POST tetap dicegah; autentikasi dilakukan oleh performLogin().
+    if(event && typeof event.preventDefault==='function') event.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const remember = document.getElementById('loginRemember').checked;
     const msgEl = document.getElementById('loginMsg');
     await performLogin(username, password, remember, msgEl, false);
+    return false;
   }
 
   function doLogout(){
