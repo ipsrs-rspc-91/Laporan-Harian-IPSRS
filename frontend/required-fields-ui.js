@@ -77,13 +77,33 @@
     }
 
     // Page Input dapat di-remount. Amati hanya area form agar ringan.
-    const observer = new MutationObserver(function(){
-      updateRequiredFieldVisuals();
-      const sel = document.getElementById('Kategori');
-      if(sel && !sel.dataset.ipsrsRequiredVisualBound){
-        sel.addEventListener('change', updateRequiredFieldVisuals);
-        sel.dataset.ipsrsRequiredVisualBound = '1';
-      }
+    let visualUpdateQueued = false;
+    const observer = new MutationObserver(function(mutations){
+      // Page Input dapat di-remount. Jangan menjalankan update untuk setiap
+      // perubahan DOM global; cukup jadwalkan satu update per frame dan hanya
+      // jika mutasi memang menyentuh area form input.
+      const pageInput = document.getElementById('page-input');
+      if(!pageInput) return;
+      const relevant = mutations.some(function(m){
+        return pageInput.contains(m.target) ||
+          Array.from(m.addedNodes || []).some(function(n){
+            return n.nodeType === 1 && (n === pageInput || pageInput.contains(n));
+          }) ||
+          Array.from(m.removedNodes || []).some(function(n){
+            return n.nodeType === 1;
+          });
+      });
+      if(!relevant || visualUpdateQueued) return;
+      visualUpdateQueued = true;
+      requestAnimationFrame(function(){
+        visualUpdateQueued = false;
+        updateRequiredFieldVisuals();
+        const sel = document.getElementById('Kategori');
+        if(sel && !sel.dataset.ipsrsRequiredVisualBound){
+          sel.addEventListener('change', updateRequiredFieldVisuals);
+          sel.dataset.ipsrsRequiredVisualBound = '1';
+        }
+      });
     });
     observer.observe(document.body, {childList:true, subtree:true});
   }
