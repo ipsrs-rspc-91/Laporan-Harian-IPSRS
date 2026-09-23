@@ -141,9 +141,80 @@
   }
 
   function getApiUrl(){ return window.IPSRS_SUPABASE_API_URL || ''; }
+  // Login username -> Supabase Auth email.
+  // Beberapa akun lama memakai username/email-localpart yang berbeda dari
+  // staff_id, sementara petugas biasanya memasukkan nama singkat (mis. "Rusdi").
+  // Mapping ini menjaga akun/password lama tetap berlaku tanpa mereset password.
+  const IPSRS_AUTH_LOGIN_ALIASES = Object.freeze({
+    'herry':'herry',
+    'herry hidayat':'herry',
+    'kaipsrs':'herry',
+    'rohim':'rohim',
+    'abdul rohim':'rohim',
+    'staf-workshop-01':'rohim',
+    'agung':'agung',
+    'agung prayitno':'agung',
+    'kasie-elektromedik':'agung',
+    'heri':'heri',
+    'heri septiawan':'heri',
+    'staf-workshop-02':'heri',
+    'kabul':'kabul',
+    'kabul wardoyo':'kabul',
+    'shift-02':'kabul',
+    'mardiyono':'mardiyono',
+    'staf-pendamping-01':'mardiyono',
+    'raihan':'raihan',
+    'muhammad raihan rasyid':'raihan',
+    'staf-kesling-01':'raihan',
+    'sobur':'sobur',
+    'muhammad sobur':'sobur',
+    'staf-sipil-02':'sobur',
+    'lamid':'lamid',
+    'pantiarso':'lamid',
+    'kasie-me':'lamid',
+    'kartolo':'kartolo',
+    'rahmat kartolo':'kartolo',
+    'shift-01':'kartolo',
+    'riko':'riko',
+    'riko ferdyan':'riko',
+    'adm01':'riko',
+    'kasie_kesling':'kasie_kesling',
+    'rusdi':'kasie_kesling',
+    'kasie-kesling':'kasie_kesling',
+    'samsuri':'samsuri',
+    'shift-04':'samsuri',
+    'selo':'selo',
+    'selo setiyawan':'selo',
+    'shift-08':'selo',
+    'setu':'setu',
+    'shift-03':'setu',
+    'sule':'sule',
+    'sulaiman':'sule',
+    'staf-me-01':'sule',
+    'sunandar':'sunandar',
+    'shift-05':'sunandar',
+    'surono':'surono',
+    'shift-06':'surono',
+    'yadi':'yadi',
+    'suryadih':'yadi',
+    'staf-sipil-01':'yadi',
+    'suro':'suro',
+    'suryanto':'suro',
+    'staf-workshop-03':'suro',
+    'teguh':'teguh',
+    'teguh iman wahyudi':'teguh',
+    'staf-elektromedik-01':'teguh',
+    'wawan':'wawan',
+    'wawan marwan':'wawan',
+    'shift-07':'wawan',
+    'yosep':'yosep',
+    'yosep kurniawan galang narpathie':'yosep',
+    'staf-pendamping-02':'yosep'
+  });
+
   function staffAuthEmail_(staffId){
     const raw=String(staffId||'').trim().toLowerCase();
-    const authUser=raw==='herry'?'herry':raw;
+    const authUser=IPSRS_AUTH_LOGIN_ALIASES[raw] || raw;
     return authUser.replace(/[^a-z0-9._-]/g,'-') + (window.IPSRS_SUPABASE_EMAIL_DOMAIN || '@auth.ipsrs.local');
   }
 
