@@ -30,20 +30,11 @@
         'PasswordCredential' in window &&
         typeof navigator.credentials.store === 'function'
       ){
-        const form=document.getElementById('ipsrsLoginForm');
-        let credential=null;
-        try{
-          // Gunakan form login yang sama agar browser mendapat metadata
-          // username/password + autocomplete yang benar.
-          if(form) credential=new PasswordCredential(form);
-        }catch(_e){}
-        if(!credential){
-          credential=new PasswordCredential({
-            id:String(username),
-            password:String(password),
-            name:String(username)
-          });
-        }
+        const credential=new PasswordCredential({
+          id:String(username),
+          password:String(password),
+          name:String(username)
+        });
         await navigator.credentials.store(credential);
         return true;
       }
