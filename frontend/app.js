@@ -287,7 +287,7 @@
       case 'apiDashboardStats':
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; break;
       case 'apiGetStaffMonitoring':
-        payload.token=token; payload.bulan=args[0]||''; payload.tanggal=args[1]||''; break;
+        payload.token=token; payload.bulan=args[0]||''; payload.tanggal=args[1]||''; payload.staffIdFilter=args[2]||null; break;
       case 'apiGetStaffDailyStatus':
         payload.token=token; payload.staffId=args[0]||''; payload.bulan=args[1]||''; break;
       case 'apiGetMonthlyRecap':
