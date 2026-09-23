@@ -8,11 +8,10 @@
   const IPSRS_MAINTENANCE_MODE = false;
   const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';
   const SESSION_KEY = 'ipsrs_session_v1';
-  // "Ingat saya": disimpan di localStorage (bukan sessionStorage) supaya
-  // tetap ada walau tab/browser ditutup atau HP/PC di-restart. Password
-  // di sini hanya disamarkan (base64), BUKAN dienkripsi -- jadi hanya untuk
-  // dipakai di HP/PC pribadi milik petugas sendiri, bukan perangkat bersama.
-  const REMEMBER_KEY = 'ipsrs_remember_v1';
+  // "Ingat saya": preferensi + username disimpan di localStorage.
+  // Password TIDAK pernah disimpan. Sesi yang bertahan antar pembukaan browser
+  // dikelola oleh Supabase Auth melalui persisted session/refresh token.
+  const REMEMBER_KEY = 'ipsrs_remember_v2';
   const BIDANG_LIST = ['ME', 'Sipil', 'Workshop', 'Elektromedik', 'Kesling', 'Shift'];
   // CATATAN (P1 §3.6): SHIFT_LIST dihapus. Konsep "Shift" sudah dihapus total
   // dari backend (lihat komentar "TAHAP 2: Tidak ada lagi shiftFilter" di
@@ -74,10 +73,25 @@
   }
 
   // ============================================================
-  // "INGAT SAYA" -- simpan username/password di localStorage HP/PC
   // ============================================================
+  // "INGAT SAYA" -- ingat sesi, BUKAN menyimpan password
+  // ============================================================
+  function isRememberMeEnabled_(){
+    try{
+      const raw=localStorage.getItem(REMEMBER_KEY);
+      if(!raw) return false;
+      const payload=JSON.parse(raw);
+      // Kompatibilitas: username lama dianggap Remember Me aktif.
+      return payload && payload.enabled !== false;
+    }catch(e){ return false; }
+  }
   function saveRememberedCredentials(username){
-    try{ localStorage.setItem(REMEMBER_KEY, JSON.stringify({u:btoa(unescape(encodeURIComponent(username)))})); }catch(e){}
+    try{
+      localStorage.setItem(REMEMBER_KEY, JSON.stringify({
+        u:btoa(unescape(encodeURIComponent(String(username||'')))),
+        enabled:true
+      }));
+    }catch(e){}
   }
   function clearRememberedCredentials(){
     try{ localStorage.removeItem(REMEMBER_KEY); }catch(e){}
@@ -85,9 +99,12 @@
   function loadRememberedCredentials(){
     try{
       const raw=localStorage.getItem(REMEMBER_KEY); if(!raw) return;
-      const payload=JSON.parse(raw); const username=decodeURIComponent(escape(atob(payload.u||'')));
-      const uEl=document.getElementById('loginUsername'); const rEl=document.getElementById('loginRemember');
-      if(uEl) uEl.value=username; if(rEl) rEl.checked=true;
+      const payload=JSON.parse(raw);
+      const username=decodeURIComponent(escape(atob(payload.u||'')));
+      const uEl=document.getElementById('loginUsername');
+      const rEl=document.getElementById('loginRemember');
+      if(uEl) uEl.value=username;
+      if(rEl) rEl.checked=(payload.enabled!==false);
     }catch(e){ clearRememberedCredentials(); }
   }
 
@@ -134,10 +151,20 @@
       window.IPSRS_SUPABASE_CLIENT = window.supabase.createClient(
         window.IPSRS_SUPABASE_URL,
         window.IPSRS_SUPABASE_PUBLISHABLE_KEY,
-        { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:false } }
+        {
+          auth:{
+            persistSession:isRememberMeEnabled_(),
+            autoRefreshToken:true,
+            detectSessionInUrl:false
+          }
+        }
       );
     }
     return window.IPSRS_SUPABASE_CLIENT;
+  }
+
+  function resetSupabaseClient_(){
+    window.IPSRS_SUPABASE_CLIENT=null;
   }
 
   function getApiUrl(){ return window.IPSRS_SUPABASE_API_URL || ''; }
@@ -341,6 +368,11 @@
       return false;
     }
     if(msgEl) msgEl.innerText=autoMode?'Masuk otomatis...':'Memeriksa...';
+    // Terapkan pilihan Remember Me sebelum client Supabase dibuat.
+    if(remember) saveRememberedCredentials(username);
+    else clearRememberedCredentials();
+    resetSupabaseClient_();
+
     const client=getSupabaseClient_();
     const email=staffAuthEmail_(username);
     try{
@@ -369,7 +401,7 @@
       // pencatatan audit tidak boleh menahan pengguna masuk ke aplikasi.
       // Kegagalan audit tidak mengubah hasil login yang sudah berhasil.
       Promise.resolve().then(()=>authRun('apiRecordLogin')).catch(()=>{});
-      if(remember) saveRememberedCredentials(username); else clearRememberedCredentials();
+
       if(msgEl) msgEl.innerText='';
       document.getElementById('loginPassword').value='';
       applyIdentityToUI();
@@ -400,7 +432,9 @@
     resetLaporanUnfinishedState();
     closeUserMenu();
     showLoginScreen('Anda sudah keluar. Silakan login kembali.');
-    client.auth.signOut().catch(function(){});
+    client.auth.signOut({scope:'local'}).catch(function(){}).finally(function(){
+      resetSupabaseClient_();
+    });
   }
 
   function openPwModal(){
