@@ -630,7 +630,14 @@
       if(statusFilter && statusFilter.value === '__BELUM_SELESAI__') statusFilter.value = '';
       loadDashboard();
     }
-    if(name === 'laporan') resetLaporanSubTabCache();
+    if(name === 'laporan'){
+      // Jangan reload API setiap kali user kembali ke menu Laporan.
+      // Data yang sudah dirender dipertahankan agar perpindahan menu konsisten cepat.
+      if(!_laporanPageInitialized || _laporanNeedsRefresh){
+        resetLaporanSubTabCache();
+        _laporanPageInitialized = true;
+      }
+    }
     if(name === 'online'){
       if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
       loadOnlineUsers();
@@ -1541,8 +1548,7 @@
           window.__ipsrsClearLaporanApiCache();
         }
         if(isEdit){
-          _laporanSubTabLoaded.monitoring = false;
-          _laporanSubTabLoaded.rekap = false;
+          invalidateLaporanViews();
           const editedId = _editingReportId;
           startCreateReportForm(true);
           openSaveSuccessModal('Perubahan laporan berhasil disimpan (ID: ' + editedId + ').');
@@ -2031,6 +2037,10 @@ cardList.appendChild(card);
   // ============================================================
   const _laporanSubTabLoaded = { monitoring: false, rekap: false, daftar: false, saya: false };
   let _laporanMode = 'saya';
+  // Laporan tidak perlu mengulang request setiap kali user bolak-balik menu.
+  // Refresh hanya dipaksa saat pertama dibuka atau setelah data laporan berubah.
+  let _laporanPageInitialized = false;
+  let _laporanNeedsRefresh = false;
 
   function goLaporanSubTab(name){
     // Klik manual menu/submenu Laporan selalu menjadi titik reset filter.
@@ -2060,7 +2070,16 @@ cardList.appendChild(card);
     }
   }
 
+  function invalidateLaporanViews(){
+    _laporanSubTabLoaded.monitoring = false;
+    _laporanSubTabLoaded.rekap = false;
+    _laporanSubTabLoaded.daftar = false;
+    _laporanSubTabLoaded.saya = false;
+    _laporanNeedsRefresh = true;
+  }
+
   function resetLaporanSubTabCache(){
+    _laporanNeedsRefresh = false;
     _laporanSubTabLoaded.monitoring = false;
     _laporanSubTabLoaded.rekap = false;
     _laporanSubTabLoaded.daftar = false;
