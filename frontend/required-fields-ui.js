@@ -36,11 +36,17 @@
     const sel = document.getElementById('Kategori');
     const value = sel ? String(sel.value || '').trim() : '';
 
-    // Spare Part / Unit, Type, dan Jumlah hanya wajib bila
-    // kategori secara eksplisit mengandung kata "baru".
-    // Contoh: "Spare Part Baru" / "Unit Baru".
-    // Perbaikan/penggantian dengan spare part kanibal tidak dipaksa.
-    return /\bbaru\b/i.test(value);
+    // Harus sama persis dengan daftar kategori resmi di backend.
+    // Jangan menggunakan pencarian kata "baru" karena dapat memicu
+    // field wajib pada kategori lain yang kebetulan mengandung kata tersebut.
+    const normalized = value.replace(/\s+/g, ' ').toUpperCase();
+    const requiredNewCategories = new Set([
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)'
+    ]);
+    return requiredNewCategories.has(normalized);
   }
 
   function updateRequiredFieldVisuals(){
