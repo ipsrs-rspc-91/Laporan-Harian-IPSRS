@@ -16,11 +16,13 @@
   };
   function setProgress(el,text){if(!el)return;el.classList.add('ipsrs-login-processing');el.innerHTML='<span class="ipsrs-login-spinner" aria-hidden="true"></span><span>'+text+'</span>';}
   function clearProgress(el){if(el)el.classList.remove('ipsrs-login-processing');}
-  function button(){return document.querySelector('#loginScreen button[onclick*="doLogin"],#loginScreen #btnLogin,button[onclick*="doLogin"]');}
+  function button(){return document.querySelector('#ipsrsLoginForm button[type="submit"],#loginScreen #loginBtn,#loginScreen button[onclick*="doLogin"]');}
   // Simpan username/password hanya melalui password manager browser/perangkat.
   // Password TIDAK ditulis ke localStorage, sessionStorage, database, atau Supabase.
-  async function storeBrowserCredential_(username,password,remember){
-    if(!remember || !username || !password) return;
+  // Password hanya ditangani oleh Password Manager browser/perangkat.
+  // Tidak pernah ditulis ke localStorage, sessionStorage, database, atau Supabase.
+  window.storeBrowserCredential_=async function(username,password,remember){
+    if(!remember || !username || !password) return false;
     try{
       if(
         window.isSecureContext &&
@@ -34,12 +36,47 @@
           name: String(username)
         });
         await navigator.credentials.store(credential);
+        return true;
       }
     }catch(_e){
-      // Tidak mengganggu login bila browser tidak mendukung API ini
-      // atau pengguna menolak penyimpanan kredensial.
+      // Fallback: autocomplete/password manager browser tetap dapat bekerja.
     }
-  }
+    return false;
+  };
+
+  // Kembalikan kredensial yang sudah disimpan ke form login.
+  // PENTING: fungsi ini hanya mengisi form dan TIDAK pernah menekan tombol MASUK.
+  window.restoreBrowserCredential_=async function(){
+    try{
+      const remember=document.getElementById('loginRemember');
+      const usernameEl=document.getElementById('loginUsername');
+      const passwordEl=document.getElementById('loginPassword');
+      if(!remember || !remember.checked || !usernameEl || !passwordEl) return false;
+
+      // Jangan menimpa autofill yang sudah diberikan browser.
+      if(passwordEl.value) return true;
+
+      if(
+        window.isSecureContext &&
+        navigator.credentials &&
+        typeof navigator.credentials.get === 'function'
+      ){
+        const credential=await navigator.credentials.get({
+          password:true,
+          mediation:'optional'
+        });
+        if(credential && credential.password){
+          if(!usernameEl.value && credential.id) usernameEl.value=credential.id;
+          passwordEl.value=credential.password;
+          return true;
+        }
+      }
+    }catch(_e){
+      // Browser/password manager tidak mendukung retrieval programatik.
+      // Form autocomplete tetap menjadi fallback.
+    }
+    return false;
+  };
 
   window.performLogin=async function(username,password,remember,msgEl,autoMode){
     if(!username||!password){clearProgress(msgEl);if(msgEl)msgEl.innerText='Username dan password wajib diisi.';return false;}
@@ -48,7 +85,7 @@
     setProgress(msgEl,'Memeriksa akun Supabase...');
     try{
       const ok=await originalPerformLogin(username,password,remember,msgEl,autoMode);
-      if(ok) await storeBrowserCredential_(username,password,remember);
+      if(ok) await window.storeBrowserCredential_(username,password,remember);
       return ok;
     }finally{clearProgress(msgEl);if(b){b.disabled=disabled;b.innerHTML=old;b.removeAttribute('aria-busy');}}
   };
