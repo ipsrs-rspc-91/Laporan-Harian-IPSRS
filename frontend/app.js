@@ -304,7 +304,7 @@
           return false;
         }
         if(String(testLegacy.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
-          if(msgEl) msgEl.innerText='Sistem sedang maintenance. Hanya KA IPSRS yang dapat login untuk pengujian.';
+          if(msgEl) msgEl.innerText='Sistem sedang maintenance.';
           return false;
         }
       }
