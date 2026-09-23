@@ -153,7 +153,7 @@
 
   function staffAuthEmail_(staffId){
     const raw=String(staffId||'').trim().toLowerCase();
-    const authUser=raw==='herry'?'kaipsrs':raw;
+    const authUser=raw==='herry'?'herry':raw;
     return authUser.replace(/[^a-z0-9._-]/g,'-') + (window.IPSRS_SUPABASE_EMAIL_DOMAIN || '@auth.ipsrs.local');
   }
 
