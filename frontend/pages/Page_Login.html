@@ -21,7 +21,7 @@
       Silakan masuk untuk mengakses Sistem Laporan Harian IPSRS.
     </div>
 
-    <form class="login-login" id="ipsrsLoginForm" autocomplete="on" onsubmit="event.preventDefault();doLogin();">
+    <form class="login-login" id="ipsrsLoginForm" autocomplete="on" onsubmit="event.preventDefault();return false;">
       <label for="loginUsername">USERNAME</label>
       <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="Username">
 
@@ -36,7 +36,7 @@
         <span>INGAT SAYA DI PERANGKAT INI</span>
       </label>
 
-      <button id="loginBtn" type="submit" class="login-btn">Masuk <span aria-hidden="true">→</span></button>
+      <button id="loginBtn" type="button" class="login-btn" onclick="doLogin()">Masuk <span aria-hidden="true">→</span></button>
       <div id="loginMsg" class="login-msg"></div>
     </form>
   </div>
