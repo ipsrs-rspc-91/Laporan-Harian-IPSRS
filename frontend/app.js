@@ -152,7 +152,9 @@
   function legacyLoginUrl_(){ return window.IPSRS_API_URL || 'https://script.google.com/macros/s/AKfycbzC7caqnB_sDXgNV5sW1nKbl4m2JM22qK-zWIx_VQnI4I2icZcLldatvq9UsqMEHf1Z/exec'; }
 
   function staffAuthEmail_(staffId){
-    return String(staffId||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'-') + (window.IPSRS_SUPABASE_EMAIL_DOMAIN || '@auth.ipsrs.local');
+    const raw=String(staffId||'').trim().toLowerCase();
+    const authUser=raw==='herry'?'kaipsrs':raw;
+    return authUser.replace(/[^a-z0-9._-]/g,'-') + (window.IPSRS_SUPABASE_EMAIL_DOMAIN || '@auth.ipsrs.local');
   }
 
   async function callLegacyLogin_(username,password){
