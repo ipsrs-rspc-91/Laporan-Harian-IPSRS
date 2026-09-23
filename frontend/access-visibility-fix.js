@@ -91,9 +91,15 @@
     });
   }
 
+  // Observasi hanya diperlukan sampai halaman Laporan pertama kali
+  // terinisialisasi. Setelah token dan tab awal sudah siap, observer dihentikan
+  // agar perpindahan menu dan render tabel tidak terus memicu pekerjaan UI.
   var observer = new MutationObserver(function(){
     if(pageLaporanReady()) bindTabTypes();
     ensureLaporanDefault();
+    if(initializedToken){
+      observer.disconnect();
+    }
   });
 
   observer.observe(document.body,{childList:true,subtree:true});
