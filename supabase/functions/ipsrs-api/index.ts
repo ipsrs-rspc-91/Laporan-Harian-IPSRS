@@ -151,7 +151,10 @@ if(a==="apiDashboardStats"){
  const {data:rawReports,error}=await q;if(error)throw error;
  // Counts include KA IPSRS. Detailed report payloads remain protected by reportPolicyBatch/canViewReport.
  const dashboardPolicy=await reportPolicyBatch(db,s,rawReports||[]);const rr:any[]=[];for(const r of rawReports||[])if(dashboardPolicy.visible.has(String(r.report_id)))rr.push(r);
- const aggregateReports=rawReports||[];
+ // KA IPSRS ikut dalam KPI kepatuhan/monitoring melalui monitoringToday.
+ // Statistik isi laporan (status, kategori, area, staff, spare part, dll.) tidak
+ // memakai laporan KA IPSRS agar detail isi laporannya tidak ikut terungkap.
+ const aggregateReports=(rawReports||[]).filter((r:any)=>String(r.role_snapshot||"").toUpperCase()!=="KA_IPSRS" && String(r.staff_id||"")!=="KAIPSRS");
  const total=aggregateReports.length,sel=aggregateReports.filter((r:any)=>r.status==="Selesai").length,bel=total-sel,cat:any={},ar:any={},sm:any={},pc:any={};for(const st of activeStaff||[])sm[st.staff_id]={staff_id:st.staff_id,nama:st.nama,role:st.role,bidang:st.bidang||"",value:0};let spare=0,unit=0;
  for(const r of aggregateReports){if(r.kategori){cat[r.kategori]=(cat[r.kategori]||0)+1;const kind=categoryKind(r.kategori);if(kind.spare)spare++;if(kind.unit)unit++;}if(r.area_kerja)ar[r.area_kerja]=(ar[r.area_kerja]||0)+1;const k=r.staff_id;if(sm[k])sm[k].value++;const p=r.status_pencapaian||r.status||"Belum Diisi";pc[p]=(pc[p]||0)+1}
  const recentSource=(rr||[]).filter((r:any)=>String(r.role_snapshot||"").toUpperCase()!=="KA_IPSRS" && String(r.staff_id||"")!=="KAIPSRS");const recent=recentSource.slice().sort((a:any,b:any)=>{const d=String(b.tanggal||"").localeCompare(String(a.tanggal||""));if(d)return d;const p=String(b.pukul||"").localeCompare(String(a.pukul||""));if(p)return p;return String(b.created_at||"").localeCompare(String(a.created_at||""));}).slice(0,6).map((r:any)=>map(r,dashboardPolicy.editable.has(String(r.report_id))));
