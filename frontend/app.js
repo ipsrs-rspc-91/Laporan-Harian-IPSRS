@@ -528,7 +528,15 @@
       goPage('input');
       return true;
     }catch(err){
-      if(msgEl) msgEl.innerText='Error: '+(err&&err.message?err.message:err);
+      const rawMsg=String(err&&err.message?err.message:err);
+      // Supabase sengaja menggunakan pesan yang sama untuk username maupun password
+      // yang tidak valid. Jangan tampilkan pesan teknis "Invalid login credentials"
+      // kepada pengguna; gunakan pesan yang jelas dan tidak membocorkan apakah akun ada.
+      if(msgEl){
+        msgEl.innerText=/invalid login credentials/i.test(rawMsg)
+          ? 'Username atau password salah.'
+          : 'Error: '+rawMsg;
+      }
       return false;
     }
   }
