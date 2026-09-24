@@ -2201,17 +2201,8 @@
     const inner=document.getElementById('reportHorizontalScrollInner');
     if(!wrap||!bar||!inner) return;
 
-    const needsScroll=wrap.scrollWidth > (wrap.clientWidth + 1);
-    bar.classList.toggle('is-hidden',!needsScroll);
-    if(!needsScroll){
-      bar.scrollLeft=0;
-      wrap.scrollLeft=0;
-      inner.style.width='100%';
-      return;
-    }
-
-    inner.style.width=Math.max(wrap.scrollWidth,wrap.clientWidth)+'px';
-
+    // Pasang listener sekali, sebelum pengecekan overflow, supaya perubahan
+    // ukuran layar atau pergantian mode tampilan tetap terdeteksi.
     if(bar.dataset.bound!=='1'){
       let syncing=false;
       wrap.addEventListener('scroll',function(){
@@ -2241,8 +2232,18 @@
       });
       bar.dataset.bound='1';
     }
-  }
 
+    const needsScroll=wrap.scrollWidth > (wrap.clientWidth + 1);
+    bar.classList.toggle('is-hidden',!needsScroll);
+    if(!needsScroll){
+      bar.scrollLeft=0;
+      wrap.scrollLeft=0;
+      inner.style.width='100%';
+      return;
+    }
+
+    inner.style.width=Math.max(wrap.scrollWidth,wrap.clientWidth)+'px';
+  }
   function renderReportTable(viewData){
     const tbody = document.getElementById('reportTableBody');
     const cardList = document.getElementById('reportCardList');
