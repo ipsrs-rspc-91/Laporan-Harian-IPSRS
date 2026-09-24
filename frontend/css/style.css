@@ -606,7 +606,7 @@
   overflow-wrap: anywhere;
 }
 
-.report-card-shared .rcard .rc-top, .report-card-view .rcard .rc-top .pill {
+.report-card-shared .rcard .rc-top .pill, .report-card-view .rcard .rc-top .pill {
   flex: 0 0 auto;
   width: auto;
   min-width: 0;
@@ -640,11 +640,11 @@
   word-break: normal;
 }
 
-.report-card-shared .rcard .rc-line, .report-card-view .rcard .rc-line:first-of-type {
+.report-card-shared .rcard .rc-line:first-of-type, .report-card-view .rcard .rc-line:first-of-type {
   padding-top: 12px;
 }
 
-.report-card-shared .rcard .rc-line, .report-card-view .rcard .rc-line:last-of-type {
+.report-card-shared .rcard .rc-line:last-of-type, .report-card-view .rcard .rc-line:last-of-type {
   padding-bottom: 14px;
 }
 
