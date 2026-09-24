@@ -2976,11 +2976,14 @@ cardList.appendChild(card);
   }
 
   async function loadDashboard(){
-    // Lindungi Dashboard dari race condition: jika user klik Dashboard,
-    // ganti petugas/bulan, lalu request lama selesai belakangan, hasil lama
-    // tidak boleh menimpa KPI terbaru.
+    // Satu sumber status loading Dashboard: request ini sendiri.
+    // Tidak lagi bergantung pada intersep window.fetch global.
     const dashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
     window.__ipsrsDashboardLoadSeq = dashboardLoadSeq;
+    if(typeof window.__ipsrsDashboardLoadingStart === 'function'){
+      window.__ipsrsDashboardLoadingStart(dashboardLoadSeq);
+    }
+    let dashboardLoadOk = false;
     const bulan = document.getElementById('DashBulan').value;
     // SENGAJA tidak fallback ke adminSelectedStaffId (default punya tab Laporan)
     // -- Dashboard punya pilihan sendiri lewat dropdown #DashStaff, default "Semua Petugas".
@@ -3038,7 +3041,14 @@ cardList.appendChild(card);
       renderRecentList(d.recent);
 
       renderBarList('barStaff', (Array.isArray(d.staff) ? d.staff.slice() : []).sort((a,b) => Number(b.value||0)-Number(a.value||0) || String(a.nama||a.staff_id||'').localeCompare(String(b.nama||b.staff_id||''),'id')).map(s => ({ label: (s.nama||s.staff_id), value: s.value })));
-    }catch(e){}
+      dashboardLoadOk = true;
+    }catch(e){
+      console.error('Dashboard data error:', e);
+    }finally{
+      if(typeof window.__ipsrsDashboardLoadingDone === 'function'){
+        window.__ipsrsDashboardLoadingDone(dashboardLoadSeq, dashboardLoadOk);
+      }
+    }
   }
 
   // ============================================================
