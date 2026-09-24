@@ -430,6 +430,14 @@
   .report-horizontal-scroll.is-hidden{
     display:none !important;
   }
+
+  /* Floating horizontal scrollbar hanya untuk desktop.
+     Pada HP, tabel/card mengikuti kontrol responsif yang sudah ada. */
+  @media (max-width: 768px){
+    .report-horizontal-scroll{
+      display:none !important;
+    }
+  }
   table.data-table thead th{ text-align:left; background:var(--primary-light); color:var(--primary-dark); padding:11px 12px; font-weight:800; white-space:nowrap; position:sticky; top:0; }
   table.data-table tbody td{ padding:10px 12px; border-top:1px solid var(--border); vertical-align:top; }
   table.data-table tbody tr{ cursor:pointer; }
