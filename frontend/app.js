@@ -187,6 +187,63 @@
 
   function resetSupabaseClient_(){
     window.IPSRS_SUPABASE_CLIENT=null;
+    window.__IPSRS_AUTH_STATE_SUBSCRIPTION=null;
+  }
+
+  // Sinkronkan token Supabase yang di-refresh otomatis ke session aplikasi.
+  // Sebelumnya gsRun() membaca token lama dari sessionStorage terus-menerus,
+  // sehingga setelah access token berganti, API mulai menerima HTTP 401.
+  function syncSupabaseSessionToApp_(session){
+    if(!session || !session.access_token) return;
+    const current=getSession();
+    if(!current) return;
+    const next=Object.assign({},current,{
+      token:session.access_token,
+      refresh_token:session.refresh_token || current.refresh_token
+    });
+    CURRENT_SESSION=next;
+    try{ sessionStorage.setItem(SESSION_KEY,JSON.stringify(next)); }catch(e){}
+  }
+
+  function bindSupabaseAuthState_(){
+    const client=window.IPSRS_SUPABASE_CLIENT;
+    if(!client || window.__IPSRS_AUTH_STATE_SUBSCRIPTION) return;
+    const sub=client.auth.onAuthStateChange((event,session)=>{
+      if(session && (event==='SIGNED_IN' || event==='TOKEN_REFRESHED' || event==='INITIAL_SESSION')){
+        // Callback harus ringan; jangan melakukan request Supabase lain di sini.
+        syncSupabaseSessionToApp_(session);
+      }
+    });
+    window.__IPSRS_AUTH_STATE_SUBSCRIPTION=sub && sub.data ? sub.data.subscription : null;
+  }
+
+  async function getFreshSupabaseAccessToken_(){
+    const client=getSupabaseClient_();
+    bindSupabaseAuthState_();
+
+    // getSession() pada browser Supabase mengembalikan session terbaru
+    // dan me-refresh bila diperlukan.
+    const {data,error}=await client.auth.getSession();
+    if(error) throw error;
+    if(data && data.session && data.session.access_token){
+      syncSupabaseSessionToApp_(data.session);
+      return data.session.access_token;
+    }
+
+    // Recovery untuk session yang masih ada di sessionStorage aplikasi tetapi
+    // belum termuat ke client Supabase (mis. setelah lifecycle PWA/tab).
+    const current=getSession();
+    if(current && current.token && current.refresh_token){
+      const r=await client.auth.setSession({
+        access_token:current.token,
+        refresh_token:current.refresh_token
+      });
+      if(r.error || !r.data || !r.data.session) throw (r.error || new Error('Sesi Supabase tidak dapat dipulihkan.'));
+      syncSupabaseSessionToApp_(r.data.session);
+      return r.data.session.access_token;
+    }
+
+    throw new Error('Sesi Supabase tidak ditemukan.');
   }
 
   function getApiUrl(){ return window.IPSRS_SUPABASE_API_URL || ''; }
@@ -268,9 +325,7 @@
   }
 
   async function gsRun(fnName,...args){
-    const s=getSession();
-    const token=s && s.token ? s.token : null;
-    if(!token) throw new Error('Sesi Supabase tidak ditemukan.');
+    let token=await getFreshSupabaseAccessToken_();
 
     const payload={};
     switch(fnName){
@@ -326,11 +381,28 @@
       default: throw new Error('Action API tidak dikenal: '+fnName);
     }
 
-    const response=await fetch(window.IPSRS_SUPABASE_API_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
-      body:JSON.stringify({action:fnName,data:payload})
-    });
+    const request_=async(t)=>{
+      return fetch(window.IPSRS_SUPABASE_API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+t},
+        body:JSON.stringify({action:fnName,data:payload})
+      });
+    };
+
+    let response=await request_(token);
+
+    // Jika gateway masih menolak token lama karena refresh baru saja terjadi,
+    // ambil session terbaru sekali lalu ulangi request. verify_jwt tetap aktif.
+    if(response.status===401){
+      const client=getSupabaseClient_();
+      const refreshed=await client.auth.refreshSession();
+      if(!refreshed.error && refreshed.data && refreshed.data.session){
+        syncSupabaseSessionToApp_(refreshed.data.session);
+        token=refreshed.data.session.access_token;
+        response=await request_(token);
+      }
+    }
+
     const text=await response.text();
     let json;
     try{ json=JSON.parse(text); }catch(e){ throw new Error('Respons Supabase bukan JSON yang valid. HTTP '+response.status); }
