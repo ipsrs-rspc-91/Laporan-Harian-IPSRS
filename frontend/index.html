@@ -8,6 +8,19 @@
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="stylesheet" href="css/style.css?v=20260924-HSCROLL2">
+  <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
+  <link rel="preload" href="js/static-data.js?v=20260916" as="script">
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
+  <link rel="preload" href="./config.js?v=SUPABASE-CUTOVER-20260923-3" as="script">
+  <link rel="preload" href="./app.js?v=20260924-HSCROLL2" as="script">
+  <link rel="preload" href="./required-fields-ui.js?v=20260923-PERF1" as="script">
+  <link rel="preload" href="./access-control.js?v=20260916" as="script">
+  <link rel="preload" href="./access-policy-ui.js?v=20260916" as="script">
+  <link rel="preload" href="./login-fast.js?v=20260924-PASSWORD7" as="script">
+  <link rel="preload" href="./dashboard-loading-v2.js?v=20260924-DASHLOADFIX1" as="script">
+  <link rel="preload" href="./access-visibility-fix.js?v=20260923-PERF1" as="script">
+  <link rel="preload" href="./laporan-fast-v2.js?v=20260924-LAPORANRACEFIX2" as="script">
+  <link rel="preload" href="./laporan-loading-state.js?v=20260923-CONSISTENT1" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
