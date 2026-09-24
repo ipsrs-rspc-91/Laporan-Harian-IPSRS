@@ -834,25 +834,18 @@
       loadDashboard();
     }
     if(name === 'laporan'){
-      // Sinkronkan TAB aktif dengan PANEL yang terlihat setiap kali kembali
-      // dari menu lain. Ini mencegah kondisi "Laporan Saya" aktif tetapi
-      // panel "Daftar Laporan" masih terlihat (mis. setelah Dashboard).
-      const activeLaporanTab = document.querySelector('.sub-tab.active')?.dataset?.subtab || 'saya';
-      const targetLaporanTab = ['monitoring','rekap','saya','daftar'].includes(activeLaporanTab)
-        ? activeLaporanTab
-        : 'saya';
+      // Setiap masuk ke menu Laporan dari menu utama harus membuka Laporan Saya.
+      // Jangan membaca .sub-tab.active lama: pada SPA, DOM/state tab sebelumnya
+      // tetap hidup dan dapat membawa mode Daftar (309) ke Laporan Saya.
+      // Drill-down Dashboard adalah satu-satunya pengecualian yang sengaja
+      // membuka Daftar Laporan.
+      const targetLaporanTab =
+        window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar' ? 'daftar' : 'saya';
 
-      // Jangan reload API setiap kali user kembali ke menu Laporan.
-      // Data yang sudah dirender dipertahankan agar perpindahan menu konsisten cepat.
-      if(!_laporanPageInitialized || _laporanNeedsRefresh){
-        resetLaporanSubTabCache();
-        _laporanPageInitialized = true;
-      }else if(typeof goLaporanSubTab === 'function'){
-        // Hanya menyelaraskan UI dengan tab aktif; loader internal akan
-        // memakai cache/tab-state yang sudah ada dan tidak membuat request
-        // baru bila tab tersebut sudah pernah dimuat.
-        goLaporanSubTab(targetLaporanTab);
-      }
+      // Siklus data baru dibuat setiap kali masuk dari menu utama.
+      // Ini memutus seluruh state bersama rawData dari kunjungan sebelumnya.
+      resetLaporanSubTabCache();
+      _laporanPageInitialized = true;
     }
     if(name === 'online'){
       if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
@@ -2049,6 +2042,10 @@
   // LAPORAN (tabel + kartu mobile + filter + admin staff picker)
   // ============================================================
   function getActiveLaporanMode_(){
+    // Sumber kebenaran mode laporan adalah state navigasi internal.
+    // Jangan bergantung pada DOM .active karena Laporan Saya dan Daftar
+    // memakai panel DOM yang sama dan SPA dapat mempertahankan state lama.
+    if(_laporanMode === 'daftar' || _laporanMode === 'saya') return _laporanMode;
     const active = document.querySelector('.sub-tab.active');
     return active && active.dataset && active.dataset.subtab === 'daftar' ? 'daftar' : 'saya';
   }
