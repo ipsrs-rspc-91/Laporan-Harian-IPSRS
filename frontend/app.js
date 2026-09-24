@@ -766,6 +766,11 @@
   }
 
   function goPage(name, preserveInputMode){
+    // Simpan status halaman SEBELUM class active dihapus.
+    // Jika dicek setelah navigasi, page-laporan sudah tidak active sehingga
+    // invalidasi state Laporan tidak pernah berjalan.
+    const wasLaporanActive = document.getElementById('page-laporan')?.classList.contains('active') === true;
+
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === name));
@@ -789,8 +794,7 @@
     //
     // Invalidasi dilakukan HANYA saat benar-benar meninggalkan halaman Laporan.
     // Saat berpindah antar-subtab di dalam Laporan, cache tetap dipakai.
-    const leavingLaporan = name !== 'laporan' &&
-      document.getElementById('page-laporan')?.classList.contains('active');
+    const leavingLaporan = name !== 'laporan' && wasLaporanActive;
     if(leavingLaporan){
       _laporanSubTabLoaded.monitoring = false;
       _laporanSubTabLoaded.rekap = false;
@@ -803,6 +807,11 @@
       window.__IPSRS_LAPORAN_REQUEST_SEQ =
         (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
       rawData = [];
+      // laporan-fast-v2 memiliki cache response tersendiri. Hapus juga agar
+      // tidak ada hasil mode Daftar yang dapat terbawa ke Laporan Saya.
+      if(typeof window.__invalidateLaporanFastCache === 'function'){
+        window.__invalidateLaporanFastCache();
+      }
     }
     if(name === 'dashboard'){
       // Setiap kembali ke Dashboard, filter petugas Dashboard selalu kembali
