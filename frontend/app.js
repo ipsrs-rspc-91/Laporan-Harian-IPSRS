@@ -366,7 +366,7 @@
       case 'apiCreateReport':
         payload.token=token; payload.payload=args[0]||{}; break;
       case 'apiGetReports':
-        payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; break;
+        payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; break;
       case 'apiUpdateReport':
         payload.token=token; payload.reportId=args[0]||''; payload.payload=args[1]||{}; break;
       case 'apiDashboardStats':
@@ -2008,7 +2008,7 @@
       // Melihat laporan terbuka untuk semua peran -- filter petugas/bidang/shift
       // dilakukan di client (applyFilters) supaya panel & dropdown tetap responsif.
       const staffFilter = (_laporanMode === 'saya' && CURRENT_SESSION) ? (CURRENT_SESSION.staff_id || '') : '';
-      const json = await authRun('apiGetReports', bulan, staffFilter, '', '');
+      const json = await authRun('apiGetReports', bulan, staffFilter, '', _laporanMode === 'saya' ? 'saya' : 'daftar');
       if(!json || !json.ok){
         setMsg('msgReport', (json && json.msg) ? json.msg : 'Gagal memuat data.', true);
         rawData = [];
