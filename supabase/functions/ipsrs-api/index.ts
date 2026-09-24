@@ -86,8 +86,9 @@ async function bulkOwnerRoles(db:any,rows:any[]){
  return m;
 }
 async function reportPolicyBatch(db:any,s:any,rows:any[]){
- const ownerRoles=await bulkOwnerRoles(db,rows);
- const teamAccess=s.role==="KA_IPSRS"||await accessSetting(db,"LAPORAN_TIM","NONAKTIF")==="AKTIF";
+ const ownOnly=(rows||[]).every((r:any)=>r.staff_id===s.staff_id);
+ const ownerRoles=(s.role==="KA_IPSRS"||ownOnly)?new Map<string,string>():await bulkOwnerRoles(db,rows);
+ const teamAccess=s.role==="KA_IPSRS"||ownOnly||await accessSetting(db,"LAPORAN_TIM","NONAKTIF")==="AKTIF";
  let adminEdit=false,permissionEdit=false;
  if(s.role==="KA_IPSRS")permissionEdit=true;
  else if(s.role==="ADMINISTRASI")adminEdit=await accessSetting(db,"ADMINISTRASI_EDIT","NONAKTIF")==="AKTIF";
