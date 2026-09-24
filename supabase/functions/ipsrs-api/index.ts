@@ -127,6 +127,7 @@ if(a==="apiDashboardStats"){
  let staffQ=db.from("staff").select("staff_id,nama,role,bidang,status").eq("status","Aktif").neq("role","KA_IPSRS").order("nama");if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);if(d.bidangFilter)staffQ=staffQ.eq("bidang",d.bidangFilter);const {data:activeStaff,error:staffErr}=await staffQ;if(staffErr)throw staffErr;
  let q=db.from("reports").select("report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pukul,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit,type,jumlah,status_pencapaian,created_at").gte("tanggal",z.start).lte("tanggal",z.end);
  if(d.staffIdFilter)q=q.eq("staff_id",d.staffIdFilter);
+ if(d.bidangFilter)q=q.eq("bidang_snapshot",d.bidangFilter);
  const {data:rawReports,error}=await q;if(error)throw error;
  const rr:any[]=[];for(const r of rawReports||[])if(await canViewReport(db,s,r))rr.push(r);
  const total=rr?.length||0,sel=(rr||[]).filter((r:any)=>r.status==="Selesai").length,bel=total-sel,cat:any={},ar:any={},sm:any={},pc:any={};for(const st of activeStaff||[])sm[st.staff_id]={staff_id:st.staff_id,nama:st.nama,role:st.role,bidang:st.bidang||"",value:0};let spare=0,unit=0;
