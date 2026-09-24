@@ -78,8 +78,10 @@
   }
 
   async function loadReportsUltra(){
-    const mySerial=++requestSerial;
     const m=mode();
+    const mySerial=++requestSerial;
+    const requestSeq=(Number(window.__IPSRS_LAPORAN_REQUEST_SEQ)||0)+1;
+    window.__IPSRS_LAPORAN_REQUEST_SEQ=requestSeq;
     const b=bulan();
     let staff='';
 
@@ -106,7 +108,9 @@
 
     try{
       const json=await requestReports(b,staff,m==='saya'?'saya':'daftar');
-      if(mySerial!==requestSerial) return;
+      if(mySerial!==requestSerial ||
+         requestSeq!==Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
+         mode()!==m) return false;
 
       if(!json || !json.ok){
         rawData=[];
