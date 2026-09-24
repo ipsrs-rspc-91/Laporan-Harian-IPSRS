@@ -2001,24 +2001,37 @@
   // ============================================================
   // LAPORAN (tabel + kartu mobile + filter + admin staff picker)
   // ============================================================
+  function getActiveLaporanMode_(){
+    const active = document.querySelector('.sub-tab.active');
+    return active && active.dataset && active.dataset.subtab === 'daftar' ? 'daftar' : 'saya';
+  }
+
   async function loadReportsBySelectedMonth(){
     const bulan = document.getElementById('FilterBulan').value;
+    const modeAtRequest = getActiveLaporanMode_();
+    _laporanMode = modeAtRequest;
+    const requestSeq = (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
+    window.__IPSRS_LAPORAN_REQUEST_SEQ = requestSeq;
     setMsg('msgReport', 'Memuat data...');
     try{
-      // Melihat laporan terbuka untuk semua peran -- filter petugas/bidang/shift
-      // dilakukan di client (applyFilters) supaya panel & dropdown tetap responsif.
-      const staffFilter = (_laporanMode === 'saya' && CURRENT_SESSION) ? (CURRENT_SESSION.staff_id || '') : '';
-      const json = await authRun('apiGetReports', bulan, staffFilter, '', _laporanMode === 'saya' ? 'saya' : 'daftar');
+      const staffFilter = (modeAtRequest === 'saya' && CURRENT_SESSION) ? (CURRENT_SESSION.staff_id || '') : '';
+      const json = await authRun('apiGetReports', bulan, staffFilter, '', modeAtRequest);
+
+      // Request lama atau response dari mode yang sudah tidak aktif
+      // tidak boleh menyentuh rawData/render tabel.
+      if(requestSeq !== Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
+         getActiveLaporanMode_() !== modeAtRequest){
+        return false;
+      }
+
       if(!json || !json.ok){
         setMsg('msgReport', (json && json.msg) ? json.msg : 'Gagal memuat data.', true);
         rawData = [];
         renderReportTable([]);
-        return;
+        return false;
       }
       rawData = json.data || [];
 
-      // Jika apiListStaff belum tersedia untuk role tertentu, bangun
-      // fallback dropdown dari data laporan yang memang sudah boleh dilihat.
       if(!Array.isArray(ADMIN_STAFF_LIST) || ADMIN_STAFF_LIST.length === 0){
         syncAdminStaffFromReports_();
       }else{
@@ -2026,8 +2039,14 @@
       }
 
       applyFilters();
+      return true;
     }catch(err){
+      if(requestSeq !== Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
+         getActiveLaporanMode_() !== modeAtRequest){
+        return false;
+      }
       setMsg('msgReport', 'Error: ' + (err && err.message ? err.message : err), true);
+      return false;
     }
   }
 
