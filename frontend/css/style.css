@@ -722,4 +722,9 @@
 }
 .report-card-shared .rcard{
   flex:0 0 auto;
+  align-self:stretch;
+  width:100%;
+  max-width:none;
+  margin:0;
+  text-align:left;
 }
