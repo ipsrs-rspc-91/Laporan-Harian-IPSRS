@@ -395,6 +395,8 @@
         payload.token=token; payload.key=args[0]||''; payload.value=args[1]||''; break;
       case 'apiSetEditPermission':
         payload.token=token; payload.grantedToStaffId=args[0]||''; payload.targetStaffId=args[1]||''; payload.isActive=args[2]; break;
+      case 'apiAdminResetPassword':
+        payload.token=token; payload.staffId=args[0]||''; payload.newPassword=args[1]||''; break;
       default: throw new Error('Action API tidak dikenal: '+fnName);
     }
 
@@ -2868,6 +2870,7 @@
     const stillExists = Array.from(sel.options).some(opt => opt.value === current);
     sel.value = stillExists ? current : '';
     if(!stillExists && current) adminSelectedStaffId = '';
+    updateAdminResetPasswordButton_();
   }
 
   // Dipertahankan untuk kompatibilitas struktur lama; panel Daftar Laporan
@@ -2908,6 +2911,90 @@
     // Dashboard harus tetap default "Semua Petugas" sendiri, independen.
     sel.value = current || '';
   }
+  function selectedAdminStaff_(){
+    const staffId=String(adminSelectedStaffId||'').trim();
+    if(!staffId) return null;
+    return ADMIN_STAFF_LIST.find(x=>String(x.staff_id||'').trim()===staffId) || null;
+  }
+
+  function canResetSelectedStaff_(){
+    const role=String(CURRENT_SESSION?.role||'').trim().toUpperCase();
+    const st=selectedAdminStaff_();
+    if(role!=='KA_IPSRS' || !st) return false;
+    const targetRole=String(st.role||'').trim().toUpperCase();
+    const targetId=String(st.staff_id||'').trim();
+    const ownId=String(CURRENT_SESSION?.staff_id||'').trim();
+    return !!targetId && targetId!==ownId && targetRole!=='KA_IPSRS';
+  }
+
+  function updateAdminResetPasswordButton_(){
+    const btn=document.getElementById('btnAdminResetPassword');
+    if(!btn) return;
+    const st=selectedAdminStaff_();
+    const allowed=canResetSelectedStaff_();
+    btn.classList.toggle('hidden',!allowed);
+    btn.disabled=!allowed;
+    if(st) btn.title='Reset password '+getStaffNameForFilter_(st);
+  }
+
+  function openAdminResetPasswordModal(){
+    const st=selectedAdminStaff_();
+    if(!canResetSelectedStaff_() || !st){
+      setMsg('adminResetPasswordMsg','Pilih petugas yang boleh direset terlebih dahulu.',true);
+      return;
+    }
+    const name=document.getElementById('adminResetPasswordName');
+    const id=document.getElementById('adminResetPasswordStaffId');
+    const pw=document.getElementById('adminResetPasswordNew');
+    const confirm=document.getElementById('adminResetPasswordConfirm');
+    if(name) name.innerText=getStaffNameForFilter_(st);
+    if(id) id.innerText=st.staff_id||'-';
+    if(pw) pw.value='';
+    if(confirm) confirm.value='';
+    setMsg('adminResetPasswordMsg','');
+    const bg=document.getElementById('adminResetPasswordModalBg');
+    if(bg) bg.classList.add('show');
+    setTimeout(()=>pw&&pw.focus(),50);
+  }
+
+  function closeAdminResetPasswordModal(){
+    const bg=document.getElementById('adminResetPasswordModalBg');
+    if(bg) bg.classList.remove('show');
+    setMsg('adminResetPasswordMsg','');
+  }
+
+  async function doAdminResetPassword(){
+    if(!canResetSelectedStaff_()){
+      setMsg('adminResetPasswordMsg','Anda tidak memiliki hak reset password untuk petugas ini.',true);
+      return;
+    }
+    const st=selectedAdminStaff_();
+    const pw=String(document.getElementById('adminResetPasswordNew')?.value||'');
+    const confirm=String(document.getElementById('adminResetPasswordConfirm')?.value||'');
+    if(pw.length<6){
+      setMsg('adminResetPasswordMsg','Password baru minimal 6 karakter.',true);
+      return;
+    }
+    if(pw!==confirm){
+      setMsg('adminResetPasswordMsg','Konfirmasi password tidak sama.',true);
+      return;
+    }
+    const ok=window.confirm('Reset password '+getStaffNameForFilter_(st)+'?\\n\\nPassword baru akan langsung aktif. Petugas tidak diwajibkan menggantinya lagi.');
+    if(!ok) return;
+    setMsg('adminResetPasswordMsg','Memproses reset password...');
+    try{
+      const json=await authRun('apiAdminResetPassword',st.staff_id,pw);
+      if(json && json.ok){
+        closeAdminResetPasswordModal();
+        setMsg('adminStaffResetMsg','Password '+getStaffNameForFilter_(st)+' berhasil direset dan langsung aktif.');
+      }else{
+        setMsg('adminResetPasswordMsg',(json&&json.msg)||'Gagal mereset password.',true);
+      }
+    }catch(err){
+      setMsg('adminResetPasswordMsg','Error: '+(err&&err.message?err.message:err),true);
+    }
+  }
+
   function selectAdminStaff(staffId){
     adminSelectedStaffId = staffId;
     const pill = document.getElementById('adminStaffActivePill');
@@ -2919,6 +3006,7 @@
       }
     }
     renderAdminStaffSelect();
+    updateAdminResetPasswordButton_();
     const dashSel = document.getElementById('DashStaff');
     if(dashSel) dashSel.value = staffId;
     applyFilters();
