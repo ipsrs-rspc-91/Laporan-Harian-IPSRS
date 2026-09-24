@@ -2201,15 +2201,17 @@ cardList.appendChild(card);
     if(!internalNav){
       resetLaporanUnfinishedState();
     }
-    resetLaporanFilterControls_({
-      // Dashboard -> Belum Selesai adalah navigasi internal yang memang
-      // sengaja membawa filter status khusus tersebut ke Daftar Laporan.
-      preserveUnfinished: internalNav && window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true
-    });
     const panelName = (name === 'saya' || name === 'daftar') ? 'daftar' : name;
     document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.add('hidden'));
     document.getElementById('subtab-' + panelName).classList.remove('hidden');
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === name));
+
+    // Reset dilakukan setelah panel tujuan aktif supaya data yang sudah
+    // termuat langsung dirender ulang tanpa filter lama.
+    resetLaporanFilterControls_({
+      preserveUnfinished: internalNav && window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true
+    });
+
     if(name === 'saya' || name === 'daftar'){
       _laporanMode = name;
       const staffPanel = document.getElementById('adminStaffPanel');
