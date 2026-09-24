@@ -1,8 +1,9 @@
 /*
  * Dashboard Loading v2
  * PATCH ONLY.
- * Menjamin urutan: Page_Dashboard mount -> Chart.js ready -> loadDashboard
- * -> request selesai -> indikator ditutup.
+ * Menjamin Page_Dashboard siap lalu langsung meneruskan navigasi.
+ * Chart.js dimuat paralel oleh index.html sehingga tidak lagi menjadi
+ * gerbang sebelum request Dashboard dimulai.
  * Tidak mengubah logika data Dashboard.
  */
 (function(){
@@ -127,31 +128,6 @@
     });
   }
 
-  function waitForChart(deadline){
-    if(window.Chart) return Promise.resolve(true);
-    const ready = window.__ipsrsChartReady;
-    if(ready && typeof ready.then === 'function'){
-      return Promise.race([
-        ready.then(function(){ return !!window.Chart; }).catch(function(err){
-          console.error('Chart.js load error:', err);
-          return false;
-        }),
-        new Promise(function(resolve){
-          const remain = Math.max(0, deadline - Date.now());
-          setTimeout(function(){ resolve(false); }, remain);
-        })
-      ]);
-    }
-    return new Promise(function(resolve){
-      function check(){
-        if(window.Chart) return resolve(true);
-        if(Date.now() >= deadline) return resolve(false);
-        setTimeout(check, 40);
-      }
-      check();
-    });
-  }
-
   window.__ipsrsDashboardLoadingStart = function(seq){
     showLoading('Sedang mengambil data statistik...', seq);
   };
@@ -174,7 +150,7 @@
     if(navigationBusy) return;
 
     showLoading('Menyiapkan dashboard...');
-    const deadline = Date.now() + 20000;
+    const deadline = Date.now() + 10000;
 
     waitForDashboardMount(deadline).then(function(pageReady){
       if(!pageReady){
@@ -182,23 +158,17 @@
         return false;
       }
 
-      setText('Menyiapkan komponen grafik...');
-      return waitForChart(deadline).then(function(chartReady){
-        if(!chartReady){
-          showError('Komponen grafik gagal dimuat. Silakan coba lagi.');
-          return false;
-        }
-
-        setText('Sedang mengambil data statistik...');
-        try{
-          originalGoPage(name, preserveInputMode);
-        }catch(err){
-          console.error('Dashboard navigation error:', err);
-          showError('Gagal memuat Dashboard.');
-          return false;
-        }
-        return true;
-      });
+      // Chart.js tidak lagi ditunggu di sini. Ia sudah dimuat paralel sejak
+      // startup; navigasi Dashboard langsung memulai loadDashboard/API.
+      setText('Sedang mengambil data statistik...');
+      try{
+        originalGoPage(name, preserveInputMode);
+      }catch(err){
+        console.error('Dashboard navigation error:', err);
+        showError('Gagal memuat Dashboard.');
+        return false;
+      }
+      return true;
     }).catch(function(err){
       console.error('Dashboard loading error:', err);
       showError('Gagal memuat Dashboard.');
