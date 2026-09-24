@@ -2373,12 +2373,26 @@ cardList.appendChild(card);
     });
 
     if(name === 'saya' || name === 'daftar'){
+      // Laporan Saya dan Daftar Laporan memakai panel DOM yang sama serta rawData
+      // yang sama. Karena itu cache "sudah pernah dimuat" tidak cukup: ketika
+      // user berpindah 6 -> 309 -> kembali Saya, rawData sudah berisi dataset
+      // Daftar. Paksa dataset dimuat ulang setiap kali MODE berubah.
+      const previousMode = _laporanMode;
+      const modeChanged = previousMode !== name;
       _laporanMode = name;
+
+      if(modeChanged){
+        _laporanSubTabLoaded[name] = false;
+        _laporanSubTabLoading[name] = false;
+        window.__IPSRS_LAPORAN_REQUEST_SEQ =
+          (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
+        rawData = [];
+      }
+
       const staffPanel = document.getElementById('adminStaffPanel');
       if(staffPanel) staffPanel.classList.toggle('hidden', name !== 'daftar');
 
-      // Jangan request ulang setiap kali user bolak-balik Laporan Saya/Daftar.
-      // Data dimuat sekali per siklus dan di-invalidasi setelah create/edit.
+      // Jika mode baru belum dimuat pada siklus ini, ambil dataset yang sesuai.
       if(!_laporanSubTabLoaded[name] && !_laporanSubTabLoading[name]){
         // Panel petugas hanya diperlukan pada Daftar Laporan. Jangan panggil
         // apiListStaff saat login karena itu menambah waktu tunggu awal.
