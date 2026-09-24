@@ -390,6 +390,46 @@
 
   .table-wrap{ overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); }
   table.data-table{ width:100%; border-collapse:collapse; font-size:var(--fs-sm); min-width:1100px; }
+
+  /* Scroll horizontal Daftar Laporan tetap terlihat saat user scroll vertikal. */
+  .report-horizontal-scroll{
+    position:sticky;
+    bottom:10px;
+    z-index:20;
+    width:100%;
+    height:14px;
+    margin:8px 0 2px;
+    padding:0 1px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    border-radius:999px;
+    background:rgba(227,233,236,.92);
+    box-shadow:0 2px 8px rgba(16,40,55,.10);
+    scrollbar-width:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .report-horizontal-scroll-inner{
+    height:1px;
+    min-width:100%;
+  }
+  .report-horizontal-scroll::-webkit-scrollbar{
+    height:12px;
+  }
+  .report-horizontal-scroll::-webkit-scrollbar-track{
+    background:#e3e9ec;
+    border-radius:999px;
+  }
+  .report-horizontal-scroll::-webkit-scrollbar-thumb{
+    background:#8ea1a8;
+    border-radius:999px;
+    border:2px solid #e3e9ec;
+  }
+  .report-horizontal-scroll:hover::-webkit-scrollbar-thumb{
+    background:#6f858e;
+  }
+  .report-horizontal-scroll.is-hidden{
+    display:none !important;
+  }
   table.data-table thead th{ text-align:left; background:var(--primary-light); color:var(--primary-dark); padding:11px 12px; font-weight:800; white-space:nowrap; position:sticky; top:0; }
   table.data-table tbody td{ padding:10px 12px; border-top:1px solid var(--border); vertical-align:top; }
   table.data-table tbody tr{ cursor:pointer; }
