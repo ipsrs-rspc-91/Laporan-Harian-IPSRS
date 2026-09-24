@@ -34,6 +34,12 @@
   let rendererWrapped = false;
 
   function mode(){
+    // Gunakan state navigasi utama sebagai sumber kebenaran.
+    // DOM .active dapat tertinggal pada SPA saat berpindah menu.
+    if(typeof getActiveLaporanMode_==='function'){
+      const current=getActiveLaporanMode_();
+      if(current==='daftar' || current==='saya') return current;
+    }
     const active=document.querySelector('.sub-tab.active');
     return active && active.dataset && active.dataset.subtab === 'daftar' ? 'daftar' : 'saya';
   }
@@ -85,6 +91,11 @@
     const b=bulan();
     let staff='';
 
+    // Begitu mode berubah, kosongkan dataset bersama agar data Daftar (mis. 309)
+    // tidak sempat ditampilkan sebagai Laporan Saya selama request berjalan.
+    rawData=[];
+    if(m==='saya') clearSayaStaffFilter();
+
     const dashboardDrilldown = window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true;
     const daftarUnfinishedDrilldown = window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN === true;
     const sayaUnfinishedDrilldown = window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN === true;
@@ -96,7 +107,6 @@
       if(!dashboardDrilldown && typeof CURRENT_SESSION !== 'undefined' && CURRENT_SESSION){
         staff=String(CURRENT_SESSION.staff_id||'').trim();
       }
-      clearSayaStaffFilter();
     }else{
       // Drill-down Dashboard -> Belum Selesai harus memakai Daftar Laporan
       // tanpa filter petugas, sehingga seluruh laporan yang boleh dilihat user
@@ -131,7 +141,7 @@
       setMsg('msgReport','Data tampil: '+rawData.length);
       return true;
     }catch(err){
-      if(mySerial!==requestSerial) return false;
+      if(mySerial!==requestSerial || mode()!==m) return false;
       setMsg('msgReport','Error: '+(err&&err.message?err.message:err),true);
       console.error('[LAPORAN_ULTRA]',err);
       return false;
