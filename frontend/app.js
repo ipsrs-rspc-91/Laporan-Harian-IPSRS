@@ -800,11 +800,24 @@
       loadDashboard();
     }
     if(name === 'laporan'){
+      // Sinkronkan TAB aktif dengan PANEL yang terlihat setiap kali kembali
+      // dari menu lain. Ini mencegah kondisi "Laporan Saya" aktif tetapi
+      // panel "Daftar Laporan" masih terlihat (mis. setelah Dashboard).
+      const activeLaporanTab = document.querySelector('.sub-tab.active')?.dataset?.subtab || 'saya';
+      const targetLaporanTab = ['monitoring','rekap','saya','daftar'].includes(activeLaporanTab)
+        ? activeLaporanTab
+        : 'saya';
+
       // Jangan reload API setiap kali user kembali ke menu Laporan.
       // Data yang sudah dirender dipertahankan agar perpindahan menu konsisten cepat.
       if(!_laporanPageInitialized || _laporanNeedsRefresh){
         resetLaporanSubTabCache();
         _laporanPageInitialized = true;
+      }else if(typeof goLaporanSubTab === 'function'){
+        // Hanya menyelaraskan UI dengan tab aktif; loader internal akan
+        // memakai cache/tab-state yang sudah ada dan tidak membuat request
+        // baru bila tab tersebut sudah pernah dimuat.
+        goLaporanSubTab(targetLaporanTab);
       }
     }
     if(name === 'online'){
