@@ -217,12 +217,31 @@
     window.__IPSRS_AUTH_STATE_SUBSCRIPTION=sub && sub.data ? sub.data.subscription : null;
   }
 
+  function jwtExpMs_(token){
+    try{
+      const p=String(token||'').split('.')[1];
+      if(!p) return 0;
+      const s=atob(p.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-(p.length%4))%4));
+      const j=JSON.parse(s);
+      return Number(j.exp||0)*1000;
+    }catch(_e){ return 0; }
+  }
+
   async function getFreshSupabaseAccessToken_(){
+    const current=getSession();
+    const token=current && current.token ? current.token : '';
+    const exp=jwtExpMs_(token);
+
+    // Jalur normal dibuat murah: jangan memanggil getSession() untuk setiap
+    // request. Access token Supabase biasanya berlaku cukup lama.
+    // Refresh hanya jika token kosong atau akan kedaluwarsa <= 60 detik.
+    if(token && exp && (exp-Date.now())>60000){
+      return token;
+    }
+
     const client=getSupabaseClient_();
     bindSupabaseAuthState_();
 
-    // getSession() pada browser Supabase mengembalikan session terbaru
-    // dan me-refresh bila diperlukan.
     const {data,error}=await client.auth.getSession();
     if(error) throw error;
     if(data && data.session && data.session.access_token){
@@ -230,9 +249,7 @@
       return data.session.access_token;
     }
 
-    // Recovery untuk session yang masih ada di sessionStorage aplikasi tetapi
-    // belum termuat ke client Supabase (mis. setelah lifecycle PWA/tab).
-    const current=getSession();
+    // Recovery untuk lifecycle PWA/tab jika session client belum termuat.
     if(current && current.token && current.refresh_token){
       const r=await client.auth.setSession({
         access_token:current.token,
