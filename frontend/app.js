@@ -2338,6 +2338,9 @@ cardList.appendChild(card);
         if(name === 'daftar') loadAdminStaffListIfNeeded();
         loadLaporanSubTabOnce_(name, loadReportsBySelectedMonth);
       }
+      requestAnimationFrame(function(){
+        if(!_laporanSubTabLoading[name]) finishNavigationLoading();
+      });
       return;
     }
     if(name === 'monitoring'){
