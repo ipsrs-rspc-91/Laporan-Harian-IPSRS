@@ -2957,15 +2957,19 @@ cardList.appendChild(card);
     }
     if(_dashboardInflight.has(key)) return _dashboardInflight.get(key);
 
-    const p = Promise.all([
-      authRun('apiDashboardStats', bulan, staffFilter),
-      authRun('apiGetStaffMonitoring', bulan, todayLocalISO(), staffFilter)
-    ]).then(function(value){
-      _dashboardResponseCache.set(key,{at:Date.now(),value:value});
-      return value;
-    }).finally(function(){
-      _dashboardInflight.delete(key);
-    });
+    // DashboardStats sekarang sudah membawa KPI monitoring hari yang sama,
+    // sehingga tidak perlu request apiGetStaffMonitoring kedua.
+    const p = authRun('apiDashboardStats', bulan, staffFilter)
+      .then(function(statsJson){
+        const monData = statsJson && statsJson.data && statsJson.data.monitoring_today
+          ? statsJson.data.monitoring_today
+          : {tanggal:todayLocalISO(),data:[]};
+        const value=[statsJson,{ok:!!(statsJson&&statsJson.ok),data:Array.isArray(monData.data)?monData.data:[]}];
+        _dashboardResponseCache.set(key,{at:Date.now(),value:value});
+        return value;
+      }).finally(function(){
+        _dashboardInflight.delete(key);
+      });
 
     _dashboardInflight.set(key,p);
     return p;
