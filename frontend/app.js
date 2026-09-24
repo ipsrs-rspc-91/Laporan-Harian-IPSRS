@@ -2195,6 +2195,54 @@
     bindDaftarUnfinishedDrilldown();
   }
 
+  function syncReportHorizontalScrollbar_(){
+    const wrap=document.getElementById('reportTableWrap');
+    const bar=document.getElementById('reportHorizontalScroll');
+    const inner=document.getElementById('reportHorizontalScrollInner');
+    if(!wrap||!bar||!inner) return;
+
+    const needsScroll=wrap.scrollWidth > (wrap.clientWidth + 1);
+    bar.classList.toggle('is-hidden',!needsScroll);
+    if(!needsScroll){
+      bar.scrollLeft=0;
+      wrap.scrollLeft=0;
+      inner.style.width='100%';
+      return;
+    }
+
+    inner.style.width=Math.max(wrap.scrollWidth,wrap.clientWidth)+'px';
+
+    if(bar.dataset.bound!=='1'){
+      let syncing=false;
+      wrap.addEventListener('scroll',function(){
+        if(syncing) return;
+        syncing=true;
+        bar.scrollLeft=wrap.scrollLeft;
+        syncing=false;
+      },{passive:true});
+      bar.addEventListener('scroll',function(){
+        if(syncing) return;
+        syncing=true;
+        wrap.scrollLeft=bar.scrollLeft;
+        syncing=false;
+      },{passive:true});
+
+      window.addEventListener('resize',function(){
+        syncReportHorizontalScrollbar_();
+      },{passive:true});
+
+      ['reportViewTable','reportViewCard'].forEach(function(id){
+        const el=document.getElementById(id);
+        if(el){
+          el.addEventListener('change',function(){
+            requestAnimationFrame(syncReportHorizontalScrollbar_);
+          });
+        }
+      });
+      bar.dataset.bound='1';
+    }
+  }
+
   function renderReportTable(viewData){
     const tbody = document.getElementById('reportTableBody');
     const cardList = document.getElementById('reportCardList');
@@ -2251,6 +2299,10 @@
       // Kartu laporan tidak membuka edit saat area kartu diklik.
       cardList.appendChild(card);
     });
+
+    // Setelah baris selesai dirender, ukur ulang agar scrollbar mengambang
+    // mengikuti lebar tabel aktual dan tetap sinkron dengan tabel utama.
+    requestAnimationFrame(syncReportHorizontalScrollbar_);
   }
 
   // ============================================================
