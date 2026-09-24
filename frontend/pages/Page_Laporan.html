@@ -193,7 +193,7 @@
       </label>
 
       <div class="report-view-content">
-        <div class="table-wrap report-table-view">
+        <div class="table-wrap report-table-view" id="reportTableWrap">
           <table class="data-table">
             <thead>
               <tr>
@@ -203,6 +203,10 @@
             </thead>
             <tbody id="reportTableBody"></tbody>
           </table>
+        </div>
+
+        <div class="report-horizontal-scroll" id="reportHorizontalScroll" aria-label="Geser tabel ke kanan atau kiri">
+          <div class="report-horizontal-scroll-inner" id="reportHorizontalScrollInner"></div>
         </div>
 
         <div class="card-list report-card-view" id="reportCardList"></div>
