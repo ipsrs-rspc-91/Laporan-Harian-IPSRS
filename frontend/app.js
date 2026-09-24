@@ -2243,39 +2243,11 @@
       tbody.appendChild(tr);
 
       const card = document.createElement('div');
-card.className = 'rcard';
+      card.className = 'rcard';
+      card.innerHTML = reportCardMarkup_(row);
 
-card.innerHTML = `
-  <div class="rc-top">
-    <div class="rc-title">
-      <span class="rc-date">${escapeHtml(formatTanggalDisplay(row.Tanggal))}</span>
-      <span class="rc-separator" aria-hidden="true"></span>
-      <span class="rc-room">${escapeHtml(row.Ruang)}</span>
-    </div>
-
-    <span class="pill ${row.Status === 'Selesai' ? 'success' : 'warning'}">
-      ${escapeHtml(row.Status)}
-    </span>
-  </div>
-
-  <div class="rc-line">
-    <span class="rc-label">Masalah:</span>
-    ${escapeHtml(row.MasalahKegiatan)}
-  </div>
-
-  <div class="rc-line">
-    <span class="rc-label">Tindak Lanjut:</span>
-    ${escapeHtml(row.Tindakan)}
-  </div>
-
-  <div class="rc-line">
-    <span class="rc-label">Petugas:</span>
-    ${escapeHtml(row.Petugas)}
-  </div>
-`;
-
-// Kartu laporan tidak membuka edit saat area kartu diklik.
-cardList.appendChild(card);
+      // Kartu laporan tidak membuka edit saat area kartu diklik.
+      cardList.appendChild(card);
     });
   }
 
@@ -3010,6 +2982,35 @@ cardList.appendChild(card);
     });
   }
 
+  // Komponen kartu laporan tunggal dipakai bersama oleh Dashboard dan Daftar Laporan.
+  // Satu markup + satu sumber style: perubahan desain kartu cukup dilakukan sekali.
+  function reportCardMarkup_(row){
+    return `
+      <div class="rc-top">
+        <div class="rc-title">
+          <span class="rc-date">${escapeHtml(formatTanggalDisplay(row.Tanggal))}</span>
+          <span class="rc-separator" aria-hidden="true"></span>
+          <span class="rc-room">${escapeHtml(row.Ruang)}</span>
+        </div>
+        <span class="pill ${row.Status === 'Selesai' ? 'success' : 'warning'}">
+          ${escapeHtml(row.Status)}
+        </span>
+      </div>
+      <div class="rc-line">
+        <span class="rc-label">Masalah:</span>
+        ${escapeHtml(row.MasalahKegiatan || '-')}
+      </div>
+      <div class="rc-line">
+        <span class="rc-label">Tindak Lanjut:</span>
+        ${escapeHtml(row.Tindakan || '-')}
+      </div>
+      <div class="rc-line">
+        <span class="rc-label">Petugas:</span>
+        ${escapeHtml(row.Petugas || '-')}
+      </div>
+    `;
+  }
+
   function renderRecentList(recent){
     const el = document.getElementById('recentList');
     el.innerHTML = '';
@@ -3019,15 +3020,8 @@ cardList.appendChild(card);
     }
     recent.forEach(r => {
       const item = document.createElement('div');
-      item.className = 'recent-item';
-      item.innerHTML = `
-        <div>
-         <div class="r-main">${escapeHtml(formatTanggalDisplay(r.Tanggal))} | ${escapeHtml(r.Ruang)}</div>
-          <div class="r-sub">${escapeHtml(r.Petugas)} | ${escapeHtml(r.MasalahKegiatan)}</div>
-          <div class="r-action">Tindakan: ${escapeHtml(r.Tindakan || '-')}</div>
-        </div>
-        <span class="pill ${r.Status==='Selesai'?'success':'warning'}">${escapeHtml(r.Status)}</span>
-      `;
+      item.className = 'rcard';
+      item.innerHTML = reportCardMarkup_(r);
       el.appendChild(item);
     });
   }
