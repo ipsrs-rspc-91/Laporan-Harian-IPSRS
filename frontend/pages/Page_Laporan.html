@@ -125,6 +125,10 @@
         <option value="">Semua Petugas</option>
       </select>
     </div>
+    <div id="adminStaffResetActions" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
+      <button id="btnAdminResetPassword" type="button" class="btn hidden" onclick="openAdminResetPasswordModal()">Reset Password Petugas</button>
+      <div id="adminStaffResetMsg" class="smallnote"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -203,6 +207,27 @@
 
         <div class="card-list report-card-view" id="reportCardList"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: RESET PASSWORD PETUGAS ===================== -->
+<div id="adminResetPasswordModalBg" class="modal-bg">
+  <div class="modal" style="max-width:420px;">
+    <h3>Reset Password Petugas</h3>
+    <div class="modal-sub">Password baru langsung menjadi password aktif. Petugas tidak diwajibkan menggantinya lagi.</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-weight:800;color:var(--primary-dark);" id="adminResetPasswordName">-</div>
+      <div class="smallnote" id="adminResetPasswordStaffId">-</div>
+    </div>
+    <label for="adminResetPasswordNew">Password baru (min. 6 karakter)</label>
+    <input id="adminResetPasswordNew" type="password" autocomplete="new-password">
+    <label for="adminResetPasswordConfirm">Ulangi password baru</label>
+    <input id="adminResetPasswordConfirm" type="password" autocomplete="new-password">
+    <div id="adminResetPasswordMsg"></div>
+    <div class="modal-actions">
+      <button class="btn" type="button" onclick="closeAdminResetPasswordModal()">Batal</button>
+      <button class="btn primary" type="button" onclick="doAdminResetPassword()">Reset Password</button>
     </div>
   </div>
 </div>
