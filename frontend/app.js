@@ -2345,7 +2345,11 @@ cardList.appendChild(card);
     }else if(name === 'rekap'){
       loadLaporanSubTabOnce_(name, loadMonthlyRecap);
     }
-    requestAnimationFrame(function(){ finishNavigationLoading(); });
+    requestAnimationFrame(function(){
+      // Jika loader data sedang berjalan, biarkan request-level loader yang menutup overlay.
+      // Jika data sudah cached/tidak ada request, tutup setelah panel sempat dirender.
+      if(!_laporanSubTabLoading[name]) finishNavigationLoading();
+    });
   }
 
   function invalidateLaporanViews(){
