@@ -2303,6 +2303,11 @@ cardList.appendChild(card);
   }
 
   function goLaporanSubTab(name){
+    const loadingName = (name === 'monitoring' || name === 'rekap') ? name : (name === 'daftar' ? 'daftar' : 'saya');
+    if(typeof window.__ipsrsLaporanNavigationStart === 'function') window.__ipsrsLaporanNavigationStart(loadingName);
+    const finishNavigationLoading = function(){
+      if(typeof window.__ipsrsLaporanNavigationDone === 'function') window.__ipsrsLaporanNavigationDone();
+    };
     // Klik manual menu/submenu Laporan selalu menjadi titik reset filter.
     // Drill-down Dashboard dikecualikan hanya selama navigasi internal.
     const internalNav = window.__IPSRS_LAPORAN_INTERNAL_NAV === true;
@@ -2340,6 +2345,7 @@ cardList.appendChild(card);
     }else if(name === 'rekap'){
       loadLaporanSubTabOnce_(name, loadMonthlyRecap);
     }
+    requestAnimationFrame(function(){ finishNavigationLoading(); });
   }
 
   function invalidateLaporanViews(){
