@@ -779,6 +779,31 @@
       // response lama tidak menulis kembali ke DOM setelah pindah halaman.
       window.__ipsrsDashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
     }
+
+    // Laporan adalah SPA/soft-navigation dan panel "Laporan Saya" serta
+    // "Daftar Laporan" sengaja memakai DOM yang sama. Karena rawData juga
+    // merupakan state bersama, cache "sudah pernah dimuat" tidak boleh
+    // dipertahankan setelah meninggalkan halaman Laporan: jika tidak,
+    // Dashboard/fitur lain dapat meninggalkan rawData lama (mis. 309) dan
+    // saat kembali ke Laporan Saya loader tidak berjalan lagi.
+    //
+    // Invalidasi dilakukan HANYA saat benar-benar meninggalkan halaman Laporan.
+    // Saat berpindah antar-subtab di dalam Laporan, cache tetap dipakai.
+    const leavingLaporan = name !== 'laporan' &&
+      document.getElementById('page-laporan')?.classList.contains('active');
+    if(leavingLaporan){
+      _laporanSubTabLoaded.monitoring = false;
+      _laporanSubTabLoaded.rekap = false;
+      _laporanSubTabLoaded.daftar = false;
+      _laporanSubTabLoaded.saya = false;
+      _laporanNeedsRefresh = true;
+
+      // Invalidasi response Laporan yang masih berjalan agar tidak boleh
+      // menulis rawData setelah user sudah berada di halaman lain.
+      window.__IPSRS_LAPORAN_REQUEST_SEQ =
+        (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
+      rawData = [];
+    }
     if(name === 'dashboard'){
       // Setiap kembali ke Dashboard, filter petugas Dashboard selalu kembali
       // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.
