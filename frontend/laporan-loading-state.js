@@ -180,17 +180,21 @@
   function install(){
     installStyle();
 
-    /* Reports loader is shared by Laporan Saya and Daftar Laporan. */
+    /* Request-level loader: dipertahankan untuk operasi data. */
     wrapLoader('loadReportsBySelectedMonth',currentReportTab);
     wrapLoader('loadStaffMonitoring','monitoring');
     wrapLoader('loadMonthlyRecap','rekap');
 
-    // Loading hanya ditampilkan ketika loader benar-benar melakukan request.
-    // Jangan tampilkan overlay hanya karena tab diklik: setelah optimasi navigasi,
-    // tab yang sudah pernah dimuat tidak melakukan request lagi. Jika overlay
-    // ditampilkan pada kondisi itu, tidak ada Promise loader yang memanggil clear()
-    // dan overlay dapat menutupi layar sampai safety timeout 30 detik.
-    // wrapLoader() di atas tetap menjadi satu-satunya sumber show/clear yang valid.
+    /* Navigation-level loader: tampil walaupun data sudah cached. */
+    if(!window.__ipsrsLaporanNavigationLoadingV1){
+      window.__ipsrsLaporanNavigationLoadingV1=true;
+      window.__ipsrsLaporanNavigationStart=function(name){
+        if(labels[name]) show(name);
+      };
+      window.__ipsrsLaporanNavigationDone=function(){
+        clear();
+      };
+    }
 
     window.__ipsrsShowLaporanLoading=show;
     window.__ipsrsClearLaporanLoading=clear;
