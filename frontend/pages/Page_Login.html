@@ -237,21 +237,54 @@
       #loginScreen .login-msg{margin-top:3px;font-size:.78rem;min-height:16px}
     }
     @media(max-width:600px){
-      #loginScreen{padding:16px 12px;align-items:center}
+      /* Mobile compact mode: seluruh elemen login diperkecil ±20% agar tidak memenuhi layar HP. */
+      #loginScreen{padding:13px 12px;align-items:center}
       #loginScreen .login-card{
         width:100%;
         max-width:440px;
-        padding:25px 20px 24px;
-        border-radius:20px;
+        padding:20px 16px 19px;
+        border-radius:16px;
       }
-      #loginScreen .login-logo{width:86px;height:86px;border-radius:15px}
-      #loginScreen .login-hospital{font-size:1.2rem;margin-bottom:8px}
-      #loginScreen .login-card h1{font-size:1.35rem}
-      #loginScreen .login-icon{width:68px;height:68px;margin:18px auto 13px}
-      #loginScreen .login-icon svg{width:35px;height:35px}
-      #loginScreen .login-title{font-size:1.25rem}
-      #loginScreen .login-text{font-size:.92rem}
-      #loginScreen .login-login{margin-top:17px}
+      #loginScreen .login-logo{width:69px;height:69px;border-radius:12px}
+      #loginScreen .login-hospital{font-size:.96rem;margin-bottom:6px}
+      #loginScreen .login-card h1{font-size:1.08rem}
+      #loginScreen .login-icon{width:54px;height:54px;margin:14px auto 10px}
+      #loginScreen .login-icon svg{width:28px;height:28px}
+      #loginScreen .login-title{font-size:1rem;margin-bottom:8px}
+      #loginScreen .login-text{font-size:.74rem;line-height:1.5}
+      #loginScreen .login-login{margin-top:14px}
+      #loginScreen .login-login label:not(.remember-row){
+        margin:10px 0 5px;
+        font-size:.66rem;
+      }
+      #loginScreen .login-login input[type="text"],
+      #loginScreen .login-login input[type="password"]{
+        height:42px;
+        padding:0 11px;
+        border-radius:9px;
+        font-size:.8rem;
+      }
+      #loginScreen .password-wrap input{padding-right:38px}
+      #loginScreen .password-toggle{
+        right:5px;
+        width:32px;
+        height:32px;
+        font-size:.84rem;
+      }
+      #loginScreen .remember-row{
+        gap:7px;
+        margin:10px 0 13px;
+        font-size:.67rem;
+      }
+      #loginScreen .remember-row input{width:14px;height:14px}
+      #loginScreen .login-btn{
+        min-height:42px;
+        padding:0 14px;
+        border-radius:9px;
+        font-size:.84rem;
+      }
+      #loginScreen .login-btn span{margin-left:6px}
+      #loginScreen .login-msg{margin-top:7px;font-size:.69rem;min-height:16px}
     }
   </style>
 </div>
