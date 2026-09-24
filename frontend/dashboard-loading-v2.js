@@ -14,6 +14,7 @@
   let requestFailed = false;
   let hideTimer = null;
   let navigationBusy = false;
+  let activeLoadSeq = 0;
   let dashboardTimerInterval = null;
   let dashboardTimerStartedAt = 0;
 
@@ -40,12 +41,6 @@
     if(el) el.textContent = text;
   }
 
-  function isKaIpsrs(){
-    return typeof CURRENT_SESSION !== 'undefined' &&
-           CURRENT_SESSION &&
-           CURRENT_SESSION.role === 'KA_IPSRS';
-  }
-
   function stopDashboardTimer_(){
     if(dashboardTimerInterval){
       clearInterval(dashboardTimerInterval);
@@ -57,24 +52,20 @@
     stopDashboardTimer_();
     const el = document.getElementById('dashboardLoadingDuration');
     if(!el) return;
-
     el.style.display = 'block';
     el.setAttribute('aria-hidden','false');
     dashboardTimerStartedAt = performance.now();
     el.textContent = '⏱ 0,0 detik';
-
     dashboardTimerInterval = setInterval(function(){
       const seconds = (performance.now() - dashboardTimerStartedAt) / 1000;
       el.textContent = '⏱ ' + seconds.toFixed(1).replace('.',',') + ' detik';
     }, 100);
   }
 
-  function showLoading(text){
+  function showLoading(text, seq){
     loadingActive = true;
-    requestStarted = false;
-    requestFailed = false;
-    pendingRequests = 0;
     navigationBusy = true;
+    activeLoadSeq = seq == null ? activeLoadSeq : seq;
     if(hideTimer) clearTimeout(hideTimer);
     setText(text || 'Menyiapkan dashboard...');
     ensureOverlay().classList.add('show');
@@ -90,7 +81,8 @@
     if(overlay) overlay.classList.remove('show');
   }
 
-  function showError(text){
+  function showError(text, seq){
+    if(seq != null && seq !== activeLoadSeq) return;
     stopDashboardTimer_();
     loadingActive = false;
     navigationBusy = false;
@@ -125,8 +117,6 @@
         return result === true && dashboardDomReady();
       });
     }
-
-    // Fallback kompatibilitas jika lifecycle promise belum tersedia.
     return new Promise(function(resolve){
       function check(){
         if(dashboardDomReady()) return resolve(true);
@@ -162,87 +152,14 @@
     });
   }
 
-  function waitForRequests(deadline){
-    if(!loadingActive) return;
-    if(requestStarted && pendingRequests === 0){
-      if(requestFailed){
-        showError('Dashboard gagal mengambil data. Silakan coba lagi.');
-        return;
-      }
-      // Satu frame tambahan memberi kesempatan KPI, bar, chart, dan recent list
-      // selesai dirender setelah Promise API selesai.
-      hideTimer = setTimeout(hideLoading, 180);
-      return;
-    }
-    // Jika loadDashboard memakai response cache/in-flight yang sudah selesai,
-    // tidak ada fetch baru sehingga requestStarted tetap false. Jangan biarkan
-    // loading menunggu sampai deadline 20 detik pada kondisi ini.
-    if(!requestStarted){
-      setTimeout(function(){
-        if(loadingActive && !requestStarted) hideLoading();
-      },80);
-      return;
-    }
-    if(Date.now() >= deadline){
-      showError('Dashboard membutuhkan waktu lebih lama dari biasanya. Silakan coba lagi.');
-      return;
-    }
-    setTimeout(function(){ waitForRequests(deadline); }, 50);
-  }
+  window.__ipsrsDashboardLoadingStart = function(seq){
+    showLoading('Sedang mengambil data statistik...', seq);
+  };
 
-  const nativeFetch = window.fetch.bind(window);
-  window.fetch = function(input, init){
-    let isDashboardRequest = false;
-    try{
-      const body = init && init.body;
-      if(typeof body === 'string'){
-        const payload = JSON.parse(body);
-        isDashboardRequest = !!(payload && (
-          payload.action === 'apiDashboardStats' ||
-          payload.action === 'apiGetStaffMonitoring'
-        ));
-      }
-    }catch(e){}
-
-    if(!isDashboardRequest) return nativeFetch(input, init);
-
-    requestStarted = true;
-    pendingRequests++;
-    if(loadingActive) setText('Sedang mengambil data statistik...');
-
-    let request;
-    try{
-      request = nativeFetch(input, init);
-    }catch(err){
-      requestFailed = true;
-      pendingRequests = Math.max(0, pendingRequests - 1);
-      throw err;
-    }
-
-    // Jangan mengonsumsi response asli. Clone dipakai hanya untuk mendeteksi
-    // {ok:false} dari API, termasuk saat HTTP tetap 200.
-    request.then(function(response){
-      if(!response.ok){
-        requestFailed = true;
-        return;
-      }
-      return response.clone().text().then(function(text){
-        try{
-          const json = JSON.parse(text);
-          if(json && json.ok === false) requestFailed = true;
-        }catch(e){
-          requestFailed = true;
-        }
-      }).catch(function(){
-        requestFailed = true;
-      });
-    }).catch(function(){
-      requestFailed = true;
-    }).finally(function(){
-      pendingRequests = Math.max(0, pendingRequests - 1);
-    });
-
-    return request;
+  window.__ipsrsDashboardLoadingDone = function(seq, ok){
+    if(seq !== activeLoadSeq) return;
+    if(ok) hideLoading();
+    else showError('Dashboard gagal mengambil data. Silakan coba lagi.', seq);
   };
 
   const originalGoPage = window.goPage;
@@ -259,7 +176,6 @@
     showLoading('Menyiapkan dashboard...');
     const deadline = Date.now() + 20000;
 
-    // 1) Page_Dashboard harus sudah ter-mount.
     waitForDashboardMount(deadline).then(function(pageReady){
       if(!pageReady){
         showError('Dashboard gagal disiapkan. Silakan coba lagi.');
@@ -267,7 +183,6 @@
       }
 
       setText('Menyiapkan komponen grafik...');
-      // 2) Chart.js harus tersedia sebelum loadDashboard membuat doughnut chart.
       return waitForChart(deadline).then(function(chartReady){
         if(!chartReady){
           showError('Komponen grafik gagal dimuat. Silakan coba lagi.');
@@ -276,17 +191,12 @@
 
         setText('Sedang mengambil data statistik...');
         try{
-          // 3) goPage asli menampilkan page dan memanggil loadDashboard().
           originalGoPage(name, preserveInputMode);
         }catch(err){
           console.error('Dashboard navigation error:', err);
           showError('Gagal memuat Dashboard.');
           return false;
         }
-
-        // 4) Tunggu seluruh request Dashboard yang benar-benar dimulai oleh
-        // loadDashboard(), lalu beri satu frame untuk render akhir.
-        waitForRequests(deadline);
         return true;
       });
     }).catch(function(err){
