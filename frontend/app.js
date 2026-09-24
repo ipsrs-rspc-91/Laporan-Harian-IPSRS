@@ -800,6 +800,12 @@
       _laporanSubTabLoaded.rekap = false;
       _laporanSubTabLoaded.daftar = false;
       _laporanSubTabLoaded.saya = false;
+      // Request lama tidak boleh membuat sub-tab tetap dianggap "sedang loading".
+      // Saat kembali ke Laporan, request baru wajib boleh dimulai.
+      _laporanSubTabLoading.monitoring = false;
+      _laporanSubTabLoading.rekap = false;
+      _laporanSubTabLoading.daftar = false;
+      _laporanSubTabLoading.saya = false;
       _laporanNeedsRefresh = true;
 
       // Invalidasi response Laporan yang masih berjalan agar tidak boleh
@@ -839,9 +845,6 @@
       // tetap hidup dan dapat membawa mode Daftar (309) ke Laporan Saya.
       // Drill-down Dashboard adalah satu-satunya pengecualian yang sengaja
       // membuka Daftar Laporan.
-      const targetLaporanTab =
-        window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar' ? 'daftar' : 'saya';
-
       // Siklus data baru dibuat setiap kali masuk dari menu utama.
       // Ini memutus seluruh state bersama rawData dari kunjungan sebelumnya.
       resetLaporanSubTabCache();
@@ -2413,6 +2416,15 @@ cardList.appendChild(card);
     _laporanSubTabLoaded.rekap = false;
     _laporanSubTabLoaded.daftar = false;
     _laporanSubTabLoaded.saya = false;
+    // Masuk dari menu utama selalu memulai siklus request baru.
+    // Request lama yang masih berjalan tidak boleh menghalangi request tujuan.
+    _laporanSubTabLoading.monitoring = false;
+    _laporanSubTabLoading.rekap = false;
+    _laporanSubTabLoading.daftar = false;
+    _laporanSubTabLoading.saya = false;
+    window.__IPSRS_LAPORAN_REQUEST_SEQ =
+      (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
+    rawData = [];
 
     // Default normal tetap Laporan Saya. Namun drill-down dari Dashboard
     // Belum Selesai secara eksplisit meminta Daftar Laporan agar sumber data
