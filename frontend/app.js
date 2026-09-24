@@ -691,6 +691,15 @@
       window.__ipsrsDashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
     }
     if(name === 'dashboard'){
+      // Setiap kembali ke Dashboard, filter petugas Dashboard selalu kembali
+      // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.
+      const dashStaff = document.getElementById('DashStaff');
+      if(dashStaff) dashStaff.value = '';
+
+      // Filter dari seluruh halaman Laporan juga dibersihkan saat user pindah
+      // ke Dashboard. Tidak menyentuh pilihan periode (bulan/tanggal).
+      resetLaporanFilterControls_();
+
       // Muat daftar petugas secara lazy saat Dashboard pertama kali dibuka.
       // Tidak menambah beban login; request hanya dijalankan sekali per sesi.
       loadAdminStaffListIfNeeded();
@@ -2142,12 +2151,61 @@ cardList.appendChild(card);
   let _laporanPageInitialized = false;
   let _laporanNeedsRefresh = false;
 
+  function resetLaporanFilterControls_(options){
+    const opts = options || {};
+    const preserveUnfinished = opts.preserveUnfinished === true;
+
+    // Filter petugas Daftar Laporan.
+    adminSelectedStaffId = '';
+    const adminStaff = document.getElementById('adminStaffSelect');
+    if(adminStaff) adminStaff.value = '';
+
+    // Filter Daftar/Laporan Saya.
+    const reportFilterIds = [
+      'FilterKategori',
+      'FilterArea',
+      'FilterBidang',
+      'FilterCari'
+    ];
+    reportFilterIds.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    const statusEl = document.getElementById('FilterStatus');
+    if(statusEl) statusEl.value = preserveUnfinished ? '__BELUM_SELESAI__' : '';
+
+    // Filter Monitoring Harian.
+    ['MonFilterStatus','MonFilterBidang','MonFilterCari'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+
+    // Filter petugas Dashboard.
+    const dashStaff = document.getElementById('DashStaff');
+    if(dashStaff) dashStaff.value = '';
+
+    // Karena navigasi ini tidak selalu memicu event onchange, render ulang
+    // data yang sudah ada agar hasil langsung kembali ke kondisi tanpa filter.
+    const activeSubTab = document.querySelector('.sub-tab.active')?.dataset?.subtab || '';
+    if(activeSubTab === 'monitoring' && Array.isArray(_monData)){
+      renderStaffMonitoring();
+    }else if((activeSubTab === 'saya' || activeSubTab === 'daftar') && Array.isArray(rawData)){
+      applyFilters();
+    }
+  }
+
   function goLaporanSubTab(name){
     // Klik manual menu/submenu Laporan selalu menjadi titik reset filter.
     // Drill-down Dashboard dikecualikan hanya selama navigasi internal.
-    if(!window.__IPSRS_LAPORAN_INTERNAL_NAV){
+    const internalNav = window.__IPSRS_LAPORAN_INTERNAL_NAV === true;
+    if(!internalNav){
       resetLaporanUnfinishedState();
     }
+    resetLaporanFilterControls_({
+      // Dashboard -> Belum Selesai adalah navigasi internal yang memang
+      // sengaja membawa filter status khusus tersebut ke Daftar Laporan.
+      preserveUnfinished: internalNav && window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true
+    });
     const panelName = (name === 'saya' || name === 'daftar') ? 'daftar' : name;
     document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.add('hidden'));
     document.getElementById('subtab-' + panelName).classList.remove('hidden');
