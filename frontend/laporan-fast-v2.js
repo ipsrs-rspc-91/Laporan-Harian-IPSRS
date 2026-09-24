@@ -60,17 +60,17 @@
     if(sel) sel.value='';
   }
 
-  function requestKey(month,staff){
-    return String(month||'')+'|'+String(staff||'');
+  function requestKey(month,staff,viewMode){
+    return String(month||'')+'|'+String(staff||'')+'|'+String(viewMode||'daftar');
   }
 
-  function requestReports(month,staff){
-    const key=requestKey(month,staff);
+  function requestReports(month,staff,viewMode){
+    const key=requestKey(month,staff,viewMode);
     const cached=responseCache.get(key);
     if(cached && (Date.now()-cached.at)<RESPONSE_CACHE_TTL) return Promise.resolve(cached.value);
     if(inflight.has(key)) return inflight.get(key);
 
-    const p=authRun('apiGetReports',month||'',staff||'','','')
+    const p=authRun('apiGetReports',month||'',staff||'','',viewMode||'daftar')
       .then(function(value){ responseCache.set(key,{at:Date.now(),value:value}); return value; })
       .finally(function(){ inflight.delete(key); });
     inflight.set(key,p);
@@ -105,7 +105,7 @@
     setMsg('msgReport','Memuat data...');
 
     try{
-      const json=await requestReports(b,staff);
+      const json=await requestReports(b,staff,m==='saya'?'saya':'daftar');
       if(mySerial!==requestSerial) return;
 
       if(!json || !json.ok){
@@ -263,7 +263,7 @@
     if(!fnName){ responseCache.clear(); return; }
     if(fnName!=='apiGetReports') return;
     if(!Array.isArray(args) || args.length<2){ responseCache.clear(); return; }
-    responseCache.delete(requestKey(args[0],args[1]));
+    responseCache.delete(requestKey(args[0],args[1],args[3]||'daftar'));
   }
 
   window.__ipsrsClearLaporanApiCache=clearReportCache;
