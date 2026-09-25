@@ -1904,7 +1904,7 @@
     const note = document.getElementById('inputPermissionNote');
     const history = document.getElementById('inputHistoryPanel');
     if(title) title.innerText = 'Input Laporan';
-    if(desc) desc.innerText = 'Isi laporan kegiatan / perbaikan harian ini';
+    if(desc) desc.innerText = 'Isi laporan kegiatan / perbaikan harian ';
     if(btn){ btn.innerText = 'Simpan Laporan'; btn.classList.remove('hidden'); }
     if(note) note.classList.add('hidden');
     if(history) history.classList.add('hidden');
