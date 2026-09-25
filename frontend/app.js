@@ -1146,7 +1146,12 @@
   function syncSparePartSection(){
     const sel = document.getElementById('Kategori');
     const required = isSparePartRequiredCategory(sel ? sel.value : '');
-    if(required){
+    const hasValue = ['SparePartUnit','Type','Jumlah'].some(id =>
+      String(document.getElementById(id)?.value || '').trim()
+    );
+    // Buka otomatis bila kategori memang mewajibkan data atau field sudah
+    // berisi data (misalnya saat membuka laporan lama untuk diedit).
+    if(required || hasValue){
       setSparePartSection(true);
     }
     updateSparePartToggleStatus();
