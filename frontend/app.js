@@ -1109,9 +1109,81 @@
     const sel = document.getElementById('Kategori');
     if(sel.value === ADD_NEW_VALUE){
       sel.value = ''; // select dikembalikan ke kosong SEBELUM modal dibuka
+      syncSparePartSection();
       openTambahKategoriModal();
+      return;
+    }
+    syncSparePartSection();
+  }
+
+  function isSparePartRequiredCategory(value){
+    const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    return new Set([
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)'
+    ]).has(normalized);
+  }
+
+  function setSparePartSection(open){
+    const section = document.getElementById('sparePartSection');
+    const fields = document.getElementById('sparePartFields');
+    const toggle = document.getElementById('sparePartToggle');
+    const icon = document.getElementById('sparePartToggleIcon');
+    if(!section || !fields || !toggle) return;
+    const shouldOpen = !!open;
+    fields.hidden = !shouldOpen;
+    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    if(icon) icon.textContent = shouldOpen ? '−' : '＋';
+  }
+
+  function toggleSparePartSection(){
+    const fields = document.getElementById('sparePartFields');
+    setSparePartSection(!fields || fields.hidden);
+  }
+
+  function syncSparePartSection(){
+    const sel = document.getElementById('Kategori');
+    const required = isSparePartRequiredCategory(sel ? sel.value : '');
+    if(required){
+      setSparePartSection(true);
+    }
+    updateSparePartToggleStatus();
+  }
+
+  function updateSparePartToggleStatus(){
+    const status = document.getElementById('sparePartToggleStatus');
+    if(!status) return;
+    const part = String(document.getElementById('SparePartUnit')?.value || '').trim();
+    const type = String(document.getElementById('Type')?.value || '').trim();
+    const qty = String(document.getElementById('Jumlah')?.value || '').trim();
+    if(part || type || qty){
+      const parts = [];
+      if(part) parts.push(part);
+      if(type) parts.push(type);
+      if(qty) parts.push('Jumlah: ' + qty);
+      status.textContent = parts.join(' • ');
+    }else{
+      status.textContent = 'Belum diisi';
     }
   }
+
+  function initSparePartSection(){
+    const fields = ['SparePartUnit','Type','Jumlah'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input', updateSparePartToggleStatus);
+    });
+    syncSparePartSection();
+  }
+  // Inisialisasi UI Spare Part/Unit setelah DOM form tersedia.
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initSparePartSection);
+  }else{
+    initSparePartSection();
+  }
+
   function openTambahKategoriModal(){
     document.getElementById('kategoriBaruInput').value = '';
     setMsg('kategoriBaruMsg', '');
