@@ -82,6 +82,33 @@
     opacity:.65;
   }
 
+  #page-input .spare-part-section{margin-bottom:var(--sp-3);}
+  #page-input .spare-part-toggle{
+    width:100%; min-height:52px; padding:9px 12px;
+    border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:#fff; color:var(--text); cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    text-align:left; font:inherit;
+  }
+  #page-input .spare-part-toggle:hover{border-color:var(--text-muted);}
+  #page-input .spare-part-toggle[aria-expanded="true"]{
+    border-color:var(--primary);
+    border-bottom-left-radius:0; border-bottom-right-radius:0;
+  }
+  #page-input .spare-part-toggle-main{display:flex;flex-direction:column;min-width:0;gap:2px;}
+  #page-input .spare-part-toggle-title{font-weight:700;font-size:15px;}
+  #page-input .spare-part-toggle-status{font-size:12px;color:var(--text-muted);font-weight:500;}
+  #page-input .spare-part-toggle-icon{font-size:23px;line-height:1;flex:none;color:var(--text-muted);}
+  #page-input .spare-part-fields{
+    padding:12px; border:1px solid var(--primary); border-top:0;
+    border-bottom-left-radius:var(--radius-sm); border-bottom-right-radius:var(--radius-sm);
+    background:#fff;
+  }
+  @media(max-width:480px){
+    #page-input .spare-part-toggle{min-height:50px;padding:8px 11px;}
+    #page-input .spare-part-fields{padding:10px;}
+  }
+
   /* Dropdown Input: ukuran teks dan tinggi baris dibuat proporsional untuk HP. */
   #page-input #Kategori,
   #page-input #AreaKerja,
@@ -381,14 +408,26 @@
     </div>
 
     <div>
-      <label for="SparePartUnit">Spare Part / Unit</label>
-      <input id="SparePartUnit">
+      <div id="sparePartSection" class="spare-part-section">
+        <button type="button" id="sparePartToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="sparePartFields" onclick="toggleSparePartSection()">
+          <span class="spare-part-toggle-main">
+            <span class="spare-part-toggle-title">Spare Part / Unit</span>
+            <span id="sparePartToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
+          </span>
+          <span id="sparePartToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
+        </button>
 
-      <label for="Type">Type</label>
-      <input id="Type">
+        <div id="sparePartFields" class="spare-part-fields" hidden>
+          <label for="SparePartUnit">Spare Part / Unit</label>
+          <input id="SparePartUnit">
 
-      <label for="Jumlah">Jumlah</label>
-      <input id="Jumlah" type="number" min="0">
+          <label for="Type">Type</label>
+          <input id="Type">
+
+          <label for="Jumlah">Jumlah</label>
+          <input id="Jumlah" type="number" min="0">
+        </div>
+      </div>
 
       <label for="Status">Status</label>
       <input type="hidden" id="Status" value="">
