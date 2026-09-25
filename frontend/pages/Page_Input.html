@@ -83,6 +83,14 @@
   }
 
   #page-input .spare-part-section{margin-top:12px;margin-bottom:var(--sp-3);}
+
+/* Border field non-wajib: dibuat sekitar 20% lebih tegas agar lebih mudah terlihat. */
+#page-input input:not([type="hidden"]),
+#page-input select,
+#page-input textarea,
+#page-input .datetime-combined-input{
+  border-color:#cbd3d7;
+}
   #page-input .spare-part-toggle{
     width:100%; min-height:52px; padding:9px 12px;
     border:1px solid var(--border); border-radius:var(--radius-sm);
