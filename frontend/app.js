@@ -1869,7 +1869,6 @@
         }
         if(isEdit){
           invalidateLaporanViews();
-          const editedId = _editingReportId;
           startCreateReportForm(true);
           openSaveSuccessModal('Laporan berhasil disimpan.');
         } else {
