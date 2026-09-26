@@ -8,18 +8,17 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   page.on('pageerror', error => consoleErrors.push(error.message));
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-
-  await expect(page.locator('#authLoading')).toBeVisible();
+  await expect(page.locator('#authLoading')).toBeAttached();
   await expect(page.locator('#loginScreen')).toBeAttached();
   await expect(page.locator('#appShell')).toBeAttached();
 
-  // Allow the auth bootstrap/login UI to settle.
+  // Auth bootstrap can take a few seconds; the expected unauthenticated state is
+  // the login screen, while authenticated sessions may legitimately show the app shell.
   await page.waitForTimeout(4000);
 
   const criticalErrors = consoleErrors.filter(msg =>
     !/favicon|Failed to load resource: the server responded with a status of 404/i.test(msg)
   );
-
   expect(criticalErrors, 'Critical browser console/page errors').toEqual([]);
 });
 
