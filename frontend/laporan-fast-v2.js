@@ -134,11 +134,13 @@
         const statusEl=document.getElementById('FilterStatus');
         if(statusEl) statusEl.value='__BELUM_SELESAI__';
       }
+      // applyFilters() menghitung hasil filter sekaligus menampilkan
+      // "Data tampil: X dari Y". Jangan timpa lagi dengan rawData.length,
+      // karena rawData adalah seluruh dataset (mis. 13), bukan hasil pencarian.
       applyFilters();
       if(dashboardDrilldown) window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN=false;
       if(daftarUnfinishedDrilldown) window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN=false;
       if(sayaUnfinishedDrilldown) window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN=false;
-      setMsg('msgReport','Data tampil: '+rawData.length);
       return true;
     }catch(err){
       if(mySerial!==requestSerial || mode()!==m) return false;
