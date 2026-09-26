@@ -1,0 +1,55 @@
+name: IPSRS Automated Audit Gate
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ipsrs-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit-total:
+    name: Audit Total + Regression Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run IPSRS Automated Audit
+        run: node scripts/audit-total.mjs
+      - name: Upload audit checklist
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipsrs-audit-${{ github.sha }}
+          path: audit-output/
+          retention-days: 30
+
+  audit-gate-result:
+    name: Deployment Gate
+    needs: audit-total
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Block when audit fails
+        if: needs.audit-total.result != 'success'
+        run: |
+          echo "❌ IPSRS DEPLOYMENT GATE BLOCKED"
+          echo "Audit Total menemukan masalah. Perbaiki dahulu sebelum deployment."
+          exit 1
+      - name: Audit passed
+        if: needs.audit-total.result == 'success'
+        run: echo "✅ IPSRS AUDIT TOTAL PASSED"
