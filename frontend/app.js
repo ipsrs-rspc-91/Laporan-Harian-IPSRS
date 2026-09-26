@@ -2142,6 +2142,8 @@
 
   async function loadReportsBySelectedMonth(){
     const bulan = document.getElementById('FilterBulan').value;
+    const cariElAtRequest = document.getElementById('FilterCari');
+    const cariAtRequest = cariElAtRequest ? cariElAtRequest.value : '';
     const modeAtRequest = getActiveLaporanMode_();
     _laporanMode = modeAtRequest;
     const requestSeq = (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
@@ -2165,6 +2167,14 @@
         return false;
       }
       rawData = json.data || [];
+
+      // Pertahankan pencarian yang sedang aktif saat Muat Ulang.
+      // Ini mencegah rawData baru langsung tampil seluruhnya (mis. 13)
+      // ketika pengguna masih mengetik "lab" (hasil harus tetap 3 dari 13).
+      const cariElAfterLoad = document.getElementById('FilterCari');
+      if(cariElAfterLoad && cariElAfterLoad.value !== cariAtRequest){
+        cariElAfterLoad.value = cariAtRequest;
+      }
 
       if(!Array.isArray(ADMIN_STAFF_LIST) || ADMIN_STAFF_LIST.length === 0){
         syncAdminStaffFromReports_();
