@@ -166,11 +166,12 @@
       </div>
     </details>
 
-    <div class="filters-bar" style="margin-bottom:var(--sp-2);">
-      <div class="f-item" style="flex:1; min-width:180px;">
-        <label>Cari</label>
-        <input id="FilterCari" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
+    <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:var(--sp-2); align-items:start; margin-bottom:var(--sp-2);">
+      <div class="f-item" style="min-width:0;">
+        <label style="display:block; text-align:left;">Cari</label>
+        <input id="FilterCari" style="width:100%; box-sizing:border-box;" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
       </div>
+      <div aria-hidden="true"></div>
     </div>
 
     <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:var(--sp-2); align-items:center; margin-bottom:var(--sp-2);">
