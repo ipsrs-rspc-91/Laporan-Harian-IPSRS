@@ -25,7 +25,7 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
 test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   const assets = [
     '/index.html',
-    '/app.js?v=20260927-SAVEMODAL2',
+    '/app.js?v=20260927-DELETE1',
     '/config.js?v=SUPABASE-CUTOVER-20260923-3',
     '/laporan-fast-v2.js?v=20260926-LAPORANFAST3',
     '/login-fast.js?v=20260924-PASSWORD7',
@@ -36,4 +36,12 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
   }
+});
+
+
+test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const deleteButton = page.locator('#btnDeleteReport');
+  await expect(deleteButton).toBeAttached();
+  await expect(deleteButton).toBeHidden();
 });
