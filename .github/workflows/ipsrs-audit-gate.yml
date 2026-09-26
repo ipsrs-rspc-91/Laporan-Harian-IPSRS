@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ipsrs-audit-\${{ github.ref }}
+  group: ipsrs-audit-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ipsrs-audit-\${{ github.sha }}
+          name: ipsrs-audit-${{ github.sha }}
           path: audit-output/
           retention-days: 30
 
