@@ -25,7 +25,7 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
 test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   const assets = [
     '/index.html',
-    '/app.js?v=20260926-SAVEMODAL1',
+    '/app.js?v=20260927-SAVEMODAL2',
     '/config.js?v=SUPABASE-CUTOVER-20260923-3',
     '/laporan-fast-v2.js?v=20260926-LAPORANFAST3',
     '/login-fast.js?v=20260924-PASSWORD7',
