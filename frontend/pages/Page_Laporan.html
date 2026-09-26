@@ -166,12 +166,10 @@
       </div>
     </details>
 
-    <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:var(--sp-2); align-items:stretch; margin-bottom:var(--sp-2);">
-      <div style="min-width:0; min-height:52px; box-sizing:border-box; padding:0 16px; border:1px solid var(--border,#d9e2e5); border-radius:14px; background:var(--surface-soft,#f7fbfc); display:flex; align-items:center; justify-content:flex-start; font-size:var(--fs-sm); font-weight:700; color:var(--muted);">
-        <span style="letter-spacing:.04em;">CARI</span>
-      </div>
-      <div style="min-width:0;">
-        <input id="FilterCari" style="width:100%; height:52px; box-sizing:border-box; padding:0 16px; border:1px solid var(--border,#d9e2e5); border-radius:14px; background:#fff; font-size:var(--fs-sm);" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
+    <div style="display:flex; align-items:center; width:100%; min-height:54px; box-sizing:border-box; margin-bottom:var(--sp-2); padding:4px 6px; border:1px solid #b7dfe7; border-radius:14px; background:#eef9fb; box-shadow:0 2px 6px rgba(0,80,100,.06);">
+      <div style="flex:0 0 auto; padding:0 14px; font-size:var(--fs-sm); font-weight:800; letter-spacing:.04em; color:#07586a; white-space:nowrap;">CARI</div>
+      <div style="flex:1; min-width:0;">
+        <input id="FilterCari" style="display:block; width:100%; height:44px; box-sizing:border-box; padding:0 14px; border:1px solid #c8e3e8; border-radius:10px; background:#fff; color:var(--text,#17343d); font-size:var(--fs-sm); outline:none;" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
       </div>
     </div>
 
