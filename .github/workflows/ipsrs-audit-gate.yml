@@ -55,11 +55,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install Playwright
-        run: |
-          npx --yes playwright@1.55.0 install --with-deps chromium
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
       - name: Run browser regression
-        run: npx --yes playwright@1.55.0 test --config=playwright.config.mjs
+        run: npx playwright test --config=playwright.config.mjs
       - name: Upload browser regression artifacts
         if: always()
         uses: actions/upload-artifact@v4

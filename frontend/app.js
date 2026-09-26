@@ -166,15 +166,40 @@
     startCreateReportForm(true);
     goPage('input');
 
-    setTimeout(function(){
-      const tanggal = document.getElementById('Tanggal');
-      if(tanggal){
-        tanggal.focus();
-        try{
-          tanggal.scrollIntoView({behavior:'smooth',block:'center'});
-        }catch(e){}
+    // Tanggal disimpan di input hidden; yang harus menerima fokus setelah
+    // klik OK adalah kontrol tanggal & jam yang benar-benar terlihat.
+    const focusTanggalWaktu = function(){
+      const display = document.getElementById('TanggalWaktuDisplay');
+      if(!display) return false;
+
+      // #Tanggal adalah input hidden. Scroll harus dilakukan pada container
+      // aplikasi (.content), bukan pada window/document. Di mobile, .content
+      // adalah elemen yang benar-benar memiliki overflow-y:auto.
+      try{
+        const content = display.closest('.content') || document.querySelector('.content');
+        if(content){
+          const displayRect = display.getBoundingClientRect();
+          const contentRect = content.getBoundingClientRect();
+          const targetTop = Math.max(
+            0,
+            content.scrollTop + (displayRect.top - contentRect.top) - 12
+          );
+          content.scrollTo({top:targetTop, behavior:'auto'});
+        }else{
+          display.scrollIntoView({behavior:'auto', block:'start'});
+        }
+      }catch(e){
+        try{ display.scrollIntoView({behavior:'auto', block:'start'}); }catch(ignore){}
       }
-    },120);
+
+      try{ if(document.activeElement && document.activeElement !== display) document.activeElement.blur(); }catch(e){}
+      display.focus({preventScroll:true});
+      return true;
+    };
+    // Page_Input dimuat/dipasang saat navigasi. Dua percobaan ringan menjaga
+    // posisi tetap benar setelah fragment/DOM selesai dipasang, tanpa polling.
+    setTimeout(focusTanggalWaktu, 120);
+    setTimeout(focusTanggalWaktu, 350);
   }
 
   // ============================================================
