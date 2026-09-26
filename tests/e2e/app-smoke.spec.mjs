@@ -37,3 +37,27 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
     expect(response.ok(), path).toBeTruthy();
   }
 });
+
+test('IPSRS startup performance budget', async ({ page }) => {
+  const startedAt = Date.now();
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#loginScreen')).toBeAttached();
+
+  const startupMs = Date.now() - startedAt;
+  const metrics = await page.evaluate(() => {
+    const nav = performance.getEntriesByType('navigation')[0];
+    const resources = performance.getEntriesByType('resource');
+    return {
+      domContentLoadedMs: nav ? Math.round(nav.domContentLoadedEventEnd - nav.startTime) : null,
+      loadEventMs: nav ? Math.round(nav.loadEventEnd - nav.startTime) : null,
+      resourceCount: resources.length,
+      jsCount: resources.filter(r => /\.js(?:\?|$)/i.test(r.name)).length
+    };
+  });
+
+  expect(startupMs, 'Startup to login screen exceeded 5 seconds').toBeLessThan(5000);
+  expect(metrics.domContentLoadedMs ?? 0, 'DOMContentLoaded exceeded 5 seconds').toBeLessThan(5000);
+
+  console.log('[PERF_GATE]', JSON.stringify({ startupMs, ...metrics }));
+});
+
