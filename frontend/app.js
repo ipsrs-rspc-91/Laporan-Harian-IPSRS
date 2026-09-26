@@ -157,7 +157,24 @@
     document.getElementById('saveSuccessModalBg').classList.add('show');
   }
   function closeSaveSuccessModal(){
-    document.getElementById('saveSuccessModalBg').classList.remove('show');
+    const bg = document.getElementById('saveSuccessModalBg');
+    if(bg) bg.classList.remove('show');
+    document.body.classList.remove('modal-open');
+
+    // Setelah penyimpanan berhasil, siapkan form baru dan langsung
+    // kembalikan pengguna ke field pertama (Tanggal).
+    startCreateReportForm(true);
+    goPage('input');
+
+    setTimeout(function(){
+      const tanggal = document.getElementById('Tanggal');
+      if(tanggal){
+        tanggal.focus();
+        try{
+          tanggal.scrollIntoView({behavior:'smooth',block:'center'});
+        }catch(e){}
+      }
+    },120);
   }
 
   // ============================================================
@@ -1854,13 +1871,12 @@
           invalidateLaporanViews();
           const editedId = _editingReportId;
           startCreateReportForm(true);
-          openSaveSuccessModal('Perubahan laporan berhasil disimpan (ID: ' + editedId + ').');
-          goPage('laporan');
+          openSaveSuccessModal('Laporan berhasil disimpan.');
         } else {
           invalidateLaporanViews();
-          setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
+          setMsg('msgInput', '');
           resetInputFieldsAfterCreate();
-          openSaveSuccessModal('Laporan berhasil disimpan (ID: ' + json.report_id + ').');
+          openSaveSuccessModal('Laporan berhasil disimpan.');
         }
       } else {
         setMsg('msgInput', (json && json.msg) ? json.msg : (isEdit ? 'Gagal menyimpan perubahan.' : 'Gagal menyimpan laporan.'), true);
