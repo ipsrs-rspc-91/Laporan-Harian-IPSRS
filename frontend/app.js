@@ -166,15 +166,20 @@
     startCreateReportForm(true);
     goPage('input');
 
-    setTimeout(function(){
-      const tanggal = document.getElementById('Tanggal');
-      if(tanggal){
-        tanggal.focus();
-        try{
-          tanggal.scrollIntoView({behavior:'smooth',block:'center'});
-        }catch(e){}
-      }
-    },120);
+    // Tanggal disimpan di input hidden; yang harus menerima fokus setelah
+    // klik OK adalah kontrol tanggal & jam yang benar-benar terlihat.
+    const focusTanggalWaktu = function(){
+      const display = document.getElementById('TanggalWaktuDisplay');
+      if(!display) return false;
+      try{ if(document.activeElement && document.activeElement !== display) document.activeElement.blur(); }catch(e){}
+      display.focus({preventScroll:true});
+      try{ display.scrollIntoView({behavior:'auto',block:'start'}); }catch(e){}
+      return true;
+    };
+    // Page_Input dimuat/dipasang saat navigasi; lakukan beberapa percobaan
+    // ringan agar fokus tidak kembali ke field Keterangan saat fragment selesai.
+    setTimeout(focusTanggalWaktu, 120);
+    setTimeout(focusTanggalWaktu, 350);
   }
 
   // ============================================================
