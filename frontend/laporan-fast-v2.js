@@ -70,10 +70,15 @@
     return String(month||'')+'|'+String(staff||'')+'|'+String(viewMode||'daftar');
   }
 
-  function requestReports(month,staff,viewMode){
+  function requestReports(month,staff,viewMode,forceRefresh){
     const key=requestKey(month,staff,viewMode);
+
+    // Force refresh hanya dipakai oleh tombol "Muat Ulang".
+    // Cache normal tetap aktif untuk navigasi/menu agar performa tidak turun.
+    if(forceRefresh) responseCache.delete(key);
+
     const cached=responseCache.get(key);
-    if(cached && (Date.now()-cached.at)<RESPONSE_CACHE_TTL) return Promise.resolve(cached.value);
+    if(!forceRefresh && cached && (Date.now()-cached.at)<RESPONSE_CACHE_TTL) return Promise.resolve(cached.value);
     if(inflight.has(key)) return inflight.get(key);
 
     const p=authRun('apiGetReports',month||'',staff||'','',viewMode||'daftar')
@@ -83,7 +88,7 @@
     return p;
   }
 
-  async function loadReportsUltra(){
+  async function loadReportsUltra(forceRefresh){
     const m=mode();
     const mySerial=++requestSerial;
     const requestSeq=(Number(window.__IPSRS_LAPORAN_REQUEST_SEQ)||0)+1;
@@ -117,7 +122,7 @@
     setMsg('msgReport','Memuat data...');
 
     try{
-      const json=await requestReports(b,staff,m==='saya'?'saya':'daftar');
+      const json=await requestReports(b,staff,m==='saya'?'saya':'daftar',forceRefresh===true);
       if(mySerial!==requestSerial ||
          requestSeq!==Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
          mode()!==m) return false;
@@ -151,6 +156,12 @@
   }
 
   window.loadReportsBySelectedMonth=loadReportsUltra;
+
+  // Public helper untuk tombol "Muat Ulang".
+  // Tidak mengubah perilaku pemanggilan biasa dari filter/menu.
+  window.forceReloadLaporan=function(){
+    return loadReportsUltra(true);
+  };
 
   const originalApply=window.applyFilters;
   if(typeof originalApply==='function'){
