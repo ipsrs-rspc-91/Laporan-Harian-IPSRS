@@ -132,6 +132,37 @@
   </div>
 
   <div class="card">
+    <details class="laporan-filter-details">
+      <summary><span class="filter-summary-icon">☰</span><span>Filter</span><span class="filter-summary-arrow">▾</span></summary>
+      <div class="filters-bar" style="margin-top:var(--sp-2);">
+        <div class="f-item">
+          <label>Bulan</label>
+          <select id="FilterBulan" onchange="loadReportsBySelectedMonth()"></select>
+        </div>
+        <div class="f-item">
+          <label>Status</label>
+          <select id="FilterStatus" onchange="applyFilters()">
+            <option value="">Semua status</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Belum">Belum</option>
+            <option value="__BELUM_SELESAI__">Belum Selesai</option>
+          </select>
+        </div>
+        <div class="f-item">
+          <label>Kategori</label>
+          <select id="FilterKategori" onchange="applyFilters()"><option value="">Semua kategori</option></select>
+        </div>
+        <div class="f-item">
+          <label>Area Kerja</label>
+          <select id="FilterArea" onchange="applyFilters()"><option value="">Semua area</option></select>
+        </div>
+        <div class="f-item">
+          <label>Bidang</label>
+          <select id="FilterBidang" onchange="applyFilters()"><option value="">Semua bidang</option></select>
+        </div>
+        <!-- Filter "Shift" dihapus (P1 §3.6): konsep Shift sudah dihapus total dari backend. -->
+      </div>
+    </details>
     <!-- Filter lanjutan tetap di dalam Detail. Yang selalu terlihat hanya Cari + Muat Ulang. -->
     <div class="filters-bar" style="margin-bottom:var(--sp-2);">
       <div class="f-item" style="flex:1; min-width:180px;">
