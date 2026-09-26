@@ -171,13 +171,33 @@
     const focusTanggalWaktu = function(){
       const display = document.getElementById('TanggalWaktuDisplay');
       if(!display) return false;
+
+      // #Tanggal adalah input hidden. Scroll harus dilakukan pada container
+      // aplikasi (.content), bukan pada window/document. Di mobile, .content
+      // adalah elemen yang benar-benar memiliki overflow-y:auto.
+      try{
+        const content = display.closest('.content') || document.querySelector('.content');
+        if(content){
+          const displayRect = display.getBoundingClientRect();
+          const contentRect = content.getBoundingClientRect();
+          const targetTop = Math.max(
+            0,
+            content.scrollTop + (displayRect.top - contentRect.top) - 12
+          );
+          content.scrollTo({top:targetTop, behavior:'auto'});
+        }else{
+          display.scrollIntoView({behavior:'auto', block:'start'});
+        }
+      }catch(e){
+        try{ display.scrollIntoView({behavior:'auto', block:'start'}); }catch(ignore){}
+      }
+
       try{ if(document.activeElement && document.activeElement !== display) document.activeElement.blur(); }catch(e){}
       display.focus({preventScroll:true});
-      try{ display.scrollIntoView({behavior:'auto',block:'start'}); }catch(e){}
       return true;
     };
-    // Page_Input dimuat/dipasang saat navigasi; lakukan beberapa percobaan
-    // ringan agar fokus tidak kembali ke field Keterangan saat fragment selesai.
+    // Page_Input dimuat/dipasang saat navigasi. Dua percobaan ringan menjaga
+    // posisi tetap benar setelah fragment/DOM selesai dipasang, tanpa polling.
     setTimeout(focusTanggalWaktu, 120);
     setTimeout(focusTanggalWaktu, 350);
   }
