@@ -109,6 +109,22 @@ for (const f of files.filter(f=>/\.(js|html)$/i.test(f) && !f.includes('/supabas
 if (direct.length) warn('Frontend direct Supabase access',direct.join(', '));
 else pass('Frontend direct Supabase access','No obvious direct .from() Supabase access detected in frontend');
 
+// Delete Report safety contract: UI placement + API authorization + soft-delete/RLS.
+const deleteApi=path.join(root,'supabase','functions','ipsrs-api','index.ts');
+const deletePage=path.join(root,'frontend','pages','Page_Input.html');
+const deleteApp=path.join(root,'frontend','app.js');
+const deleteMigrationFiles=fs.existsSync(migrationDir) ? fs.readdirSync(migrationDir).filter(x=>x.includes('soft_delete_reports') && x.endsWith('.sql')) : [];
+if(fs.existsSync(deleteApi) && fs.existsSync(deletePage) && fs.existsSync(deleteApp)){
+  const api=fs.readFileSync(deleteApi,'utf8'), page=fs.readFileSync(deletePage,'utf8'), app=fs.readFileSync(deleteApp,'utf8');
+  const ok = api.includes('if(a==="apiDeleteReport")') && api.includes('s.role!=="KA_IPSRS"') && api.includes('deleted_at') && api.includes('audit(db,s,"DELETE_REPORT"') &&
+    app.includes("case 'apiDeleteReport'") && app.includes('async function deleteCurrentReport()') &&
+    page.includes('id="btnDeleteReport"') && page.includes('onclick="deleteCurrentReport()"');
+  if(ok) pass('Delete Report safety contract','KA-only API + soft delete + audit + edit-form button contract detected');
+  else fail('Delete Report safety contract','Required KA-only/soft-delete/audit/UI contract is incomplete');
+  if(deleteMigrationFiles.length) pass('Delete Report RLS contract','Soft-delete migration file present: '+deleteMigrationFiles.join(', '));
+  else fail('Delete Report RLS contract','Soft-delete migration file not found');
+}else fail('Delete Report safety contract','Required Delete Report files are missing');
+
 const md = [
   '# IPSRS Automated Audit Report','',
   'Generated: '+new Date().toISOString(),
