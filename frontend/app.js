@@ -411,6 +411,8 @@
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; break;
       case 'apiUpdateReport':
         payload.token=token; payload.reportId=args[0]||''; payload.payload=args[1]||{}; break;
+      case 'apiDeleteReport':
+        payload.token=token; payload.reportId=args[0]||''; payload.reason=args[1]||''; break;
       case 'apiDashboardStats':
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; break;
       case 'apiGetStaffMonitoring':
@@ -1941,11 +1943,13 @@
     const title = document.getElementById('inputPageTitle');
     const desc = document.getElementById('inputPageDesc');
     const btn = document.getElementById('btnSaveInput');
+    const deleteBtn = document.getElementById('btnDeleteReport');
     const note = document.getElementById('inputPermissionNote');
     const history = document.getElementById('inputHistoryPanel');
     if(title) title.innerText = 'Input Laporan';
     if(desc) desc.innerText = 'Isi laporan kegiatan / perbaikan harian ini ';
     if(btn){ btn.innerText = 'Simpan Laporan'; btn.classList.remove('hidden'); }
+    if(deleteBtn) deleteBtn.classList.add('hidden');
     if(note) note.classList.add('hidden');
     if(history) history.classList.add('hidden');
 
@@ -2035,6 +2039,7 @@
     const title = document.getElementById('inputPageTitle');
     const desc = document.getElementById('inputPageDesc');
     const btn = document.getElementById('btnSaveInput');
+    const deleteBtn = document.getElementById('btnDeleteReport');
     const note = document.getElementById('inputPermissionNote');
     const history = document.getElementById('inputHistoryPanel');
 
@@ -2086,6 +2091,10 @@
     if(btn){
       btn.innerText = 'Simpan Perubahan';
       btn.classList.toggle('hidden', !editable);
+    }
+    if(deleteBtn){
+      const canDelete = editable && CURRENT_SESSION && String(CURRENT_SESSION.role||'').toUpperCase()==='KA_IPSRS';
+      deleteBtn.classList.toggle('hidden', !canDelete);
     }
     if(note){
       note.classList.toggle('hidden', editable);
@@ -2160,6 +2169,42 @@
         document.getElementById('historyList').classList.add('hidden');
         document.getElementById('historyList').innerHTML = '';
       }
+    }
+  }
+
+  async function deleteCurrentReport(){
+    const reportId=String(_editingReportId||'').trim();
+    const role=String(CURRENT_SESSION && CURRENT_SESSION.role || '').toUpperCase();
+    if(_reportFormMode!=='EDIT' || !reportId){ alert('Tidak ada laporan yang sedang diedit.'); return; }
+    if(role!=='KA_IPSRS'){ alert('Hanya KA IPSRS yang dapat menghapus laporan.'); return; }
+    const first=window.confirm('Hapus laporan ini? Data tidak dimusnahkan permanen, tetapi dipindahkan menjadi arsip dan tidak akan tampil pada laporan aktif.');
+    if(!first) return;
+    const reason=window.prompt('Masukkan alasan penghapusan laporan (wajib, minimal 5 karakter):','');
+    if(reason===null) return;
+    const trimmed=String(reason).trim();
+    if(trimmed.length<5){ alert('Alasan penghapusan wajib diisi minimal 5 karakter.'); return; }
+    if(trimmed.length>500){ alert('Alasan penghapusan maksimal 500 karakter.'); return; }
+
+    const btn=document.getElementById('btnDeleteReport');
+    if(btn){ btn.disabled=true; btn.innerText='Menghapus...'; }
+    setMsg('msgInput','Menghapus laporan...');
+    try{
+      const json=await authRun('apiDeleteReport',reportId,trimmed);
+      if(!json || !json.ok) throw new Error((json&&json.msg)||'Gagal menghapus laporan.');
+      try{ if(typeof window.__ipsrsClearLaporanApiCache==='function') window.__ipsrsClearLaporanApiCache(); }catch(e){}
+      setMsg('msgInput','');
+      startCreateReportForm(true);
+      goPage('laporan');
+      setTimeout(function(){
+        try{
+          if(typeof window.forceReloadLaporan==='function') window.forceReloadLaporan();
+          else if(typeof window.loadReportsBySelectedMonth==='function') window.loadReportsBySelectedMonth(true);
+        }catch(e){ console.warn('[DELETE] refresh laporan gagal',e); }
+      },120);
+      alert('Laporan berhasil dihapus dan disimpan sebagai arsip.');
+    }catch(err){
+      if(btn){ btn.disabled=false; btn.innerText='Hapus Laporan'; }
+      setMsg('msgInput','Gagal menghapus laporan: '+(err&&err.message?err.message:err),true);
     }
   }
 
