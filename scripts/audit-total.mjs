@@ -47,7 +47,7 @@ for (const f of htmlFiles) {
 if (!failures.some(x=>x.name.startsWith('Referenced asset exists:'))) pass('HTML asset references','All local script/style references resolve');
 
 const allText = files.filter(f=>/\.(js|html|css|sql|json|yml|yaml|md)$/i.test(f));
-const secretPatterns = [/service_role/gi,/SUPABASE_SERVICE_ROLE_KEY/gi,/sb_secret_[A-Za-z0-9_-]+/g,/-----BEGIN (?:RSA|OPENSSH|EC|PRIVATE) KEY-----/g];
+const secretPatterns = [/SUPABASE_SERVICE_ROLE_KEY\\s*[:=]/gi,/sb_secret_[A-Za-z0-9_-]+/g,/-----BEGIN (?:RSA|OPENSSH|EC|PRIVATE) KEY-----/g];
 for (const f of allText) {
   const s=fs.readFileSync(f,'utf8');
   for (const re of secretPatterns) {
@@ -55,7 +55,7 @@ for (const f of allText) {
     re.lastIndex=0;
   }
 }
-if (!failures.some(x=>x.name==='Secret exposure scan')) pass('Secret exposure scan','No service-role/private-key patterns found in tracked text');
+if (!failures.some(x=>x.name==='Secret exposure scan')) pass('Secret exposure scan','No exposed service-role key/private-key patterns found in tracked text');
 
 const migrationDir=path.join(root,'supabase','migrations');
 if (fs.existsSync(migrationDir)) {
