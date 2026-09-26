@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   audit-total:
-    name: Audit Total + Regression Gate
+    name: Audit Total + Static Regression
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -30,26 +30,58 @@ jobs:
           node-version: 22
       - name: Run IPSRS Automated Audit
         run: node scripts/audit-total.mjs
-      - name: Upload audit checklist
+      - name: Upload static audit checklist
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ipsrs-audit-${{ github.sha }}
+          name: ipsrs-audit-static-${{ github.sha }}
           path: audit-output/
+          retention-days: 30
+
+  browser-regression:
+    name: Browser Smoke Regression
+    needs: audit-total
+    if: needs.audit-total.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout audited commit
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install Playwright
+        run: |
+          npx --yes playwright@1.55.0 install --with-deps chromium
+      - name: Run browser regression
+        run: npx --yes playwright@1.55.0 test --config=playwright.config.mjs
+      - name: Upload browser regression artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipsrs-browser-regression-${{ github.sha }}
+          path: |
+            audit-output/
+            test-results/
           retention-days: 30
 
   audit-gate-result:
     name: Deployment Gate
-    needs: audit-total
+    needs: [audit-total, browser-regression]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Block when audit fails
-        if: needs.audit-total.result != 'success'
+      - name: Block when audit or browser regression fails
+        if: needs.audit-total.result != 'success' || needs.browser-regression.result != 'success'
         run: |
           echo "❌ IPSRS DEPLOYMENT GATE BLOCKED"
-          echo "Audit Total menemukan masalah. Perbaiki dahulu sebelum deployment."
+          echo "Static audit atau browser regression menemukan masalah."
           exit 1
-      - name: Audit passed
-        if: needs.audit-total.result == 'success'
-        run: echo "✅ IPSRS AUDIT TOTAL PASSED"
+      - name: Full gate passed
+        if: needs.audit-total.result == 'success' && needs.browser-regression.result == 'success'
+        run: echo "✅ IPSRS FULL REGRESSION GATE PASSED"
