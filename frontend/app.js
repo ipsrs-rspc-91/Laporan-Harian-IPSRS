@@ -492,6 +492,7 @@
 
   function resetLaporanUnfinishedState(){
     // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET = '';
     window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
     window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
@@ -3137,9 +3138,9 @@
       window.__IPSRS_LAPORAN_INTERNAL_NAV = false;
     }
 
-    // Target hanya berlaku untuk satu navigasi drill-down.
+    // Target kategori Dashboard dibersihkan setelah data Laporan selesai dimuat.
+    // Jangan dibersihkan di sini karena loadReportsBySelectedMonth() berjalan async.
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
-    window.__IPSRS_DASHBOARD_CATEGORY_TARGET = '';
   }
 
   // ============================================================
