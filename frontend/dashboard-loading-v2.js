@@ -1,5 +1,5 @@
 /*
- * Dashboard Loading v2
+ * Dashboard Loading v2 - FASTFINISH1
  * PATCH ONLY.
  * Menjamin Page_Dashboard siap lalu langsung meneruskan navigasi.
  * Chart.js dimuat paralel oleh index.html sehingga tidak lagi menjadi
@@ -31,7 +31,7 @@
 
     const style = document.createElement('style');
     style.id = 'dashboardLoadingStyle';
-    style.textContent = '#dashboardLoadingOverlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(255,255,255,.72);backdrop-filter:blur(2px)}#dashboardLoadingOverlay.show{display:flex}.dashboard-loading-card{min-width:250px;max-width:360px;padding:24px 28px;border:1px solid var(--border,#dbe3e8);border-radius:16px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.12);text-align:center}.dashboard-loading-spinner{width:38px;height:38px;margin:0 auto 14px;border:4px solid #dbe7ea;border-top-color:#0f6172;border-radius:50%;animation:dashboardLoadingSpin .8s linear infinite}.dashboard-loading-title{font-size:16px;font-weight:800;color:#17323a}.dashboard-loading-text{margin-top:6px;font-size:12px;color:#64747a}.dashboard-loading-duration{margin-top:10px;font-size:13px;font-weight:800;color:#0f6172;letter-spacing:.1px}@keyframes dashboardLoadingSpin{to{transform:rotate(360deg)}}@media(max-width:700px){.dashboard-loading-card{min-width:230px;padding:21px 22px}}';
+    style.textContent = '#dashboardLoadingOverlay{position:fixed;inset:0;z-index:99990;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(255,255,255,.68)}#dashboardLoadingOverlay.show{display:flex}.dashboard-loading-card{min-width:250px;max-width:360px;padding:24px 28px;border:1px solid var(--border,#dbe3e8);border-radius:16px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.12);text-align:center;contain:layout paint style}.dashboard-loading-spinner{width:38px;height:38px;margin:0 auto 14px;border:4px solid #dbe7ea;border-top-color:#0f6172;border-radius:50%;animation:dashboardLoadingSpin .8s linear infinite;will-change:transform}.dashboard-loading-title{font-size:16px;font-weight:800;color:#17323a}.dashboard-loading-text{margin-top:6px;font-size:12px;color:#64747a}.dashboard-loading-duration{margin-top:10px;font-size:13px;font-weight:800;color:#0f6172;letter-spacing:.1px}@keyframes dashboardLoadingSpin{to{transform:rotate(360deg)}}@media(max-width:700px){.dashboard-loading-card{min-width:230px;padding:21px 22px}}';
     document.head.appendChild(style);
     document.body.appendChild(overlay);
     return overlay;
