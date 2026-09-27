@@ -1277,9 +1277,13 @@
   }
   // Inisialisasi UI Spare Part/Unit setelah DOM form tersedia.
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initSparePartSection);
+    document.addEventListener('DOMContentLoaded', function(){
+      initSparePartSection();
+      initMasalahKegiatanAutoScroll();
+    });
   }else{
     initSparePartSection();
+    initMasalahKegiatanAutoScroll();
   }
 
   function openTambahKategoriModal(){
