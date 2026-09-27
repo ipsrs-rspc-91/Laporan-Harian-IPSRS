@@ -1441,56 +1441,11 @@
   }
 
   // ============================================================
-  // POSISI FORM MOBILE SAAT KATEGORI DIKLIK
-  // Setelah pengguna masuk ke field Kategori, tampilkan bagian bawah
-  // form sekaligus: Petugas -> Kategori -> Area Kerja -> Item ->
-  // Keterangan -> Simpan Laporan, mengikuti posisi pada desain mobile.
-  // Ini sengaja TIDAK menunggu ITEM; perpindahan dilakukan sejak Kategori.
+  // POSISI SELECT BAWAH FORM -> TOMBOL SIMPAN
+  // Kategori, Area Kerja, dan Item semuanya memakai satu target scroll:
+  // tombol Simpan Laporan. Ini mencegah mekanisme scroll lama saling
+  // menarik posisi form ke Item atau field lain.
   // ============================================================
-  function positionInputForCategory(){
-    const content = getKeyboardContent();
-    const page = document.getElementById('page-input');
-    const petugas = document.getElementById('Petugas');
-    const kategori = document.getElementById('Kategori');
-
-    if(!content || !page || !petugas || !kategori) return;
-
-    const mobile = window.matchMedia
-      ? window.matchMedia('(max-width: 768px)').matches
-      : true;
-    if(!mobile) return;
-
-    try{
-      // Gunakan label PETUGAS sebagai titik awal agar seluruh rangkaian
-      // field bawah berada di layar seperti desain yang diminta.
-      // Setelah Status/Petugas dipindahkan ke bawah, titik awal
-      // harus Kategori agar seluruh blok Kategori -> Simpan tetap terlihat.
-      const label = page.querySelector('label[for="Kategori"]') || kategori;
-      const contentRect = content.getBoundingClientRect();
-      const labelRect = label.getBoundingClientRect();
-
-      // Jarak kecil dari batas atas area scroll, sehingga label PETUGAS
-      // tidak menempel pada header dan form bawah tetap terlihat.
-      const TOP_GAP = 18;
-      const desiredTop = contentRect.top + TOP_GAP;
-      const delta = labelRect.top - desiredTop;
-
-      if(Math.abs(delta) > 2){
-        const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-        const nextTop = Math.max(
-          0,
-          Math.min(content.scrollTop + delta, maxScroll)
-        );
-
-        content.scrollTo({
-          top: nextTop,
-          behavior: 'auto'
-        });
-      }
-    }catch(err){
-      console.warn('Category form positioning:', err);
-    }
-  }
 
   // Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan Laporan
   // harus langsung berada di area layar yang bisa ditekan tanpa geser manual.
@@ -1568,25 +1523,16 @@
 
       clearKeyboardMoveTimers();
 
-      // Kategori menjadi titik masuk ke blok bawah form pada mobile.
-      // Jangan arahkan ke Area Kerja saja; langsung tampilkan sampai
-      // tombol Simpan Laporan seperti desain yang diminta.
-      if(field.id === 'Kategori'){
+      // Kategori, Area Kerja, dan Item semuanya memakai SATU target:
+      // tombol Simpan Laporan. Tidak lagi diarahkan ke Item atau fungsi
+      // positioning Kategori lama.
+      if(field.id === 'Kategori' || field.id === 'AreaKerja' || field.id === 'Item'){
         keyboardFocusedField = field;
-        keyboardScrollTarget = field;
+        keyboardScrollTarget = document.getElementById('btnSaveInput') || field;
 
-        keyboardMoveTimers.push(setTimeout(function(){
-          positionInputForCategory();
-        }, 80));
-
-        keyboardMoveTimers.push(setTimeout(function(){
-          positionInputForCategory();
-        }, 260));
-
-        keyboardMoveTimers.push(setTimeout(function(){
-          positionInputForCategory();
-        }, 520));
-
+        // Pastikan tersedia ruang scroll tambahan saat keyboard Android terbuka.
+        extendKeyboardBottomSpace();
+        scheduleInputSaveButtonPosition();
         return;
       }
 
@@ -1614,32 +1560,23 @@
     });
 
     document.addEventListener('change', function(event){
-      // Select ITEM tidak selalu memicu perpindahan fokus di Android.
-      // Setelah pilihan berubah, ulangi scroll ke bagian bawah form agar
-      // Keterangan + Simpan Laporan langsung terlihat.
-      if(event.target && event.target.id === 'Item'){
+      // Android dapat mengubah nilai <select> tanpa memindahkan fokus secara
+      // konsisten. Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan
+      // harus menjadi target tunggal dan terlihat penuh.
+      if(event.target && (
+        event.target.id === 'Kategori' ||
+        event.target.id === 'AreaKerja' ||
+        event.target.id === 'Item'
+      )){
         keyboardFocusedField = event.target;
         keyboardScrollTarget = document.getElementById('btnSaveInput') || event.target;
         clearKeyboardMoveTimers();
 
-        // Pastikan maxScroll bertambah. Tanpa spacer, Android dapat sudah
-        // berada di batas bawah .content tetapi tombol Simpan tetap tersembunyi.
+        // Tambahkan ruang bawah sebelum menghitung posisi. Ini penting saat
+        // keyboard Android masih terbuka sehingga tombol tidak berhenti
+        // sebagian di bawah batas viewport.
         extendKeyboardBottomSpace();
-
-        keyboardMoveTimers.push(setTimeout(function(){
-          extendKeyboardBottomSpace();
-          moveActiveFieldAboveKeyboard('auto');
-        }, 80));
-
-        keyboardMoveTimers.push(setTimeout(function(){
-          extendKeyboardBottomSpace();
-          moveActiveFieldAboveKeyboard('smooth');
-        }, 260));
-
-        keyboardMoveTimers.push(setTimeout(function(){
-          extendKeyboardBottomSpace();
-          moveActiveFieldAboveKeyboard('smooth');
-        }, 520));
+        scheduleInputSaveButtonPosition();
       }
     });
 
