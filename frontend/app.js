@@ -1420,6 +1420,56 @@
     }
   }
 
+  // ============================================================
+  // POSISI FORM MOBILE SAAT KATEGORI DIKLIK
+  // Setelah pengguna masuk ke field Kategori, tampilkan bagian bawah
+  // form sekaligus: Petugas -> Kategori -> Area Kerja -> Item ->
+  // Keterangan -> Simpan Laporan, mengikuti posisi pada desain mobile.
+  // Ini sengaja TIDAK menunggu ITEM; perpindahan dilakukan sejak Kategori.
+  // ============================================================
+  function positionInputForCategory(){
+    const content = getKeyboardContent();
+    const page = document.getElementById('page-input');
+    const petugas = document.getElementById('Petugas');
+    const kategori = document.getElementById('Kategori');
+
+    if(!content || !page || !petugas || !kategori) return;
+
+    const mobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!mobile) return;
+
+    try{
+      // Gunakan label PETUGAS sebagai titik awal agar seluruh rangkaian
+      // field bawah berada di layar seperti desain yang diminta.
+      const label = page.querySelector('label[for="Petugas"]') || petugas;
+      const contentRect = content.getBoundingClientRect();
+      const labelRect = label.getBoundingClientRect();
+
+      // Jarak kecil dari batas atas area scroll, sehingga label PETUGAS
+      // tidak menempel pada header dan form bawah tetap terlihat.
+      const TOP_GAP = 18;
+      const desiredTop = contentRect.top + TOP_GAP;
+      const delta = labelRect.top - desiredTop;
+
+      if(Math.abs(delta) > 2){
+        const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+        const nextTop = Math.max(
+          0,
+          Math.min(content.scrollTop + delta, maxScroll)
+        );
+
+        content.scrollTo({
+          top: nextTop,
+          behavior: 'auto'
+        });
+      }
+    }catch(err){
+      console.warn('Category form positioning:', err);
+    }
+  }
+
   function initMasalahKegiatanAutoScroll(){
     if(document.documentElement.dataset.keyboardSmartScrollBound === '1') return;
     document.documentElement.dataset.keyboardSmartScrollBound = '1';
@@ -1429,6 +1479,28 @@
       if(!isKeyboardFieldVisible(field)) return;
 
       clearKeyboardMoveTimers();
+
+      // Kategori menjadi titik masuk ke blok bawah form pada mobile.
+      // Jangan arahkan ke Area Kerja saja; langsung tampilkan sampai
+      // tombol Simpan Laporan seperti desain yang diminta.
+      if(field.id === 'Kategori'){
+        keyboardFocusedField = field;
+        keyboardScrollTarget = field;
+
+        keyboardMoveTimers.push(setTimeout(function(){
+          positionInputForCategory();
+        }, 80));
+
+        keyboardMoveTimers.push(setTimeout(function(){
+          positionInputForCategory();
+        }, 260));
+
+        keyboardMoveTimers.push(setTimeout(function(){
+          positionInputForCategory();
+        }, 520));
+
+        return;
+      }
 
       keyboardFocusedField = field;
       keyboardScrollTarget = getNextKeyboardField(field);
