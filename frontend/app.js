@@ -166,40 +166,42 @@
     startCreateReportForm(true);
     goPage('input');
 
-    // Tanggal disimpan di input hidden; yang harus menerima fokus setelah
-    // klik OK adalah kontrol tanggal & jam yang benar-benar terlihat.
-    const focusTanggalWaktu = function(){
-      const display = document.getElementById('TanggalWaktuDisplay');
-      if(!display) return false;
+    // Setelah OK, kembalikan posisi ke BAGIAN PALING ATAS FORM INPUT,
+    // bukan hanya ke field Tanggal & Jam. Di mobile, .content adalah
+    // container yang benar-benar melakukan scroll.
+    const focusFormTop = function(){
+      const page = document.getElementById('page-input');
+      if(!page) return false;
 
-      // #Tanggal adalah input hidden. Scroll harus dilakukan pada container
-      // aplikasi (.content), bukan pada window/document. Di mobile, .content
-      // adalah elemen yang benar-benar memiliki overflow-y:auto.
+      const content = page.closest('.content') || document.querySelector('.content');
+      const header = page.querySelector('.page-header');
+      const formCard = header ? header.nextElementSibling : page.querySelector('.card');
+
       try{
-        const content = display.closest('.content') || document.querySelector('.content');
-        if(content){
-          const displayRect = display.getBoundingClientRect();
+        if(content && formCard){
           const contentRect = content.getBoundingClientRect();
+          const cardRect = formCard.getBoundingClientRect();
           const targetTop = Math.max(
             0,
-            content.scrollTop + (displayRect.top - contentRect.top) - 12
+            content.scrollTop + (cardRect.top - contentRect.top) - 8
           );
           content.scrollTo({top:targetTop, behavior:'auto'});
-        }else{
-          display.scrollIntoView({behavior:'auto', block:'start'});
+        }else if(formCard){
+          formCard.scrollIntoView({behavior:'auto', block:'start'});
         }
       }catch(e){
-        try{ display.scrollIntoView({behavior:'auto', block:'start'}); }catch(ignore){}
+        try{ if(formCard) formCard.scrollIntoView({behavior:'auto', block:'start'}); }catch(ignore){}
       }
 
-      try{ if(document.activeElement && document.activeElement !== display) document.activeElement.blur(); }catch(e){}
-      display.focus({preventScroll:true});
+      // Jangan memfokuskan field tertentu agar browser Android tidak
+      // menggeser halaman lagi setelah posisi form sudah dikembalikan.
+      try{ if(document.activeElement) document.activeElement.blur(); }catch(e){}
       return true;
     };
-    // Page_Input dimuat/dipasang saat navigasi. Dua percobaan ringan menjaga
-    // posisi tetap benar setelah fragment/DOM selesai dipasang, tanpa polling.
-    setTimeout(focusTanggalWaktu, 120);
-    setTimeout(focusTanggalWaktu, 350);
+    // Page_Input dipasang saat navigasi. Dua percobaan ringan memastikan
+    // posisi tetap tepat setelah DOM selesai dirender.
+    setTimeout(focusFormTop, 120);
+    setTimeout(focusFormTop, 350);
   }
 
   // ============================================================
