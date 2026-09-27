@@ -3772,6 +3772,35 @@
     });
   }
 
+  function formatDashboardQuantity_(value){
+    const n=Number(value||0);
+    if(!Number.isFinite(n)) return '0';
+    return new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(n);
+  }
+
+  function renderDashboardNewItemStats_(rows, emptyText){
+    if(!Array.isArray(rows) || rows.length === 0) return '<tr><td colspan="3" class="dashboard-new-item-empty">'+escapeHtml(emptyText||'Belum ada data.')+'</td></tr>';
+    return rows.map(function(r){
+      return '<tr>'
+        + '<td>'+escapeHtml(r.nama||'-')+'</td>'
+        + '<td>'+escapeHtml(r.type||'-')+'</td>'
+        + '<td>'+formatDashboardQuantity_(r.jumlah)+'</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function renderDashboardNewItemStats_(data){
+    const d=data||{};
+    const spareTotal=document.getElementById('statSparePartTotalQty');
+    const unitTotal=document.getElementById('statUnitBaruTotalQty');
+    const spareBody=document.getElementById('dashSparePartStats');
+    const unitBody=document.getElementById('dashUnitBaruStats');
+    if(spareTotal) spareTotal.innerText=formatDashboardQuantity_(d.spare_part_total_quantity);
+    if(unitTotal) unitTotal.innerText=formatDashboardQuantity_(d.unit_baru_total_quantity);
+    if(spareBody) spareBody.innerHTML=renderDashboardNewItemStats_(d.spare_part_stats,'Belum ada data spare part.');
+    if(unitBody) unitBody.innerHTML=renderDashboardNewItemStats_(d.unit_baru_stats,'Belum ada data unit baru.');
+  }
+
   function renderStatusChart(selesai, belum){
     const ctx = document.getElementById('statusChart');
     const legendEl = document.getElementById('statusLegend');
@@ -4020,6 +4049,7 @@
       const unitBaruStat = document.getElementById('statUnitBaru');
       if(sparePartStat) sparePartStat.innerText = Number(d.spare_part_baru || 0);
       if(unitBaruStat) unitBaruStat.innerText = Number(d.unit_baru || 0);
+      renderDashboardNewItemStats_(d);
       bindDashboardUnfinishedDrilldown();
 
       const pencapaianOrder = ['Selesai','Sebagian','Belum Selesai','Ditunda','Tindak Lanjut','Belum Diisi'];
