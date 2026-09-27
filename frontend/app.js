@@ -3794,17 +3794,6 @@
     return new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(n);
   }
 
-  function renderDashboardNewItemStats_(rows, emptyText){
-    if(!Array.isArray(rows) || rows.length === 0) return '<tr><td colspan="3" class="dashboard-new-item-empty">'+escapeHtml(emptyText||'Belum ada data.')+'</td></tr>';
-    return rows.map(function(r){
-      return '<tr>'
-        + '<td>'+escapeHtml(r.nama||'-')+'</td>'
-        + '<td>'+escapeHtml(r.type||'-')+'</td>'
-        + '<td>'+formatDashboardQuantity_(r.jumlah)+'</td>'
-        + '</tr>';
-    }).join('');
-  }
-
   function renderDashboardNewItemStats_(data){
     const d=data||{};
     const spareTotal=document.getElementById('statSparePartTotalQty');
