@@ -247,6 +247,24 @@
   .bar-row .bar-val{ width:24px; text-align:right; font-weight:700; color:var(--primary-dark); }
 
   .recent-list{ display:flex; flex-direction:column; gap:0; margin-top:var(--sp-2); }
+
+  .dashboard-new-item-stats{ overflow:hidden; }
+  .dashboard-new-item-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:var(--sp-3); }
+  .dashboard-new-item-summary{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-3); margin-top:var(--sp-3); }
+  .dashboard-new-item-total{ border:1px solid var(--border); border-radius:12px; padding:10px 12px; background:#f8fbfc; }
+  .dashboard-new-item-total span{ display:block; color:var(--muted); font-size:var(--fs-xs); font-weight:700; }
+  .dashboard-new-item-total strong{ display:block; margin-top:2px; color:var(--primary-dark); font-size:var(--fs-lg); line-height:1.1; }
+  .dashboard-new-item-total small{ color:var(--muted); font-size:11px; }
+  .dashboard-new-item-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-4); margin-top:var(--sp-4); }
+  .dashboard-new-item-title{ color:var(--primary-dark); font-weight:800; font-size:var(--fs-sm); margin-bottom:var(--sp-2); }
+  .dashboard-new-item-table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+  .dashboard-new-item-table{ width:100%; border-collapse:collapse; min-width:360px; font-size:var(--fs-xs); }
+  .dashboard-new-item-table th,.dashboard-new-item-table td{ padding:9px 10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+  .dashboard-new-item-table th{ background:#f5f9fa; color:var(--muted); font-weight:800; white-space:nowrap; }
+  .dashboard-new-item-table td:last-child,.dashboard-new-item-table th:last-child{ text-align:right; font-weight:800; color:var(--primary-dark); }
+  .dashboard-new-item-table tr:last-child td{ border-bottom:none; }
+  .dashboard-new-item-empty{ color:var(--muted); text-align:center !important; padding:18px 10px !important; }
+
   /* ===================== FORM INPUT ===================== */
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 28px; }
   .field-row{ display:flex; gap:var(--sp-2); }
