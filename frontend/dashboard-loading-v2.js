@@ -82,7 +82,7 @@
     if(overlay) overlay.classList.remove('show');
   }
 
-  function showError(text, seq){
+  function showDashboardError_(text, seq){
     if(seq != null && seq !== activeLoadSeq) return;
     stopDashboardTimer_();
     loadingActive = false;
