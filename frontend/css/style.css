@@ -727,13 +727,13 @@
 .report-card-view .rcard .rc-petugas{
   font-size:13px;
   line-height:1.4;
-  color:#60727a;
+  color:#1565c0;
 }
 
 .report-card-shared .rcard .rc-petugas .rc-label,
 .report-card-view .rcard .rc-petugas .rc-label{
   font-size:13px;
-  color:#4f626b;
+  color:#1565c0;
 }
 
 .rc-input-meta{
@@ -741,12 +741,12 @@
   padding:0 15px 13px;
   font-size:12px;
   line-height:1.35;
-  color:#71838a;
+  color:#1565c0;
 }
 
 .rc-input-meta strong{
   font-weight:700;
-  color:#5c7078;
+  color:#1565c0;
 }
 
 .rc-input-clock-icon{
