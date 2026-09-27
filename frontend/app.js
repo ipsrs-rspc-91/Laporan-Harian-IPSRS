@@ -3279,7 +3279,11 @@
     wrap.innerHTML = '';
     laporan.forEach(row => {
       const card = document.createElement('div');
-      card.className = 'rcard';
+      card.className = 'rcard ' + (
+        row.Status === 'Selesai'
+          ? 'rc-status-selesai'
+          : (row.Status === 'Belum' ? 'rc-status-belum' : 'rc-status-proses')
+      );
       card.style.marginBottom = '8px';
       card.innerHTML = `
         <div class="rc-top">
@@ -3818,7 +3822,11 @@
     }
     recent.forEach(r => {
       const item = document.createElement('div');
-      item.className = 'rcard';
+      item.className = 'rcard ' + (
+        r.Status === 'Selesai'
+          ? 'rc-status-selesai'
+          : (r.Status === 'Belum' ? 'rc-status-belum' : 'rc-status-proses')
+      );
       item.innerHTML = reportCardMarkup_(r);
       el.appendChild(item);
     });
