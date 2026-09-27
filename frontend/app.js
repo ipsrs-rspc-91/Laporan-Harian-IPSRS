@@ -1220,6 +1220,53 @@
     }
   }
 
+  // ============================================================
+  // MOBILE AUTO-SCROLL: Masalah / Kegiatan
+  // Saat field disentuh, posisikan field di bagian atas area konten
+  // agar keyboard Android tidak menutup area pengetikan.
+  // ============================================================
+  function scrollMasalahKegiatanIntoComfortPosition(){
+    const field = document.getElementById('MasalahKegiatan');
+    if(!field) return;
+
+    const content = field.closest('.content') || document.querySelector('.content');
+    if(!content) return;
+
+    const move = function(){
+      try{
+        const contentRect = content.getBoundingClientRect();
+        const fieldRect = field.getBoundingClientRect();
+        const isMobile = window.matchMedia ? window.matchMedia('(max-width: 768px)').matches : true;
+        if(!isMobile) return;
+
+        // Letakkan field sekitar 70px dari bagian atas content.
+        // Tidak memakai scrollIntoView() agar halaman tidak meloncat terlalu jauh.
+        const topOffset = 70;
+        const targetTop = Math.max(
+          0,
+          content.scrollTop + (fieldRect.top - contentRect.top) - topOffset
+        );
+
+        content.scrollTo({top:targetTop, behavior:'smooth'});
+      }catch(err){
+        // Fallback aman bila browser tidak mendukung perhitungan scroll container.
+        try{ field.scrollIntoView({behavior:'smooth', block:'center'}); }catch(ignore){}
+      }
+    };
+
+    // Android biasanya mengubah viewport setelah keyboard mulai tampil.
+    // Dua tahap membuat posisi akhir tetap nyaman untuk mengetik.
+    setTimeout(move, 80);
+    setTimeout(move, 320);
+  }
+
+  function initMasalahKegiatanAutoScroll(){
+    const field = document.getElementById('MasalahKegiatan');
+    if(!field || field.dataset.autoScrollBound === '1') return;
+    field.dataset.autoScrollBound = '1';
+    field.addEventListener('focus', scrollMasalahKegiatanIntoComfortPosition);
+  }
+
   function initSparePartSection(){
     const fields = ['SparePartUnit','Type','Jumlah'];
     fields.forEach(id => {
