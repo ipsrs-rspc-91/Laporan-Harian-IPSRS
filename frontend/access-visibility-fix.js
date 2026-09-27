@@ -117,9 +117,16 @@
   // Page Laporan dimount sebelum login selesai. Polling ringan ini hanya
   // menunggu token pertama; setelah token ditemukan tidak ada polling berat
   // dan tidak ada request server tambahan selain yang dipicu goLaporanSubTab.
+  var bootAttempts = 0;
   var bootTimer = setInterval(function(){
+    bootAttempts++;
     ensureLaporanDefault();
-    if(initializedToken) clearInterval(bootTimer);
+    // Hentikan polling setelah token ditemukan atau setelah ~30 detik.
+    // Sebelumnya interval dapat hidup tanpa batas pada halaman login.
+    if(initializedToken || bootAttempts >= 40){
+      clearInterval(bootTimer);
+      bootTimer = null;
+    }
   },750);
 
   console.info('[ACCESS_VISIBILITY_FIX] v20260917-REPORT-FIX1 active');
