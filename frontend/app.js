@@ -1225,20 +1225,35 @@
   }
 
   function openDashboardNewCategory(kind){
-    window.__IPSRS_DASHBOARD_CATEGORY_TARGET = kind === 'unit' ? 'unit' : 'spare';
+    const target=setDashboardCategoryTarget_(kind);
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
 
     // Set filter sedini mungkin sebelum goPage()/loader async berjalan.
-    // resetLaporanFilterControls_ juga mempertahankan nilai ini selama
-    // drill-down aktif.
     const kategoriEl = document.getElementById('FilterKategori');
-    if(kategoriEl){
-      kategoriEl.value = window.__IPSRS_DASHBOARD_CATEGORY_TARGET === 'unit'
-        ? '__DASH_UNIT_BARU__'
-        : '__DASH_SPARE_PART__';
-    }
+    if(kategoriEl) kategoriEl.value = target==='unit' ? '__DASH_UNIT_BARU__' : '__DASH_SPARE_PART__';
 
     goPage('laporan');
+  }
+
+  function getDashboardCategoryTarget_(){
+    const live=window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+    if(live==='spare' || live==='unit') return live;
+    try{
+      const stored=sessionStorage.getItem('ipsrs_dashboard_category_target');
+      return stored==='spare' || stored==='unit' ? stored : '';
+    }catch(e){ return ''; }
+  }
+
+  function setDashboardCategoryTarget_(kind){
+    const value=kind==='unit' ? 'unit' : 'spare';
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET=value;
+    try{ sessionStorage.setItem('ipsrs_dashboard_category_target',value); }catch(e){}
+    return value;
+  }
+
+  function clearDashboardCategoryTarget_(){
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET='';
+    try{ sessionStorage.removeItem('ipsrs_dashboard_category_target'); }catch(e){}
   }
 
   function isSparePartRequiredCategory(value){
@@ -2735,7 +2750,7 @@
         renderAdminStaffSelect();
       }
 
-      const dashboardCategoryTarget = window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+      const dashboardCategoryTarget = getDashboardCategoryTarget_();
       if(dashboardCategoryTarget === 'spare'){
         const kategoriEl = document.getElementById('FilterKategori');
         if(kategoriEl) kategoriEl.value = '__DASH_SPARE_PART__';
@@ -2744,7 +2759,7 @@
         if(kategoriEl) kategoriEl.value = '__DASH_UNIT_BARU__';
       }
       applyFilters();
-      if(dashboardCategoryTarget) window.__IPSRS_DASHBOARD_CATEGORY_TARGET = '';
+      if(dashboardCategoryTarget) clearDashboardCategoryTarget_();
       return true;
     }catch(err){
       if(requestSeq !== Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
@@ -3006,7 +3021,8 @@
     // Drill-down Dashboard harus mempertahankan target kategori selama
     // navigasi dan request async Laporan berlangsung. Filter biasa tetap
     // di-reset seperti sebelumnya.
-    const preserveDashboardCategory = !!window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+    const dashboardCategoryTarget = getDashboardCategoryTarget_();
+    const preserveDashboardCategory = !!dashboardCategoryTarget;
 
     // Filter petugas Daftar Laporan.
     adminSelectedStaffId = '';
@@ -3033,7 +3049,7 @@
     if(preserveDashboardCategory){
       const kategoriEl = document.getElementById('FilterKategori');
       if(kategoriEl){
-        kategoriEl.value = window.__IPSRS_DASHBOARD_CATEGORY_TARGET === 'unit'
+        kategoriEl.value = dashboardCategoryTarget === 'unit'
           ? '__DASH_UNIT_BARU__'
           : '__DASH_SPARE_PART__';
       }
@@ -3155,7 +3171,7 @@
     // Default normal tetap Laporan Saya. Namun drill-down dari Dashboard
     // Belum Selesai secara eksplisit meminta Daftar Laporan agar sumber data
     // mencakup seluruh petugas sesuai hak akses backend.
-    const categoryTarget = window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+    const categoryTarget = getDashboardCategoryTarget_();
     const drilldownTarget = categoryTarget
       ? 'daftar'
       : (window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar' ? 'daftar' : 'saya');
