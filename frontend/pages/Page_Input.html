@@ -437,6 +437,18 @@
         </div>
       </div>
 
+      <label for="Kategori">Kategori</label>
+      <select id="Kategori" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
+
+      <label for="AreaKerja">Area Kerja</label>
+      <select id="AreaKerja" onchange="handleAreaKerjaChange()"><option value="">Pilih area kerja&hellip;</option></select>
+
+      <label for="Item">Item</label>
+      <select id="Item" onchange="handleItemChange()"><option value="">Pilih area kerja dahulu&hellip;</option></select>
+
+      <label for="Keterangan">Keterangan</label>
+      <textarea id="Keterangan" placeholder="Catatan tambahan (opsional)"></textarea>
+
       <label for="Status">Status</label>
       <input type="hidden" id="Status" value="">
       <div class="status-choice-group" role="group" aria-label="Status pekerjaan">
@@ -454,18 +466,6 @@
       <label for="Petugas">Petugas</label>
       <input id="Petugas" class="readonlyPetugas" readonly>
       <div class="smallnote">Otomatis terisi dari akun yang login &mdash; tidak dapat diubah manual.</div>
-
-      <label for="Kategori">Kategori</label>
-      <select id="Kategori" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
-
-      <label for="AreaKerja">Area Kerja</label>
-      <select id="AreaKerja" onchange="handleAreaKerjaChange()"><option value="">Pilih area kerja&hellip;</option></select>
-
-      <label for="Item">Item</label>
-      <select id="Item" onchange="handleItemChange()"><option value="">Pilih area kerja dahulu&hellip;</option></select>
-
-      <label for="Keterangan">Keterangan</label>
-      <textarea id="Keterangan" placeholder="Catatan tambahan (opsional)"></textarea>
     </div>
   </div>
 
