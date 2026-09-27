@@ -1372,10 +1372,6 @@
 
       clearKeyboardMoveTimers();
 
-      if(window.visualViewport){
-        window.visualViewport.removeEventListener('resize', keyboardViewportResize);
-      }
-
       keyboardActiveField = null;
 
       // Jangan langsung mengembalikan spacer ketika keyboard masih
