@@ -1177,9 +1177,8 @@
     }
     syncSparePartSection();
 
-    // Setelah kategori dipilih, langsung posisikan tombol Simpan agar
-    // terlihat dan bisa ditekan tanpa geser manual.
-    scheduleInputSaveButtonPosition();
+    // Posisi tombol Simpan ditangani terpusat oleh event change/focusin
+    // agar tidak ada dua timer scroll yang berjalan bersamaan.
   }
 
   function isSparePartRequiredCategory(value){
@@ -1679,8 +1678,7 @@
       return;
     }
     refreshItemOptions();
-    // Setelah Area Kerja dipilih, tombol Simpan langsung terlihat.
-    scheduleInputSaveButtonPosition();
+    // Posisi tombol Simpan ditangani terpusat oleh event change/focusin.
   }
   function openTambahAreaModal(){
     document.getElementById('areaBaruInput').value = '';
@@ -1752,8 +1750,7 @@
       return;
     }
 
-    // Setelah Item dipilih, langsung tampilkan tombol Simpan.
-    scheduleInputSaveButtonPosition();
+    // Posisi tombol Simpan ditangani terpusat oleh event change/focusin.
   }
   function openTambahItemModal(){
     const area = document.getElementById('AreaKerja').value;
