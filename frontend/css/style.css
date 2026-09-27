@@ -877,3 +877,36 @@
   margin:0;
   text-align:left;
 }
+
+/* =========================================================
+   DASHBOARD NEW ITEM SECTION - MOBILE FINAL
+   Keep Spare Part / Unit Baru at the bottom and full width.
+   No JS/API impact: presentation-only optimization.
+   ========================================================= */
+.dashboard-new-item-stats{
+  width:100%;
+  box-sizing:border-box;
+}
+.dashboard-new-item-table-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.dashboard-new-item-table{
+  width:100%;
+  min-width:360px;
+}
+@media (max-width: 768px){
+  .dashboard-new-item-grid{
+    grid-template-columns:1fr !important;
+    gap:var(--sp-4) !important;
+  }
+  .dashboard-new-item-grid > div{
+    width:100%;
+    min-width:0;
+  }
+  .dashboard-new-item-table-wrap{
+    margin-bottom:0;
+  }
+}
