@@ -1160,6 +1160,15 @@
       return;
     }
     syncSparePartSection();
+
+    // Setelah kategori benar-benar dipilih dari native select Android,
+    // pastikan blok bawah langsung tampil penuh seperti desain mobile:
+    // PETUGAS sampai tombol Simpan Laporan.
+    if(window.matchMedia && window.matchMedia('(max-width: 768px)').matches){
+      setTimeout(positionInputForCategory, 80);
+      setTimeout(positionInputForCategory, 260);
+      setTimeout(positionInputForCategory, 520);
+    }
   }
 
   function isSparePartRequiredCategory(value){
