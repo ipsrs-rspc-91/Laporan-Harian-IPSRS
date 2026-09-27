@@ -1221,49 +1221,56 @@
   }
 
   // ============================================================
-  // MOBILE SMART SCROLL: Masalah / Kegiatan
-  // Menjaga textarea tetap berada pada posisi nyaman saat keyboard
-  // Android membuka/menutup viewport. Tidak memakai scrollIntoView()
-  // karena dapat menyebabkan lompatan besar.
+  // MOBILE KEYBOARD SMART SCROLL
+  // Menjaga field yang sedang aktif tetap terlihat UTUH di atas
+  // keyboard Android. Berlaku untuk textarea/input form, bukan hanya
+  // Masalah/Kegiatan.
   // ============================================================
-  function scrollMasalahKegiatanIntoComfortPosition(){
-    const field = document.getElementById('MasalahKegiatan');
+  function scrollActiveFieldAboveKeyboard(){
+    const field = document.activeElement;
     if(!field) return;
+
+    const isField = field.matches &&
+      field.matches('#page-input textarea, #page-input input, #page-input select');
+    if(!isField) return;
 
     const content = field.closest('.content') || document.querySelector('.content');
     if(!content) return;
 
-    const isMobile = function(){
-      return window.matchMedia
-        ? window.matchMedia('(max-width: 768px)').matches
-        : true;
-    };
-
-    let timer1 = null;
-    let timer2 = null;
-    let timer3 = null;
+    const isMobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!isMobile) return;
 
     const move = function(behavior){
       try{
-        if(!isMobile() || document.activeElement !== field) return;
+        if(document.activeElement !== field) return;
 
         const viewport = window.visualViewport;
         const viewportTop = viewport ? viewport.offsetTop : 0;
         const viewportHeight = viewport ? viewport.height : window.innerHeight;
+        const viewportBottom = viewportTop + viewportHeight;
 
-        // Area target dibuat cukup jauh dari address bar/header dan keyboard.
-        // 30% memberi posisi mengetik yang nyaman; dibatasi agar konsisten
-        // pada HP dengan ukuran layar berbeda.
-        const targetTop = viewportTop + Math.min(
-          300,
-          Math.max(180, viewportHeight * 0.30)
-        );
+        const rect = field.getBoundingClientRect();
 
-        const fieldRect = field.getBoundingClientRect();
-        const delta = fieldRect.top - targetTop;
+        // Jarak aman dari keyboard.
+        const safeTop = viewportTop + 24;
+        const safeBottom = viewportBottom - 20;
 
-        // Toleransi mencegah gerakan kecil berulang/flicker.
-        if(Math.abs(delta) < 14) return;
+        let delta = 0;
+
+        // Jika bagian bawah field masuk/terlalu dekat dengan keyboard,
+        // naikkan hanya sebesar bagian yang tertutup + margin aman.
+        if(rect.bottom > safeBottom){
+          delta = rect.bottom - safeBottom;
+        }
+        // Jika native Android justru menggeser field terlalu tinggi,
+        // turunkan sedikit agar label/field tetap nyaman terlihat.
+        else if(rect.top < safeTop){
+          delta = rect.top - safeTop;
+        }
+
+        if(Math.abs(delta) < 8) return;
 
         const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
         const nextTop = Math.max(
@@ -1278,67 +1285,68 @@
           behavior: behavior || 'smooth'
         });
       }catch(err){
-        console.warn('Smart scroll Masalah/Kegiatan gagal:', err);
+        console.warn('Keyboard smart scroll gagal:', err);
       }
     };
 
-    // Browser Android dapat melakukan native scroll saat focus.
-    // Beri kesempatan native scroll + keyboard resize selesai, lalu
-    // lakukan SATU koreksi terukur. Koreksi terakhir memakai smooth.
-    timer1 = setTimeout(function(){ move('auto'); }, 120);
-    timer2 = setTimeout(function(){ move('smooth'); }, 320);
-    timer3 = setTimeout(function(){ move('smooth'); }, 650);
+    // Android membuka keyboard setelah focus. Jangan melawan native
+    // adjustment terlalu cepat; lakukan koreksi setelah viewport berubah.
+    setTimeout(function(){ move('auto'); }, 180);
+    setTimeout(function(){ move('smooth'); }, 420);
+    setTimeout(function(){ move('smooth'); }, 700);
 
-    // Saat tinggi visual viewport berubah karena keyboard, lakukan koreksi
-    // sekali lagi. Listener dilepas setelah keyboard stabil agar tidak
-    // terus-menerus mengganggu scroll manual pengguna.
+    // Koreksi ketika visual viewport benar-benar berubah karena keyboard.
     if(window.visualViewport){
-      let resizeTimer = null;
-      let resizeCount = 0;
+      let lastHeight = window.visualViewport.height;
+      let timer = null;
+      let count = 0;
 
-      const onViewportResize = function(){
+      const onResize = function(){
         if(document.activeElement !== field){
-          window.visualViewport.removeEventListener('resize', onViewportResize);
+          window.visualViewport.removeEventListener('resize', onResize);
           return;
         }
 
-        resizeCount++;
-        clearTimeout(resizeTimer);
+        const height = window.visualViewport.height;
+        if(Math.abs(height - lastHeight) < 10) return;
+        lastHeight = height;
+        count++;
 
-        if(resizeCount <= 3){
-          resizeTimer = setTimeout(function(){
-            move('smooth');
-          }, 100);
-        }
+        clearTimeout(timer);
+        timer = setTimeout(function(){
+          move('smooth');
+        }, 80);
 
-        if(resizeCount >= 3){
+        if(count >= 4){
           setTimeout(function(){
-            window.visualViewport.removeEventListener('resize', onViewportResize);
+            window.visualViewport.removeEventListener('resize', onResize);
           }, 250);
         }
       };
 
-      window.visualViewport.addEventListener('resize', onViewportResize, {passive:true});
+      window.visualViewport.addEventListener('resize', onResize, {passive:true});
 
       setTimeout(function(){
         try{
-          window.visualViewport.removeEventListener('resize', onViewportResize);
+          window.visualViewport.removeEventListener('resize', onResize);
         }catch(ignore){}
-      }, 1400);
+      }, 1500);
     }
   }
 
   function initMasalahKegiatanAutoScroll(){
-    // Page_Input dapat dimuat/diganti secara dinamis setelah DOMContentLoaded.
-    // Karena itu gunakan delegation pada document agar listener tetap aktif
-    // walaupun textarea MasalahKegiatan baru dibuat setelah navigasi ke Input.
-    if(document.documentElement.dataset.masalahAutoScrollBound === '1') return;
-    document.documentElement.dataset.masalahAutoScrollBound = '1';
+    // Nama fungsi dipertahankan agar tidak memutus pemanggilan lama.
+    // Listener sekarang berlaku untuk seluruh field Input yang dapat
+    // tertutup keyboard, termasuk Masalah/Kegiatan dan Tindakan.
+    if(document.documentElement.dataset.keyboardSmartScrollBound === '1') return;
+    document.documentElement.dataset.keyboardSmartScrollBound = '1';
 
     document.addEventListener('focusin', function(event){
       const field = event.target;
-      if(field && field.id === 'MasalahKegiatan'){
-        scrollMasalahKegiatanIntoComfortPosition();
+      if(!field || !field.matches) return;
+
+      if(field.matches('#page-input textarea, #page-input input, #page-input select')){
+        scrollActiveFieldAboveKeyboard();
       }
     });
   }
