@@ -1222,15 +1222,39 @@
 
   // ============================================================
   // MOBILE KEYBOARD SMART SCROLL
-  // Setiap field aktif diposisikan 33px DI ATAS keyboard Android.
+  // Pola khusus form IPSRS:
+  // 1) Saat RUANG diklik dan keyboard muncul -> MASALAH/KEGIATAN
+  //    diposisikan 33px di atas keyboard.
+  // 2) Saat MASALAH/KEGIATAN diklik -> TINDAKAN diposisikan
+  //    33px di atas keyboard.
+  // Field lain tetap memakai field aktif sebagai target scroll.
   // ============================================================
-  let keyboardActiveField = null;
+  let keyboardFocusedField = null;
+  let keyboardScrollTarget = null;
   let keyboardMoveTimers = [];
   let keyboardResizeTimer = null;
   let keyboardOriginalPadding = null;
 
   function getKeyboardContent(){
     return document.querySelector('.content');
+  }
+
+  function getKeyboardScrollTarget(field){
+    if(!field || !field.id) return field;
+
+    // Saat pengguna mengisi RUANG, area MASALAH harus langsung
+    // dipindahkan ke posisi nyaman di atas keyboard.
+    if(field.id === 'Ruang'){
+      return document.getElementById('MasalahKegiatan') || field;
+    }
+
+    // Saat pengguna mengisi MASALAH/KEGIATAN, area TINDAKAN
+    // harus naik agar siap diisi berikutnya.
+    if(field.id === 'MasalahKegiatan'){
+      return document.getElementById('Tindakan') || field;
+    }
+
+    return field;
   }
 
   function clearKeyboardMoveTimers(){
@@ -1253,7 +1277,7 @@
   }
 
   function moveActiveFieldAboveKeyboard(behavior){
-    const field = keyboardActiveField || document.activeElement;
+    const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
     if(!field || !field.matches || !field.matches('#page-input input, #page-input textarea, #page-input select')) return;
 
     const content = getKeyboardContent();
@@ -1270,7 +1294,7 @@
       const viewportHeight = vv ? vv.height : window.innerHeight;
       const viewportBottom = viewportTop + viewportHeight;
 
-      // Jarak yang diminta: 33px antara field aktif dan bagian atas keyboard.
+      // Jarak target: 33px antara field tujuan dan bagian atas keyboard.
       const GAP = 33;
 
       // Pada Android Chrome, visualViewport adalah area yang benar-benar
@@ -1281,8 +1305,8 @@
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      // Tambahkan ruang bawah supaya field paling bawah tetap bisa
-      // dinaikkan sampai 33px di atas keyboard.
+      // Tambahkan ruang bawah agar target paling bawah tetap dapat
+      // digeser sampai 33px di atas keyboard.
       if(keyboardHeight > 80){
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
@@ -1294,18 +1318,30 @@
         content.style.paddingBottom = requiredPadding + 'px';
       }
 
+      // Bantu Chrome Android menemukan scrollable ancestor (.content)
+      // sebelum koreksi posisi presisi 33px dilakukan.
+      const rectBefore = field.getBoundingClientRect();
+      const targetBottomBefore = viewportBottom - GAP;
+      if(rectBefore.bottom > targetBottomBefore){
+        try{
+          field.scrollIntoView({
+            behavior: behavior || 'auto',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }catch(_e){}
+      }
+
       const rect = field.getBoundingClientRect();
       const targetBottom = viewportBottom - GAP;
       const safeTop = viewportTop + 20;
 
       let delta = 0;
 
-      // Prioritas utama: bagian bawah field harus berada 33px
+      // Target utama: bagian bawah field harus berada 33px
       // di atas keyboard.
       if(rect.bottom > targetBottom){
         delta = rect.bottom - targetBottom;
-      // Jika ada browser/device yang membuat field terdorong terlalu atas,
-      // koreksi kembali agar tetap nyaman dilihat.
       }else if(rect.top < safeTop){
         delta = rect.top - safeTop;
       }
@@ -1345,7 +1381,8 @@
 
       clearKeyboardMoveTimers();
 
-      keyboardActiveField = field;
+      keyboardFocusedField = field;
+      keyboardScrollTarget = getKeyboardScrollTarget(field);
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
@@ -1353,7 +1390,7 @@
       }
 
       // Android perlu diberi waktu untuk membuka keyboard dan
-      // memperbarui visualViewport sebelum posisi final dihitung.
+      // memperbarui visualViewport sebelum posisi target dihitung.
       keyboardMoveTimers.push(setTimeout(function(){
         moveActiveFieldAboveKeyboard('auto');
       }, 120));
@@ -1368,21 +1405,22 @@
     });
 
     document.addEventListener('focusout', function(event){
-      if(event.target !== keyboardActiveField) return;
+      if(event.target !== keyboardFocusedField) return;
 
       clearKeyboardMoveTimers();
 
-      keyboardActiveField = null;
+      keyboardFocusedField = null;
+      keyboardScrollTarget = null;
 
       // Jangan langsung mengembalikan spacer ketika keyboard masih
       // melakukan animasi tutup. Kembalikan setelah viewport stabil.
       setTimeout(function(){
-        if(!keyboardActiveField) restoreKeyboardSpacer();
+        if(!keyboardFocusedField) restoreKeyboardSpacer();
       }, 250);
     });
 
     function keyboardViewportResize(){
-      if(!keyboardActiveField) return;
+      if(!keyboardFocusedField) return;
 
       clearTimeout(keyboardResizeTimer);
       keyboardResizeTimer = setTimeout(function(){
