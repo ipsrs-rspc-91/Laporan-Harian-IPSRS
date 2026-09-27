@@ -180,12 +180,12 @@ if(a==="apiDashboardStats"){
  const {data:rawReports,error}=await q;if(error)throw error;
  // Counts include KA IPSRS. Detailed report payloads remain protected by reportPolicyBatch/canViewReport.
  const dashboardPolicy=await reportPolicyBatch(db,s,rawReports||[]);const rr:any[]=[];for(const r of rawReports||[])if(dashboardPolicy.visible.has(String(r.report_id)))rr.push(r);
- // KA IPSRS ikut dalam KPI kepatuhan/monitoring melalui monitoringToday.
- // Statistik isi laporan (status, kategori, area, staff, spare part, dll.) tidak
- // memakai laporan KA IPSRS agar detail isi laporannya tidak ikut terungkap.
+ // KA IPSRS ikut dalam KPI kepatuhan/monitoring.
  // PRIVACY/STATISTICS SEPARATION:
- // Detailed aggregate metrics exclude KA IPSRS; discipline counts use only staff_id/tanggal.
- const aggregateReports=(rawReports||[]).filter((r:any)=>String(r.role_snapshot||"").toUpperCase()!=="KA_IPSRS" && String(r.staff_id||"")!=="KAIPSRS");
+ // Statistik/agregat BOLEH menghitung laporan KA IPSRS. Yang dibatasi untuk
+ // petugas lain adalah payload/detail laporan KA IPSRS, bukan angka agregatnya.
+ // reportPolicyBatch/rr tetap menjadi pagar untuk detail yang dapat dilihat.
+ const aggregateReports=(rawReports||[]);
  const staffCountReports=(rawReports||[]).map((r:any)=>({staff_id:r.staff_id,tanggal:r.tanggal}));
  const total=aggregateReports.length,sel=aggregateReports.filter((r:any)=>r.status==="Selesai").length,bel=total-sel,cat:any={},ar:any={},sm:any={},pc:any={};for(const st of activeStaff||[])sm[st.staff_id]={staff_id:st.staff_id,nama:st.nama,role:st.role,bidang:st.bidang||"",value:0};let spare=0,unit=0;
  const newPartGroups:any={};const newUnitGroups:any={};let spareQty=0,unitQty=0;
@@ -194,7 +194,8 @@ if(a==="apiDashboardStats"){
  for(const r of aggregateReports){if(r.kategori){cat[r.kategori]=(cat[r.kategori]||0)+1;const kind=categoryKind(r.kategori);if(kind.spare){spare++;const q=qtyValue(r.jumlah);spareQty+=q;addNewGroup(newPartGroups,r)}if(kind.unit){unit++;const q=qtyValue(r.jumlah);unitQty+=q;addNewGroup(newUnitGroups,r)}}if(r.area_kerja)ar[r.area_kerja]=(ar[r.area_kerja]||0)+1;const p=r.status_pencapaian||r.status||"Belum Diisi";pc[p]=(pc[p]||0)+1}
  // Petugas Teraktif tetap menghitung KA IPSRS, tanpa membaca/menampilkan isi laporannya.
  for(const r of staffCountReports){const k=r.staff_id;if(sm[k])sm[k].value++;}
- const recentSource=(rr||[]).filter((r:any)=>String(r.role_snapshot||"").toUpperCase()!=="KA_IPSRS" && String(r.staff_id||"")!=="KAIPSRS");const recent=recentSource.slice().sort((a:any,b:any)=>{const d=String(b.tanggal||"").localeCompare(String(a.tanggal||""));if(d)return d;const p=String(b.pukul||"").localeCompare(String(a.pukul||""));if(p)return p;return String(b.created_at||"").localeCompare(String(a.created_at||""));}).slice(0,6).map((r:any)=>map(r,dashboardPolicy.editable.has(String(r.report_id))));
+ const isKaIpsrs=String(s?.role||"").toUpperCase()==="KA_IPSRS" || String(s?.staff_id||"")==="KAIPSRS";
+ const recentSource=isKaIpsrs ? (rr||[]) : (rr||[]).filter((r:any)=>String(r.role_snapshot||"").toUpperCase()!=="KA_IPSRS" && String(r.staff_id||"")!=="KAIPSRS");const recent=recentSource.slice().sort((a:any,b:any)=>{const d=String(b.tanggal||"").localeCompare(String(a.tanggal||""));if(d)return d;const p=String(b.pukul||"").localeCompare(String(a.pukul||""));if(p)return p;return String(b.created_at||"").localeCompare(String(a.created_at||""));}).slice(0,6).map((r:any)=>map(r,dashboardPolicy.editable.has(String(r.report_id))));
  const todayCount:any={};for(const r of staffCountReports)if(r.tanggal===dashboardTanggal)todayCount[r.staff_id]=(todayCount[r.staff_id]||0)+1;
  const monitoringToday=(activeStaff||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:todayCount[x.staff_id]?"SUDAH_ISI":"BELUM_ISI",laporan_hari_ini:todayCount[x.staff_id]||0}));
  const sortCount=(a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.label||"").localeCompare(String(b.label||""),"id");const kategori=Object.entries(cat).map(([label,value])=>({label,value})).sort(sortCount);const area=Object.entries(ar).map(([label,value])=>({label,value})).sort(sortCount);const staff=Object.values(sm).sort((a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.nama||a.staff_id||"").localeCompare(String(b.nama||b.staff_id||""),"id"));const sparePartStats=Object.values(newPartGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);const unitBaruStats=Object.values(newUnitGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);return cacheSet(ck,{ok:true,data:{total,selesai:sel,belum:bel,persen:total?Math.round(sel/total*100):0,kategori,area,staff,recent,pencapaian:pc,spare_part_baru:spare,unit_baru:unit,spare_part_total_quantity:spareQty,unit_baru_total_quantity:unitQty,spare_part_stats:sparePartStats,unit_baru_stats:unitBaruStats,monitoring_today:{tanggal:dashboardTanggal,data:monitoringToday}}})
