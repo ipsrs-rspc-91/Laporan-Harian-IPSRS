@@ -1261,10 +1261,18 @@
   }
 
   function initMasalahKegiatanAutoScroll(){
-    const field = document.getElementById('MasalahKegiatan');
-    if(!field || field.dataset.autoScrollBound === '1') return;
-    field.dataset.autoScrollBound = '1';
-    field.addEventListener('focus', scrollMasalahKegiatanIntoComfortPosition);
+    // Page_Input dapat dimuat/diganti secara dinamis setelah DOMContentLoaded.
+    // Karena itu gunakan delegation pada document agar listener tetap aktif
+    // walaupun textarea MasalahKegiatan baru dibuat setelah navigasi ke Input.
+    if(document.documentElement.dataset.masalahAutoScrollBound === '1') return;
+    document.documentElement.dataset.masalahAutoScrollBound = '1';
+
+    document.addEventListener('focusin', function(event){
+      const field = event.target;
+      if(field && field.id === 'MasalahKegiatan'){
+        scrollMasalahKegiatanIntoComfortPosition();
+      }
+    });
   }
 
   function initSparePartSection(){
