@@ -151,6 +151,11 @@
   // Modal konfirmasi "Data telah disimpan" -- dipakai supaya klik tombol
   // Simpan Laporan selalu memberi reaksi yang jelas (bukan cuma teks kecil
   // di bawah tombol yang gampang tak disadari, terutama di HP).
+  // Menyimpan konteks aksi yang memunculkan modal. State EDIT akan di-reset
+  // setelah update berhasil, jadi closeSaveSuccessModal() tidak boleh menebak
+  // status EDIT dari _reportFormMode/_editingReportId.
+  let _saveSuccessWasEdit = false;
+
   function openSaveSuccessModal(msg){
     const sub = document.getElementById('saveSuccessModalSub');
     if(sub) sub.innerText = msg || 'Laporan berhasil disimpan.';
@@ -164,31 +169,25 @@
     // Jika modal muncul setelah EDIT, kembali ke Daftar Laporan agar
     // pengguna dapat langsung memeriksa data hasil perubahan di daftar.
     // Untuk CREATE tetap kembali ke Form Input baru seperti sebelumnya.
-    const wasEdit = _reportFormMode === 'EDIT' || !!String(_editingReportId || '').trim();
+    const wasEdit = _saveSuccessWasEdit === true;
+    _saveSuccessWasEdit = false;
 
     if(wasEdit){
       startCreateReportForm(true);
       goPage('laporan');
 
-      // Muat ulang daftar setelah navigasi agar hasil EDIT terbaru terlihat.
-      // invalidateLaporanViews() sudah dipanggil setelah update berhasil;
-      // panggil refresh yang tersedia tanpa membuat request ganda jika tidak ada.
-      const refreshLaporan = function(){
+      // goPage('laporan') sengaja membuka Laporan Saya. Untuk hasil EDIT,
+      // setelah itu pindahkan ke sub-tab Daftar Laporan dan biarkan loader
+      // resminya mengambil data terbaru. Tidak ada loadLaporanPage() di app.js.
+      setTimeout(function(){
         try{
-          if(typeof loadLaporanPage === 'function'){
-            const result = loadLaporanPage();
-            if(result && typeof result.catch === 'function') result.catch(function(err){
-              console.warn('[EDIT] Gagal refresh Daftar Laporan:', err);
-            });
-            return true;
+          if(typeof goLaporanSubTab === 'function'){
+            goLaporanSubTab('daftar');
           }
         }catch(err){
-          console.warn('[EDIT] Refresh Daftar Laporan:', err);
+          console.warn('[EDIT] Gagal membuka Daftar Laporan:', err);
         }
-        return false;
-      };
-      setTimeout(refreshLaporan, 80);
-      setTimeout(refreshLaporan, 350);
+      }, 80);
       return;
     }
 
@@ -2326,6 +2325,7 @@
           window.__ipsrsClearDashboardCache();
         }
         if(isEdit){
+          _saveSuccessWasEdit = true;
           invalidateLaporanViews();
           startCreateReportForm(true);
           openSaveSuccessModal('Laporan berhasil disimpan.');
