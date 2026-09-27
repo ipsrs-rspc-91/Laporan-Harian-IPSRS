@@ -1227,6 +1227,17 @@
   function openDashboardNewCategory(kind){
     window.__IPSRS_DASHBOARD_CATEGORY_TARGET = kind === 'unit' ? 'unit' : 'spare';
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
+
+    // Set filter sedini mungkin sebelum goPage()/loader async berjalan.
+    // resetLaporanFilterControls_ juga mempertahankan nilai ini selama
+    // drill-down aktif.
+    const kategoriEl = document.getElementById('FilterKategori');
+    if(kategoriEl){
+      kategoriEl.value = window.__IPSRS_DASHBOARD_CATEGORY_TARGET === 'unit'
+        ? '__DASH_UNIT_BARU__'
+        : '__DASH_SPARE_PART__';
+    }
+
     goPage('laporan');
   }
 
@@ -2992,6 +3003,10 @@
   function resetLaporanFilterControls_(options){
     const opts = options || {};
     const preserveUnfinished = opts.preserveUnfinished === true;
+    // Drill-down Dashboard harus mempertahankan target kategori selama
+    // navigasi dan request async Laporan berlangsung. Filter biasa tetap
+    // di-reset seperti sebelumnya.
+    const preserveDashboardCategory = !!window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
 
     // Filter petugas Daftar Laporan.
     adminSelectedStaffId = '';
@@ -3007,8 +3022,22 @@
     ];
     reportFilterIds.forEach(id => {
       const el = document.getElementById(id);
-      if(el) el.value = '';
+      if(!el) return;
+      if(id === 'FilterKategori' && preserveDashboardCategory) return;
+      el.value = '';
     });
+
+    // Pastikan nilai target benar-benar terpasang setelah reset filter.
+    // Ini membuat drill-down tetap deterministik walaupun reset dipanggil
+    // lebih dari sekali selama perpindahan SPA.
+    if(preserveDashboardCategory){
+      const kategoriEl = document.getElementById('FilterKategori');
+      if(kategoriEl){
+        kategoriEl.value = window.__IPSRS_DASHBOARD_CATEGORY_TARGET === 'unit'
+          ? '__DASH_UNIT_BARU__'
+          : '__DASH_SPARE_PART__';
+      }
+    }
     const statusEl = document.getElementById('FilterStatus');
     if(statusEl) statusEl.value = preserveUnfinished ? '__BELUM_SELESAI__' : '';
 
