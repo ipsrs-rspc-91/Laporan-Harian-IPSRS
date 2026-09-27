@@ -139,10 +139,38 @@
         const statusEl=document.getElementById('FilterStatus');
         if(statusEl) statusEl.value='__BELUM_SELESAI__';
       }
+
+      // Drill-down Dashboard -> Spare Part Baru / Unit Baru:
+      // marker kategori harus diterapkan DI SINI, setelah dataset selesai
+      // dimuat. Sebelumnya app.js sudah memiliki logika ini, tetapi
+      // laporan-fast-v2 menimpa loadReportsBySelectedMonth(), sehingga
+      // marker tidak pernah diterapkan dan daftar kembali menampilkan semua
+      // laporan. Ini adalah sumber regresi "klik Spare Part Baru tetapi semua
+      // data tampil".
+      const dashboardCategoryTarget =
+        (typeof getDashboardCategoryTarget_ === 'function')
+          ? getDashboardCategoryTarget_()
+          : '';
+      if(dashboardCategoryTarget === 'spare'){
+        const kategoriEl=document.getElementById('FilterKategori');
+        if(kategoriEl) kategoriEl.value='__DASH_SPARE_PART__';
+      }else if(dashboardCategoryTarget === 'unit'){
+        const kategoriEl=document.getElementById('FilterKategori');
+        if(kategoriEl) kategoriEl.value='__DASH_UNIT_BARU__';
+      }
+
       // applyFilters() menghitung hasil filter sekaligus menampilkan
       // "Data tampil: X dari Y". Jangan timpa lagi dengan rawData.length,
       // karena rawData adalah seluruh dataset (mis. 13), bukan hasil pencarian.
       applyFilters();
+
+      // Marker hanya berlaku untuk satu navigasi dari Dashboard. Setelah
+      // filter benar-benar diterapkan, hapus marker agar klik/menu Laporan
+      // berikutnya kembali ke perilaku normal.
+      if(dashboardCategoryTarget && typeof clearDashboardCategoryTarget_ === 'function'){
+        clearDashboardCategoryTarget_();
+      }
+
       if(dashboardDrilldown) window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN=false;
       if(daftarUnfinishedDrilldown) window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN=false;
       if(sayaUnfinishedDrilldown) window.__IPSRS_SAYA_UNFINISHED_DRILLDOWN=false;
