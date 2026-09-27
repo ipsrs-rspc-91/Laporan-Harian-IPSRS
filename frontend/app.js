@@ -174,20 +174,12 @@
 
     if(wasEdit){
       startCreateReportForm(true);
-      goPage('laporan');
 
-      // goPage('laporan') sengaja membuka Laporan Saya. Untuk hasil EDIT,
-      // setelah itu pindahkan ke sub-tab Daftar Laporan dan biarkan loader
-      // resminya mengambil data terbaru. Tidak ada loadLaporanPage() di app.js.
-      setTimeout(function(){
-        try{
-          if(typeof goLaporanSubTab === 'function'){
-            goLaporanSubTab('daftar');
-          }
-        }catch(err){
-          console.warn('[EDIT] Gagal membuka Daftar Laporan:', err);
-        }
-      }, 80);
+      // Tandai tujuan internal sebelum goPage('laporan'). Dengan begitu
+      // resetLaporanSubTabCache() langsung membuka Daftar Laporan dan hanya
+      // menjalankan satu loader, tanpa sempat memuat Laporan Saya terlebih dulu.
+      window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = 'daftar';
+      goPage('laporan');
       return;
     }
 
