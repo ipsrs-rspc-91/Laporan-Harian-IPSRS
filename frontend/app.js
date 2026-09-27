@@ -3741,19 +3741,27 @@
     }
   }
 
+  function formatReportIncidentTime_(value){
+    const s = String(value || '').trim();
+    if(!s) return '-';
+    const m = s.match(/^(\\d{1,2}:\\d{2})/);
+    return m ? m[1] : s;
+  }
+
   function reportCardMarkup_(row){
     const inputDateTime = formatReportInputDateTime_(row.created_at || row.createdAt || row.CREATED_AT);
-    const inputTimeHtml = row.Pukul
+    const incidentTime = formatReportIncidentTime_(row.Pukul);
+    const inputTimeHtml = incidentTime !== '-'
       ? `
-        <span class="rc-time" aria-label="Jam pekerjaan">
+        <span class="rc-time" aria-label="Jam kejadian">
           <svg class="rc-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="8.5"></circle>
             <path d="M12 7.5v5l3.2 1.9"></path>
           </svg>
-          <span>${escapeHtml(row.Pukul)}</span>
+          <span>${escapeHtml(incidentTime)}</span>
         </span>`
       : `
-        <span class="rc-time" aria-label="Jam pekerjaan">
+        <span class="rc-time" aria-label="Jam kejadian">
           <svg class="rc-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="8.5"></circle>
             <path d="M12 7.5v5l3.2 1.9"></path>
