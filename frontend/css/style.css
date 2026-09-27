@@ -692,7 +692,7 @@
 }
 
 .rc-room {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 700;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -724,7 +724,7 @@
   min-width: 0;
   margin: 0;
   padding: 0 15px;
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.5;
   color: #37474f;
   white-space: normal;
