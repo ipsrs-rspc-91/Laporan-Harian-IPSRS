@@ -37,6 +37,8 @@
       }
     });
   }
-  setInterval(refresh,5000);
+  // Hak akses dibaca saat sesi/token berubah dan saat UI pertama kali siap.
+  // Polling 5 detik tidak diperlukan karena otoritas edit tetap berada di backend
+  // dan justru menyebabkan kerja browser berulang saat pengguna membuka detail.
   setTimeout(refresh,1000);
 })();
