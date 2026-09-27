@@ -636,6 +636,7 @@
 }
 
 .rc-date {
+  font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -643,15 +644,16 @@
 .rc-time{
   display:inline-flex;
   align-items:center;
-  gap:4px;
+  gap:3px;
+  font-size:14px;
   font-weight:700;
   white-space:nowrap;
 }
 
 .rc-clock-icon{
-  width:16px;
-  height:16px;
-  flex:0 0 16px;
+  width:13px;
+  height:13px;
+  flex:0 0 13px;
   fill:none;
   stroke:currentColor;
   stroke-width:1.8;
