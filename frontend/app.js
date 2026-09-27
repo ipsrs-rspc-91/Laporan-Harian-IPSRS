@@ -834,7 +834,23 @@
 
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
-    if(name === 'input' && !preserveInputMode) startCreateReportForm(true);
+    if(name === 'input' && !preserveInputMode){
+      startCreateReportForm(true);
+
+      // Setiap membuka Form Input dari menu utama selalu kembali ke
+      // BAGIAN AWAL/HEADER FORM, bukan posisi scroll terakhir (misalnya
+      // langsung berada di Kategori). .content adalah scroll container utama.
+      const resetInputScrollTop = function(){
+        const content = document.querySelector('.content');
+        if(!content) return;
+        try{ content.scrollTo({top:0, behavior:'auto'}); }
+        catch(_e){ content.scrollTop = 0; }
+      };
+
+      resetInputScrollTop();
+      setTimeout(resetInputScrollTop, 80);
+      setTimeout(resetInputScrollTop, 250);
+    }
     if(name !== 'dashboard'){
       // Batalkan secara logis request Dashboard yang masih berjalan agar
       // response lama tidak menulis kembali ke DOM setelah pindah halaman.
