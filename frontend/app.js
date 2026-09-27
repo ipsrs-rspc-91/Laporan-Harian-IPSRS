@@ -1222,7 +1222,7 @@
 
   // ============================================================
   // MOBILE KEYBOARD SMART SCROLL
-  // Setiap field aktif diposisikan 25px DI ATAS keyboard Android.
+  // Setiap field aktif diposisikan 33px DI ATAS keyboard Android.
   // ============================================================
   let keyboardActiveField = null;
   let keyboardMoveTimers = [];
@@ -1270,8 +1270,8 @@
       const viewportHeight = vv ? vv.height : window.innerHeight;
       const viewportBottom = viewportTop + viewportHeight;
 
-      // Jarak yang diminta: 25px antara field aktif dan bagian atas keyboard.
-      const GAP = 25;
+      // Jarak yang diminta: 33px antara field aktif dan bagian atas keyboard.
+      const GAP = 33;
 
       // Pada Android Chrome, visualViewport adalah area yang benar-benar
       // terlihat setelah keyboard muncul.
@@ -1282,7 +1282,7 @@
       }
 
       // Tambahkan ruang bawah supaya field paling bawah tetap bisa
-      // dinaikkan sampai 25px di atas keyboard.
+      // dinaikkan sampai 33px di atas keyboard.
       if(keyboardHeight > 80){
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
@@ -1300,7 +1300,7 @@
 
       let delta = 0;
 
-      // Prioritas utama: bagian bawah field harus berada 25px
+      // Prioritas utama: bagian bawah field harus berada 33px
       // di atas keyboard.
       if(rect.bottom > targetBottom){
         delta = rect.bottom - targetBottom;
