@@ -602,6 +602,28 @@
   border-color: #263238;
 }
 
+/* Warna border kartu mengikuti status laporan.
+   Selesai = hijau, Belum = merah lebih tebal. */
+.report-card-shared .rcard.rc-status-selesai,
+.report-card-view .rcard.rc-status-selesai{
+  border: 2px solid var(--success);
+}
+
+.report-card-shared .rcard.rc-status-selesai:hover,
+.report-card-view .rcard.rc-status-selesai:hover{
+  border-color: var(--success);
+}
+
+.report-card-shared .rcard.rc-status-belum,
+.report-card-view .rcard.rc-status-belum{
+  border: 3px solid var(--danger);
+}
+
+.report-card-shared .rcard.rc-status-belum:hover,
+.report-card-view .rcard.rc-status-belum:hover{
+  border-color: var(--danger);
+}
+
 .report-card-shared .rcard:active, .report-card-view .rcard:active {
   transform: scale(0.995);
 }
