@@ -3744,7 +3744,7 @@
   function formatReportIncidentTime_(value){
     const s = String(value || '').trim();
     if(!s) return '-';
-    const m = s.match(/^(\\d{1,2}:\\d{2})/);
+    const m = s.match(/^(\d{1,2}:\d{2})/);
     return m ? m[1] : s;
   }
 
