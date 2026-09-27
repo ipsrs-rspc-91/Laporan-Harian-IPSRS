@@ -746,6 +746,19 @@
   color:#5c7078;
 }
 
+.rc-input-clock-icon{
+  width:13px;
+  height:13px;
+  margin:0 3px;
+  flex:0 0 13px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vertical-align:-2px;
+}
+
 .report-card-shared .rcard .pill.success, .report-card-view .rcard .pill.success,
 .report-card-shared .rcard .pill.warning, .report-card-view .rcard .pill.warning {
   white-space: nowrap !important;
