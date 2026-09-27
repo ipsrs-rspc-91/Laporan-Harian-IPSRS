@@ -1221,9 +1221,9 @@
   }
 
   // ============================================================
-  // MOBILE AUTO-SCROLL: Masalah / Kegiatan
-  // Saat field disentuh, posisikan field di bagian atas area konten
-  // agar keyboard Android tidak menutup area pengetikan.
+  // MOBILE KEYBOARD SCROLL: Masalah / Kegiatan
+  // Hanya menggeser form bila field benar-benar tertutup keyboard.
+  // Tidak lagi memaksa field ke bagian atas layar saat baru disentuh.
   // ============================================================
   function scrollMasalahKegiatanIntoComfortPosition(){
     const field = document.getElementById('MasalahKegiatan');
@@ -1234,30 +1234,54 @@
 
     const move = function(){
       try{
-        const contentRect = content.getBoundingClientRect();
+        const isMobile = window.matchMedia
+          ? window.matchMedia('(max-width: 768px)').matches
+          : true;
+        if(!isMobile || document.activeElement !== field) return;
+
         const fieldRect = field.getBoundingClientRect();
-        const isMobile = window.matchMedia ? window.matchMedia('(max-width: 768px)').matches : true;
-        if(!isMobile) return;
 
-        // Letakkan field sekitar 70px dari bagian atas content.
-        // Tidak memakai scrollIntoView() agar halaman tidak meloncat terlalu jauh.
-        const topOffset = 70;
-        const targetTop = Math.max(
-          0,
-          content.scrollTop + (fieldRect.top - contentRect.top) - topOffset
-        );
+        // visualViewport mengikuti tinggi layar yang benar-benar terlihat
+        // setelah keyboard Android muncul.
+        const viewport = window.visualViewport;
+        const viewportTop = viewport ? viewport.offsetTop : 0;
+        const viewportHeight = viewport ? viewport.height : window.innerHeight;
+        const viewportBottom = viewportTop + viewportHeight;
 
-        content.scrollTo({top:targetTop, behavior:'smooth'});
+        // Sisakan sedikit ruang agar caret/teks tidak menempel ke keyboard.
+        const safeTop = viewportTop + 16;
+        const safeBottom = viewportBottom - 24;
+
+        let delta = 0;
+
+        // Field terlalu bawah/tertutup keyboard: geser hanya sebesar yang perlu.
+        if(fieldRect.bottom > safeBottom){
+          delta = fieldRect.bottom - safeBottom;
+        }else if(fieldRect.top < safeTop){
+          delta = fieldRect.top - safeTop;
+        }
+
+        // Bila field sudah terlihat nyaman, JANGAN mengubah posisi halaman.
+        if(Math.abs(delta) < 2) return;
+
+        const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+        const nextTop = Math.max(0, Math.min(content.scrollTop + delta, maxScroll));
+
+        content.scrollTo({
+          top: nextTop,
+          behavior: 'smooth'
+        });
       }catch(err){
-        // Fallback aman bila browser tidak mendukung perhitungan scroll container.
-        try{ field.scrollIntoView({behavior:'smooth', block:'center'}); }catch(ignore){}
+        // Jangan memakai scrollIntoView() sebagai fallback karena dapat
+        // menyebabkan lompatan besar pada halaman mobile.
       }
     };
 
-    // Android biasanya mengubah viewport setelah keyboard mulai tampil.
-    // Dua tahap membuat posisi akhir tetap nyaman untuk mengetik.
-    setTimeout(move, 80);
-    setTimeout(move, 320);
+    // Keyboard Android biasanya selesai membuka setelah focus event.
+    // Cek bertahap, tetapi setiap cek hanya bergerak jika benar-benar perlu.
+    setTimeout(move, 180);
+    setTimeout(move, 420);
+    setTimeout(move, 700);
   }
 
   function initMasalahKegiatanAutoScroll(){
