@@ -1221,9 +1221,9 @@
   }
 
   // ============================================================
-  // MOBILE KEYBOARD SCROLL: Masalah / Kegiatan
-  // Hanya menggeser form bila field benar-benar tertutup keyboard.
-  // Tidak lagi memaksa field ke bagian atas layar saat baru disentuh.
+  // MOBILE SMART SCROLL: Masalah / Kegiatan
+  // Saat field disentuh, letakkan field pada posisi nyaman di area
+  // atas keyboard. Tidak terlalu ke atas dan tidak dibiarkan di bawah.
   // ============================================================
   function scrollMasalahKegiatanIntoComfortPosition(){
     const field = document.getElementById('MasalahKegiatan');
@@ -1239,49 +1239,51 @@
           : true;
         if(!isMobile || document.activeElement !== field) return;
 
+        const contentRect = content.getBoundingClientRect();
         const fieldRect = field.getBoundingClientRect();
 
-        // visualViewport mengikuti tinggi layar yang benar-benar terlihat
-        // setelah keyboard Android muncul.
+        // visualViewport memberi ukuran area layar yang benar-benar terlihat
+        // setelah keyboard Android terbuka.
         const viewport = window.visualViewport;
         const viewportTop = viewport ? viewport.offsetTop : 0;
         const viewportHeight = viewport ? viewport.height : window.innerHeight;
-        const viewportBottom = viewportTop + viewportHeight;
 
-        // Sisakan sedikit ruang agar caret/teks tidak menempel ke keyboard.
-        const safeTop = viewportTop + 16;
-        const safeBottom = viewportBottom - 24;
+        // Target profesional: field berada sekitar 30% dari area layar yang
+        // terlihat. Ini membuat field mudah dibaca/ditik tanpa menempel
+        // ke header dan tanpa menutup bagian atas textarea.
+        const targetTop = viewportTop + Math.min(
+          300,
+          Math.max(180, viewportHeight * 0.30)
+        );
 
-        let delta = 0;
+        const currentTop = fieldRect.top;
+        const delta = currentTop - targetTop;
 
-        // Field terlalu bawah/tertutup keyboard: geser hanya sebesar yang perlu.
-        if(fieldRect.bottom > safeBottom){
-          delta = fieldRect.bottom - safeBottom;
-        }else if(fieldRect.top < safeTop){
-          delta = fieldRect.top - safeTop;
-        }
+        // Kalau sudah sangat dekat dengan posisi target, jangan menggerakkan
+        // halaman lagi agar tidak terjadi getaran/flicker.
+        if(Math.abs(delta) < 12) return;
 
-        // Bila field sudah terlihat nyaman, JANGAN mengubah posisi halaman.
-        if(Math.abs(delta) < 2) return;
-
+        // Ubah posisi layar menjadi posisi scroll .content.
+        const desiredScrollTop = content.scrollTop + delta;
         const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-        const nextTop = Math.max(0, Math.min(content.scrollTop + delta, maxScroll));
+        const nextTop = Math.max(0, Math.min(desiredScrollTop, maxScroll));
+
+        if(Math.abs(nextTop - content.scrollTop) < 4) return;
 
         content.scrollTo({
           top: nextTop,
           behavior: 'smooth'
         });
       }catch(err){
-        // Jangan memakai scrollIntoView() sebagai fallback karena dapat
-        // menyebabkan lompatan besar pada halaman mobile.
+        console.warn('Smart scroll Masalah/Kegiatan gagal:', err);
       }
     };
 
-    // Keyboard Android biasanya selesai membuka setelah focus event.
-    // Cek bertahap, tetapi setiap cek hanya bergerak jika benar-benar perlu.
-    setTimeout(move, 180);
-    setTimeout(move, 420);
-    setTimeout(move, 700);
+    // Tahap 1: segera setelah focus.
+    // Tahap 2-3: setelah keyboard Android selesai mengubah viewport.
+    setTimeout(move, 80);
+    setTimeout(move, 300);
+    setTimeout(move, 600);
   }
 
   function initMasalahKegiatanAutoScroll(){
