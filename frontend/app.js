@@ -3821,19 +3821,52 @@
   function renderStatusChart(selesai, belum){
     const ctx = document.getElementById('statusChart');
     const legendEl = document.getElementById('statusLegend');
-    if(statusChartInstance){ statusChartInstance.destroy(); }
+    if(!ctx || !legendEl) return;
+
+    if(statusChartInstance){
+      try{ statusChartInstance.destroy(); }catch(_e){}
+      statusChartInstance = null;
+    }
 
     const data = [selesai, belum];
     const labels = ['Selesai', 'Belum Selesai'];
     const colors = ['#1a9e57', '#b91c1c'];
 
     if(selesai === 0 && belum === 0){
-      ctx.parentElement.innerHTML = emptyStateHtml('Belum ada data pada periode ini.');
+      if(ctx.parentElement) ctx.parentElement.innerHTML = emptyStateHtml('Belum ada data pada periode ini.');
       legendEl.innerHTML = '';
       return;
     }
 
-    statusChartInstance = new Chart(ctx, {
+    // Chart.js dimuat deferred dari index.html. Jangan biarkan race condition
+    // menghentikan seluruh render Dashboard jika library belum siap.
+    if(typeof window.Chart !== 'function'){
+      legendEl.innerHTML = '';
+      labels.forEach((lbl, i) => {
+        const row = document.createElement('div');
+        row.className = 'legend-row';
+        row.innerHTML = `<span class="legend-dot" style="background:${colors[i]}"></span><span class="lbl">${lbl}</span><span class="val">${data[i]}</span>`;
+        legendEl.appendChild(row);
+      });
+
+      if(!ctx.dataset.chartRetryBound){
+        ctx.dataset.chartRetryBound = '1';
+        const ready = window.__ipsrsChartReady;
+        if(ready && typeof ready.then === 'function'){
+          ready.then(function(){
+            if(ctx.isConnected && document.getElementById('page-dashboard')?.classList.contains('active')){
+              delete ctx.dataset.chartRetryBound;
+              renderStatusChart(selesai, belum);
+            }
+          }).catch(function(err){
+            console.warn('Chart.js belum tersedia:', err);
+          });
+        }
+      }
+      return;
+    }
+
+    statusChartInstance = new window.Chart(ctx, {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
       options: {
