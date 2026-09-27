@@ -1252,6 +1252,13 @@
   }
 
   function getNextKeyboardField(field){
+    // Setelah ITEM dipilih, pengguna masuk ke bagian paling bawah form.
+    // Target harus langsung ke tombol Simpan Laporan supaya Keterangan
+    // dan tombol Simpan ikut terlihat, bukan berhenti di Keterangan saja.
+    if(field && field.id === 'Item'){
+      return document.getElementById('btnSaveInput') || field;
+    }
+
     const fields = Array.from(
       document.querySelectorAll(
         '#page-input input:not([type="hidden"]), #page-input textarea, #page-input select'
@@ -1292,7 +1299,10 @@
 
   function moveActiveFieldAboveKeyboard(behavior){
     const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
-    if(!field || !field.matches || !field.matches('#page-input input, #page-input textarea, #page-input select')) return;
+    const isFormField = field && field.matches &&
+      field.matches('#page-input input, #page-input textarea, #page-input select');
+    const isSaveButton = field && field.id === 'btnSaveInput';
+    if(!field || (!isFormField && !isSaveButton)) return;
 
     const content = getKeyboardContent();
     if(!content) return;
@@ -1402,8 +1412,8 @@
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      // Tunggu keyboard Android selesai membuka dan visualViewport
-      // berubah, lalu posisikan field berikutnya.
+      // Tunggu layout Android stabil. Untuk ITEM targetnya adalah
+      // tombol Simpan Laporan, sehingga bagian bawah form ikut naik.
       keyboardMoveTimers.push(setTimeout(function(){
         moveActiveFieldAboveKeyboard('auto');
       }, 120));
@@ -1415,6 +1425,25 @@
       keyboardMoveTimers.push(setTimeout(function(){
         moveActiveFieldAboveKeyboard('smooth');
       }, 600));
+    });
+
+    document.addEventListener('change', function(event){
+      // Select ITEM tidak selalu memicu perpindahan fokus di Android.
+      // Setelah pilihan berubah, ulangi scroll ke bagian bawah form agar
+      // Keterangan + Simpan Laporan langsung terlihat.
+      if(event.target && event.target.id === 'Item'){
+        keyboardFocusedField = event.target;
+        keyboardScrollTarget = document.getElementById('btnSaveInput') || event.target;
+        clearKeyboardMoveTimers();
+
+        keyboardMoveTimers.push(setTimeout(function(){
+          moveActiveFieldAboveKeyboard('auto');
+        }, 80));
+
+        keyboardMoveTimers.push(setTimeout(function(){
+          moveActiveFieldAboveKeyboard('smooth');
+        }, 260));
+      }
     });
 
     document.addEventListener('focusout', function(event){
