@@ -645,7 +645,7 @@
   display:inline-flex;
   align-items:center;
   gap:2px;
-  font-size:12.5px;
+  font-size:13px;
   font-weight:700;
   white-space:nowrap;
 }
@@ -670,6 +670,7 @@
 }
 
 .rc-room {
+  font-size: 14px;
   font-weight: 700;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -701,7 +702,7 @@
   min-width: 0;
   margin: 0;
   padding: 0 15px;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
   color: #37474f;
   white-space: normal;
