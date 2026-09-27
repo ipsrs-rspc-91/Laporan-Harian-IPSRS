@@ -135,7 +135,7 @@
   window.__ipsrsDashboardLoadingDone = function(seq, ok){
     if(seq !== activeLoadSeq) return;
     if(ok) hideLoading();
-    else showError('Dashboard gagal mengambil data. Silakan coba lagi.', seq);
+    else showDashboardError_('Dashboard gagal mengambil data. Silakan coba lagi.', seq);
   };
 
   const originalGoPage = window.goPage;
@@ -154,7 +154,7 @@
 
     waitForDashboardMount(deadline).then(function(pageReady){
       if(!pageReady){
-        showError('Dashboard gagal disiapkan. Silakan coba lagi.');
+        showDashboardError_('Dashboard gagal disiapkan. Silakan coba lagi.');
         return false;
       }
 
@@ -165,13 +165,13 @@
         originalGoPage(name, preserveInputMode);
       }catch(err){
         console.error('Dashboard navigation error:', err);
-        showError('Gagal memuat Dashboard.');
+        showDashboardError_('Gagal memuat Dashboard.');
         return false;
       }
       return true;
     }).catch(function(err){
       console.error('Dashboard loading error:', err);
-      showError('Gagal memuat Dashboard.');
+      showDashboardError_('Gagal memuat Dashboard.');
     });
   };
 })();
