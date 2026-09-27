@@ -1209,6 +1209,26 @@
     // agar tidak ada dua timer scroll yang berjalan bersamaan.
   }
 
+  function isSparePartReportCategory_(value){
+    const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    return [
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
+    ].includes(normalized);
+  }
+
+  function isUnitBaruReportCategory_(value){
+    const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    return normalized === 'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)';
+  }
+
+  function openDashboardNewCategory(kind){
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET = kind === 'unit' ? 'unit' : 'spare';
+    window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
+    goPage('laporan');
+  }
+
   function isSparePartRequiredCategory(value){
     const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
     return new Set([
@@ -2703,7 +2723,16 @@
         renderAdminStaffSelect();
       }
 
+      const dashboardCategoryTarget = window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+      if(dashboardCategoryTarget === 'spare'){
+        const kategoriEl = document.getElementById('FilterKategori');
+        if(kategoriEl) kategoriEl.value = '__DASH_SPARE_PART__';
+      }else if(dashboardCategoryTarget === 'unit'){
+        const kategoriEl = document.getElementById('FilterKategori');
+        if(kategoriEl) kategoriEl.value = '__DASH_UNIT_BARU__';
+      }
       applyFilters();
+      if(dashboardCategoryTarget) window.__IPSRS_DASHBOARD_CATEGORY_TARGET = '';
       return true;
     }catch(err){
       if(requestSeq !== Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
@@ -2719,6 +2748,8 @@
     const status = document.getElementById('FilterStatus').value;
     const isDashboardUnfinishedFilter = status === '__BELUM_SELESAI__';
     const kategori = document.getElementById('FilterKategori').value;
+    const isDashboardSparePartFilter = kategori === '__DASH_SPARE_PART__';
+    const isDashboardUnitFilter = kategori === '__DASH_UNIT_BARU__';
     const area = document.getElementById('FilterArea').value;
     const bidang = document.getElementById('FilterBidang').value;
     // Filter "Shift" dihapus (P1 §3.6) -- elemen #FilterShift tidak ada lagi
@@ -2729,7 +2760,11 @@
       if(isDashboardUnfinishedFilter){
         if(r.Status === 'Selesai') return false;
       }else if(status && r.Status !== status) return false;
-      if(kategori && r.Kategori !== kategori) return false;
+      if(isDashboardSparePartFilter){
+        if(!isSparePartReportCategory_(r.Kategori)) return false;
+      }else if(isDashboardUnitFilter){
+        if(!isUnitBaruReportCategory_(r.Kategori)) return false;
+      }else if(kategori && r.Kategori !== kategori) return false;
       if(area && r.AreaKerja !== area) return false;
       if(bidang && r.Bidang !== bidang) return false;
       if(adminSelectedStaffId && r.StaffID !== adminSelectedStaffId) return false;
@@ -3090,9 +3125,10 @@
     // Default normal tetap Laporan Saya. Namun drill-down dari Dashboard
     // Belum Selesai secara eksplisit meminta Daftar Laporan agar sumber data
     // mencakup seluruh petugas sesuai hak akses backend.
-    const drilldownTarget = window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar'
+    const categoryTarget = window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+    const drilldownTarget = categoryTarget
       ? 'daftar'
-      : 'saya';
+      : (window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar' ? 'daftar' : 'saya');
     _laporanMode = drilldownTarget;
     window.__IPSRS_LAPORAN_INTERNAL_NAV = true;
     try{
@@ -3103,6 +3139,7 @@
 
     // Target hanya berlaku untuk satu navigasi drill-down.
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET = '';
   }
 
   // ============================================================
@@ -3949,6 +3986,10 @@
       document.getElementById('statSelesai').innerText = d.selesai;
       document.getElementById('statBelum').innerText = d.belum;
       document.getElementById('statPersen').innerText = d.total ? Math.round(d.selesai / d.total * 100) + '%' : '0%';
+      const sparePartStat = document.getElementById('statSparePartBaru');
+      const unitBaruStat = document.getElementById('statUnitBaru');
+      if(sparePartStat) sparePartStat.innerText = Number(d.spare_part_baru || 0);
+      if(unitBaruStat) unitBaruStat.innerText = Number(d.unit_baru || 0);
       bindDashboardUnfinishedDrilldown();
 
       const pencapaianOrder = ['Selesai','Sebagian','Belum Selesai','Ditunda','Tindak Lanjut','Belum Diisi'];
