@@ -1350,11 +1350,14 @@
       const targetBottom = viewportBottom - GAP;
       const safeTop = viewportTop + 20;
 
-      let delta = 0;
+      // Target berikutnya harus benar-benar berada 33px di atas keyboard,
+      // bukan sekadar "masih terlihat". Ini penting pada Android: field
+      // berikutnya kadang sudah terlihat, tetapi masih terlalu rendah untuk
+      // langsung diisi.
+      let delta = rect.bottom - targetBottom;
 
-      if(rect.bottom > targetBottom){
-        delta = rect.bottom - targetBottom;
-      }else if(rect.top < safeTop){
+      // Jangan menarik field ke bawah melewati batas aman atas viewport.
+      if(rect.top - delta < safeTop){
         delta = rect.top - safeTop;
       }
 
