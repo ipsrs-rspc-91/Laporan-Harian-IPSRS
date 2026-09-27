@@ -161,14 +161,42 @@
     if(bg) bg.classList.remove('show');
     document.body.classList.remove('modal-open');
 
-    // Setelah penyimpanan berhasil, siapkan form baru dan langsung
-    // kembalikan pengguna ke field pertama (Tanggal).
+    // Jika modal muncul setelah EDIT, kembali ke Daftar Laporan agar
+    // pengguna dapat langsung memeriksa data hasil perubahan di daftar.
+    // Untuk CREATE tetap kembali ke Form Input baru seperti sebelumnya.
+    const wasEdit = _reportFormMode === 'EDIT' || !!String(_editingReportId || '').trim();
+
+    if(wasEdit){
+      startCreateReportForm(true);
+      goPage('laporan');
+
+      // Muat ulang daftar setelah navigasi agar hasil EDIT terbaru terlihat.
+      // invalidateLaporanViews() sudah dipanggil setelah update berhasil;
+      // panggil refresh yang tersedia tanpa membuat request ganda jika tidak ada.
+      const refreshLaporan = function(){
+        try{
+          if(typeof loadLaporanPage === 'function'){
+            const result = loadLaporanPage();
+            if(result && typeof result.catch === 'function') result.catch(function(err){
+              console.warn('[EDIT] Gagal refresh Daftar Laporan:', err);
+            });
+            return true;
+          }
+        }catch(err){
+          console.warn('[EDIT] Refresh Daftar Laporan:', err);
+        }
+        return false;
+      };
+      setTimeout(refreshLaporan, 80);
+      setTimeout(refreshLaporan, 350);
+      return;
+    }
+
+    // CREATE: setelah penyimpanan berhasil, siapkan form baru dan kembali
+    // ke bagian atas Form Input.
     startCreateReportForm(true);
     goPage('input');
 
-    // Setelah OK, kembalikan posisi ke BAGIAN PALING ATAS FORM INPUT,
-    // bukan hanya ke field Tanggal & Jam. Di mobile, .content adalah
-    // container yang benar-benar melakukan scroll.
     const focusFormTop = function(){
       const page = document.getElementById('page-input');
       if(!page) return false;
@@ -193,13 +221,9 @@
         try{ if(formCard) formCard.scrollIntoView({behavior:'auto', block:'start'}); }catch(ignore){}
       }
 
-      // Jangan memfokuskan field tertentu agar browser Android tidak
-      // menggeser halaman lagi setelah posisi form sudah dikembalikan.
       try{ if(document.activeElement) document.activeElement.blur(); }catch(e){}
       return true;
     };
-    // Page_Input dipasang saat navigasi. Dua percobaan ringan memastikan
-    // posisi tetap tepat setelah DOM selesai dirender.
     setTimeout(focusFormTop, 120);
     setTimeout(focusFormTop, 350);
   }
