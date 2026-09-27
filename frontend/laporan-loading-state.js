@@ -20,7 +20,7 @@
 
   function el(id){ return document.getElementById(id); }
 
-  function escapeHtml(v){
+  function escapeHtmlLaporanLoading_(v){
     return String(v==null?'':v)
       .replace(/&/g,'&amp;')
       .replace(/</g,'&lt;')
@@ -131,7 +131,7 @@
     o.setAttribute('role','alert');
     o.innerHTML='<div class="ipsrs-loading-box ipsrs-loading-error">'
       +'<div class="ipsrs-loading-title">Gagal memuat data</div>'
-      +'<div class="ipsrs-loading-detail">'+escapeHtml(message||'Silakan coba lagi.')+'</div>'
+      +'<div class="ipsrs-loading-detail">'+escapeHtmlLaporanLoading_(message||'Silakan coba lagi.')+'</div>'
       +'</div>';
     document.body.appendChild(o);
     if(safetyTimer) clearTimeout(safetyTimer);
