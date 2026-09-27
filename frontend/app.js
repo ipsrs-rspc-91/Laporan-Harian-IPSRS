@@ -492,7 +492,7 @@
 
   function resetLaporanUnfinishedState(){
     // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
-    window.__IPSRS_DASHBOARD_CATEGORY_TARGET = '';
+    clearDashboardCategoryTarget_();
     window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
     window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
