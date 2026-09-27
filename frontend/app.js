@@ -1297,6 +1297,32 @@
     }
   }
 
+  function extendKeyboardBottomSpace(){
+    const content = getKeyboardContent();
+    if(!content) return;
+
+    if(keyboardOriginalPadding === null){
+      keyboardOriginalPadding = content.style.paddingBottom || '';
+    }
+
+    const currentPadding = parseFloat(
+      getComputedStyle(content).paddingBottom || '0'
+    ) || 0;
+
+    // ITEM berada dekat bagian bawah form. Android dapat berhenti pada
+    // batas maxScroll sehingga tombol Simpan masih berada di bawah layar.
+    // Tambahkan ruang nyata ke scroll container agar bagian paling bawah
+    // benar-benar dapat dinaikkan ke area yang terlihat.
+    const viewportHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+
+    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.35));
+    if(currentPadding < bottomSpace){
+      content.style.paddingBottom = bottomSpace + 'px';
+    }
+  }
+
   function moveActiveFieldAboveKeyboard(behavior){
     const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
     const isFormField = field && field.matches &&
@@ -1436,13 +1462,24 @@
         keyboardScrollTarget = document.getElementById('btnSaveInput') || event.target;
         clearKeyboardMoveTimers();
 
+        // Pastikan maxScroll bertambah. Tanpa spacer, Android dapat sudah
+        // berada di batas bawah .content tetapi tombol Simpan tetap tersembunyi.
+        extendKeyboardBottomSpace();
+
         keyboardMoveTimers.push(setTimeout(function(){
+          extendKeyboardBottomSpace();
           moveActiveFieldAboveKeyboard('auto');
         }, 80));
 
         keyboardMoveTimers.push(setTimeout(function(){
+          extendKeyboardBottomSpace();
           moveActiveFieldAboveKeyboard('smooth');
         }, 260));
+
+        keyboardMoveTimers.push(setTimeout(function(){
+          extendKeyboardBottomSpace();
+          moveActiveFieldAboveKeyboard('smooth');
+        }, 520));
       }
     });
 
@@ -1474,7 +1511,14 @@
         keyboardViewportResize,
         {passive:true}
       );
+      window.visualViewport.addEventListener(
+        'scroll',
+        keyboardViewportResize,
+        {passive:true}
+      );
     }
+
+    window.addEventListener('resize', keyboardViewportResize, {passive:true});
   }
 
   function initSparePartSection(){
