@@ -640,6 +640,25 @@
   white-space: nowrap;
 }
 
+.rc-time{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.rc-clock-icon{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
 .rc-separator {
   width: 2px;
   height: 20px;
@@ -699,6 +718,32 @@
 .report-card-shared .rcard .rc-label, .report-card-view .rcard .rc-label {
   font-weight: 700;
   color: #17232d;
+}
+
+.report-card-shared .rcard .rc-petugas,
+.report-card-view .rcard .rc-petugas{
+  font-size:13px;
+  line-height:1.4;
+  color:#60727a;
+}
+
+.report-card-shared .rcard .rc-petugas .rc-label,
+.report-card-view .rcard .rc-petugas .rc-label{
+  font-size:13px;
+  color:#4f626b;
+}
+
+.rc-input-meta{
+  margin:0;
+  padding:0 15px 13px;
+  font-size:12px;
+  line-height:1.35;
+  color:#71838a;
+}
+
+.rc-input-meta strong{
+  font-weight:700;
+  color:#5c7078;
 }
 
 .report-card-shared .rcard .pill.success, .report-card-view .rcard .pill.success,
