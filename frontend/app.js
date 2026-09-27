@@ -3786,7 +3786,13 @@
         ${escapeHtml(row.Petugas || '-')}
       </div>
       <div class="rc-input-meta">
-        Tgl &amp; Jam Input: <strong>${escapeHtml(inputDateTime)}</strong>
+        <span>Tgl &amp; Jam Input:</span>
+        <strong>${escapeHtml(inputDateTime.split(' ')[0])}</strong>
+        <svg class="rc-input-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5"></circle>
+          <path d="M12 7.5v5l3.2 1.9"></path>
+        </svg>
+        <strong>${escapeHtml(inputDateTime.split(' ').slice(1).join(' ') || '-')}</strong>
       </div>
     `;
   }
