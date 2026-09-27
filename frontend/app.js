@@ -3794,6 +3794,18 @@
     return new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(n);
   }
 
+  function renderDashboardNewItemRows_(rows, emptyText){
+    if(!Array.isArray(rows) || rows.length === 0){
+      return '<tr><td colspan="3" class="dashboard-new-item-empty">'+escapeHtml(emptyText||'Belum ada data.')+'</td></tr>';
+    }
+    return rows.map(row => {
+      const nama = row?.nama ?? row?.item ?? row?.name ?? '-';
+      const type = row?.type ?? row?.tipe ?? '-';
+      const jumlah = row?.jumlah ?? row?.quantity ?? row?.qty ?? 0;
+      return '<tr><td>'+escapeHtml(nama)+'</td><td>'+escapeHtml(type)+'</td><td class="num">'+escapeHtml(formatDashboardQuantity_(jumlah))+'</td></tr>';
+    }).join('');
+  }
+
   function renderDashboardNewItemStats_(data){
     const d=data||{};
     const spareTotal=document.getElementById('statSparePartTotalQty');
@@ -3802,8 +3814,8 @@
     const unitBody=document.getElementById('dashUnitBaruStats');
     if(spareTotal) spareTotal.innerText=formatDashboardQuantity_(d.spare_part_total_quantity);
     if(unitTotal) unitTotal.innerText=formatDashboardQuantity_(d.unit_baru_total_quantity);
-    if(spareBody) spareBody.innerHTML=renderDashboardNewItemStats_(d.spare_part_stats,'Belum ada data spare part.');
-    if(unitBody) unitBody.innerHTML=renderDashboardNewItemStats_(d.unit_baru_stats,'Belum ada data unit baru.');
+    if(spareBody) spareBody.innerHTML=renderDashboardNewItemRows_(d.spare_part_stats,'Belum ada data spare part.');
+    if(unitBody) unitBody.innerHTML=renderDashboardNewItemRows_(d.unit_baru_stats,'Belum ada data unit baru.');
   }
 
   function renderStatusChart(selesai, belum){
