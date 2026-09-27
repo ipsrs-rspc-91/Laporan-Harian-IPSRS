@@ -1177,14 +1177,9 @@
     }
     syncSparePartSection();
 
-    // Setelah kategori benar-benar dipilih dari native select Android,
-    // pastikan blok bawah langsung tampil penuh seperti desain mobile:
-    // PETUGAS sampai tombol Simpan Laporan.
-    if(window.matchMedia && window.matchMedia('(max-width: 768px)').matches){
-      setTimeout(positionInputForCategory, 80);
-      setTimeout(positionInputForCategory, 260);
-      setTimeout(positionInputForCategory, 520);
-    }
+    // Setelah kategori dipilih, langsung posisikan tombol Simpan agar
+    // terlihat dan bisa ditekan tanpa geser manual.
+    scheduleInputSaveButtonPosition();
   }
 
   function isSparePartRequiredCategory(value){
@@ -1497,6 +1492,72 @@
     }
   }
 
+  // Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan Laporan
+  // harus langsung berada di area layar yang bisa ditekan tanpa geser manual.
+  // .content adalah scroll container utama, jadi posisi dihitung terhadap
+  // visual viewport Android (termasuk saat keyboard masih terbuka).
+  function positionInputSaveButton(){
+    const content = getKeyboardContent();
+    const button = document.getElementById('btnSaveInput');
+    if(!content || !button) return;
+
+    const mobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!mobile) return;
+
+    try{
+      const vv = window.visualViewport;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+      const GAP = 16;
+      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
+
+      // Saat keyboard masih terbuka, beri ruang agar tombol benar-benar dapat
+      // dinaikkan sampai di atas keyboard, bukan berhenti di maxScroll lama.
+      if(keyboardHeight > 80){
+        if(keyboardOriginalPadding === null){
+          keyboardOriginalPadding = content.style.paddingBottom || '';
+        }
+        const currentPadding = parseFloat(
+          getComputedStyle(content).paddingBottom || '0'
+        ) || 0;
+        const requiredPadding = Math.max(
+          currentPadding,
+          keyboardHeight + GAP + 80
+        );
+        if(currentPadding < requiredPadding){
+          content.style.paddingBottom = requiredPadding + 'px';
+        }
+      }
+
+      const rect = button.getBoundingClientRect();
+      const desiredBottom = viewportBottom - GAP;
+      const delta = rect.bottom - desiredBottom;
+
+      // Jika tombol sudah terlihat di atas keyboard/viewport, jangan geser.
+      if(delta <= 2 && rect.top >= viewportTop + 8) return;
+
+      let nextTop = content.scrollTop + delta;
+      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+      nextTop = Math.max(0, Math.min(nextTop, maxScroll));
+
+      content.scrollTo({top: nextTop, behavior:'auto'});
+    }catch(err){
+      console.warn('Save button positioning:', err);
+    }
+  }
+
+  function scheduleInputSaveButtonPosition(){
+    if(!window.matchMedia || !window.matchMedia('(max-width: 768px)').matches) return;
+    [60, 180, 360, 600].forEach(function(delay){
+      keyboardMoveTimers.push(setTimeout(function(){
+        positionInputSaveButton();
+      }, delay));
+    });
+  }
+
   function initMasalahKegiatanAutoScroll(){
     if(document.documentElement.dataset.keyboardSmartScrollBound === '1') return;
     document.documentElement.dataset.keyboardSmartScrollBound = '1';
@@ -1681,6 +1742,8 @@
       return;
     }
     refreshItemOptions();
+    // Setelah Area Kerja dipilih, tombol Simpan langsung terlihat.
+    scheduleInputSaveButtonPosition();
   }
   function openTambahAreaModal(){
     document.getElementById('areaBaruInput').value = '';
@@ -1749,7 +1812,11 @@
       const area = document.getElementById('AreaKerja').value;
       if(!area){ setMsg('msgInput', 'Pilih Area Kerja terlebih dahulu sebelum menambah item.', true); return; }
       openTambahItemModal();
+      return;
     }
+
+    // Setelah Item dipilih, langsung tampilkan tombol Simpan.
+    scheduleInputSaveButtonPosition();
   }
   function openTambahItemModal(){
     const area = document.getElementById('AreaKerja').value;
