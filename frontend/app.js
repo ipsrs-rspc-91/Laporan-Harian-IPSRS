@@ -2889,7 +2889,11 @@
       tbody.appendChild(tr);
 
       const card = document.createElement('div');
-      card.className = 'rcard';
+      card.className = 'rcard ' + (
+        row.Status === 'Selesai'
+          ? 'rc-status-selesai'
+          : (row.Status === 'Belum' ? 'rc-status-belum' : 'rc-status-proses')
+      );
       card.innerHTML = reportCardMarkup_(row);
 
       // Kartu laporan tidak membuka edit saat area kartu diklik.
