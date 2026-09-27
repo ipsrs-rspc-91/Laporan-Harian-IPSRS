@@ -3720,11 +3720,52 @@
 
   // Komponen kartu laporan tunggal dipakai bersama oleh Dashboard dan Daftar Laporan.
   // Satu markup + satu sumber style: perubahan desain kartu cukup dilakukan sekali.
+  function formatReportInputDateTime_(value){
+    if(!value) return '-';
+    try{
+      const d = new Date(value);
+      if(Number.isNaN(d.getTime())) return '-';
+      const parts = new Intl.DateTimeFormat('id-ID',{
+        timeZone:'Asia/Jakarta',
+        day:'2-digit',
+        month:'2-digit',
+        year:'numeric',
+        hour:'2-digit',
+        minute:'2-digit',
+        hour12:false
+      }).formatToParts(d);
+      const get = type => (parts.find(p => p.type === type)?.value || '');
+      return `${get('day')}/${get('month')}/${get('year')} ${get('hour')}:${get('minute')}`;
+    }catch(e){
+      return '-';
+    }
+  }
+
   function reportCardMarkup_(row){
+    const inputDateTime = formatReportInputDateTime_(row.created_at || row.createdAt || row.CREATED_AT);
+    const inputTimeHtml = row.Pukul
+      ? `
+        <span class="rc-time" aria-label="Jam pekerjaan">
+          <svg class="rc-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <path d="M12 7.5v5l3.2 1.9"></path>
+          </svg>
+          <span>${escapeHtml(row.Pukul)}</span>
+        </span>`
+      : `
+        <span class="rc-time" aria-label="Jam pekerjaan">
+          <svg class="rc-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <path d="M12 7.5v5l3.2 1.9"></path>
+          </svg>
+          <span>-</span>
+        </span>`;
+
     return `
       <div class="rc-top">
         <div class="rc-title">
           <span class="rc-date">${escapeHtml(formatTanggalDisplay(row.Tanggal))}</span>
+          ${inputTimeHtml}
           <span class="rc-separator" aria-hidden="true"></span>
           <span class="rc-room">${escapeHtml(row.Ruang)}</span>
         </div>
@@ -3740,9 +3781,12 @@
         <span class="rc-label">Tindak Lanjut:</span>
         ${escapeHtml(row.Tindakan || '-')}
       </div>
-      <div class="rc-line">
+      <div class="rc-line rc-petugas">
         <span class="rc-label">Petugas:</span>
         ${escapeHtml(row.Petugas || '-')}
+      </div>
+      <div class="rc-input-meta">
+        Tgl &amp; Jam Input: <strong>${escapeHtml(inputDateTime)}</strong>
       </div>
     `;
   }
