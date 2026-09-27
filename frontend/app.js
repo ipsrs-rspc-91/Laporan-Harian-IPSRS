@@ -1452,7 +1452,9 @@
     try{
       // Gunakan label PETUGAS sebagai titik awal agar seluruh rangkaian
       // field bawah berada di layar seperti desain yang diminta.
-      const label = page.querySelector('label[for="Petugas"]') || petugas;
+      // Setelah Status/Petugas dipindahkan ke bawah, titik awal
+      // harus Kategori agar seluruh blok Kategori -> Simpan tetap terlihat.
+      const label = page.querySelector('label[for="Kategori"]') || kategori;
       const contentRect = content.getBoundingClientRect();
       const labelRect = label.getBoundingClientRect();
 
