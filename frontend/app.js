@@ -775,9 +775,22 @@
     if(!value) return '-';
     const d=new Date(value), now=Date.now(), sec=Math.max(0,Math.floor((now-d.getTime())/1000));
     if(sec<60) return sec+' detik lalu';
-    const min=Math.floor(sec/60);
-    if(min<60) return min+' menit lalu';
-    return formatLoginDateTime_(value);
+
+    const minTotal=Math.floor(sec/60);
+    const hourTotal=Math.floor(minTotal/60);
+    const dayTotal=Math.floor(hourTotal/24);
+
+    // < 24 jam: tampilkan jam + menit agar aktivitas lebih mudah dibaca.
+    if(hourTotal<24){
+      if(hourTotal===0) return minTotal+' menit lalu';
+      const mins=minTotal%60;
+      return hourTotal+' jam'+(mins ? ' '+mins+' menit' : '')+' lalu';
+    }
+
+    // >= 24 jam: tampilkan hari + jam + menit.
+    const hours=hourTotal%24;
+    const mins=minTotal%60;
+    return dayTotal+' hari'+(hours ? ' '+hours+' jam' : '')+(mins ? ' '+mins+' menit' : '')+' lalu';
   }
 
   async function loadOnlineUsers(){
