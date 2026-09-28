@@ -10,8 +10,8 @@
  * 5) Hanya request yang SEDANG berjalan yang dideduplikasi.
  * 6) Filter status/kategori/area/bidang/pencarian tetap client-side.
  * 7) Laporan Saya memakai renderer utama app.js dan tombol Edit tetap tersedia.
- * 8) Daftar Laporan read-only di UI: tidak ada tombol Edit dan baris/kartu
- *    tidak membuka modal edit. Otorisasi edit tetap wajib ditegakkan backend.
+ * 8) Daftar Laporan mengikuti CanEdit dari backend; tombol Edit tampil hanya
+ *    untuk laporan yang memang dapat diedit oleh user.
  * 9) Kebijakan read-only dipasang setelah renderer utama tersedia, sehingga
  *    tidak bergantung pada timing mount Page_Laporan.html.
  *
@@ -212,19 +212,14 @@
   }
 
   // -------------------------------------------------------------------
-  // DAFTAR LAPORAN — EDIT KHUSUS KA IPSRS
-  // Renderer utama app.js tetap dipakai. Saat tab Daftar aktif, tombol Edit
-  // hanya dipertahankan untuk KA IPSRS; peran lain tetap read-only di UI.
-  // Detail laporan baru diambil oleh openEditModalForReport() setelah tombol
-  // Edit diklik (on-demand), sehingga tidak menambah request saat daftar dibuka.
+  // DAFTAR LAPORAN — OTORISASI MENGIKUTI BACKEND
+  // Backend Supabase adalah sumber kebenaran. Jangan lagi memaksa
+  // Daftar Laporan menjadi read-only hanya karena role bukan KA IPSRS.
+  //
+  // CanEdit=true  -> tombol Edit boleh ditampilkan.
+  // CanEdit=false -> tombol Edit disembunyikan.
+  // Laporan KA IPSRS untuk non-KA sudah disaring oleh backend.
   // -------------------------------------------------------------------
-  function isKaIpsrs(){
-    try{
-      const s=typeof getSession==='function' ? getSession() : null;
-      return !!(s && String(s.role||'').trim().toUpperCase()==='KA_IPSRS');
-    }catch(e){ return false; }
-  }
-
   function installRendererPolicy(){
     if(rendererWrapped || typeof window.renderReportTable!=='function') return;
 
@@ -234,37 +229,21 @@
 
       if(mode()!=='daftar') return;
 
-      // KA IPSRS: pertahankan tombol Edit dari renderer utama.
-      // User lain: Daftar Laporan tetap read-only.
-      if(isKaIpsrs()) return;
-
+      const rows=Array.isArray(viewData)?viewData:[];
       const tbody=document.getElementById('reportTableBody');
       if(tbody){
-        Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
-          tr.onclick=null;
+        Array.from(tbody.querySelectorAll('tr')).forEach(function(tr,index){
+          const row=rows[index];
+          const canEdit=!!(row && row.CanEdit===true);
           const actionCell=tr.querySelector('.report-action');
           if(actionCell){
-            actionCell.innerHTML='';
-            actionCell.removeAttribute('onclick');
-            actionCell.style.display='none';
+            actionCell.style.display=canEdit?'':'none';
+            if(!canEdit){
+              actionCell.innerHTML='';
+              actionCell.removeAttribute('onclick');
+            }
           }
         });
-      }
-
-      const cardList=document.getElementById('reportCardList');
-      if(cardList){
-        Array.from(cardList.querySelectorAll('.rcard')).forEach(function(card){
-          card.onclick=null;
-          card.removeAttribute('onclick');
-          card.style.cursor='default';
-        });
-      }
-
-      const table=tbody ? tbody.closest('table') : null;
-      if(table){
-        const headers=table.querySelectorAll('thead th');
-        const lastHeader=headers.length ? headers[headers.length-1] : null;
-        if(lastHeader) lastHeader.style.display='none';
       }
     };
 
@@ -273,46 +252,12 @@
 
   installRendererPolicy();
 
-  // Renderer utama dipasang sekali. Setelah berhasil dibungkus, tidak
-  // perlu lagi mengamati seluruh document.body pada setiap perubahan DOM.
   const rendererObserver=new MutationObserver(function(){
     installRendererPolicy();
     if(rendererWrapped) rendererObserver.disconnect();
   });
   rendererObserver.observe(document.body,{childList:true,subtree:true});
 
-  function ensureAllMonth(){
-    const sel=document.getElementById('FilterBulan');
-    if(!sel) return;
-    if(!Array.from(sel.options).some(o=>o.value==='')){
-      const o=document.createElement('option');
-      o.value='';
-      o.textContent='Semua Bulan';
-      sel.insertBefore(o,sel.firstChild);
-    }
-  }
-
-  const originalGo=window.goLaporanSubTab;
-  if(typeof originalGo==='function'){
-    window.goLaporanSubTab=function(name){
-      if(name==='saya') clearSayaStaffFilter();
-      return originalGo.apply(this,arguments);
-    };
-  }
-
-  // Lapisan terakhir untuk mencegah tombol Edit pada Daftar Laporan jika ada
-  // renderer lain yang menambahkannya setelah render utama selesai.
-  document.addEventListener('click',function(ev){
-    if(mode()!=='daftar' || isKaIpsrs()) return;
-    const btn=ev.target && ev.target.closest ? ev.target.closest('button') : null;
-    if(!btn) return;
-    const t=String(btn.textContent||'').toLowerCase();
-    if(t.indexOf('edit')!==-1 || t.indexOf('✏')!==-1){
-      ev.preventDefault();
-      ev.stopPropagation();
-      ev.stopImmediatePropagation();
-    }
-  },true);
 
   function clearReportCache(fnName,args){
     if(!fnName){ responseCache.clear(); return; }
