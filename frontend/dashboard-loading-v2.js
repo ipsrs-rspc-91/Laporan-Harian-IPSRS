@@ -123,10 +123,12 @@
       try{ window.__ipsrsEnsureChart(); }catch(_e){}
     }
 
-    Promise.resolve().then(function(){
+    // PERF STAGE 17: kembalikan Promise navigasi agar caller tidak
+    // kehilangan status async dari goPage() utama.
+    return Promise.resolve().then(function(){
       return originalGoPage(name, preserveInputMode);
-    }).then(function(){
-      return true;
+    }).then(function(result){
+      return result !== false;
     }).catch(function(err){
       console.error('Dashboard loading error:', err);
       showDashboardError_('Gagal memuat Dashboard.');
