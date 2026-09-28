@@ -528,15 +528,20 @@
     resetLaporanUnfinishedState();
     const authLoading = document.getElementById('authLoading');
     if(authLoading) authLoading.classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
-    document.getElementById('appShell').classList.add('hidden');
-    if(msg) document.getElementById('loginMsg').innerText = msg;
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    const loginMsg = document.getElementById('loginMsg');
+    if(loginScreen) loginScreen.classList.remove('hidden');
+    if(appShell) appShell.classList.add('hidden');
+    if(msg && loginMsg) loginMsg.innerText = msg;
   }
   function hideLoginScreen(){
     const authLoading = document.getElementById('authLoading');
     if(authLoading) authLoading.classList.add('hidden');
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('appShell').classList.remove('hidden');
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
+    if(loginScreen) loginScreen.classList.add('hidden');
+    if(appShell) appShell.classList.remove('hidden');
   }
 
   async function performLogin(username,password,remember,msgEl,autoMode){
@@ -595,20 +600,35 @@
       // jangan jalankan dua kali pada jalur login.
       // Stage 8: Form Input baru dimuat setelah autentikasi berhasil.
       // Pastikan DOM form siap sebelum afterAuthReady() mengisi data master.
-      if(typeof window.__ipsrsEnsurePage==='function'){
-        await window.__ipsrsEnsurePage('input');
+      // AUTH SUCCESS BOUNDARY:
+      // Setelah Supabase + apiWhoAmI sukses, autentikasi dianggap berhasil.
+      // Error UI/lazy-page tidak boleh membatalkan login atau menampilkan
+      // error teknis sebagai "login gagal".
+      try{
+        if(typeof window.__ipsrsEnsurePage==='function'){
+          await window.__ipsrsEnsurePage('input');
+        }
+        if(typeof window.__ipsrsInitInputUi==='function'){
+          window.__ipsrsInitInputUi();
+        }
+        await afterAuthReady();
+      }catch(uiErr){
+        console.error('Post-auth UI initialization failed:', uiErr);
       }
-      if(typeof window.__ipsrsInitInputUi==='function'){
-        window.__ipsrsInitInputUi();
-      }
-      await afterAuthReady();
+
       hideLoginScreen();
+
       // Stage 3: fitur UI non-kritis dimuat di background setelah layar aplikasi
       // sudah terlihat. Tidak menahan proses login atau Form Input.
       if(typeof window.__ipsrsLoadPostAuthFeatures==='function'){
         window.__ipsrsLoadPostAuthFeatures();
       }
-      goPage('input');
+
+      try{
+        await Promise.resolve(goPage('input'));
+      }catch(navErr){
+        console.error('Post-auth navigation to input failed:', navErr);
+      }
       return true;
     }catch(err){
       const rawMsg=String(err&&err.message?err.message:err);
@@ -1907,8 +1927,10 @@
    * tidak pernah ikut terbawa ke Area Kerja baru.
    */
   function refreshItemOptions(){
-    const area = document.getElementById('AreaKerja').value;
+    const areaEl = document.getElementById('AreaKerja');
     const sel = document.getElementById('Item');
+    if(!areaEl || !sel) return;
+    const area = areaEl.value;
     sel.innerHTML = '';
     if(!area || area === ADD_NEW_VALUE){
       sel.innerHTML = '<option value="">Pilih area kerja dahulu&hellip;</option>';
