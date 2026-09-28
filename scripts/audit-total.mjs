@@ -83,12 +83,21 @@ const appPath=path.join(root,'frontend','app.js');
 if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
   const indexText=fs.readFileSync(indexPath,'utf8');
   const appText=fs.readFileSync(appPath,'utf8');
-  const hasDeferredPages=indexText.includes("deferredMounts") &&
-    indexText.includes("window.__ipsrsPageReady.laporan") &&
-    indexText.includes("window.__ipsrsPageReady.dashboard");
-  const hasNavigationGuard=appText.includes("ensureDeferredPageReady_") &&
-    appText.includes("deferredNames=new Set(['dashboard','laporan','online'])") &&
-    appText.includes("!document.getElementById('page-'+name)");
+  // TAHAP 31/DEPLOY GATE:
+  // Validasi marker implementasi lazy-page yang benar-benar digunakan saat ini.
+  // Versi lama audit mencari "deferredMounts"/"deferredNames", padahal aplikasi
+  // sekarang menggunakan lazyMounts + __ipsrsPageReady + ensureDeferredPageReady_.
+  const hasDeferredPages=indexText.includes("const lazyMounts=") &&
+    indexText.includes("window.__ipsrsPageReady") &&
+    indexText.includes("window.__ipsrsEnsurePage=ensurePage") &&
+    indexText.includes("lazyUrls") &&
+    indexText.includes("dashboard:'page-dashboard'") &&
+    indexText.includes("laporan:'page-laporan'") &&
+    indexText.includes("online:'page-online'");
+  const hasNavigationGuard=appText.includes("function ensureDeferredPageReady_(name, timeoutMs)") &&
+    appText.includes("const IPSRS_DEFERRED_PAGE_NAMES = new Set(['dashboard','laporan','online'])") &&
+    appText.includes("!document.getElementById('page-'+name)") &&
+    appText.includes("return ensureDeferredPageReady_(waitName,10000)");
   if(hasDeferredPages && hasNavigationGuard) pass('Deferred navigation race gate','Lazy page mounting is guarded before DOM activation');
   else fail('Deferred navigation race gate','Deferred pages exist without a verified navigation readiness guard');
 }else{
