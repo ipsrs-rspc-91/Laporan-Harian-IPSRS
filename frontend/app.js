@@ -856,7 +856,10 @@
     if(existing) return Promise.resolve(true);
 
     const readyMap=window.__ipsrsPageReady || {};
-    const ready=readyMap[name];
+    let ready=readyMap[name];
+    if(!ready && typeof window.__ipsrsEnsurePage==='function'){
+      try{ ready=window.__ipsrsEnsurePage(name); }catch(err){ console.error('[IPSRS_PAGE_MOUNT]',name,err); }
+    }
     if(!ready || typeof ready.then!=='function'){
       return Promise.resolve(!!document.getElementById(pageId));
     }
