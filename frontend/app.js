@@ -952,6 +952,11 @@
 
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
+    if(name === 'input'){
+      // Kategori/Area/Item kustom dibutuhkan Form Input. Jalankan di background
+      // agar perpindahan ke Form Input tidak menunggu API master-data.
+      ensureCustomItems_();
+    }
     if(name === 'input' && !preserveInputMode){
       startCreateReportForm(true);
 
@@ -1010,6 +1015,8 @@
       }
     }
     if(name === 'dashboard'){
+      // PERF STAGE 28: filter kategori/area kustom dimuat lazy saat Dashboard dibuka.
+      ensureCustomKategoriArea_();
       // PERF STAGE 11: kontrol Dashboard di-lazy-mount; isi hanya saat dibuka.
       buildMonthOptions();
       populateStaticSelects();
@@ -1034,6 +1041,8 @@
       loadDashboard();
     }
     if(name === 'laporan'){
+      // PERF STAGE 28: filter kategori/area kustom dimuat lazy saat Laporan dibuka.
+      ensureCustomKategoriArea_();
       // PERF STAGE 11: kontrol Laporan di-lazy-mount; isi hanya saat dibuka.
       buildMonthOptions();
       populateStaticSelects();
@@ -3584,7 +3593,35 @@
   let _editingReportId = null;
   let _editTransitionToken = null;
   let _reportFormMode = 'CREATE';
-  let _customDataReady = Promise.resolve();
+
+  // PERF STAGE 28: master data kustom dimuat hanya ketika halaman yang
+  // membutuhkannya benar-benar dibuka. Tidak ada request master-data setelah login.
+  let _customKategoriAreaPromise = null;
+  let _customItemPromise = null;
+
+  function ensureCustomKategoriArea_(){
+    if(_customKategoriAreaPromise) return _customKategoriAreaPromise;
+    _customKategoriAreaPromise = Promise.all([
+      loadKategoriKustom(),
+      loadAreaKerjaKustom()
+    ]).catch(function(){});
+    return _customKategoriAreaPromise;
+  }
+
+  function ensureCustomItems_(){
+    if(_customItemPromise) return _customItemPromise;
+    _customItemPromise = ensureCustomKategoriArea_()
+      .then(function(){
+        return loadItemKustomAll();
+      })
+      .then(function(){
+        const selected = document.getElementById('Item')?.value || '';
+        refreshItemOptions();
+        if(selected) setInputSelectValue('Item', selected);
+      })
+      .catch(function(){});
+    return _customItemPromise;
+  }
 
   // Satu form dipakai untuk CREATE dan EDIT. Hanya mode, ID laporan,
   // data awal, dan endpoint penyimpanan yang berbeda.
@@ -4243,29 +4280,9 @@
     refreshItemOptions();
     setStatusValue('');
 
-    // Data kustom tidak boleh berebut koneksi dengan proses login/halaman pertama.
-    // Mulai sedikit setelah UI aktif; data bawaan tetap langsung tersedia.
+    // PERF STAGE 28: tidak ada request master-data setelah login.
+    // Kategori/Area/Item kustom dimuat lazy ketika halaman yang membutuhkan dibuka.
     startIpsrsHeartbeat_();
-    _customDataReady = new Promise(resolve => setTimeout(resolve, 1200))
-      .then(() => Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()]))
-      .then(() => {
-        appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
-        appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
-
-        // Jangan menghapus Item yang sedang dipilih pada form EDIT ketika
-        // data kustom selesai dimuat di background.
-        const selectedItemBeforeRefresh =
-          (_reportFormMode === 'EDIT' && document.getElementById('Item'))
-            ? document.getElementById('Item').value
-            : '';
-
-        refreshItemOptions();
-
-        if(_reportFormMode === 'EDIT' && selectedItemBeforeRefresh){
-          setInputSelectValue('Item', selectedItemBeforeRefresh);
-        }
-      })
-      .catch(() => {});
   }
 
   async function checkAuthAndInit(){
