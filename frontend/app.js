@@ -66,6 +66,8 @@
   // Area Kerja -- bentuknya sama seperti ITEMS_BY_AREA (StaticData.html).
   // Dimuat sekali per sesi login lewat loadItemKustomAll().
   let CUSTOM_ITEMS_BY_AREA = {};
+  let CUSTOM_KATEGORI = [];
+  let CUSTOM_AREA_KERJA = [];
 
   function getSession(){
     try{ const raw = sessionStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; }
@@ -1002,6 +1004,10 @@
       }
     }
     if(name === 'dashboard'){
+      // PERF STAGE 11: kontrol Dashboard di-lazy-mount; isi hanya saat dibuka.
+      buildMonthOptions();
+      populateStaticSelects();
+
       // Setiap kembali ke Dashboard, filter petugas Dashboard selalu kembali
       // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.
       const dashStaff = document.getElementById('DashStaff');
@@ -1022,6 +1028,10 @@
       loadDashboard();
     }
     if(name === 'laporan'){
+      // PERF STAGE 11: kontrol Laporan di-lazy-mount; isi hanya saat dibuka.
+      buildMonthOptions();
+      populateStaticSelects();
+
       // PERF STAGE 9: fitur khusus Laporan baru dimuat saat menu ini benar-benar dibuka.
       // Loading dilakukan sekali dan ketiga script berjalan paralel.
       if(typeof window.__ipsrsLoadLaporanFeatures === 'function'){
@@ -1149,31 +1159,27 @@
   // option tambah -- fungsinya cuma menampilkan pilihan yang sudah ada.
   // ============================================================
   function populateStaticSelects(){
-    const kategoriTargets = ['Kategori','FilterKategori'];
-    kategoriTargets.forEach(id => {
+    // PERF STAGE 11: setiap lazy page mengisi kontrolnya saat DOM-nya sudah
+    // tersedia. Guard per-select mencegah option bawaan terduplikasi.
+    const appendOnce = function(id, values){
       const sel = document.getElementById(id);
-      STATIC_KATEGORI.forEach(k => {
+      if(!sel || sel.dataset.ipsrsStaticOptionsBound === '1') return;
+      values.forEach(v => {
+        if(Array.from(sel.options).some(o => o.value === v)) return;
         const opt = document.createElement('option');
-        opt.value = k; opt.innerText = k;
+        opt.value = v; opt.innerText = v;
         sel.appendChild(opt);
       });
-    });
-    const areaTargets = ['AreaKerja','FilterArea'];
-    areaTargets.forEach(id => {
-      const sel = document.getElementById(id);
-      STATIC_AREA.forEach(a => {
-        const opt = document.createElement('option');
-        opt.value = a; opt.innerText = a;
-        sel.appendChild(opt);
-      });
-    });
-
-    const bidangSel = document.getElementById('FilterBidang');
-    BIDANG_LIST.forEach(b => {
-      const opt = document.createElement('option');
-      opt.value = b; opt.innerText = b;
-      bidangSel.appendChild(opt);
-    });
+      sel.dataset.ipsrsStaticOptionsBound = '1';
+    };
+    appendOnce('Kategori', STATIC_KATEGORI);
+    appendOnce('FilterKategori', STATIC_KATEGORI);
+    appendOnce('AreaKerja', STATIC_AREA);
+    appendOnce('FilterArea', STATIC_AREA);
+    appendOnce('FilterBidang', BIDANG_LIST);
+    appendOnce('MonFilterBidang', BIDANG_LIST);
+    CUSTOM_KATEGORI.forEach(k => appendKategoriOption(k));
+    CUSTOM_AREA_KERJA.forEach(a => appendAreaKerjaOption(a));
     // Dropdown "Shift" dihapus dari HTML (P1 §3.6); tidak ada lagi elemen
     // #FilterShift untuk diisi di sini.
 
@@ -1196,7 +1202,8 @@
     try{
       const json = await authRun('apiGetKategoriKustom');
       if(json && json.ok && Array.isArray(json.kategori)){
-        json.kategori.forEach(k => appendKategoriOption(k));
+        CUSTOM_KATEGORI = Array.from(new Set(json.kategori.map(String)));
+        CUSTOM_KATEGORI.forEach(k => appendKategoriOption(k));
       }
     }catch(e){ /* gagal ambil kategori kustom bukan error fatal -- kategori bawaan tetap jalan */ }
   }
@@ -1210,7 +1217,8 @@
     try{
       const json = await authRun('apiGetAreaKerjaKustom');
       if(json && json.ok && Array.isArray(json.area)){
-        json.area.forEach(a => appendAreaKerjaOption(a));
+        CUSTOM_AREA_KERJA = Array.from(new Set(json.area.map(String)));
+        CUSTOM_AREA_KERJA.forEach(a => appendAreaKerjaOption(a));
       }
     }catch(e){ /* gagal ambil area kustom bukan error fatal -- area bawaan tetap jalan */ }
   }
