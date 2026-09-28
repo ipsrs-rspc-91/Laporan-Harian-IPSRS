@@ -731,11 +731,16 @@
     if(!CURRENT_SESSION) return;
     const nama = CURRENT_SESSION.nama || CURRENT_SESSION.username;
     const meta = (CURRENT_SESSION.staff_id||'-') + ' \u2022 ' + roleContextLabel(CURRENT_SESSION);
-    document.getElementById('sbIdentityNama').innerText = nama;
-    document.getElementById('sbIdentityNamaMenu').innerText = nama;
-    document.getElementById('sbIdentityMeta').innerText = meta;
-    document.getElementById('mobileIdentityChip').innerText = CURRENT_SESSION.staff_id || nama;
-    document.getElementById('inputIdentityPill').innerText = nama + ' \u00b7 ' + roleContextLabel(CURRENT_SESSION);
+    const sbIdentityNama = document.getElementById('sbIdentityNama');
+    const sbIdentityNamaMenu = document.getElementById('sbIdentityNamaMenu');
+    const sbIdentityMeta = document.getElementById('sbIdentityMeta');
+    const mobileIdentityChip = document.getElementById('mobileIdentityChip');
+    const inputIdentityPill = document.getElementById('inputIdentityPill');
+    if(sbIdentityNama) sbIdentityNama.innerText = nama;
+    if(sbIdentityNamaMenu) sbIdentityNamaMenu.innerText = nama;
+    if(sbIdentityMeta) sbIdentityMeta.innerText = meta;
+    if(mobileIdentityChip) mobileIdentityChip.innerText = CURRENT_SESSION.staff_id || nama;
+    if(inputIdentityPill) inputIdentityPill.innerText = nama + ' \u00b7 ' + roleContextLabel(CURRENT_SESSION);
     document.querySelectorAll('.readonlyPetugas').forEach(el => { el.value = nama; });
 
     // Prinsip baru: SEMUA peran bisa melihat semua laporan & panel filter petugas.
