@@ -128,10 +128,14 @@
     return Promise.resolve().then(function(){
       return originalGoPage(name, preserveInputMode);
     }).then(function(result){
-      return result !== false;
+      if(result === false){
+        showDashboardError_('Dashboard gagal dibuka. Silakan coba lagi.', activeLoadSeq);
+        return false;
+      }
+      return true;
     }).catch(function(err){
       console.error('Dashboard loading error:', err);
-      showDashboardError_('Gagal memuat Dashboard.');
+      showDashboardError_('Gagal memuat Dashboard.', activeLoadSeq);
       return false;
     });
   };
