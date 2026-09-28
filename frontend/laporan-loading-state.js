@@ -202,15 +202,10 @@
   }
 
   function boot(){
+    // Stage 6: script ini dieksekusi setelah laporan-fast-v2.js,
+    // sehingga fungsi laporan sudah tersedia. Tidak perlu polling
+    // 30 x 500 ms yang terus memeriksa fungsi yang sama.
     install();
-    var tries=0;
-    var timer=setInterval(function(){
-      tries++;
-      wrapLoader('loadReportsBySelectedMonth',currentReportTab);
-      wrapLoader('loadStaffMonitoring','monitoring');
-      wrapLoader('loadMonthlyRecap','rekap');
-      if(tries>=30) clearInterval(timer);
-    },500);
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
