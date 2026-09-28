@@ -587,6 +587,11 @@
       if(msgEl) msgEl.innerText='';
       // Password dipertahankan di field login agar tetap terisi setelah logout.
       applyIdentityToUI();
+      // Stage 8: Form Input baru dimuat setelah autentikasi berhasil.
+      // Pastikan DOM form siap sebelum afterAuthReady() mengisi data master.
+      if(typeof window.__ipsrsEnsurePage==='function'){
+        await window.__ipsrsEnsurePage('input');
+      }
       await afterAuthReady();
       hideLoginScreen();
       // Stage 3: fitur UI non-kritis dimuat di background setelah layar aplikasi
