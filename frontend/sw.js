@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-static-v20260928-audittotal4";
+const CACHE_NAME = "lhi-static-v20260928-audittotal1";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
