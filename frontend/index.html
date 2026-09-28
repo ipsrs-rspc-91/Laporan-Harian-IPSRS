@@ -17,7 +17,7 @@
   <link rel="preload" href="./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="./access-visibility-fix.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="./laporan-fast-v2.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./laporan-loading-state.js?v=20260928-AUDITTOTAL3" as="script">
+  <link rel="preload" href="./laporan-loading-state.js?v=20260928-AUDITTOTAL5" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
@@ -184,7 +184,7 @@
       await script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3');
       await script('./access-visibility-fix.js?v=20260928-AUDITTOTAL3');
       await script('./laporan-fast-v2.js?v=20260928-AUDITTOTAL3');
-      await script('./laporan-loading-state.js?v=20260928-AUDITTOTAL3');
+      await script('./laporan-loading-state.js?v=20260928-AUDITTOTAL5');
       window.__ipsrsChartReady = null;
     }catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
   </script>
