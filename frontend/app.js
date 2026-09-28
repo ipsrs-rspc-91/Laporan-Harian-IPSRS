@@ -415,6 +415,7 @@
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
       case 'apiListEditPermissions':
+      case 'apiGetSystemInfo':
         payload.token=token; break;
       case 'apiChangePassword':
         payload.token=token; payload.oldPassword=args[0]||''; payload.newPassword=args[1]||''; break;
