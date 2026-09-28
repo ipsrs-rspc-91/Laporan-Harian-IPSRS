@@ -719,9 +719,14 @@
     document.querySelectorAll('.readonlyPetugas').forEach(el => { el.value = nama; });
 
     // Prinsip baru: SEMUA peran bisa melihat semua laporan & panel filter petugas.
-    document.getElementById('adminStaffPanel').classList.remove('hidden');
-    document.getElementById('dashStaffFilterWrap').classList.remove('hidden');
-    document.getElementById('dashStaffCard').classList.remove('hidden');
+    // Dashboard sekarang lazy-load. Saat login, elemen Dashboard belum tentu
+    // sudah ter-mount; jangan memanggil classList pada elemen yang belum ada.
+    const adminStaffPanel = document.getElementById('adminStaffPanel');
+    const dashStaffFilterWrap = document.getElementById('dashStaffFilterWrap');
+    const dashStaffCard = document.getElementById('dashStaffCard');
+    if(adminStaffPanel) adminStaffPanel.classList.remove('hidden');
+    if(dashStaffFilterWrap) dashStaffFilterWrap.classList.remove('hidden');
+    if(dashStaffCard) dashStaffCard.classList.remove('hidden');
 
     // Default Daftar Laporan = semua petugas.
     // Pengguna tetap dapat memilih petugas tertentu melalui dropdown.
