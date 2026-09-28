@@ -1,0 +1,32 @@
+{
+  "baseline_id": "BASELINE-20260929-SYSTEM-GITHUB-SUPABASE-V66",
+  "created_from_github_commit": "5f17e9d1c59a46e1f243f67230a0befb0bf10589",
+  "github_repo": "ipsrs-rspc-91/Laporan-Harian-IPSRS",
+  "github_branch": "main",
+  "baseline_branch": "baseline/20260929-system-github-supabase-v66",
+  "supabase_project_id": "tcrmlhfsroyhaxdfwyll",
+  "supabase_functions": {
+    "ipsrs-api": {
+      "version": 66,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "ezbr_sha256": "ed12391ef6b9a432acfacb959f0e376eb7d83338fa73dc21450936872db36a23"
+    }
+  },
+  "database": {
+    "latest_migration": "20260928092227",
+    "latest_migration_name": "fix_target_specific_edit_permission",
+    "data_policy": "DATA LAPORAN TETAP. Checkpoint/rollback aplikasi tidak menghapus data laporan."
+  },
+  "access_settings": {
+    "ADMINISTRASI_EDIT": "AKTIF",
+    "note": "Nilai dicatat apa adanya saat checkpoint; tidak diubah oleh proses checkpoint."
+  },
+  "source_alignment": {
+    "github_ipsrs_api_path": "supabase/functions/ipsrs-api/index.ts",
+    "github_blob_sha": "07cc3434f85b42e5dfe5037cf72b7eff7c61ccc7",
+    "production_source_matches_github": "FALSE",
+    "note": "Production Edge Function v66 disimpan di baseline branch sebagai snapshot terpisah agar rollback dapat memulihkan source produksi yang benar-benar aktif."
+  },
+  "rollback_rule": "Rollback GitHub/frontend dan Supabase Edge Function harus diperlakukan sebagai satu pasangan. Jangan rollback database/data kecuali diminta eksplisit."
+}
