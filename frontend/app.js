@@ -579,7 +579,10 @@
       // lokal dan, bila didukung browser, juga oleh Password Manager.
       if(remember) saveRememberedCredentials(username);
       if(remember && typeof window.storeBrowserCredential_==='function'){
-        await window.storeBrowserCredential_(username,password,true);
+        // PERF STAGE 18: penyimpanan credential bukan dependency login.
+        // Jalankan di background agar Form Input tidak menunggu IndexedDB/
+        // Password Manager menyelesaikan proses penyimpanan.
+        Promise.resolve().then(() => window.storeBrowserCredential_(username,password,true)).catch(()=>{});
       }
       // Catat login di background. WhoAmI sudah memvalidasi sesi/identitas;
       // pencatatan audit tidak boleh menahan pengguna masuk ke aplikasi.
