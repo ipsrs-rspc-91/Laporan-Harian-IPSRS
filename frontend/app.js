@@ -956,9 +956,10 @@
     // sebelum fragment HTML selesai di-mount. Tanpa guard ini, getElementById()
     // bernilai null dan seluruh area aplikasi dapat terlihat kosong.
     if(IPSRS_DEFERRED_PAGE_NAMES.has(String(name||''))){
+      const pageMissing = !document.getElementById('page-'+name);
       const existingPage=document.getElementById('page-'+name);
       const pageIsMounted=!!existingPage && String(existingPage.innerHTML || '').trim() !== '';
-      if(pageIsMounted){
+      if(!pageMissing && pageIsMounted){
         // Halaman sudah benar-benar ter-mount; lanjutkan navigasi normal.
       }else{
       const waitName=String(name);
