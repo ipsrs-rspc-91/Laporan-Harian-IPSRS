@@ -7,6 +7,9 @@
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL4">
   <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
   <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL3" as="script">
@@ -14,7 +17,6 @@
   <link rel="preload" href="./config.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="./app.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="./login-fast.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
@@ -180,8 +182,12 @@
       ]);
       await script('./app.js?v=20260928-AUDITTOTAL3');
       // required-fields/access-control/access-policy dimuat setelah login.
-      await script('./login-fast.js?v=20260928-AUDITTOTAL3');
-      await script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3');
+      // PERF STAGE 22: kedua wrapper tidak saling bergantung setelah app.js siap.
+      // Muat bersamaan agar startup tidak menunggu total waktu download keduanya.
+      await Promise.all([
+        script('./login-fast.js?v=20260928-AUDITTOTAL3'),
+        script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3')
+      ]);
 
       // PERF STAGE 9: fitur khusus Laporan tidak dibutuhkan saat startup.
       // Ketiganya dimuat paralel hanya ketika menu Laporan pertama kali dibuka.
