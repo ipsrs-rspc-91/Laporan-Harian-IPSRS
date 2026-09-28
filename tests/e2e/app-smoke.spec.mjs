@@ -25,11 +25,13 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
 test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   const assets = [
     '/index.html',
-    '/app.js?v=20260927-DASHSTAT3',
-    '/config.js?v=SUPABASE-CUTOVER-20260923-3',
-    '/laporan-fast-v2.js?v=20260926-LAPORANFAST3',
-    '/login-fast.js?v=20260924-PASSWORD7',
-    '/dashboard-loading-v2.js?v=20260927-DASHFAST4'
+    '/app.js?v=20260928-PRIVACYFIX1',
+    '/config.js?v=20260928-PRIVACYFIX1',
+    '/laporan-fast-v2.js?v=20260928-PRIVACYFIX1',
+    '/login-fast.js?v=20260928-PRIVACYFIX1',
+    '/dashboard-loading-v2.js?v=20260928-PRIVACYFIX1',
+    '/access-policy-ui.js?v=20260928-PRIVACYFIX1',
+    '/sw.js?v=20260928-PRIVACYFIX1'
   ];
 
   for (const path of assets) {
