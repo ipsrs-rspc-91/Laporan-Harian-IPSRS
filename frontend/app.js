@@ -4116,7 +4116,7 @@
   // cache dibersihkan segera setelah create/edit laporan.
   const _dashboardResponseCache = new Map();
   const _dashboardInflight = new Map();
-  const _DASHBOARD_CACHE_TTL = 3000;
+  const _DASHBOARD_CACHE_TTL = 5000; // PERF STAGE 19: selaraskan dengan cache backend 5 detik
 
   function clearDashboardResponseCache(){
     _dashboardResponseCache.clear();
