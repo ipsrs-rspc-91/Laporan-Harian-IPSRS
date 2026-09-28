@@ -2931,7 +2931,9 @@
       if(resolvedReportId) row.ID = resolvedReportId;
 
       window.__IPSRS_REPORTS[resolvedReportId] = row;
+      const canEdit = row && row.CanEdit === true;
       const tr = document.createElement('tr');
+      if(resolvedReportId) tr.dataset.reportId = resolvedReportId;
       // Kolom "Bidang/Shift" (P1 §3.6): konsep Shift sudah dihapus dari
       // backend, jadi kolom ini sekarang murni menampilkan Bidang.
       const bidang = row.Bidang || '-';
@@ -2948,7 +2950,7 @@
         <td>${escapeHtml(row.Kategori)}</td>
         <td>${escapeHtml(row.AreaKerja)}</td>
         <td>${escapeHtml(row.Item)}</td>
-        <td class="report-action"><button class="btn" type="button">✏️ Edit</button></td>
+        <td class="report-action" ${canEdit ? '' : 'style="display:none"'}>${canEdit ? '<button class="btn" type="button">✏️ Edit</button>' : ''}</td>
       `;
       tr.className = row.Status === 'Selesai' ? 'report-row-selesai' : (row.Status === 'Belum' ? 'report-row-belum' : 'report-row-proses');
 
