@@ -589,6 +589,11 @@
       applyIdentityToUI();
       await afterAuthReady();
       hideLoginScreen();
+      // Stage 3: fitur UI non-kritis dimuat di background setelah layar aplikasi
+      // sudah terlihat. Tidak menahan proses login atau Form Input.
+      if(typeof window.__ipsrsLoadPostAuthFeatures==='function'){
+        window.__ipsrsLoadPostAuthFeatures();
+      }
       goPage('input');
       return true;
     }catch(err){
