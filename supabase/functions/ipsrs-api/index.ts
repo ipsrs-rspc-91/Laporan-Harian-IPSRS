@@ -63,18 +63,15 @@ async function canEditReport(db:any,s:any,r:any){
    if((await accessSetting(db,"ADMINISTRASI_EDIT","NONAKTIF"))==="AKTIF")return{ok:true};
    return{ok:false,reason:"Administrasi tidak memiliki izin edit laporan staf lain saat ADMINISTRASI_EDIT NONAKTIF."};
  }
- const pk=String(s.staff_id||"");
- const hit=editPermissionCache.get(pk);
- let allowed:boolean;
- if(hit&&Date.now()-hit.at<PERMISSION_CACHE_TTL){
-   allowed=hit.value;
- }else{
-   const {data,error}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();
-   if(error)throw error;
-   allowed=!!data;
-   editPermissionCache.set(pk,{at:Date.now(),value:allowed});
- }
- return allowed?{ok:true}:{ok:false,reason:"Anda tidak memiliki hak untuk mengedit laporan ini."};
+ const {data,error}=await db.from("edit_permissions")
+   .select("permission_id")
+   .eq("granted_to_staff_id",s.staff_id)
+   .eq("target_staff_id",r.staff_id)
+   .eq("is_active",true)
+   .limit(1)
+   .maybeSingle();
+ if(error)throw error;
+ return data?{ok:true}:{ok:false,reason:"Anda tidak memiliki hak untuk mengedit laporan ini."};
 }
 async function bulkOwnerRoles(db:any,rows:any[]){
  const ids=[...new Set((rows||[]).map((r:any)=>String(r.staff_id||'').trim()).filter(Boolean))];
@@ -89,12 +86,23 @@ async function reportPolicyBatch(db:any,s:any,rows:any[]){
  const ownOnly=(rows||[]).every((r:any)=>r.staff_id===s.staff_id);
  const ownerRoles=(s.role==="KA_IPSRS"||ownOnly)?new Map<string,string>():await bulkOwnerRoles(db,rows);
  const teamAccess=s.role==="KA_IPSRS"||ownOnly||await accessSetting(db,"LAPORAN_TIM","NONAKTIF")==="AKTIF";
- let adminEdit=false,permissionEdit=false;
- if(s.role==="KA_IPSRS")permissionEdit=true;
- else if(s.role==="ADMINISTRASI")adminEdit=await accessSetting(db,"ADMINISTRASI_EDIT","NONAKTIF")==="AKTIF";
- else {const {data,error}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(error)throw error;permissionEdit=!!data;}
+ let adminEdit=false;
+ const permissionTargets=new Set<string>();
+ if(s.role==="ADMINISTRASI")adminEdit=await accessSetting(db,"ADMINISTRASI_EDIT","NONAKTIF")==="AKTIF";
+ else if(s.role!=="KA_IPSRS"){
+   const {data,error}=await db.from("edit_permissions").select("target_staff_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true);
+   if(error)throw error;
+   for(const p of data||[])permissionTargets.add(String(p.target_staff_id||''));
+ }
  const visible=new Set<string>(),editable=new Set<string>();
- for(const r of rows||[]){const id=String(r.report_id||'');const own=r.staff_id===s.staff_id;const ownerIsKa=String(r.role_snapshot||'').toUpperCase()==="KA_IPSRS"||ownerRoles.get(String(r.staff_id||''))==="KA_IPSRS";if(s.role==="KA_IPSRS"||(own&&!ownerIsKa)||(!ownerIsKa&&teamAccess))visible.add(id);if(s.role==="KA_IPSRS"||(own&&!ownerIsKa)||(adminEdit&&!ownerIsKa)||(permissionEdit&&!ownerIsKa))editable.add(id);}
+ for(const r of rows||[]){
+   const id=String(r.report_id||'');
+   const ownerId=String(r.staff_id||'');
+   const own=r.staff_id===s.staff_id;
+   const ownerIsKa=String(r.role_snapshot||'').toUpperCase()==="KA_IPSRS"||ownerRoles.get(ownerId)==="KA_IPSRS";
+   if(s.role==="KA_IPSRS"||(own&&!ownerIsKa)||(!ownerIsKa&&teamAccess))visible.add(id);
+   if(s.role==="KA_IPSRS"||(own&&!ownerIsKa)||(adminEdit&&!ownerIsKa)||(!ownerIsKa&&permissionTargets.has(ownerId)))editable.add(id);
+ }
  return{visible,editable};
 }
 function dbp(p:any){const n=(v:any)=>v===""||v==null?null:Number(v);return{tanggal:p.Tanggal||null,pelapor:p.Pelapor||null,pukul:p.Pukul||null,nolk:p.NoLK||null,ruang:p.Ruang||null,masalah_kegiatan:p.MasalahKegiatan||null,tindakan:p.Tindakan||null,status:p.Status||null,keterangan:p.Keterangan||null,kategori:p.Kategori||null,area_kerja:p.AreaKerja||null,item:p.Item||null,spare_part_unit:p.SparePartUnit||null,type:p.Type||null,jumlah:n(p.Jumlah),jadwal_kerja:p.JadwalKerja||null,rencana_kegiatan:p.RencanaKegiatan||null,target_pekerjaan:p.TargetPekerjaan||null,realisasi_pekerjaan:p.RealisasiPekerjaan||null,hasil_pencapaian:p.HasilPencapaian||null,status_pencapaian:p.StatusPencapaian||null,kendala:p.Kendala||null,tindak_lanjut:p.TindakLanjut||null,waktu_mulai:p.WaktuMulai||null,waktu_selesai:p.WaktuSelesai||null}}
