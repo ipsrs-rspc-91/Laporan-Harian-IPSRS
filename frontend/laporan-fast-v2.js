@@ -280,11 +280,11 @@
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',function(){
-      ensureAllMonth();
+      buildMonthOptions();
       installRendererPolicy();
     },{once:true});
   }else{
-    ensureAllMonth();
+    buildMonthOptions();
     installRendererPolicy();
   }
 
