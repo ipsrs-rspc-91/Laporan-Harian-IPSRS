@@ -912,13 +912,15 @@
     console.error('[IPSRS_PAGE_MOUNT] timeout:',name);
   }
 
+  // PERF STAGE 26: set halaman deferred dibuat sekali, bukan setiap klik navigasi.
+  const IPSRS_DEFERRED_PAGE_NAMES = new Set(['dashboard','laporan','online']);
+
   async function goPage(name, preserveInputMode){
     // Deferred pages harus siap sebelum navigasi dijalankan.
     // Ini mencegah race condition: user dapat menekan menu Laporan/Dashboard
     // sebelum fragment HTML selesai di-mount. Tanpa guard ini, getElementById()
     // bernilai null dan seluruh area aplikasi dapat terlihat kosong.
-    const deferredNames=new Set(['dashboard','laporan','online']);
-    if(deferredNames.has(String(name||'')) && !document.getElementById('page-'+name)){
+    if(IPSRS_DEFERRED_PAGE_NAMES.has(String(name||'')) && !document.getElementById('page-'+name)){
       const waitName=String(name);
       if(waitName==='laporan' && typeof window.__ipsrsShowLaporanLoading==='function'){
         try{ window.__ipsrsShowLaporanLoading('saya'); }catch(_e){}
