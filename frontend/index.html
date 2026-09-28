@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
-  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL3">
+  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL4">
   <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
   <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
@@ -131,13 +131,21 @@
   <script>
   (async function(){
     const initialMounts={loginScreen:'pages/Page_Login.html', 'page-input':'pages/Page_Input.html'};
-    const deferredMounts={ 'page-dashboard':'pages/Page_Dashboard.html', 'page-laporan':'pages/Page_Laporan.html', 'page-online':'pages/Page_Online.html' };
+    const lazyMounts={dashboard:'page-dashboard', laporan:'page-laporan', online:'page-online'};
+    const lazyUrls={dashboard:'pages/Page_Dashboard.html', laporan:'pages/Page_Laporan.html', online:'pages/Page_Online.html'};
     window.__ipsrsPageReady = window.__ipsrsPageReady || {};
     window.__ipsrsPageReady.dashboard = null;
     window.__ipsrsPageReady.laporan = null;
     window.__ipsrsPageReady.online = null;
     async function fragment(id,url){const el=document.getElementById(id);if(!el)throw new Error('Mount point not found: '+id);const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');el.outerHTML=await r.text();const mounted=document.getElementById(id);const pageName=id.replace(/^page-/,'');const activeNav=document.querySelector('.nav-item.active');if(mounted&&mounted.classList.contains('page')&&activeNav&&activeNav.dataset.page===pageName)mounted.classList.add('active');return true;}
     function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Gagal memuat '+src));document.body.appendChild(s);});}
+    function ensurePage(name){
+      if(!lazyMounts[name]) return Promise.reject(new Error('Unknown lazy page: '+name));
+      if(window.__ipsrsPageReady[name]) return window.__ipsrsPageReady[name];
+      window.__ipsrsPageReady[name]=fragment(lazyMounts[name],lazyUrls[name]);
+      return window.__ipsrsPageReady[name];
+    }
+    window.__ipsrsEnsurePage=ensurePage;
     try{
       await Promise.all(Object.entries(initialMounts).map(([id,url])=>fragment(id,url)));
       await script('js/static-data.js?v=20260928-AUDITTOTAL3');
@@ -152,14 +160,8 @@
       await script('./access-visibility-fix.js?v=20260928-AUDITTOTAL3');
       await script('./laporan-fast-v2.js?v=20260928-AUDITTOTAL3');
       await script('./laporan-loading-state.js?v=20260928-AUDITTOTAL3');
-      window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
-      window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
-      window.__ipsrsPageReady.online = fragment('page-online', deferredMounts['page-online']);
-      Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan, window.__ipsrsPageReady.online]).catch(e=>console.warn('Deferred page load:',e));
-      window.__ipsrsChartReady = script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js').catch(e=>{ console.warn('Deferred Chart.js load:', e); throw e; });
-    }
-    catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
-  })();
+      window.__ipsrsChartReady = null;
+    }catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
   </script>
 
   <script>
