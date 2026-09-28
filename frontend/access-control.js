@@ -34,5 +34,7 @@
   window.toggleAccessSetting=async function(key,current){const next=current==='AKTIF'?'NONAKTIF':'AKTIF';if(!confirm('Ubah '+key+' menjadi '+next+'?'))return;const r=await callAccessApi('apiSetAccessSetting',key,next);if(!r.ok)alert(r.msg||'Gagal mengubah pengaturan.');await render();};
   window.saveAccessPermission=async function(){const g=document.getElementById('permGrantee').value,t=document.getElementById('permTarget').value;if(g===t){alert('Pemberi izin dan target harus berbeda.');return;}const r=await callAccessApi('apiSetEditPermission',g,t,true);if(!r.ok)alert(r.msg||'Gagal menyimpan izin.');await render();};
   window.togglePermission=async function(g,t,current){const next=current==='AKTIF'?false:true;const r=await callAccessApi('apiSetEditPermission',g,t,next);if(!r.ok)alert(r.msg||'Gagal mengubah izin.');await render();};
-  const timer=setInterval(()=>{mount();if(mounted)clearInterval(timer);},500);setTimeout(mount,50);
+  // PERF STAGE 31: file ini dimuat setelah autentikasi, sehingga session
+  // sudah tersedia. Satu mount tertunda cukup; tidak perlu polling 500 ms.
+  setTimeout(mount,50);
 })();
