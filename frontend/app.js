@@ -2915,13 +2915,26 @@
     inner.style.width=Math.max(wrap.scrollWidth,wrap.clientWidth)+'px';
   }
   function renderReportTable(viewData){
+    // Defense-in-depth privasi KA IPSRS:
+    // backend adalah sumber kebenaran utama, tetapi renderer juga tidak
+    // pernah menampilkan laporan KA IPSRS kepada petugas non-KA jika suatu
+    // payload lama/cache tidak sengaja sampai ke frontend.
+    const sessionRole = String(CURRENT_SESSION?.role || '').toUpperCase();
+    const sessionStaff = String(CURRENT_SESSION?.staff_id || '').trim();
+    const safeViewData = (Array.isArray(viewData) ? viewData : []).filter(function(row){
+      if(sessionRole === 'KA_IPSRS') return true;
+      const ownerRole = String(row?.Role || row?.role_snapshot || '').toUpperCase();
+      const ownerId = String(row?.StaffID || row?.staff_id || '').trim();
+      return ownerRole !== 'KA_IPSRS' && ownerId !== 'KAIPSRS';
+    });
+
     const tbody = document.getElementById('reportTableBody');
     const cardList = document.getElementById('reportCardList');
     tbody.innerHTML = '';
     cardList.innerHTML = '';
 
     window.__IPSRS_REPORTS = window.__IPSRS_REPORTS || {};
-    viewData.forEach(row => {
+    safeViewData.forEach(row => {
       // Normalisasi ID laporan dari backend. REPORTS menggunakan field report_id.
       const resolvedReportId = String(
         row.ID ?? row.report_id ?? row.ReportID ?? row.id ?? ''
