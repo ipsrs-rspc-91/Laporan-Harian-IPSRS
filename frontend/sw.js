@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20260928-editfix2";
+const CACHE_NAME = "lhi-shell-v20260928-editfix3";
 
 self.addEventListener("install", () => self.skipWaiting());
 
