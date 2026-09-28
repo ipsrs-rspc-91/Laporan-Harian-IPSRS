@@ -1,0 +1,20 @@
+{
+  "baseline_id": "BASELINE-20260929-SYSTEM-GITHUB-SUPABASE-V67",
+  "created_at": "2026-09-29T05:02:00+07:00",
+  "github_repo": "ipsrs-rspc-91/Laporan-Harian-IPSRS",
+  "github_branch": "main",
+  "github_commit": "5f17e9d1c59a46e1f243f67230a0befb0bf10589",
+  "baseline_branch": "baseline/20260929-system-github-supabase-v67",
+  "supabase_project_id": "tcrmlhfsroyhaxdfwyll",
+  "edge_functions": {
+    "ipsrs-api": {
+      "version": 67,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "sha256": "d9c8322b5d8e276375221a961ed4201faaa67d0b07f4270d99d56b4ca98af937"
+    }
+  },
+  "database_migration": "20260928092227",
+  "data_policy": "DATA LAPORAN SUPABASE TETAP ADA. Rollback aplikasi tidak menghapus data. Rollback database hanya jika diminta secara eksplisit.",
+  "note": "ipsrs-api v67 deployed from GitHub main source; previous production v66 differed from GitHub main. v67 aligns deployed entrypoint with GitHub main."
+}
