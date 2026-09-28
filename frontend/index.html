@@ -83,7 +83,7 @@
   </style>
   <script>
   (function(){
-    const VERSION='20260928-AUDITTOTAL3';
+    const VERSION='20260929-SYSTEMINFO-FIX1';
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -106,7 +106,10 @@
           ['Service Worker',x.service_worker||'-'],
           ['API Status',x.api_status||'-'],
           ['Database Status',x.database_status||'-'],
-          ['Last Deployment',x.last_deployment||'-']
+          ['Last Deployment',x.last_deployment||'-'],
+          ['Rollback Baseline','BASELINE-20260929-SYSTEMINFO-FIX'],
+          ['Rollback Commit','767aaa47e1a48f96070ffa4952998a41c4c84043'],
+          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke BASELINE-20260929-SYSTEMINFO-FIX']
         ];
         content.innerHTML=rows.map(([k,v])=>'<div class="system-info-row"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
       }catch(e){
