@@ -41,7 +41,7 @@
   <div id="loginScreen" class="hidden"></div>
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
-      <div class="topbar-brand"><div class="logo-box"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></div><span class="topbar-brand-text"><h2>LAPORAN HARIAN IPSRS</h2><span>RS. Puri Cinere</span></span></div>
+      <div class="topbar-brand" id="rsBrandLogo" title="Rumah Sakit Puri Cinere"><button type="button" class="logo-box" id="rsLogoButton" aria-label="Logo Rumah Sakit Puri Cinere"><img class="logo-img" src="./logo.png" alt="Logo RS Puri Cinere"></button><span class="topbar-brand-text"><h2>LAPORAN HARIAN IPSRS</h2><span>RS. Puri Cinere</span></span></div>
       <nav class="topbar-nav">
         <button id="nav-online-users" class="nav-item hidden" data-page="online" onclick="goPage('online')" title="Aktivitas Petugas"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17" cy="8" r="2"></circle><path d="M14.5 14.5A5.8 5.8 0 0 1 21 20"></path></svg><span>Petugas Online</span></button>
         <button class="nav-item" data-page="input" onclick="goPage('input')" title="Form Input"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><path d="M14 2v6h6"></path><path d="m8 16 4-4 3 3-4 4H8v-3Z"></path><path d="m14 12 2-2 2 2-2 2"></path></svg><span>Form Input</span></button>
@@ -50,10 +50,21 @@
       </nav>
       <div class="topbar-user"><button class="user-chip" onclick="toggleUserMenu()"><span class="u-avatar" id="mobileIdentityChip">-</span><span class="u-name" id="sbIdentityNama">-</span><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button><button type="button" class="logout-direct" onclick="try{doLogout()}catch(e){try{clearSession();}catch(_e){} try{showLoginScreen('Anda sudah keluar. Silakan login kembali.');}catch(_e){} }" title="Keluar dari aplikasi" aria-label="Keluar dari aplikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg><span>Keluar</span></button><div class="user-menu" id="userMenu"><div class="identity-card"><div class="i-name" id="sbIdentityNamaMenu">-</div><div class="i-meta" id="sbIdentityMeta">-</div></div><button type="button" class="btn block" onclick="openPwModal()">Ganti Password</button></div></div>
     </header>
+    <div id="systemInfoModalBg" class="modal-bg" aria-hidden="true"><div class="modal system-info-modal" role="dialog" aria-modal="true" aria-labelledby="systemInfoTitle"><div class="system-info-head"><div><h3 id="systemInfoTitle">Informasi Sistem</h3><div class="modal-sub">Khusus KA IPSRS</div></div><button type="button" class="btn" id="systemInfoClose">Tutup</button></div><div id="systemInfoContent" class="system-info-content"><div class="modal-sub">Memuat informasi sistem...</div></div></div></div>
     <div class="user-menu-backdrop" id="userMenuBackdrop" onclick="closeUserMenu()"></div>
     <main class="content"><section id="page-input" class="page active"></section><section id="page-dashboard" class="page"></section><section id="page-laporan" class="page"></section><section id="page-online" class="page"></section></main>
   </div>
   <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
+  <style>
+    .system-info-modal{width:min(620px,calc(100vw - 28px));max-height:82vh;overflow:auto}
+    .system-info-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+    .system-info-content{display:grid;gap:8px}
+    .system-info-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:11px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fafafa}
+    .system-info-row span{font-size:13px;color:#64748b}
+    .system-info-row strong{font-size:13px;text-align:right;overflow-wrap:anywhere}
+    #rsLogoButton{border:0;background:transparent;padding:0;cursor:pointer}
+    @media(max-width:700px){.system-info-row{align-items:flex-start;flex-direction:column;gap:4px}.system-info-row strong{text-align:left}}
+  </style>
   <style>
     /* Required-field indicator: red border only. */
     /* Required-field indicator: red border ~30% lebih tegas, tanpa mengubah validasi. */
@@ -70,6 +81,53 @@
       font-weight: 600;
     }
   </style>
+  <script>
+  (function(){
+    const VERSION='20260928-AUDITTOTAL1';
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    async function openSystemInfo(){
+      const session=typeof getSession==='function'?getSession():null;
+      if(!session||session.role!=='KA_IPSRS')return;
+      const bg=document.getElementById('systemInfoModalBg'), content=document.getElementById('systemInfoContent');
+      if(!bg||!content)return;
+      bg.classList.add('show'); bg.setAttribute('aria-hidden','false');
+      content.innerHTML='<div class="modal-sub">Memuat informasi sistem...</div>';
+      try{
+        const r=await authRun('apiGetSystemInfo');
+        if(!r||!r.ok)throw new Error((r&&r.msg)||'Informasi sistem tidak dapat dimuat.');
+        const x=r.data||{};
+        const rows=[
+          ['System Version',x.system_version||VERSION],
+          ['Frontend Build',x.frontend_build||VERSION],
+          ['API Version',x.api_version||'-'],
+          ['Database Migration',x.database_migration||'-'],
+          ['Environment',x.environment||'-'],
+          ['Git Commit',x.git_commit||'-'],
+          ['Service Worker',x.service_worker||'-'],
+          ['API Status',x.api_status||'-'],
+          ['Database Status',x.database_status||'-'],
+          ['Last Deployment',x.last_deployment||'-']
+        ];
+        content.innerHTML=rows.map(([k,v])=>'<div class="system-info-row"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
+      }catch(e){
+        content.innerHTML='<div class="msg-err">'+esc(e.message||e)+'</div>';
+      }
+    }
+    function closeSystemInfo(){
+      const bg=document.getElementById('systemInfoModalBg');
+      if(bg){bg.classList.remove('show');bg.setAttribute('aria-hidden','true');}
+    }
+    window.__ipsrsOpenSystemInfo=openSystemInfo;
+    window.__ipsrsCloseSystemInfo=closeSystemInfo;
+    window.addEventListener('DOMContentLoaded',function(){
+      const b=document.getElementById('rsLogoButton'), close=document.getElementById('systemInfoClose'), bg=document.getElementById('systemInfoModalBg');
+      if(b)b.addEventListener('click',openSystemInfo);
+      if(close)close.addEventListener('click',closeSystemInfo);
+      if(bg)bg.addEventListener('click',e=>{if(e.target===bg)closeSystemInfo();});
+    });
+  })();
+  </script>
+
   <script>
   (async function(){
     const initialMounts={loginScreen:'pages/Page_Login.html', 'page-input':'pages/Page_Input.html'};
