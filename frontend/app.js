@@ -528,20 +528,15 @@
     resetLaporanUnfinishedState();
     const authLoading = document.getElementById('authLoading');
     if(authLoading) authLoading.classList.add('hidden');
-    const loginScreen = document.getElementById('loginScreen');
-    const appShell = document.getElementById('appShell');
-    const loginMsg = document.getElementById('loginMsg');
-    if(loginScreen) loginScreen.classList.remove('hidden');
-    if(appShell) appShell.classList.add('hidden');
-    if(msg && loginMsg) loginMsg.innerText = msg;
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('appShell').classList.add('hidden');
+    if(msg) document.getElementById('loginMsg').innerText = msg;
   }
   function hideLoginScreen(){
     const authLoading = document.getElementById('authLoading');
     if(authLoading) authLoading.classList.add('hidden');
-    const loginScreen = document.getElementById('loginScreen');
-    const appShell = document.getElementById('appShell');
-    if(loginScreen) loginScreen.classList.add('hidden');
-    if(appShell) appShell.classList.remove('hidden');
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appShell').classList.remove('hidden');
   }
 
   async function performLogin(username,password,remember,msgEl,autoMode){
@@ -600,35 +595,20 @@
       // jangan jalankan dua kali pada jalur login.
       // Stage 8: Form Input baru dimuat setelah autentikasi berhasil.
       // Pastikan DOM form siap sebelum afterAuthReady() mengisi data master.
-      // AUTH SUCCESS BOUNDARY:
-      // Setelah Supabase + apiWhoAmI sukses, autentikasi dianggap berhasil.
-      // Error UI/lazy-page tidak boleh membatalkan login atau menampilkan
-      // error teknis sebagai "login gagal".
-      try{
-        if(typeof window.__ipsrsEnsurePage==='function'){
-          await window.__ipsrsEnsurePage('input');
-        }
-        if(typeof window.__ipsrsInitInputUi==='function'){
-          window.__ipsrsInitInputUi();
-        }
-        await afterAuthReady();
-      }catch(uiErr){
-        console.error('Post-auth UI initialization failed:', uiErr);
+      if(typeof window.__ipsrsEnsurePage==='function'){
+        await window.__ipsrsEnsurePage('input');
       }
-
+      if(typeof window.__ipsrsInitInputUi==='function'){
+        window.__ipsrsInitInputUi();
+      }
+      await afterAuthReady();
       hideLoginScreen();
-
       // Stage 3: fitur UI non-kritis dimuat di background setelah layar aplikasi
       // sudah terlihat. Tidak menahan proses login atau Form Input.
       if(typeof window.__ipsrsLoadPostAuthFeatures==='function'){
         window.__ipsrsLoadPostAuthFeatures();
       }
-
-      try{
-        await Promise.resolve(goPage('input'));
-      }catch(navErr){
-        console.error('Post-auth navigation to input failed:', navErr);
-      }
+      goPage('input');
       return true;
     }catch(err){
       const rawMsg=String(err&&err.message?err.message:err);
@@ -731,27 +711,17 @@
     if(!CURRENT_SESSION) return;
     const nama = CURRENT_SESSION.nama || CURRENT_SESSION.username;
     const meta = (CURRENT_SESSION.staff_id||'-') + ' \u2022 ' + roleContextLabel(CURRENT_SESSION);
-    const sbIdentityNama = document.getElementById('sbIdentityNama');
-    const sbIdentityNamaMenu = document.getElementById('sbIdentityNamaMenu');
-    const sbIdentityMeta = document.getElementById('sbIdentityMeta');
-    const mobileIdentityChip = document.getElementById('mobileIdentityChip');
-    const inputIdentityPill = document.getElementById('inputIdentityPill');
-    if(sbIdentityNama) sbIdentityNama.innerText = nama;
-    if(sbIdentityNamaMenu) sbIdentityNamaMenu.innerText = nama;
-    if(sbIdentityMeta) sbIdentityMeta.innerText = meta;
-    if(mobileIdentityChip) mobileIdentityChip.innerText = CURRENT_SESSION.staff_id || nama;
-    if(inputIdentityPill) inputIdentityPill.innerText = nama + ' \u00b7 ' + roleContextLabel(CURRENT_SESSION);
+    document.getElementById('sbIdentityNama').innerText = nama;
+    document.getElementById('sbIdentityNamaMenu').innerText = nama;
+    document.getElementById('sbIdentityMeta').innerText = meta;
+    document.getElementById('mobileIdentityChip').innerText = CURRENT_SESSION.staff_id || nama;
+    document.getElementById('inputIdentityPill').innerText = nama + ' \u00b7 ' + roleContextLabel(CURRENT_SESSION);
     document.querySelectorAll('.readonlyPetugas').forEach(el => { el.value = nama; });
 
     // Prinsip baru: SEMUA peran bisa melihat semua laporan & panel filter petugas.
-    // Dashboard sekarang lazy-load. Saat login, elemen Dashboard belum tentu
-    // sudah ter-mount; jangan memanggil classList pada elemen yang belum ada.
-    const adminStaffPanel = document.getElementById('adminStaffPanel');
-    const dashStaffFilterWrap = document.getElementById('dashStaffFilterWrap');
-    const dashStaffCard = document.getElementById('dashStaffCard');
-    if(adminStaffPanel) adminStaffPanel.classList.remove('hidden');
-    if(dashStaffFilterWrap) dashStaffFilterWrap.classList.remove('hidden');
-    if(dashStaffCard) dashStaffCard.classList.remove('hidden');
+    document.getElementById('adminStaffPanel').classList.remove('hidden');
+    document.getElementById('dashStaffFilterWrap').classList.remove('hidden');
+    document.getElementById('dashStaffCard').classList.remove('hidden');
 
     // Default Daftar Laporan = semua petugas.
     // Pengguna tetap dapat memilih petugas tertentu melalui dropdown.
@@ -902,11 +872,7 @@
   function ensureDeferredPageReady_(name, timeoutMs){
     const pageId='page-'+String(name||'').trim();
     const existing=document.getElementById(pageId);
-    // Placeholder <section id="page-*"> memang sudah ada di index.html,
-    // tetapi belum berarti fragment halaman sudah ter-mount. Hanya anggap
-    // siap jika elemen sudah memiliki isi dari fragment yang sebenarnya.
-    const isMounted=!!existing && String(existing.innerHTML || '').trim() !== '';
-    if(isMounted) return Promise.resolve(true);
+    if(existing) return Promise.resolve(true);
 
     const readyMap=window.__ipsrsPageReady || {};
     let ready=readyMap[name];
@@ -914,8 +880,7 @@
       try{ ready=window.__ipsrsEnsurePage(name); }catch(err){ console.error('[IPSRS_PAGE_MOUNT]',name,err); }
     }
     if(!ready || typeof ready.then!=='function'){
-      const mountedNow=document.getElementById(pageId);
-      return Promise.resolve(!!mountedNow && String(mountedNow.innerHTML || '').trim() !== '');
+      return Promise.resolve(!!document.getElementById(pageId));
     }
 
     const timeout=Number(timeoutMs)||10000;
@@ -955,31 +920,24 @@
     // Ini mencegah race condition: user dapat menekan menu Laporan/Dashboard
     // sebelum fragment HTML selesai di-mount. Tanpa guard ini, getElementById()
     // bernilai null dan seluruh area aplikasi dapat terlihat kosong.
-    if(IPSRS_DEFERRED_PAGE_NAMES.has(String(name||''))){
-      const pageMissing = !document.getElementById('page-'+name);
-      const existingPage=document.getElementById('page-'+name);
-      const pageIsMounted=!!existingPage && String(existingPage.innerHTML || '').trim() !== '';
-      if(!pageMissing && pageIsMounted){
-        // Halaman sudah benar-benar ter-mount; lanjutkan navigasi normal.
-      }else{
+    if(IPSRS_DEFERRED_PAGE_NAMES.has(String(name||'')) && !document.getElementById('page-'+name)){
       const waitName=String(name);
       if(waitName==='laporan' && typeof window.__ipsrsShowLaporanLoading==='function'){
         try{ window.__ipsrsShowLaporanLoading('saya'); }catch(_e){}
       }
-        return ensureDeferredPageReady_(waitName,10000).then(function(ready){
-          if(!ready){
-            if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
-              try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
-            }
-            showDeferredPageError_(waitName);
-            return false;
-          }
+      return ensureDeferredPageReady_(waitName,10000).then(function(ready){
+        if(!ready){
           if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
             try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
           }
-          return goPage(waitName,preserveInputMode);
-        });
-      }
+          showDeferredPageError_(waitName);
+          return false;
+        }
+        if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
+          try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
+        }
+        return goPage(waitName,preserveInputMode);
+      });
     }
 
     // Simpan status halaman SEBELUM class active dihapus.
@@ -994,11 +952,6 @@
 
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
-    if(name === 'input'){
-      // Kategori/Area/Item kustom dibutuhkan Form Input. Jalankan di background
-      // agar perpindahan ke Form Input tidak menunggu API master-data.
-      ensureCustomItems_();
-    }
     if(name === 'input' && !preserveInputMode){
       startCreateReportForm(true);
 
@@ -1057,8 +1010,6 @@
       }
     }
     if(name === 'dashboard'){
-      // PERF STAGE 28: filter kategori/area kustom dimuat lazy saat Dashboard dibuka.
-      ensureCustomKategoriArea_();
       // PERF STAGE 11: kontrol Dashboard di-lazy-mount; isi hanya saat dibuka.
       buildMonthOptions();
       populateStaticSelects();
@@ -1083,8 +1034,6 @@
       loadDashboard();
     }
     if(name === 'laporan'){
-      // PERF STAGE 28: filter kategori/area kustom dimuat lazy saat Laporan dibuka.
-      ensureCustomKategoriArea_();
       // PERF STAGE 11: kontrol Laporan di-lazy-mount; isi hanya saat dibuka.
       buildMonthOptions();
       populateStaticSelects();
@@ -1944,10 +1893,8 @@
    * tidak pernah ikut terbawa ke Area Kerja baru.
    */
   function refreshItemOptions(){
-    const areaEl = document.getElementById('AreaKerja');
+    const area = document.getElementById('AreaKerja').value;
     const sel = document.getElementById('Item');
-    if(!areaEl || !sel) return;
-    const area = areaEl.value;
     sel.innerHTML = '';
     if(!area || area === ADD_NEW_VALUE){
       sel.innerHTML = '<option value="">Pilih area kerja dahulu&hellip;</option>';
@@ -3637,35 +3584,7 @@
   let _editingReportId = null;
   let _editTransitionToken = null;
   let _reportFormMode = 'CREATE';
-
-  // PERF STAGE 28: master data kustom dimuat hanya ketika halaman yang
-  // membutuhkannya benar-benar dibuka. Tidak ada request master-data setelah login.
-  let _customKategoriAreaPromise = null;
-  let _customItemPromise = null;
-
-  function ensureCustomKategoriArea_(){
-    if(_customKategoriAreaPromise) return _customKategoriAreaPromise;
-    _customKategoriAreaPromise = Promise.all([
-      loadKategoriKustom(),
-      loadAreaKerjaKustom()
-    ]).catch(function(){});
-    return _customKategoriAreaPromise;
-  }
-
-  function ensureCustomItems_(){
-    if(_customItemPromise) return _customItemPromise;
-    _customItemPromise = ensureCustomKategoriArea_()
-      .then(function(){
-        return loadItemKustomAll();
-      })
-      .then(function(){
-        const selected = document.getElementById('Item')?.value || '';
-        refreshItemOptions();
-        if(selected) setInputSelectValue('Item', selected);
-      })
-      .catch(function(){});
-    return _customItemPromise;
-  }
+  let _customDataReady = Promise.resolve();
 
   // Satu form dipakai untuk CREATE dan EDIT. Hanya mode, ID laporan,
   // data awal, dan endpoint penyimpanan yang berbeda.
@@ -4324,9 +4243,29 @@
     refreshItemOptions();
     setStatusValue('');
 
-    // PERF STAGE 28: tidak ada request master-data setelah login.
-    // Kategori/Area/Item kustom dimuat lazy ketika halaman yang membutuhkan dibuka.
+    // Data kustom tidak boleh berebut koneksi dengan proses login/halaman pertama.
+    // Mulai sedikit setelah UI aktif; data bawaan tetap langsung tersedia.
     startIpsrsHeartbeat_();
+    _customDataReady = new Promise(resolve => setTimeout(resolve, 1200))
+      .then(() => Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()]))
+      .then(() => {
+        appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
+        appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
+
+        // Jangan menghapus Item yang sedang dipilih pada form EDIT ketika
+        // data kustom selesai dimuat di background.
+        const selectedItemBeforeRefresh =
+          (_reportFormMode === 'EDIT' && document.getElementById('Item'))
+            ? document.getElementById('Item').value
+            : '';
+
+        refreshItemOptions();
+
+        if(_reportFormMode === 'EDIT' && selectedItemBeforeRefresh){
+          setInputSelectValue('Item', selectedItemBeforeRefresh);
+        }
+      })
+      .catch(() => {});
   }
 
   async function checkAuthAndInit(){
