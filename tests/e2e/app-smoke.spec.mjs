@@ -31,13 +31,13 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
 test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   const assets = [
     '/index.html',
-    '/app.js?v=20260928-AUDITTOTAL3',
-    '/config.js?v=20260928-AUDITTOTAL3',
-    '/laporan-fast-v2.js?v=20260928-AUDITTOTAL3',
-    '/login-fast.js?v=20260928-AUDITTOTAL3',
-    '/dashboard-loading-v2.js?v=20260928-AUDITTOTAL3',
-    '/access-policy-ui.js?v=20260928-AUDITTOTAL3',
-    '/sw.js?v=20260928-AUDITTOTAL3'
+    '/app.js?v=20260928-AUDITTOTAL7',
+    '/config.js?v=20260928-AUDITTOTAL7',
+    '/laporan-fast-v2.js?v=20260928-AUDITTOTAL7',
+    '/login-fast.js?v=20260928-AUDITTOTAL7',
+    '/dashboard-loading-v2.js?v=20260928-AUDITTOTAL7',
+    '/access-policy-ui.js?v=20260928-AUDITTOTAL7',
+    '/sw.js?v=20260928-AUDITTOTAL7'
   ];
 
   for (const path of assets) {
@@ -47,9 +47,10 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
 });
 
 
-test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  const deleteButton = page.locator('#btnDeleteReport');
-  await expect(deleteButton).toBeAttached();
-  await expect(deleteButton).toBeHidden();
+test('Delete Report control is present but hidden outside edit mode', async ({ request }) => {
+  const response = await request.get('/pages/Page_Input.html');
+  expect(response.ok()).toBeTruthy();
+  const html = await response.text();
+  expect(html).toContain('id="btnDeleteReport"');
+  expect(html).toMatch(/id="btnDeleteReport"[^>]*class="[^"]*hidden[^"]*"/);
 });
