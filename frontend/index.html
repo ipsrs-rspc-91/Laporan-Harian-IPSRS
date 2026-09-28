@@ -108,7 +108,8 @@
           ['Database Status',x.database_status||'-'],
           ['Last Deployment',x.last_deployment||'-'],
           ['Rollback Baseline','BASELINE-20260929-SYSTEMINFO-FIX'],
-          ['Rollback Commit','767aaa47e1a48f96070ffa4952998a41c4c84043'],
+          ['Rollback Commit','d1c667935bb1d18a07075f023951ae4241869154'],
+          ['Rollback Branch','baseline/20260929-systeminfo-fix'],
           ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke BASELINE-20260929-SYSTEMINFO-FIX']
         ];
         content.innerHTML=rows.map(([k,v])=>'<div class="system-info-row"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
