@@ -914,7 +914,8 @@
       try{ ready=window.__ipsrsEnsurePage(name); }catch(err){ console.error('[IPSRS_PAGE_MOUNT]',name,err); }
     }
     if(!ready || typeof ready.then!=='function'){
-      return Promise.resolve(!!document.getElementById(pageId));
+      const mountedNow=document.getElementById(pageId);
+      return Promise.resolve(!!mountedNow && String(mountedNow.innerHTML || '').trim() !== '');
     }
 
     const timeout=Number(timeoutMs)||10000;
