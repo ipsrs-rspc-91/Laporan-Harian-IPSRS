@@ -123,6 +123,23 @@ async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){
 }
 async function act(ctx:any,a:string,d:any,req?:Request){const db=ctx.supabaseAdmin,s=await staff(ctx,req);
 if(a==="apiWhoAmI"){await db.from("staff").update({last_seen_at:new Date().toISOString()}).eq("staff_id",s.staff_id);return{ok:true,token:d.token||"",username:s.staff_id,staff_id:s.staff_id,nama:s.nama,role:s.role,bidang:s.bidang,status:s.status,role_label:label(s.role)};}
+if(a==="apiGetSystemInfo"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat informasi sistem."};
+ const {error}=await db.from("staff").select("staff_id").eq("staff_id",s.staff_id).maybeSingle();
+ if(error)throw error;
+ return{ok:true,data:{
+   system_version:"20260928-AUDITTOTAL1",
+   frontend_build:"20260928-AUDITTOTAL1",
+   api_version:"ipsrs-api v62",
+   database_migration:"20260928100000",
+   environment:"PRODUCTION",
+   git_commit:"fc29ce2bce5c5c5e39b2b33628b5e7421b515e74",
+   service_worker:"lhi-shell-v20260928-audittotal1",
+   api_status:"ONLINE",
+   database_status:"CONNECTED",
+   last_deployment:"2026-09-28"
+ }};
+}
 if(a==="apiRecordLogin"){
  const now=new Date().toISOString();
  const ua=String(req?.headers.get("user-agent")||"").trim().slice(0,500);
