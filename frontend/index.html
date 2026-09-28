@@ -127,9 +127,12 @@
 
   <script>
   (async function(){
-    const initialMounts={loginScreen:'pages/Page_Login.html', 'page-input':'pages/Page_Input.html'};
-    const lazyMounts={dashboard:'page-dashboard', laporan:'page-laporan', online:'page-online'};
-    const lazyUrls={dashboard:'pages/Page_Dashboard.html', laporan:'pages/Page_Laporan.html', online:'pages/Page_Online.html'};
+    // PERF STAGE 8: Form Input tidak dibutuhkan sebelum autentikasi.
+    // Muat hanya layar login saat startup; Form Input dimuat setelah login
+    // berhasil, sebelum afterAuthReady() yang memang membutuhkan DOM input.
+    const initialMounts={loginScreen:'pages/Page_Login.html'};
+    const lazyMounts={input:'page-input',dashboard:'page-dashboard', laporan:'page-laporan', online:'page-online'};
+    const lazyUrls={input:'pages/Page_Input.html',dashboard:'pages/Page_Dashboard.html', laporan:'pages/Page_Laporan.html', online:'pages/Page_Online.html'};
     window.__ipsrsPageReady = window.__ipsrsPageReady || {};
     window.__ipsrsPageReady.dashboard = null;
     window.__ipsrsPageReady.laporan = null;
