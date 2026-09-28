@@ -1019,6 +1019,17 @@
       loadDashboard();
     }
     if(name === 'laporan'){
+      // PERF STAGE 9: fitur khusus Laporan baru dimuat saat menu ini benar-benar dibuka.
+      // Loading dilakukan sekali dan ketiga script berjalan paralel.
+      if(typeof window.__ipsrsLoadLaporanFeatures === 'function'){
+        try{
+          await window.__ipsrsLoadLaporanFeatures();
+        }catch(err){
+          console.error('Gagal memuat fitur Laporan:', err);
+          showDeferredPageError_('laporan');
+          return false;
+        }
+      }
       // Setiap masuk ke menu Laporan dari menu utama harus membuka Laporan Saya.
       // Jangan membaca .sub-tab.active lama: pada SPA, DOM/state tab sebelumnya
       // tetap hidup dan dapat membawa mode Daftar (309) ke Laporan Saya.
