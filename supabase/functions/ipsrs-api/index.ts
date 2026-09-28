@@ -128,8 +128,8 @@ if(a==="apiGetSystemInfo"){
  const {error}=await db.from("staff").select("staff_id").eq("staff_id",s.staff_id).maybeSingle();
  if(error)throw error;
  return{ok:true,data:{
-   system_version:"20260928-AUDITTOTAL2",
-   frontend_build:"20260928-AUDITTOTAL2",
+   system_version:"20260928-AUDITTOTAL1",
+   frontend_build:"20260928-AUDITTOTAL1",
    api_version:"ipsrs-api v64",
    database_migration:"20260928092227",
    environment:"PRODUCTION",
