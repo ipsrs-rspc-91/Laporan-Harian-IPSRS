@@ -229,7 +229,16 @@
 
       if(mode()!=='daftar') return;
 
-      const rows=Array.isArray(viewData)?viewData:[];
+      // Defense-in-depth: renderer Daftar Laporan juga membuang
+      // laporan KA IPSRS untuk seluruh petugas non-KA. Backend tetap
+      // menjadi sumber otorisasi utama.
+      const sess=(typeof getSession==='function') ? getSession() : null;
+      const isKa=String(sess?.role||'').toUpperCase()==='KA_IPSRS';
+      const rows=(Array.isArray(viewData)?viewData:[]).filter(function(row){
+        if(isKa) return true;
+        return String(row?.Role||row?.role_snapshot||'').toUpperCase()!=='KA_IPSRS'
+          && String(row?.StaffID||row?.staff_id||'').trim()!=='KAIPSRS';
+      });
       const tbody=document.getElementById('reportTableBody');
       if(tbody){
         Array.from(tbody.querySelectorAll('tr')).forEach(function(tr,index){
