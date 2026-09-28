@@ -850,7 +850,72 @@
     goPage('laporan');
   }
 
+  function ensureDeferredPageReady_(name, timeoutMs){
+    const pageId='page-'+String(name||'').trim();
+    const existing=document.getElementById(pageId);
+    if(existing) return Promise.resolve(true);
+
+    const readyMap=window.__ipsrsPageReady || {};
+    const ready=readyMap[name];
+    if(!ready || typeof ready.then!=='function'){
+      return Promise.resolve(!!document.getElementById(pageId));
+    }
+
+    const timeout=Number(timeoutMs)||10000;
+    let timer=null;
+    const timeoutPromise=new Promise(resolve=>{
+      timer=setTimeout(()=>resolve(false),timeout);
+    });
+
+    return Promise.race([
+      Promise.resolve(ready).then(()=>!!document.getElementById(pageId)).catch(err=>{
+        console.error('[IPSRS_PAGE_MOUNT]',name,err);
+        return false;
+      }),
+      timeoutPromise
+    ]).then(ok=>{
+      if(timer) clearTimeout(timer);
+      return ok;
+    });
+  }
+
+  function showDeferredPageError_(name){
+    const label=String(name||'').toLowerCase()==='laporan'?'Laporan':(String(name||'').toLowerCase()==='online'?'Petugas Online':'halaman');
+    try{
+      if(label==='Laporan' && typeof window.__ipsrsLaporanLoadingError==='function'){
+        window.__ipsrsLaporanLoadingError('saya','Halaman Laporan belum siap. Silakan coba lagi.');
+        return;
+      }
+    }catch(_e){}
+    console.error('[IPSRS_PAGE_MOUNT] timeout:',name);
+  }
+
   function goPage(name, preserveInputMode){
+    // Deferred pages harus siap sebelum navigasi dijalankan.
+    // Ini mencegah race condition: user dapat menekan menu Laporan/Dashboard
+    // sebelum fragment HTML selesai di-mount. Tanpa guard ini, getElementById()
+    // bernilai null dan seluruh area aplikasi dapat terlihat kosong.
+    const deferredNames=new Set(['dashboard','laporan','online']);
+    if(deferredNames.has(String(name||'')) && !document.getElementById('page-'+name)){
+      const waitName=String(name);
+      if(waitName==='laporan' && typeof window.__ipsrsShowLaporanLoading==='function'){
+        try{ window.__ipsrsShowLaporanLoading('saya'); }catch(_e){}
+      }
+      return ensureDeferredPageReady_(waitName,10000).then(function(ready){
+        if(!ready){
+          if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
+            try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
+          }
+          showDeferredPageError_(waitName);
+          return false;
+        }
+        if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
+          try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
+        }
+        return goPage(waitName,preserveInputMode);
+      });
+    }
+
     // Simpan status halaman SEBELUM class active dihapus.
     // Jika dicek setelah navigasi, page-laporan sudah tidak active sehingga
     // invalidasi state Laporan tidak pernah berjalan.
