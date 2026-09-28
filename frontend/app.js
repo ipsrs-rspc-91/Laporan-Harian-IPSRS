@@ -908,7 +908,7 @@
     console.error('[IPSRS_PAGE_MOUNT] timeout:',name);
   }
 
-  function goPage(name, preserveInputMode){
+  async function goPage(name, preserveInputMode){
     // Deferred pages harus siap sebelum navigasi dijalankan.
     // Ini mencegah race condition: user dapat menekan menu Laporan/Dashboard
     // sebelum fragment HTML selesai di-mount. Tanpa guard ini, getElementById()
