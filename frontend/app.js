@@ -2768,13 +2768,10 @@
       try{ if(typeof window.__ipsrsClearLaporanApiCache==='function') window.__ipsrsClearLaporanApiCache(); }catch(e){}
       setMsg('msgInput','');
       startCreateReportForm(true);
+      // PERF STAGE 16: goPage('laporan') sudah menginvalidasi siklus
+      // Laporan dan memuat dataset terbaru. Jangan lakukan forceReload
+      // kedua 120 ms kemudian karena itu menggandakan request apiGetReports.
       goPage('laporan');
-      setTimeout(function(){
-        try{
-          if(typeof window.forceReloadLaporan==='function') window.forceReloadLaporan();
-          else if(typeof window.loadReportsBySelectedMonth==='function') window.loadReportsBySelectedMonth(true);
-        }catch(e){ console.warn('[DELETE] refresh laporan gagal',e); }
-      },120);
       alert('Laporan berhasil dihapus dan disimpan sebagai arsip.');
     }catch(err){
       if(btn){ btn.disabled=false; btn.innerText='Hapus Laporan'; }
