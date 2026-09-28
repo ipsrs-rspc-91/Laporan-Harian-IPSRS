@@ -26,14 +26,9 @@
     if(s.role === 'KA_IPSRS') return true;
     if(String(report.StaffID||'') === String(s.staff_id||'')) return true;
     if(String(report.Role||'') === 'KA_IPSRS') return false;
-    // Administrasi: setting edit dibaca langsung dari backend melalui
-    // apiGetAccessControl. Ini hanya fallback UI untuk memastikan tombol
-    // tetap muncul setelah setting AKTIF; backend apiUpdateReport tetap
-    // melakukan otorisasi final dan tetap melarang laporan KA IPSRS.
-    if(s.role === 'ADMINISTRASI' && adminEditActive === true) return true;
-
     // Backend mengirim CanEdit sebagai sumber kebenaran UI per laporan.
-    // Untuk role selain Administrasi, jangan menebak izin dari frontend.
+    // ADMINISTRASI_EDIT hanya memicu reload policy; frontend tidak boleh
+    // memberikan hak edit sendiri jika backend mengirim CanEdit=false.
     return report.CanEdit === true;
   };
 
