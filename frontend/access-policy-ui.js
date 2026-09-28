@@ -39,18 +39,19 @@
 
   function refresh(){
     loadPolicy().then(function(){
-      // Setting edit adalah hasil dari backend. Setelah selesai dimuat,
-      // render ulang Daftar Laporan agar tombol Edit langsung muncul tanpa
-      // menunggu navigasi ulang.
+      // Setelah policy selesai dibaca, muat ulang hanya sekali bila
+      // Administrasi sedang berada di Daftar Laporan. Ini memastikan
+      // CanEdit dari backend sudah terpasang sebelum renderer menentukan
+      // visibilitas tombol Edit.
       try{
+        const s2 = typeof getSession === 'function' ? getSession() : null;
         const page=document.getElementById('page-laporan');
-        if(s.role === 'ADMINISTRASI' &&
+        if(s2 && s2.role === 'ADMINISTRASI' &&
            adminEditActive === true &&
            page &&
            page.classList.contains('active') &&
-           typeof rawData !== 'undefined' &&
-           typeof renderReportTable === 'function'){
-          renderReportTable(Array.isArray(rawData) ? rawData : []);
+           typeof window.loadReportsBySelectedMonth === 'function'){
+          window.loadReportsBySelectedMonth(false);
         }
       }catch(e){}
 
