@@ -1180,17 +1180,8 @@
     appendOnce('MonFilterBidang', BIDANG_LIST);
     CUSTOM_KATEGORI.forEach(k => appendKategoriOption(k));
     CUSTOM_AREA_KERJA.forEach(a => appendAreaKerjaOption(a));
-    // Dropdown "Shift" dihapus dari HTML (P1 §3.6); tidak ada lagi elemen
-    // #FilterShift untuk diisi di sini.
-
-    const monBidangSel = document.getElementById('MonFilterBidang');
-    BIDANG_LIST.forEach(b => {
-      const opt = document.createElement('option');
-      opt.value = b; opt.innerText = b;
-      monBidangSel.appendChild(opt);
-    });
-    // Dropdown "Shift" pada Monitoring dihapus dari HTML (P1 §3.6); tidak ada
-    // lagi elemen #MonFilterShift untuk diisi di sini.
+    // Filter bidang dan monitoring bidang juga sudah ditangani appendOnce()
+    // di atas. Tidak ada pekerjaan DOM tambahan saat login.
   }
   /**
    * Kategori kustom (dibuat lewat option "+ Tambah Kategori Baru") disimpan
