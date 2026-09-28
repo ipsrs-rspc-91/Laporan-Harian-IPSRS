@@ -15,9 +15,6 @@
   <link rel="preload" href="./app.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="./login-fast.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./access-visibility-fix.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./laporan-fast-v2.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./laporan-loading-state.js?v=20260928-AUDITTOTAL5" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
@@ -185,9 +182,25 @@
       // required-fields/access-control/access-policy dimuat setelah login.
       await script('./login-fast.js?v=20260928-AUDITTOTAL3');
       await script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3');
-      await script('./access-visibility-fix.js?v=20260928-AUDITTOTAL3');
-      await script('./laporan-fast-v2.js?v=20260928-AUDITTOTAL3');
-      await script('./laporan-loading-state.js?v=20260928-AUDITTOTAL5');
+
+      // PERF STAGE 9: fitur khusus Laporan tidak dibutuhkan saat startup.
+      // Ketiganya dimuat paralel hanya ketika menu Laporan pertama kali dibuka.
+      let laporanFeaturesPromise = null;
+      window.__ipsrsLoadLaporanFeatures = function(){
+        if(laporanFeaturesPromise) return laporanFeaturesPromise;
+        const urls = [
+          './access-visibility-fix.js?v=20260928-AUDITTOTAL4',
+          './laporan-fast-v2.js?v=20260928-AUDITTOTAL4',
+          './laporan-loading-state.js?v=20260928-AUDITTOTAL6'
+        ];
+        laporanFeaturesPromise = Promise.all(urls.map(script))
+          .catch(function(err){
+            laporanFeaturesPromise = null;
+            console.warn('Laporan feature load failed:', err);
+            throw err;
+          });
+        return laporanFeaturesPromise;
+      };
       window.__ipsrsChartReady = null;
     }catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
   </script>
