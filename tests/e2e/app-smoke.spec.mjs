@@ -12,6 +12,12 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   await expect(page.locator('#loginScreen')).toBeAttached();
   await expect(page.locator('#appShell')).toBeAttached();
 
+  // All deferred SPA pages must eventually mount before a user can navigate to them.
+  // This catches the blank-screen race independently of authentication state.
+  await expect(page.locator('#page-dashboard')).toBeAttached({timeout:10000});
+  await expect(page.locator('#page-laporan')).toBeAttached({timeout:10000});
+  await expect(page.locator('#page-online')).toBeAttached({timeout:10000});
+
   // Auth bootstrap can take a few seconds; the expected unauthenticated state is
   // the login screen, while authenticated sessions may legitimately show the app shell.
   await page.waitForTimeout(4000);
