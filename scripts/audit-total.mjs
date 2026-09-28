@@ -138,6 +138,33 @@ for (const f of files.filter(f=>/\.(js|html)$/i.test(f) && !f.includes('/supabas
 if (direct.length) warn('Frontend direct Supabase access',direct.join(', '));
 else pass('Frontend direct Supabase access','No obvious direct .from() Supabase access detected in frontend');
 
+// Security + permission regression gate:
+// Guard the authorization invariants that must survive frontend/backend optimizations.
+// This is static CI protection only; it does not modify production permissions.
+const securityApiPath=path.join(root,'supabase','functions','ipsrs-api','index.ts');
+const securityAppPath=path.join(root,'frontend','app.js');
+if(fs.existsSync(securityApiPath) && fs.existsSync(securityAppPath)){
+  const api=fs.readFileSync(securityApiPath,'utf8');
+  const app=fs.readFileSync(securityAppPath,'utf8');
+  const securityChecks=[
+    ['API authentication gate', api.includes('withSupabase({auth:"user"}')],
+    ['Active staff gate', api.includes('status).toLowerCase()!=="aktif"')],
+    ['KA report view privacy', api.includes('if(String(r.role_snapshot||"").toUpperCase()==="KA_IPSRS")return false;')],
+    ['KA report edit privacy', api.includes('Laporan KA IPSRS hanya dapat diedit oleh KA IPSRS.')],
+    ['KA-only delete gate', api.includes('if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menghapus laporan."};')],
+    ['Batch report visibility policy', api.includes('async function reportPolicyBatch(db:any,s:any,rows:any[])')],
+    ['Backend CanEdit authority', api.includes('return{ok:true,data:map(data,ce.ok)}')],
+    ['Lazy Dashboard DOM safety', app.includes('if(adminStaffPanel) adminStaffPanel.classList.remove') &&
+      app.includes('if(dashStaffFilterWrap) dashStaffFilterWrap.classList.remove') &&
+      app.includes('if(dashStaffCard) dashStaffCard.classList.remove')]
+  ];
+  const bad=securityChecks.filter(([,ok])=>!ok).map(([name])=>name);
+  if(bad.length) fail('Security + permission regression gate','Missing invariant(s): '+bad.join(', '));
+  else pass('Security + permission regression gate','Auth, active-staff, KA privacy, KA-only delete, batch policy, CanEdit authority, and lazy-Dashboard DOM guards detected');
+}else{
+  fail('Security + permission regression gate','Backend API or frontend app file is missing');
+}
+
 // Delete Report safety contract: UI placement + API authorization + soft-delete/RLS.
 const deleteApi=path.join(root,'supabase','functions','ipsrs-api','index.ts');
 const deletePage=path.join(root,'frontend','pages','Page_Input.html');
