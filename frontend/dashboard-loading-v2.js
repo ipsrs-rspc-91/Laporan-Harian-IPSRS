@@ -93,41 +93,6 @@
     hideTimer = setTimeout(hideLoading, 1800);
   }
 
-  function dashboardDomReady(){
-    return !!(
-      document.getElementById('DashBulan') &&
-      document.getElementById('DashStaff') &&
-      document.getElementById('statPetugasAktif') &&
-      document.getElementById('statTotal')
-    );
-  }
-
-  function waitForDashboardMount(deadline){
-    const ready = window.__ipsrsPageReady && window.__ipsrsPageReady.dashboard;
-    if(ready && typeof ready.then === 'function'){
-      return Promise.race([
-        ready.then(function(){ return true; }).catch(function(err){
-          console.error('Dashboard page mount error:', err);
-          return false;
-        }),
-        new Promise(function(resolve){
-          const remain = Math.max(0, deadline - Date.now());
-          setTimeout(function(){ resolve(false); }, remain);
-        })
-      ]).then(function(result){
-        return result === true && dashboardDomReady();
-      });
-    }
-    return new Promise(function(resolve){
-      function check(){
-        if(dashboardDomReady()) return resolve(true);
-        if(Date.now() >= deadline) return resolve(false);
-        setTimeout(check, 40);
-      }
-      check();
-    });
-  }
-
   window.__ipsrsDashboardLoadingStart = function(seq){
     showLoading('Sedang mengambil data statistik...', seq);
   };
@@ -150,31 +115,22 @@
     if(navigationBusy) return;
 
     showLoading('Menyiapkan dashboard...');
-    const deadline = Date.now() + 10000;
 
-    waitForDashboardMount(deadline).then(function(pageReady){
-      if(!pageReady){
-        showDashboardError_('Dashboard gagal disiapkan. Silakan coba lagi.');
-        return false;
-      }
+    // Stage 4: goPage() utama sudah menangani lazy-mount dan timeout halaman.
+    // Jangan melakukan polling/mount check kedua di sini.
+    setText('Sedang mengambil data statistik...');
+    if(typeof window.__ipsrsEnsureChart==='function'){
+      try{ window.__ipsrsEnsureChart(); }catch(_e){}
+    }
 
-      // Chart.js tidak lagi ditunggu di sini. Ia sudah dimuat paralel sejak
-      // startup; navigasi Dashboard langsung memulai loadDashboard/API.
-      setText('Sedang mengambil data statistik...');
-      if(typeof window.__ipsrsEnsureChart==='function'){
-        try{ window.__ipsrsEnsureChart(); }catch(_e){}
-      }
-      try{
-        originalGoPage(name, preserveInputMode);
-      }catch(err){
-        console.error('Dashboard navigation error:', err);
-        showDashboardError_('Gagal memuat Dashboard.');
-        return false;
-      }
+    Promise.resolve().then(function(){
+      return originalGoPage(name, preserveInputMode);
+    }).then(function(){
       return true;
     }).catch(function(err){
       console.error('Dashboard loading error:', err);
       showDashboardError_('Gagal memuat Dashboard.');
+      return false;
     });
   };
 })();
