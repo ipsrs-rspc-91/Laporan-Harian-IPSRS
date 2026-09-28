@@ -1,4 +1,4 @@
-/* Laporan Loading State v20260920-1
+/* Laporan Loading State v20260927-FASTFINISH1
  * Standard modal loading spinner for all Laporan sub-tabs.
  * - Laporan Saya
  * - Monitoring Harian
@@ -20,7 +20,7 @@
 
   function el(id){ return document.getElementById(id); }
 
-  function escapeHtml(v){
+  function escapeHtmlLaporanLoading_(v){
     return String(v==null?'':v)
       .replace(/&/g,'&amp;')
       .replace(/</g,'&lt;')
@@ -34,10 +34,10 @@
     var s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=''
-      + '#'+OVERLAY_ID+'{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;background:rgba(15,23,42,.20)!important;backdrop-filter:blur(3px)!important;-webkit-backdrop-filter:blur(3px)!important;}\n'
-      + '#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(330px,calc(100vw - 40px));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 20px 17px;border:1px solid rgba(226,232,240,.95);border-radius:16px;background:rgba(255,255,255,.98);box-shadow:0 18px 55px rgba(15,23,42,.22);text-align:center;}\n'
-      + '#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:50px;height:50px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:2px;}\n'
-  + '#'+OVERLAY_ID+' .ipsrs-lightning{font-size:44px;line-height:1;display:inline-block;position:relative;z-index:4;color:#f5b400;text-shadow:0 0 4px rgba(245,180,0,.35);animation:ipsrsLightningFlash .62s ease-in-out infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc{position:absolute;width:60px;height:60px;border:4px solid transparent;border-top-color:#0f6f8c;border-right-color:#38bdf8;border-radius:50%;animation:ipsrsArcSpin .9s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc2{position:absolute;width:64px;height:64px;border:3px dashed rgba(56,189,248,.8);border-radius:50%;animation:ipsrsArcSpinReverse .75s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc3{position:absolute;width:68px;height:68px;border:2px solid transparent;border-left-color:rgba(245,180,0,.75);border-bottom-color:rgba(245,180,0,.35);border-radius:50%;animation:ipsrsArcSpin 1.35s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-charge-ring{position:absolute;inset:1px;border:4px solid rgba(15,111,140,.12);border-top-color:#0f6f8c;border-right-color:#38bdf8;border-radius:50%;animation:ipsrsChargeSpin 1.05s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-neon-bolt{font-size:48px;filter:drop-shadow(0 0 5px rgba(56,189,248,.85)) drop-shadow(0 0 13px rgba(15,111,140,.55));animation:ipsrsNeonPulse .72s ease-in-out infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-2 .ipsrs-lightning{color:#38bdf8;text-shadow:0 0 6px rgba(56,189,248,.9),0 0 15px rgba(15,111,140,.55);}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-3 .ipsrs-lightning{color:#0f6f8c;}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-4 .ipsrs-lightning{color:#7dd3fc;}\n'
+      + '#'+OVERLAY_ID+'{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;background:rgba(15,23,42,.16)!important;}\n'
+      + '#'+OVERLAY_ID+' .ipsrs-loading-box{width:min(330px,calc(100vw - 40px));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 20px 17px;border:1px solid rgba(226,232,240,.95);border-radius:16px;background:rgba(255,255,255,.98);box-shadow:0 12px 36px rgba(15,23,42,.18);text-align:center;contain:layout paint style;}\n'
+      + '#'+OVERLAY_ID+' .ipsrs-loading-spinner{width:50px;height:50px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:2px;contain:layout paint style;will-change:transform;}\n'
+  + '#'+OVERLAY_ID+' .ipsrs-lightning{font-size:44px;line-height:1;display:inline-block;position:relative;z-index:4;color:#f5b400;text-shadow:0 0 4px rgba(245,180,0,.35);animation:ipsrsLightningFlash .62s ease-in-out infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc{position:absolute;width:60px;height:60px;border:4px solid transparent;border-top-color:#0f6f8c;border-right-color:#38bdf8;border-radius:50%;animation:ipsrsArcSpin .9s linear infinite;will-change:transform;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc2{position:absolute;width:64px;height:64px;border:3px dashed rgba(56,189,248,.8);border-radius:50%;animation:ipsrsArcSpinReverse .75s linear infinite;will-change:transform;}\n'      + '#'+OVERLAY_ID+' .ipsrs-electric-arc3{position:absolute;width:68px;height:68px;border:2px solid transparent;border-left-color:rgba(245,180,0,.75);border-bottom-color:rgba(245,180,0,.35);border-radius:50%;animation:ipsrsArcSpin 1.35s linear infinite;}\n'      + '#'+OVERLAY_ID+' .ipsrs-charge-ring{position:absolute;inset:1px;border:4px solid rgba(15,111,140,.12);border-top-color:#0f6f8c;border-right-color:#38bdf8;border-radius:50%;animation:ipsrsChargeSpin 1.05s linear infinite;will-change:transform;}\n'      + '#'+OVERLAY_ID+' .ipsrs-neon-bolt{font-size:48px;filter:drop-shadow(0 0 5px rgba(56,189,248,.85)) drop-shadow(0 0 13px rgba(15,111,140,.55));animation:ipsrsNeonPulse .72s ease-in-out infinite;will-change:transform,opacity;}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-2 .ipsrs-lightning{color:#38bdf8;text-shadow:0 0 6px rgba(56,189,248,.9),0 0 15px rgba(15,111,140,.55);}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-3 .ipsrs-lightning{color:#0f6f8c;}\n'      + '#'+OVERLAY_ID+' .ipsrs-loading-model-4 .ipsrs-lightning{color:#7dd3fc;}\n'
   + '#'+OVERLAY_ID+' .ipsrs-lightning-ring{position:absolute;inset:3px;border:2px solid rgba(15,111,140,.22);border-radius:50%;animation:ipsrsLightningRing 1.15s ease-out infinite;}\n'
   + '#'+OVERLAY_ID+' .ipsrs-lightning-ring2{position:absolute;inset:8px;border:1px dashed rgba(15,111,140,.18);border-radius:50%;animation:ipsrsLightningRing2 1.15s ease-out infinite .18s;}\n'
       + '#'+OVERLAY_ID+' .ipsrs-loading-title{font-size:16px;font-weight:800;color:#16324a;line-height:1.3;margin-top:2px;}\n'
@@ -131,7 +131,7 @@
     o.setAttribute('role','alert');
     o.innerHTML='<div class="ipsrs-loading-box ipsrs-loading-error">'
       +'<div class="ipsrs-loading-title">Gagal memuat data</div>'
-      +'<div class="ipsrs-loading-detail">'+escapeHtml(message||'Silakan coba lagi.')+'</div>'
+      +'<div class="ipsrs-loading-detail">'+escapeHtmlLaporanLoading_(message||'Silakan coba lagi.')+'</div>'
       +'</div>';
     document.body.appendChild(o);
     if(safetyTimer) clearTimeout(safetyTimer);

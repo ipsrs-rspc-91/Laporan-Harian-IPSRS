@@ -247,6 +247,24 @@
   .bar-row .bar-val{ width:24px; text-align:right; font-weight:700; color:var(--primary-dark); }
 
   .recent-list{ display:flex; flex-direction:column; gap:0; margin-top:var(--sp-2); }
+
+  .dashboard-new-item-stats{ overflow:hidden; }
+  .dashboard-new-item-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:var(--sp-3); }
+  .dashboard-new-item-summary{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--sp-3); margin-top:var(--sp-3); }
+  .dashboard-new-item-total{ border:1px solid var(--border); border-radius:12px; padding:10px 12px; background:#f8fbfc; }
+  .dashboard-new-item-total span{ display:block; color:var(--muted); font-size:var(--fs-xs); font-weight:700; }
+  .dashboard-new-item-total strong{ display:block; margin-top:2px; color:var(--primary-dark); font-size:var(--fs-lg); line-height:1.1; }
+  .dashboard-new-item-total small{ color:var(--muted); font-size:11px; }
+  .dashboard-new-item-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-4); margin-top:var(--sp-4); }
+  .dashboard-new-item-title{ color:var(--primary-dark); font-weight:800; font-size:var(--fs-sm); margin-bottom:var(--sp-2); }
+  .dashboard-new-item-table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+  .dashboard-new-item-table{ width:100%; border-collapse:collapse; min-width:360px; font-size:var(--fs-xs); }
+  .dashboard-new-item-table th,.dashboard-new-item-table td{ padding:9px 10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+  .dashboard-new-item-table th{ background:#f5f9fa; color:var(--muted); font-weight:800; white-space:nowrap; }
+  .dashboard-new-item-table td:last-child,.dashboard-new-item-table th:last-child{ text-align:right; font-weight:800; color:var(--primary-dark); }
+  .dashboard-new-item-table tr:last-child td{ border-bottom:none; }
+  .dashboard-new-item-empty{ color:var(--muted); text-align:center !important; padding:18px 10px !important; }
+
   /* ===================== FORM INPUT ===================== */
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 28px; }
   .field-row{ display:flex; gap:var(--sp-2); }
@@ -602,6 +620,28 @@
   border-color: #263238;
 }
 
+/* Warna border kartu mengikuti status laporan.
+   Selesai = hijau, Belum = merah lebih tebal. */
+.report-card-shared .rcard.rc-status-selesai,
+.report-card-view .rcard.rc-status-selesai{
+  border: 2px solid var(--success);
+}
+
+.report-card-shared .rcard.rc-status-selesai:hover,
+.report-card-view .rcard.rc-status-selesai:hover{
+  border-color: var(--success);
+}
+
+.report-card-shared .rcard.rc-status-belum,
+.report-card-view .rcard.rc-status-belum{
+  border: 3px solid var(--danger);
+}
+
+.report-card-shared .rcard.rc-status-belum:hover,
+.report-card-view .rcard.rc-status-belum:hover{
+  border-color: var(--danger);
+}
+
 .report-card-shared .rcard:active, .report-card-view .rcard:active {
   transform: scale(0.995);
 }
@@ -636,8 +676,29 @@
 }
 
 .rc-date {
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.rc-time{
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.rc-clock-icon{
+  width:12px;
+  height:12px;
+  flex:0 0 12px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 .rc-separator {
@@ -649,6 +710,7 @@
 }
 
 .rc-room {
+  font-size: 14.5px;
   font-weight: 700;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -680,7 +742,7 @@
   min-width: 0;
   margin: 0;
   padding: 0 15px;
-  font-size: 15px;
+  font-size: 14.5px;
   line-height: 1.5;
   color: #37474f;
   white-space: normal;
@@ -699,6 +761,45 @@
 .report-card-shared .rcard .rc-label, .report-card-view .rcard .rc-label {
   font-weight: 700;
   color: #17232d;
+}
+
+.report-card-shared .rcard .rc-petugas,
+.report-card-view .rcard .rc-petugas{
+  font-size:13px;
+  line-height:1.4;
+  color:#1565c0;
+}
+
+.report-card-shared .rcard .rc-petugas .rc-label,
+.report-card-view .rcard .rc-petugas .rc-label{
+  font-size:13px;
+  color:#1565c0;
+}
+
+.rc-input-meta{
+  margin:0;
+  padding:0 15px 13px;
+  font-size:12px;
+  line-height:1.35;
+  color:#1565c0;
+}
+
+.rc-input-meta strong{
+  font-weight:700;
+  color:#1565c0;
+}
+
+.rc-input-clock-icon{
+  width:13px;
+  height:13px;
+  margin:0 3px;
+  flex:0 0 13px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vertical-align:-2px;
 }
 
 .report-card-shared .rcard .pill.success, .report-card-view .rcard .pill.success,
@@ -775,4 +876,37 @@
   max-width:none;
   margin:0;
   text-align:left;
+}
+
+/* =========================================================
+   DASHBOARD NEW ITEM SECTION - MOBILE FINAL
+   Keep Spare Part / Unit Baru at the bottom and full width.
+   No JS/API impact: presentation-only optimization.
+   ========================================================= */
+.dashboard-new-item-stats{
+  width:100%;
+  box-sizing:border-box;
+}
+.dashboard-new-item-table-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.dashboard-new-item-table{
+  width:100%;
+  min-width:360px;
+}
+@media (max-width: 768px){
+  .dashboard-new-item-grid{
+    grid-template-columns:1fr !important;
+    gap:var(--sp-4) !important;
+  }
+  .dashboard-new-item-grid > div{
+    width:100%;
+    min-width:0;
+  }
+  .dashboard-new-item-table-wrap{
+    margin-bottom:0;
+  }
 }

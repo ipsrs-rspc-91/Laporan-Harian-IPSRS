@@ -151,13 +151,72 @@
   // Modal konfirmasi "Data telah disimpan" -- dipakai supaya klik tombol
   // Simpan Laporan selalu memberi reaksi yang jelas (bukan cuma teks kecil
   // di bawah tombol yang gampang tak disadari, terutama di HP).
+  // Menyimpan konteks aksi yang memunculkan modal. State EDIT akan di-reset
+  // setelah update berhasil, jadi closeSaveSuccessModal() tidak boleh menebak
+  // status EDIT dari _reportFormMode/_editingReportId.
+  let _saveSuccessWasEdit = false;
+
   function openSaveSuccessModal(msg){
     const sub = document.getElementById('saveSuccessModalSub');
     if(sub) sub.innerText = msg || 'Laporan berhasil disimpan.';
     document.getElementById('saveSuccessModalBg').classList.add('show');
   }
   function closeSaveSuccessModal(){
-    document.getElementById('saveSuccessModalBg').classList.remove('show');
+    const bg = document.getElementById('saveSuccessModalBg');
+    if(bg) bg.classList.remove('show');
+    document.body.classList.remove('modal-open');
+
+    // Jika modal muncul setelah EDIT, kembali ke Daftar Laporan agar
+    // pengguna dapat langsung memeriksa data hasil perubahan di daftar.
+    // Untuk CREATE tetap kembali ke Form Input baru seperti sebelumnya.
+    const wasEdit = _saveSuccessWasEdit === true;
+    _saveSuccessWasEdit = false;
+
+    if(wasEdit){
+      startCreateReportForm(true);
+
+      // Tandai tujuan internal sebelum goPage('laporan'). Dengan begitu
+      // resetLaporanSubTabCache() langsung membuka Daftar Laporan dan hanya
+      // menjalankan satu loader, tanpa sempat memuat Laporan Saya terlebih dulu.
+      window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = 'daftar';
+      goPage('laporan');
+      return;
+    }
+
+    // CREATE: setelah penyimpanan berhasil, siapkan form baru dan kembali
+    // ke bagian atas Form Input.
+    startCreateReportForm(true);
+    goPage('input');
+
+    const focusFormTop = function(){
+      const page = document.getElementById('page-input');
+      if(!page) return false;
+
+      const content = page.closest('.content') || document.querySelector('.content');
+      const header = page.querySelector('.page-header');
+      const formCard = header ? header.nextElementSibling : page.querySelector('.card');
+
+      try{
+        if(content && formCard){
+          const contentRect = content.getBoundingClientRect();
+          const cardRect = formCard.getBoundingClientRect();
+          const targetTop = Math.max(
+            0,
+            content.scrollTop + (cardRect.top - contentRect.top) - 8
+          );
+          content.scrollTo({top:targetTop, behavior:'auto'});
+        }else if(formCard){
+          formCard.scrollIntoView({behavior:'auto', block:'start'});
+        }
+      }catch(e){
+        try{ if(formCard) formCard.scrollIntoView({behavior:'auto', block:'start'}); }catch(ignore){}
+      }
+
+      try{ if(document.activeElement) document.activeElement.blur(); }catch(e){}
+      return true;
+    };
+    setTimeout(focusFormTop, 120);
+    setTimeout(focusFormTop, 350);
   }
 
   // ============================================================
@@ -369,6 +428,8 @@
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; break;
       case 'apiUpdateReport':
         payload.token=token; payload.reportId=args[0]||''; payload.payload=args[1]||{}; break;
+      case 'apiDeleteReport':
+        payload.token=token; payload.reportId=args[0]||''; payload.reason=args[1]||''; break;
       case 'apiDashboardStats':
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; break;
       case 'apiGetStaffMonitoring':
@@ -431,6 +492,7 @@
 
   function resetLaporanUnfinishedState(){
     // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
+    clearDashboardCategoryTarget_();
     window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN = false;
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
     window.__IPSRS_DAFTAR_UNFINISHED_DRILLDOWN = false;
@@ -714,9 +776,22 @@
     if(!value) return '-';
     const d=new Date(value), now=Date.now(), sec=Math.max(0,Math.floor((now-d.getTime())/1000));
     if(sec<60) return sec+' detik lalu';
-    const min=Math.floor(sec/60);
-    if(min<60) return min+' menit lalu';
-    return formatLoginDateTime_(value);
+
+    const minTotal=Math.floor(sec/60);
+    const hourTotal=Math.floor(minTotal/60);
+    const dayTotal=Math.floor(hourTotal/24);
+
+    // < 24 jam: tampilkan jam + menit agar aktivitas lebih mudah dibaca.
+    if(hourTotal<24){
+      if(hourTotal===0) return minTotal+' menit lalu';
+      const mins=minTotal%60;
+      return hourTotal+' jam'+(mins ? ' '+mins+' menit' : '')+' lalu';
+    }
+
+    // >= 24 jam: tampilkan hari + jam + menit.
+    const hours=hourTotal%24;
+    const mins=minTotal%60;
+    return dayTotal+' hari'+(hours ? ' '+hours+' jam' : '')+(mins ? ' '+mins+' menit' : '')+' lalu';
   }
 
   async function loadOnlineUsers(){
@@ -788,7 +863,23 @@
 
     // Klik menu Form Input biasa selalu membuka mode CREATE baru.
     // Edit memanggil goPage('input', true) agar data laporan tetap terisi.
-    if(name === 'input' && !preserveInputMode) startCreateReportForm(true);
+    if(name === 'input' && !preserveInputMode){
+      startCreateReportForm(true);
+
+      // Setiap membuka Form Input dari menu utama selalu kembali ke
+      // BAGIAN AWAL/HEADER FORM, bukan posisi scroll terakhir (misalnya
+      // langsung berada di Kategori). .content adalah scroll container utama.
+      const resetInputScrollTop = function(){
+        const content = document.querySelector('.content');
+        if(!content) return;
+        try{ content.scrollTo({top:0, behavior:'auto'}); }
+        catch(_e){ content.scrollTop = 0; }
+      };
+
+      resetInputScrollTop();
+      setTimeout(resetInputScrollTop, 80);
+      setTimeout(resetInputScrollTop, 250);
+    }
     if(name !== 'dashboard'){
       // Batalkan secara logis request Dashboard yang masih berjalan agar
       // response lama tidak menulis kembali ke DOM setelah pindah halaman.
@@ -1109,9 +1200,517 @@
     const sel = document.getElementById('Kategori');
     if(sel.value === ADD_NEW_VALUE){
       sel.value = ''; // select dikembalikan ke kosong SEBELUM modal dibuka
+      syncSparePartSection();
       openTambahKategoriModal();
+      return;
+    }
+    syncSparePartSection();
+
+    // Posisi tombol Simpan ditangani terpusat oleh event change/focusin
+    // agar tidak ada dua timer scroll yang berjalan bersamaan.
+  }
+
+  function isSparePartReportCategory_(value){
+    const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    return [
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
+    ].includes(normalized);
+  }
+
+  function isUnitBaruReportCategory_(value){
+    const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    return normalized === 'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)';
+  }
+
+  function openDashboardNewCategory(kind){
+    const target=setDashboardCategoryTarget_(kind);
+    window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
+
+    // Set filter sedini mungkin sebelum goPage()/loader async berjalan.
+    const kategoriEl = document.getElementById('FilterKategori');
+    if(kategoriEl) kategoriEl.value = target==='unit' ? '__DASH_UNIT_BARU__' : '__DASH_SPARE_PART__';
+
+    goPage('laporan');
+  }
+
+  function getDashboardCategoryTarget_(){
+    const live=window.__IPSRS_DASHBOARD_CATEGORY_TARGET;
+    if(live==='spare' || live==='unit') return live;
+    try{
+      const stored=sessionStorage.getItem('ipsrs_dashboard_category_target');
+      return stored==='spare' || stored==='unit' ? stored : '';
+    }catch(e){ return ''; }
+  }
+
+  function setDashboardCategoryTarget_(kind){
+    const value=kind==='unit' ? 'unit' : 'spare';
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET=value;
+    try{ sessionStorage.setItem('ipsrs_dashboard_category_target',value); }catch(e){}
+    return value;
+  }
+
+  function clearDashboardCategoryTarget_(){
+    window.__IPSRS_DASHBOARD_CATEGORY_TARGET='';
+    try{ sessionStorage.removeItem('ipsrs_dashboard_category_target'); }catch(e){}
+  }
+
+  function isSparePartRequiredCategory(value){
+    const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+    return new Set([
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)'
+    ]).has(normalized);
+  }
+
+  function setSparePartSection(open){
+    const section = document.getElementById('sparePartSection');
+    const fields = document.getElementById('sparePartFields');
+    const toggle = document.getElementById('sparePartToggle');
+    const icon = document.getElementById('sparePartToggleIcon');
+    if(!section || !fields || !toggle) return;
+    const shouldOpen = !!open;
+    fields.hidden = !shouldOpen;
+    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    if(icon) icon.textContent = shouldOpen ? '−' : '＋';
+  }
+
+  function toggleSparePartSection(){
+    const fields = document.getElementById('sparePartFields');
+    setSparePartSection(!fields || fields.hidden);
+  }
+
+  function syncSparePartSection(){
+    const sel = document.getElementById('Kategori');
+    const required = isSparePartRequiredCategory(sel ? sel.value : '');
+    const hasValue = ['SparePartUnit','Type','Jumlah'].some(id =>
+      String(document.getElementById(id)?.value || '').trim()
+    );
+    // Buka otomatis bila kategori memang mewajibkan data atau field sudah
+    // berisi data (misalnya saat membuka laporan lama untuk diedit).
+    if(required || hasValue){
+      setSparePartSection(true);
+    }
+    updateSparePartToggleStatus();
+  }
+
+  function updateSparePartToggleStatus(){
+    const status = document.getElementById('sparePartToggleStatus');
+    if(!status) return;
+    const part = String(document.getElementById('SparePartUnit')?.value || '').trim();
+    const type = String(document.getElementById('Type')?.value || '').trim();
+    const qty = String(document.getElementById('Jumlah')?.value || '').trim();
+    if(part || type || qty){
+      const parts = [];
+      if(part) parts.push(part);
+      if(type) parts.push(type);
+      if(qty) parts.push('Jumlah: ' + qty);
+      status.textContent = parts.join(' • ');
+    }else{
+      status.textContent = 'Belum diisi';
     }
   }
+
+  // ============================================================
+  // MOBILE KEYBOARD SMART SCROLL
+  // Pola pengisian form IPSRS:
+  // Saat sebuah field diklik dan keyboard muncul, field BERIKUTNYA
+  // otomatis diposisikan 33px di atas keyboard agar siap diisi.
+  //
+  // Contoh:
+  // Ruang -> Masalah/Kegiatan
+  // Masalah/Kegiatan -> Tindakan
+  // Tindakan -> field berikutnya yang terlihat
+  // dan seterusnya untuk seluruh field form.
+  // ============================================================
+  let keyboardFocusedField = null;
+  let keyboardScrollTarget = null;
+  let keyboardMoveTimers = [];
+  let keyboardResizeTimer = null;
+  let keyboardOriginalPadding = null;
+
+  function getKeyboardContent(){
+    return document.querySelector('.content');
+  }
+
+  function isKeyboardFieldVisible(field){
+    if(!field || !field.matches) return false;
+    if(!field.matches('#page-input input, #page-input textarea, #page-input select')) return false;
+    if(field.disabled || field.hidden) return false;
+    const style = getComputedStyle(field);
+    if(style.display === 'none' || style.visibility === 'hidden') return false;
+    return field.getClientRects().length > 0;
+  }
+
+  function getNextKeyboardField(field){
+    // Setelah ITEM dipilih, pengguna masuk ke bagian paling bawah form.
+    // Target harus langsung ke tombol Simpan Laporan supaya Keterangan
+    // dan tombol Simpan ikut terlihat, bukan berhenti di Keterangan saja.
+    if(field && field.id === 'Item'){
+      return document.getElementById('btnSaveInput') || field;
+    }
+
+    const fields = Array.from(
+      document.querySelectorAll(
+        '#page-input input:not([type="hidden"]), #page-input textarea, #page-input select'
+      )
+    ).filter(isKeyboardFieldVisible);
+
+    const index = fields.indexOf(field);
+
+    // Jika field berikutnya tersedia, jadikan itu target.
+    // Ini membuat pengguna langsung melihat field yang akan diisi.
+    if(index >= 0 && index < fields.length - 1){
+      return fields[index + 1];
+    }
+
+    // Field terakhir: tidak ada field berikutnya, jadi tetap jaga
+    // field aktif agar terlihat nyaman di atas keyboard.
+    return field;
+  }
+
+  function clearKeyboardMoveTimers(){
+    keyboardMoveTimers.forEach(function(timer){ clearTimeout(timer); });
+    keyboardMoveTimers = [];
+    if(keyboardResizeTimer){
+      clearTimeout(keyboardResizeTimer);
+      keyboardResizeTimer = null;
+    }
+  }
+
+  function restoreKeyboardSpacer(){
+    const content = getKeyboardContent();
+    if(!content) return;
+
+    if(keyboardOriginalPadding !== null){
+      content.style.paddingBottom = keyboardOriginalPadding;
+      keyboardOriginalPadding = null;
+    }
+  }
+
+  function extendKeyboardBottomSpace(){
+    const content = getKeyboardContent();
+    if(!content) return;
+
+    if(keyboardOriginalPadding === null){
+      keyboardOriginalPadding = content.style.paddingBottom || '';
+    }
+
+    const currentPadding = parseFloat(
+      getComputedStyle(content).paddingBottom || '0'
+    ) || 0;
+
+    // ITEM berada dekat bagian bawah form. Android dapat berhenti pada
+    // batas maxScroll sehingga tombol Simpan masih berada di bawah layar.
+    // Tambahkan ruang nyata ke scroll container agar bagian paling bawah
+    // benar-benar dapat dinaikkan ke area yang terlihat.
+    const viewportHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+
+    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.35));
+    if(currentPadding < bottomSpace){
+      content.style.paddingBottom = bottomSpace + 'px';
+    }
+  }
+
+  function moveActiveFieldAboveKeyboard(behavior){
+    const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
+    const isFormField = field && field.matches &&
+      field.matches('#page-input input, #page-input textarea, #page-input select');
+    const isSaveButton = field && field.id === 'btnSaveInput';
+    if(!field || (!isFormField && !isSaveButton)) return;
+
+    const content = getKeyboardContent();
+    if(!content) return;
+
+    const mobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!mobile) return;
+
+    try{
+      const vv = window.visualViewport;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+
+      // Jarak target: 33px antara field tujuan dan bagian atas keyboard.
+      const GAP = 33;
+
+      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
+
+      if(keyboardHeight > 80 && keyboardOriginalPadding === null){
+        keyboardOriginalPadding = content.style.paddingBottom || '';
+      }
+
+      // Ruang tambahan agar field tujuan yang berada di bawah
+      // tetap dapat digeser sampai 33px di atas keyboard.
+      if(keyboardHeight > 80){
+        const currentPadding = parseFloat(
+          getComputedStyle(content).paddingBottom || '0'
+        ) || 0;
+        const requiredPadding = Math.max(
+          currentPadding,
+          keyboardHeight + GAP + 80
+        );
+        content.style.paddingBottom = requiredPadding + 'px';
+      }
+
+      // Android Chrome kadang tidak langsung menggeser scroll container
+      // non-body. scrollIntoView membantu menemukan posisi target dahulu.
+      const rectBefore = field.getBoundingClientRect();
+      const targetBottomBefore = viewportBottom - GAP;
+
+      if(rectBefore.bottom > targetBottomBefore){
+        try{
+          field.scrollIntoView({
+            behavior: behavior || 'auto',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }catch(_e){}
+      }
+
+      // Setelah scrollIntoView, hitung ulang posisi dan koreksi presisi.
+      const rect = field.getBoundingClientRect();
+      const targetBottom = viewportBottom - GAP;
+      const safeTop = viewportTop + 20;
+
+      // Target berikutnya harus benar-benar berada 33px di atas keyboard,
+      // bukan sekadar "masih terlihat". Ini penting pada Android: field
+      // berikutnya kadang sudah terlihat, tetapi masih terlalu rendah untuk
+      // langsung diisi.
+      let delta = rect.bottom - targetBottom;
+
+      // Jangan menarik field ke bawah melewati batas aman atas viewport.
+      if(rect.top - delta < safeTop){
+        delta = rect.top - safeTop;
+      }
+
+      if(Math.abs(delta) < 2) return;
+
+      const maxScroll = Math.max(
+        0,
+        content.scrollHeight - content.clientHeight
+      );
+
+      const nextTop = Math.max(
+        0,
+        Math.min(content.scrollTop + delta, maxScroll)
+      );
+
+      if(Math.abs(nextTop - content.scrollTop) < 2) return;
+
+      content.scrollTo({
+        top: nextTop,
+        behavior: behavior || 'smooth'
+      });
+    }catch(err){
+      console.warn('Keyboard smart scroll:', err);
+    }
+  }
+
+  // ============================================================
+  // POSISI SELECT BAWAH FORM -> TOMBOL SIMPAN
+  // Kategori, Area Kerja, dan Item semuanya memakai satu target scroll:
+  // tombol Simpan Laporan. Ini mencegah mekanisme scroll lama saling
+  // menarik posisi form ke Item atau field lain.
+  // ============================================================
+
+  // Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan Laporan
+  // harus langsung berada di area layar yang bisa ditekan tanpa geser manual.
+  // .content adalah scroll container utama, jadi posisi dihitung terhadap
+  // visual viewport Android (termasuk saat keyboard masih terbuka).
+  function positionInputSaveButton(){
+    const content = getKeyboardContent();
+    const button = document.getElementById('btnSaveInput');
+    if(!content || !button) return;
+
+    const mobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!mobile) return;
+
+    try{
+      const vv = window.visualViewport;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+      const GAP = 16;
+      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
+
+      // Saat keyboard masih terbuka, beri ruang agar tombol benar-benar dapat
+      // dinaikkan sampai di atas keyboard, bukan berhenti di maxScroll lama.
+      if(keyboardHeight > 80){
+        if(keyboardOriginalPadding === null){
+          keyboardOriginalPadding = content.style.paddingBottom || '';
+        }
+        const currentPadding = parseFloat(
+          getComputedStyle(content).paddingBottom || '0'
+        ) || 0;
+        const requiredPadding = Math.max(
+          currentPadding,
+          keyboardHeight + GAP + 80
+        );
+        if(currentPadding < requiredPadding){
+          content.style.paddingBottom = requiredPadding + 'px';
+        }
+      }
+
+      const rect = button.getBoundingClientRect();
+      const desiredBottom = viewportBottom - GAP;
+      const delta = rect.bottom - desiredBottom;
+
+      // Jika tombol sudah terlihat di atas keyboard/viewport, jangan geser.
+      if(delta <= 2 && rect.top >= viewportTop + 8) return;
+
+      let nextTop = content.scrollTop + delta;
+      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+      nextTop = Math.max(0, Math.min(nextTop, maxScroll));
+
+      content.scrollTo({top: nextTop, behavior:'auto'});
+    }catch(err){
+      console.warn('Save button positioning:', err);
+    }
+  }
+
+  function scheduleInputSaveButtonPosition(){
+    if(!window.matchMedia || !window.matchMedia('(max-width: 768px)').matches) return;
+    [60, 180, 360, 600].forEach(function(delay){
+      keyboardMoveTimers.push(setTimeout(function(){
+        positionInputSaveButton();
+      }, delay));
+    });
+  }
+
+  function initMasalahKegiatanAutoScroll(){
+    if(document.documentElement.dataset.keyboardSmartScrollBound === '1') return;
+    document.documentElement.dataset.keyboardSmartScrollBound = '1';
+
+    document.addEventListener('focusin', function(event){
+      const field = event.target;
+      if(!isKeyboardFieldVisible(field)) return;
+
+      clearKeyboardMoveTimers();
+
+      // Kategori, Area Kerja, dan Item semuanya memakai SATU target:
+      // tombol Simpan Laporan. Tidak lagi diarahkan ke Item atau fungsi
+      // positioning Kategori lama.
+      if(field.id === 'Kategori' || field.id === 'AreaKerja' || field.id === 'Item'){
+        keyboardFocusedField = field;
+        keyboardScrollTarget = document.getElementById('btnSaveInput') || field;
+
+        // Pastikan tersedia ruang scroll tambahan saat keyboard Android terbuka.
+        extendKeyboardBottomSpace();
+        scheduleInputSaveButtonPosition();
+        return;
+      }
+
+      keyboardFocusedField = field;
+      keyboardScrollTarget = getNextKeyboardField(field);
+
+      const content = getKeyboardContent();
+      if(content && keyboardOriginalPadding === null){
+        keyboardOriginalPadding = content.style.paddingBottom || '';
+      }
+
+      // Tunggu layout Android stabil. Untuk ITEM targetnya adalah
+      // tombol Simpan Laporan, sehingga bagian bawah form ikut naik.
+      keyboardMoveTimers.push(setTimeout(function(){
+        moveActiveFieldAboveKeyboard('auto');
+      }, 120));
+
+      keyboardMoveTimers.push(setTimeout(function(){
+        moveActiveFieldAboveKeyboard('smooth');
+      }, 320));
+
+      keyboardMoveTimers.push(setTimeout(function(){
+        moveActiveFieldAboveKeyboard('smooth');
+      }, 600));
+    });
+
+    document.addEventListener('change', function(event){
+      // Android dapat mengubah nilai <select> tanpa memindahkan fokus secara
+      // konsisten. Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan
+      // harus menjadi target tunggal dan terlihat penuh.
+      if(event.target && (
+        event.target.id === 'Kategori' ||
+        event.target.id === 'AreaKerja' ||
+        event.target.id === 'Item'
+      )){
+        keyboardFocusedField = event.target;
+        keyboardScrollTarget = document.getElementById('btnSaveInput') || event.target;
+        clearKeyboardMoveTimers();
+
+        // Tambahkan ruang bawah sebelum menghitung posisi. Ini penting saat
+        // keyboard Android masih terbuka sehingga tombol tidak berhenti
+        // sebagian di bawah batas viewport.
+        extendKeyboardBottomSpace();
+        scheduleInputSaveButtonPosition();
+      }
+    });
+
+    document.addEventListener('focusout', function(event){
+      if(event.target !== keyboardFocusedField) return;
+
+      clearKeyboardMoveTimers();
+
+      keyboardFocusedField = null;
+      keyboardScrollTarget = null;
+
+      setTimeout(function(){
+        if(!keyboardFocusedField) restoreKeyboardSpacer();
+      }, 250);
+    });
+
+    function keyboardViewportResize(){
+      if(!keyboardFocusedField) return;
+
+      clearTimeout(keyboardResizeTimer);
+      keyboardResizeTimer = setTimeout(function(){
+        moveActiveFieldAboveKeyboard('smooth');
+      }, 50);
+    }
+
+    if(window.visualViewport){
+      window.visualViewport.addEventListener(
+        'resize',
+        keyboardViewportResize,
+        {passive:true}
+      );
+      window.visualViewport.addEventListener(
+        'scroll',
+        keyboardViewportResize,
+        {passive:true}
+      );
+    }
+
+    window.addEventListener('resize', keyboardViewportResize, {passive:true});
+  }
+
+  function initSparePartSection(){
+    const fields = ['SparePartUnit','Type','Jumlah'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input', updateSparePartToggleStatus);
+    });
+    syncSparePartSection();
+  }
+  // Inisialisasi UI Spare Part/Unit setelah DOM form tersedia.
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      initSparePartSection();
+      initMasalahKegiatanAutoScroll();
+    });
+  }else{
+    initSparePartSection();
+    initMasalahKegiatanAutoScroll();
+  }
+
   function openTambahKategoriModal(){
     document.getElementById('kategoriBaruInput').value = '';
     setMsg('kategoriBaruMsg', '');
@@ -1154,6 +1753,7 @@
       return;
     }
     refreshItemOptions();
+    // Posisi tombol Simpan ditangani terpusat oleh event change/focusin.
   }
   function openTambahAreaModal(){
     document.getElementById('areaBaruInput').value = '';
@@ -1222,7 +1822,10 @@
       const area = document.getElementById('AreaKerja').value;
       if(!area){ setMsg('msgInput', 'Pilih Area Kerja terlebih dahulu sebelum menambah item.', true); return; }
       openTambahItemModal();
+      return;
     }
+
+    // Posisi tombol Simpan ditangani terpusat oleh event change/focusin.
   }
   function openTambahItemModal(){
     const area = document.getElementById('AreaKerja').value;
@@ -1774,16 +2377,15 @@
           window.__ipsrsClearDashboardCache();
         }
         if(isEdit){
+          _saveSuccessWasEdit = true;
           invalidateLaporanViews();
-          const editedId = _editingReportId;
           startCreateReportForm(true);
-          openSaveSuccessModal('Perubahan laporan berhasil disimpan (ID: ' + editedId + ').');
-          goPage('laporan');
+          openSaveSuccessModal('Laporan berhasil disimpan.');
         } else {
           invalidateLaporanViews();
-          setMsg('msgInput', 'Laporan tersimpan (ID: ' + json.report_id + ').');
+          setMsg('msgInput', '');
           resetInputFieldsAfterCreate();
-          openSaveSuccessModal('Laporan berhasil disimpan (ID: ' + json.report_id + ').');
+          openSaveSuccessModal('Laporan berhasil disimpan.');
         }
       } else {
         setMsg('msgInput', (json && json.msg) ? json.msg : (isEdit ? 'Gagal menyimpan perubahan.' : 'Gagal menyimpan laporan.'), true);
@@ -1824,11 +2426,13 @@
     const title = document.getElementById('inputPageTitle');
     const desc = document.getElementById('inputPageDesc');
     const btn = document.getElementById('btnSaveInput');
+    const deleteBtn = document.getElementById('btnDeleteReport');
     const note = document.getElementById('inputPermissionNote');
     const history = document.getElementById('inputHistoryPanel');
     if(title) title.innerText = 'Input Laporan';
-    if(desc) desc.innerText = 'Isi laporan kegiatan / perbaikan harian ini';
+    if(desc) desc.innerText = 'Isi laporan kegiatan / perbaikan harian ini ';
     if(btn){ btn.innerText = 'Simpan Laporan'; btn.classList.remove('hidden'); }
+    if(deleteBtn) deleteBtn.classList.add('hidden');
     if(note) note.classList.add('hidden');
     if(history) history.classList.add('hidden');
 
@@ -1918,6 +2522,7 @@
     const title = document.getElementById('inputPageTitle');
     const desc = document.getElementById('inputPageDesc');
     const btn = document.getElementById('btnSaveInput');
+    const deleteBtn = document.getElementById('btnDeleteReport');
     const note = document.getElementById('inputPermissionNote');
     const history = document.getElementById('inputHistoryPanel');
 
@@ -1969,6 +2574,10 @@
     if(btn){
       btn.innerText = 'Simpan Perubahan';
       btn.classList.toggle('hidden', !editable);
+    }
+    if(deleteBtn){
+      const canDelete = editable && CURRENT_SESSION && String(CURRENT_SESSION.role||'').toUpperCase()==='KA_IPSRS';
+      deleteBtn.classList.toggle('hidden', !canDelete);
     }
     if(note){
       note.classList.toggle('hidden', editable);
@@ -2046,6 +2655,42 @@
     }
   }
 
+  async function deleteCurrentReport(){
+    const reportId=String(_editingReportId||'').trim();
+    const role=String(CURRENT_SESSION && CURRENT_SESSION.role || '').toUpperCase();
+    if(_reportFormMode!=='EDIT' || !reportId){ alert('Tidak ada laporan yang sedang diedit.'); return; }
+    if(role!=='KA_IPSRS'){ alert('Hanya KA IPSRS yang dapat menghapus laporan.'); return; }
+    const first=window.confirm('Hapus laporan ini? Data tidak dimusnahkan permanen, tetapi dipindahkan menjadi arsip dan tidak akan tampil pada laporan aktif.');
+    if(!first) return;
+    const reason=window.prompt('Masukkan alasan penghapusan laporan (wajib, minimal 5 karakter):','');
+    if(reason===null) return;
+    const trimmed=String(reason).trim();
+    if(trimmed.length<5){ alert('Alasan penghapusan wajib diisi minimal 5 karakter.'); return; }
+    if(trimmed.length>500){ alert('Alasan penghapusan maksimal 500 karakter.'); return; }
+
+    const btn=document.getElementById('btnDeleteReport');
+    if(btn){ btn.disabled=true; btn.innerText='Menghapus...'; }
+    setMsg('msgInput','Menghapus laporan...');
+    try{
+      const json=await authRun('apiDeleteReport',reportId,trimmed);
+      if(!json || !json.ok) throw new Error((json&&json.msg)||'Gagal menghapus laporan.');
+      try{ if(typeof window.__ipsrsClearLaporanApiCache==='function') window.__ipsrsClearLaporanApiCache(); }catch(e){}
+      setMsg('msgInput','');
+      startCreateReportForm(true);
+      goPage('laporan');
+      setTimeout(function(){
+        try{
+          if(typeof window.forceReloadLaporan==='function') window.forceReloadLaporan();
+          else if(typeof window.loadReportsBySelectedMonth==='function') window.loadReportsBySelectedMonth(true);
+        }catch(e){ console.warn('[DELETE] refresh laporan gagal',e); }
+      },120);
+      alert('Laporan berhasil dihapus dan disimpan sebagai arsip.');
+    }catch(err){
+      if(btn){ btn.disabled=false; btn.innerText='Hapus Laporan'; }
+      setMsg('msgInput','Gagal menghapus laporan: '+(err&&err.message?err.message:err),true);
+    }
+  }
+
   function closeEditModal(){
     // Kompatibilitas dengan pemanggilan lama; Edit sekarang tidak memakai modal.
     startCreateReportForm(true);
@@ -2065,6 +2710,8 @@
 
   async function loadReportsBySelectedMonth(){
     const bulan = document.getElementById('FilterBulan').value;
+    const cariElAtRequest = document.getElementById('FilterCari');
+    const cariAtRequest = cariElAtRequest ? cariElAtRequest.value : '';
     const modeAtRequest = getActiveLaporanMode_();
     _laporanMode = modeAtRequest;
     const requestSeq = (Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) || 0) + 1;
@@ -2089,13 +2736,30 @@
       }
       rawData = json.data || [];
 
+      // Pertahankan pencarian yang sedang aktif saat Muat Ulang.
+      // Ini mencegah rawData baru langsung tampil seluruhnya (mis. 13)
+      // ketika pengguna masih mengetik "lab" (hasil harus tetap 3 dari 13).
+      const cariElAfterLoad = document.getElementById('FilterCari');
+      if(cariElAfterLoad && cariElAfterLoad.value !== cariAtRequest){
+        cariElAfterLoad.value = cariAtRequest;
+      }
+
       if(!Array.isArray(ADMIN_STAFF_LIST) || ADMIN_STAFF_LIST.length === 0){
         syncAdminStaffFromReports_();
       }else{
         renderAdminStaffSelect();
       }
 
+      const dashboardCategoryTarget = getDashboardCategoryTarget_();
+      if(dashboardCategoryTarget === 'spare'){
+        const kategoriEl = document.getElementById('FilterKategori');
+        if(kategoriEl) kategoriEl.value = '__DASH_SPARE_PART__';
+      }else if(dashboardCategoryTarget === 'unit'){
+        const kategoriEl = document.getElementById('FilterKategori');
+        if(kategoriEl) kategoriEl.value = '__DASH_UNIT_BARU__';
+      }
       applyFilters();
+      if(dashboardCategoryTarget) clearDashboardCategoryTarget_();
       return true;
     }catch(err){
       if(requestSeq !== Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
@@ -2111,6 +2775,8 @@
     const status = document.getElementById('FilterStatus').value;
     const isDashboardUnfinishedFilter = status === '__BELUM_SELESAI__';
     const kategori = document.getElementById('FilterKategori').value;
+    const isDashboardSparePartFilter = kategori === '__DASH_SPARE_PART__';
+    const isDashboardUnitFilter = kategori === '__DASH_UNIT_BARU__';
     const area = document.getElementById('FilterArea').value;
     const bidang = document.getElementById('FilterBidang').value;
     // Filter "Shift" dihapus (P1 §3.6) -- elemen #FilterShift tidak ada lagi
@@ -2121,7 +2787,11 @@
       if(isDashboardUnfinishedFilter){
         if(r.Status === 'Selesai') return false;
       }else if(status && r.Status !== status) return false;
-      if(kategori && r.Kategori !== kategori) return false;
+      if(isDashboardSparePartFilter){
+        if(!isSparePartReportCategory_(r.Kategori)) return false;
+      }else if(isDashboardUnitFilter){
+        if(!isUnitBaruReportCategory_(r.Kategori)) return false;
+      }else if(kategori && r.Kategori !== kategori) return false;
       if(area && r.AreaKerja !== area) return false;
       if(bidang && r.Bidang !== bidang) return false;
       if(adminSelectedStaffId && r.StaffID !== adminSelectedStaffId) return false;
@@ -2294,7 +2964,11 @@
       tbody.appendChild(tr);
 
       const card = document.createElement('div');
-      card.className = 'rcard';
+      card.className = 'rcard ' + (
+        row.Status === 'Selesai'
+          ? 'rc-status-selesai'
+          : (row.Status === 'Belum' ? 'rc-status-belum' : 'rc-status-proses')
+      );
       card.innerHTML = reportCardMarkup_(row);
 
       // Kartu laporan tidak membuka edit saat area kartu diklik.
@@ -2344,6 +3018,11 @@
   function resetLaporanFilterControls_(options){
     const opts = options || {};
     const preserveUnfinished = opts.preserveUnfinished === true;
+    // Drill-down Dashboard harus mempertahankan target kategori selama
+    // navigasi dan request async Laporan berlangsung. Filter biasa tetap
+    // di-reset seperti sebelumnya.
+    const dashboardCategoryTarget = getDashboardCategoryTarget_();
+    const preserveDashboardCategory = !!dashboardCategoryTarget;
 
     // Filter petugas Daftar Laporan.
     adminSelectedStaffId = '';
@@ -2359,8 +3038,22 @@
     ];
     reportFilterIds.forEach(id => {
       const el = document.getElementById(id);
-      if(el) el.value = '';
+      if(!el) return;
+      if(id === 'FilterKategori' && preserveDashboardCategory) return;
+      el.value = '';
     });
+
+    // Pastikan nilai target benar-benar terpasang setelah reset filter.
+    // Ini membuat drill-down tetap deterministik walaupun reset dipanggil
+    // lebih dari sekali selama perpindahan SPA.
+    if(preserveDashboardCategory){
+      const kategoriEl = document.getElementById('FilterKategori');
+      if(kategoriEl){
+        kategoriEl.value = dashboardCategoryTarget === 'unit'
+          ? '__DASH_UNIT_BARU__'
+          : '__DASH_SPARE_PART__';
+      }
+    }
     const statusEl = document.getElementById('FilterStatus');
     if(statusEl) statusEl.value = preserveUnfinished ? '__BELUM_SELESAI__' : '';
 
@@ -2478,9 +3171,10 @@
     // Default normal tetap Laporan Saya. Namun drill-down dari Dashboard
     // Belum Selesai secara eksplisit meminta Daftar Laporan agar sumber data
     // mencakup seluruh petugas sesuai hak akses backend.
-    const drilldownTarget = window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar'
+    const categoryTarget = getDashboardCategoryTarget_();
+    const drilldownTarget = categoryTarget
       ? 'daftar'
-      : 'saya';
+      : (window.__IPSRS_DASHBOARD_UNFINISHED_TARGET === 'daftar' ? 'daftar' : 'saya');
     _laporanMode = drilldownTarget;
     window.__IPSRS_LAPORAN_INTERNAL_NAV = true;
     try{
@@ -2489,7 +3183,8 @@
       window.__IPSRS_LAPORAN_INTERNAL_NAV = false;
     }
 
-    // Target hanya berlaku untuk satu navigasi drill-down.
+    // Target kategori Dashboard dibersihkan setelah data Laporan selesai dimuat.
+    // Jangan dibersihkan di sini karena loadReportsBySelectedMonth() berjalan async.
     window.__IPSRS_DASHBOARD_UNFINISHED_TARGET = '';
   }
 
@@ -2680,7 +3375,11 @@
     wrap.innerHTML = '';
     laporan.forEach(row => {
       const card = document.createElement('div');
-      card.className = 'rcard';
+      card.className = 'rcard ' + (
+        row.Status === 'Selesai'
+          ? 'rc-status-selesai'
+          : (row.Status === 'Belum' ? 'rc-status-belum' : 'rc-status-proses')
+      );
       card.style.marginBottom = '8px';
       card.innerHTML = `
         <div class="rc-top">
@@ -3089,22 +3788,85 @@
     });
   }
 
+  function formatDashboardQuantity_(value){
+    const n=Number(value||0);
+    if(!Number.isFinite(n)) return '0';
+    return new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(n);
+  }
+
+  function renderDashboardNewItemRows_(rows, emptyText){
+    if(!Array.isArray(rows) || rows.length === 0){
+      return '<tr><td colspan="3" class="dashboard-new-item-empty">'+escapeHtml(emptyText||'Belum ada data.')+'</td></tr>';
+    }
+    return rows.map(row => {
+      const nama = row?.nama ?? row?.item ?? row?.name ?? '-';
+      const type = row?.type ?? row?.tipe ?? '-';
+      const jumlah = row?.jumlah ?? row?.quantity ?? row?.qty ?? 0;
+      return '<tr><td>'+escapeHtml(nama)+'</td><td>'+escapeHtml(type)+'</td><td class="num">'+escapeHtml(formatDashboardQuantity_(jumlah))+'</td></tr>';
+    }).join('');
+  }
+
+  function renderDashboardNewItemStats_(data){
+    const d=data||{};
+    const spareTotal=document.getElementById('statSparePartTotalQty');
+    const unitTotal=document.getElementById('statUnitBaruTotalQty');
+    const spareBody=document.getElementById('dashSparePartStats');
+    const unitBody=document.getElementById('dashUnitBaruStats');
+    if(spareTotal) spareTotal.innerText=formatDashboardQuantity_(d.spare_part_total_quantity);
+    if(unitTotal) unitTotal.innerText=formatDashboardQuantity_(d.unit_baru_total_quantity);
+    if(spareBody) spareBody.innerHTML=renderDashboardNewItemRows_(d.spare_part_stats,'Belum ada data spare part.');
+    if(unitBody) unitBody.innerHTML=renderDashboardNewItemRows_(d.unit_baru_stats,'Belum ada data unit baru.');
+  }
+
   function renderStatusChart(selesai, belum){
     const ctx = document.getElementById('statusChart');
     const legendEl = document.getElementById('statusLegend');
-    if(statusChartInstance){ statusChartInstance.destroy(); }
+    if(!ctx || !legendEl) return;
+
+    if(statusChartInstance){
+      try{ statusChartInstance.destroy(); }catch(_e){}
+      statusChartInstance = null;
+    }
 
     const data = [selesai, belum];
     const labels = ['Selesai', 'Belum Selesai'];
     const colors = ['#1a9e57', '#b91c1c'];
 
     if(selesai === 0 && belum === 0){
-      ctx.parentElement.innerHTML = emptyStateHtml('Belum ada data pada periode ini.');
+      if(ctx.parentElement) ctx.parentElement.innerHTML = emptyStateHtml('Belum ada data pada periode ini.');
       legendEl.innerHTML = '';
       return;
     }
 
-    statusChartInstance = new Chart(ctx, {
+    // Chart.js dimuat deferred dari index.html. Jangan biarkan race condition
+    // menghentikan seluruh render Dashboard jika library belum siap.
+    if(typeof window.Chart !== 'function'){
+      legendEl.innerHTML = '';
+      labels.forEach((lbl, i) => {
+        const row = document.createElement('div');
+        row.className = 'legend-row';
+        row.innerHTML = `<span class="legend-dot" style="background:${colors[i]}"></span><span class="lbl">${lbl}</span><span class="val">${data[i]}</span>`;
+        legendEl.appendChild(row);
+      });
+
+      if(!ctx.dataset.chartRetryBound){
+        ctx.dataset.chartRetryBound = '1';
+        const ready = window.__ipsrsChartReady;
+        if(ready && typeof ready.then === 'function'){
+          ready.then(function(){
+            if(ctx.isConnected && document.getElementById('page-dashboard')?.classList.contains('active')){
+              delete ctx.dataset.chartRetryBound;
+              renderStatusChart(selesai, belum);
+            }
+          }).catch(function(err){
+            console.warn('Chart.js belum tersedia:', err);
+          });
+        }
+      }
+      return;
+    }
+
+    statusChartInstance = new window.Chart(ctx, {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
       options: {
@@ -3125,11 +3887,60 @@
 
   // Komponen kartu laporan tunggal dipakai bersama oleh Dashboard dan Daftar Laporan.
   // Satu markup + satu sumber style: perubahan desain kartu cukup dilakukan sekali.
+  function formatReportInputDateTime_(value){
+    if(!value) return '-';
+    try{
+      const d = new Date(value);
+      if(Number.isNaN(d.getTime())) return '-';
+      const parts = new Intl.DateTimeFormat('id-ID',{
+        timeZone:'Asia/Jakarta',
+        day:'2-digit',
+        month:'2-digit',
+        year:'numeric',
+        hour:'2-digit',
+        minute:'2-digit',
+        hour12:false
+      }).formatToParts(d);
+      const get = type => (parts.find(p => p.type === type)?.value || '');
+      return `${get('day')}/${get('month')}/${get('year')} ${get('hour')}:${get('minute')}`;
+    }catch(e){
+      return '-';
+    }
+  }
+
+  function formatReportIncidentTime_(value){
+    const s = String(value || '').trim();
+    if(!s) return '-';
+    const m = s.match(/^(\d{1,2}:\d{2})/);
+    return m ? m[1] : s;
+  }
+
   function reportCardMarkup_(row){
+    const inputDateTime = formatReportInputDateTime_(row.created_at || row.createdAt || row.CREATED_AT);
+    const incidentTime = formatReportIncidentTime_(row.Pukul);
+    const inputTimeHtml = incidentTime !== '-'
+      ? `
+        <span class="rc-time" aria-label="Jam kejadian">
+          <svg class="rc-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <path d="M12 7.5v5l3.2 1.9"></path>
+          </svg>
+          <span>${escapeHtml(incidentTime)}</span>
+        </span>`
+      : `
+        <span class="rc-time" aria-label="Jam kejadian">
+          <svg class="rc-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <path d="M12 7.5v5l3.2 1.9"></path>
+          </svg>
+          <span>-</span>
+        </span>`;
+
     return `
       <div class="rc-top">
         <div class="rc-title">
           <span class="rc-date">${escapeHtml(formatTanggalDisplay(row.Tanggal))}</span>
+          ${inputTimeHtml}
           <span class="rc-separator" aria-hidden="true"></span>
           <span class="rc-room">${escapeHtml(row.Ruang)}</span>
         </div>
@@ -3145,9 +3956,18 @@
         <span class="rc-label">Tindak Lanjut:</span>
         ${escapeHtml(row.Tindakan || '-')}
       </div>
-      <div class="rc-line">
+      <div class="rc-line rc-petugas">
         <span class="rc-label">Petugas:</span>
         ${escapeHtml(row.Petugas || '-')}
+      </div>
+      <div class="rc-input-meta">
+        <span>Tgl &amp; Jam Input:</span>
+        <strong>${escapeHtml(inputDateTime.split(' ')[0])}</strong>
+        <svg class="rc-input-clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5"></circle>
+          <path d="M12 7.5v5l3.2 1.9"></path>
+        </svg>
+        <strong>${escapeHtml(inputDateTime.split(' ').slice(1).join(' ') || '-')}</strong>
       </div>
     `;
   }
@@ -3161,7 +3981,11 @@
     }
     recent.forEach(r => {
       const item = document.createElement('div');
-      item.className = 'rcard';
+      item.className = 'rcard ' + (
+        r.Status === 'Selesai'
+          ? 'rc-status-selesai'
+          : (r.Status === 'Belum' ? 'rc-status-belum' : 'rc-status-proses')
+      );
       item.innerHTML = reportCardMarkup_(r);
       el.appendChild(item);
     });
@@ -3271,6 +4095,11 @@
       document.getElementById('statSelesai').innerText = d.selesai;
       document.getElementById('statBelum').innerText = d.belum;
       document.getElementById('statPersen').innerText = d.total ? Math.round(d.selesai / d.total * 100) + '%' : '0%';
+      const sparePartStat = document.getElementById('statSparePartBaru');
+      const unitBaruStat = document.getElementById('statUnitBaru');
+      if(sparePartStat) sparePartStat.innerText = Number(d.spare_part_baru || 0);
+      if(unitBaruStat) unitBaruStat.innerText = Number(d.unit_baru || 0);
+      renderDashboardNewItemStats_(d);
       bindDashboardUnfinishedDrilldown();
 
       const pencapaianOrder = ['Selesai','Sebagian','Belum Selesai','Ditunda','Tindak Lanjut','Belum Diisi'];

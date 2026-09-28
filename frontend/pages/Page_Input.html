@@ -82,6 +82,41 @@
     opacity:.65;
   }
 
+  #page-input .spare-part-section{margin-top:12px;margin-bottom:var(--sp-3);}
+
+/* Border field non-wajib: dibuat sekitar 20% lebih tegas agar lebih mudah terlihat. */
+#page-input input:not([type="hidden"]),
+#page-input select,
+#page-input textarea,
+#page-input .datetime-combined-input{
+  border-color:#cbd3d7;
+}
+  #page-input .spare-part-toggle{
+    width:100%; min-height:52px; padding:9px 12px;
+    border:1px solid #c5cdd2; border-radius:var(--radius-sm);
+    background:#fff; color:var(--text); cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    text-align:left; font:inherit;
+  }
+  #page-input .spare-part-toggle:hover{border-color:var(--text-muted);}
+  #page-input .spare-part-toggle[aria-expanded="true"]{
+    border-color:var(--primary);
+    border-bottom-left-radius:0; border-bottom-right-radius:0;
+  }
+  #page-input .spare-part-toggle-main{display:flex;flex-direction:column;min-width:0;gap:2px;}
+  #page-input .spare-part-toggle-title{font-weight:700;font-size:15px;}
+  #page-input .spare-part-toggle-status{font-size:12px;color:var(--text-muted);font-weight:500;}
+  #page-input .spare-part-toggle-icon{font-size:23px;line-height:1;flex:none;color:var(--text-muted);}
+  #page-input .spare-part-fields{
+    padding:12px; border:1px solid var(--primary); border-top:0;
+    border-bottom-left-radius:var(--radius-sm); border-bottom-right-radius:var(--radius-sm);
+    background:#fff;
+  }
+  @media(max-width:480px){
+    #page-input .spare-part-toggle{min-height:50px;padding:8px 11px;}
+    #page-input .spare-part-fields{padding:10px;}
+  }
+
   /* Dropdown Input: ukuran teks dan tinggi baris dibuat proporsional untuk HP. */
   #page-input #Kategori,
   #page-input #AreaKerja,
@@ -322,7 +357,7 @@
 <div class="page-header">
   <div>
     <h1 id="inputPageTitle">Input Laporan</h1>
-    <div class="desc" id="inputPageDesc">Isi laporan kegiatan / perbaikan harian ini</div>
+    <div class="desc" id="inputPageDesc">Isi laporan kegiatan / perbaikan harian ini </div>
   </div>
   <div class="pill" id="inputIdentityPill">-</div>
 </div>
@@ -381,14 +416,38 @@
     </div>
 
     <div>
-      <label for="SparePartUnit">Spare Part / Unit</label>
-      <input id="SparePartUnit">
+      <div id="sparePartSection" class="spare-part-section">
+        <button type="button" id="sparePartToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="sparePartFields" onclick="toggleSparePartSection()">
+          <span class="spare-part-toggle-main">
+            <span class="spare-part-toggle-title">Spare Part / Unit</span>
+            <span id="sparePartToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
+          </span>
+          <span id="sparePartToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
+        </button>
 
-      <label for="Type">Type</label>
-      <input id="Type">
+        <div id="sparePartFields" class="spare-part-fields" hidden>
+          <label for="SparePartUnit">Spare Part / Unit</label>
+          <input id="SparePartUnit">
 
-      <label for="Jumlah">Jumlah</label>
-      <input id="Jumlah" type="number" min="0">
+          <label for="Type">Type</label>
+          <input id="Type">
+
+          <label for="Jumlah">Jumlah</label>
+          <input id="Jumlah" type="number" min="0">
+        </div>
+      </div>
+
+      <label for="Kategori">Kategori</label>
+      <select id="Kategori" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
+
+      <label for="AreaKerja">Area Kerja</label>
+      <select id="AreaKerja" onchange="handleAreaKerjaChange()"><option value="">Pilih area kerja&hellip;</option></select>
+
+      <label for="Item">Item</label>
+      <select id="Item" onchange="handleItemChange()"><option value="">Pilih area kerja dahulu&hellip;</option></select>
+
+      <label for="Keterangan">Keterangan</label>
+      <textarea id="Keterangan" placeholder="Catatan tambahan (opsional)"></textarea>
 
       <label for="Status">Status</label>
       <input type="hidden" id="Status" value="">
@@ -407,18 +466,6 @@
       <label for="Petugas">Petugas</label>
       <input id="Petugas" class="readonlyPetugas" readonly>
       <div class="smallnote">Otomatis terisi dari akun yang login &mdash; tidak dapat diubah manual.</div>
-
-      <label for="Kategori">Kategori</label>
-      <select id="Kategori" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
-
-      <label for="AreaKerja">Area Kerja</label>
-      <select id="AreaKerja" onchange="handleAreaKerjaChange()"><option value="">Pilih area kerja&hellip;</option></select>
-
-      <label for="Item">Item</label>
-      <select id="Item" onchange="handleItemChange()"><option value="">Pilih area kerja dahulu&hellip;</option></select>
-
-      <label for="Keterangan">Keterangan</label>
-      <textarea id="Keterangan" placeholder="Catatan tambahan (opsional)"></textarea>
     </div>
   </div>
 
@@ -446,6 +493,7 @@
 </div>
 
   <button id="btnSaveInput" class="btn accent lg block" style="margin-top:var(--sp-4);" onclick="saveData()">Simpan Laporan</button>
+  <button id="btnDeleteReport" class="btn lg block hidden" style="margin-top:10px; border:1px solid var(--danger); color:var(--danger); background:transparent;" onclick="deleteCurrentReport()">Hapus Laporan</button>
   <div id="msgInput" style="margin-top:var(--sp-2); font-size:var(--fs-base); font-weight:700;"></div>
 </div>
 

@@ -3,11 +3,24 @@
 <head>
   <base href="./">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
-  <link rel="stylesheet" href="css/style.css?v=20260924-HSCROLL2">
+  <link rel="stylesheet" href="css/style.css?v=20260927-DASHSTAT1">
+  <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
+  <link rel="preload" href="js/static-data.js?v=20260916" as="script">
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
+  <link rel="preload" href="./config.js?v=SUPABASE-CUTOVER-20260923-3" as="script">
+  <link rel="preload" href="./app.js?v=20260927-DASHSTAT3" as="script">
+  <link rel="preload" href="./required-fields-ui.js?v=20260923-PERF1" as="script">
+  <link rel="preload" href="./access-control.js?v=20260916" as="script">
+  <link rel="preload" href="./access-policy-ui.js?v=20260916" as="script">
+  <link rel="preload" href="./login-fast.js?v=20260924-PASSWORD7" as="script">
+  <link rel="preload" href="./dashboard-loading-v2.js?v=20260927-DASHFAST4" as="script">
+  <link rel="preload" href="./access-visibility-fix.js?v=20260923-PERF1" as="script">
+  <link rel="preload" href="./laporan-fast-v2.js?v=20260927-LAPORANFAST4" as="script">
+  <link rel="preload" href="./laporan-loading-state.js?v=20260927-FASTFINISH1" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
@@ -43,16 +56,17 @@
   <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
   <style>
     /* Required-field indicator: red border only. */
+    /* Required-field indicator: red border ~30% lebih tegas, tanpa mengubah validasi. */
     #page-input .ipsrs-required-field {
-      border: 1px solid #e2b4b4 !important;
+      border: 1px solid #df9490 !important;
     }
     #page-input .ipsrs-required-field:focus {
-      border-color: #cc8f8f !important;
+      border-color: #d07a76 !important;
       box-shadow: none !important;
     }
     #page-input .ipsrs-required-label::after {
       content: " *";
-      color: #cc8f8f;
+      color: #d07a76;
       font-weight: 600;
     }
   </style>
@@ -71,15 +85,15 @@
       await script('js/static-data.js?v=20260916');
       await script('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js');
       await script('./config.js?v=SUPABASE-CUTOVER-20260923-3');
-      await script('./app.js?v=20260924-HSCROLL2');
+      await script('./app.js?v=20260927-DASHSTAT3');
       await script('./required-fields-ui.js?v=20260923-PERF1');
       await script('./access-control.js?v=20260916');
       await script('./access-policy-ui.js?v=20260916');
       await script('./login-fast.js?v=20260924-PASSWORD7');
-      await script('./dashboard-loading-v2.js?v=20260924-DASHLOADFIX1');
+      await script('./dashboard-loading-v2.js?v=20260927-DASHFAST4');
       await script('./access-visibility-fix.js?v=20260923-PERF1');
-      await script('./laporan-fast-v2.js?v=20260924-LAPORANRACEFIX2');
-      await script('./laporan-loading-state.js?v=20260923-CONSISTENT1');
+      await script('./laporan-fast-v2.js?v=20260927-LAPORANFAST4');
+      await script('./laporan-loading-state.js?v=20260927-FASTFINISH1');
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
       window.__ipsrsPageReady.online = fragment('page-online', deferredMounts['page-online']);

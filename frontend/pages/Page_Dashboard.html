@@ -116,4 +116,68 @@
   </div>
 </div>
 
-      </section>
+      
+<!-- Spare Part & Unit Baru: intentionally placed at the bottom to keep primary Dashboard KPIs visible first. -->
+<b style="font-size:var(--fs-sm); color:var(--primary-dark); text-transform:uppercase; letter-spacing:.03em; display:block; margin-top:var(--sp-4);">Spare Part &amp; Unit Baru</b>
+<div class="stat-grid" style="margin-top:var(--sp-2);">
+  <button type="button" class="stat-card" id="dashSparePartCard" onclick="openDashboardNewCategory('spare')" style="text-align:left; cursor:pointer;">
+    <div class="s-icon" style="background:var(--primary-light); color:var(--primary);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18"></path><path d="M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"></path><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+    </div>
+    <div class="s-value" id="statSparePartBaru">0</div>
+    <div class="s-label">Laporan Spare Part Baru</div>
+    <div class="smallnote">Klik untuk melihat laporan yang dapat Anda akses</div>
+  </button>
+  <button type="button" class="stat-card" id="dashUnitBaruCard" onclick="openDashboardNewCategory('unit')" style="text-align:left; cursor:pointer;">
+    <div class="s-icon" style="background:var(--success-bg); color:var(--success);">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M2 12h20"></path><path d="M5 5l14 14"></path><path d="M19 5 5 19"></path></svg>
+    </div>
+    <div class="s-value" id="statUnitBaru">0</div>
+    <div class="s-label">Laporan Unit Baru</div>
+    <div class="smallnote">Klik untuk melihat laporan yang dapat Anda akses</div>
+  </button>
+</div>
+
+<div class="card dashboard-new-item-stats" style="margin-top:var(--sp-4);">
+  <div class="dashboard-new-item-head">
+    <div>
+      <b style="font-size:var(--fs-base);">Detail Spare Part &amp; Unit Baru</b>
+      <div class="smallnote">Statistik Spare Part & Unit Baru</div>
+    </div>
+  </div>
+  <div class="dashboard-new-item-summary">
+    <div class="dashboard-new-item-total">
+      <span>Spare Part Baru</span>
+      <strong id="statSparePartTotalQty">0</strong>
+      <small>Total jumlah</small>
+    </div>
+    <div class="dashboard-new-item-total">
+      <span>Unit Baru</span>
+      <strong id="statUnitBaruTotalQty">0</strong>
+      <small>Total jumlah</small>
+    </div>
+  </div>
+  <div class="dashboard-new-item-grid">
+    <div>
+      <div class="dashboard-new-item-title">Spare Part Baru</div>
+      <div class="dashboard-new-item-table-wrap">
+        <table class="dashboard-new-item-table">
+          <thead><tr><th>Nama / Spare Part</th><th>Type</th><th>Jumlah</th></tr></thead>
+          <tbody id="dashSparePartStats"></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="dashboard-new-item-title">Unit Baru</div>
+      <div class="dashboard-new-item-table-wrap">
+        <table class="dashboard-new-item-table">
+          <thead><tr><th>Nama / Unit</th><th>Type</th><th>Jumlah</th></tr></thead>
+          <tbody id="dashUnitBaruStats"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</section>

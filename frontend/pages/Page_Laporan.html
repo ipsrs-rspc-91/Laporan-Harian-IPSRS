@@ -132,53 +132,57 @@
   </div>
 
   <div class="card">
+    
+    <!-- Filter lanjutan tetap di dalam Detail. Yang selalu terlihat hanya Cari + Muat Ulang. -->
     <details class="laporan-filter-details">
-      <summary><span class="filter-summary-icon">☰</span><span>Filter Laporan</span><span class="filter-summary-arrow">▾</span></summary>
-    <div class="filters-bar">
-      <div class="f-item">
-        <label>Bulan</label>
-        <select id="FilterBulan" onchange="loadReportsBySelectedMonth()"></select>
+      <summary><span class="filter-summary-icon">☰</span><span>Filter</span><span class="filter-summary-arrow">▾</span></summary>
+      <div class="filters-bar" style="margin-top:var(--sp-2);">
+        <div class="f-item">
+          <label>Bulan</label>
+          <select id="FilterBulan" onchange="loadReportsBySelectedMonth()"></select>
+        </div>
+        <div class="f-item">
+          <label>Status</label>
+          <select id="FilterStatus" onchange="applyFilters()">
+            <option value="">Semua status</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Belum">Belum</option>
+            <option value="__BELUM_SELESAI__">Belum Selesai</option>
+          </select>
+        </div>
+        <div class="f-item">
+          <label>Kategori</label>
+          <select id="FilterKategori" onchange="applyFilters()"><option value="">Semua kategori</option><option value="__DASH_SPARE_PART__">Spare Part Baru</option><option value="__DASH_UNIT_BARU__">Unit Baru</option></select>
+        </div>
+        <div class="f-item">
+          <label>Area Kerja</label>
+          <select id="FilterArea" onchange="applyFilters()"><option value="">Semua area</option></select>
+        </div>
+        <div class="f-item">
+          <label>Bidang</label>
+          <select id="FilterBidang" onchange="applyFilters()"><option value="">Semua bidang</option></select>
+        </div>
+        <!-- Filter "Shift" dihapus (P1 §3.6): konsep Shift sudah dihapus total dari backend. -->
       </div>
-      <div class="f-item">
-        <label>Status</label>
-        <select id="FilterStatus" onchange="applyFilters()">
-          <option value="">Semua status</option>
-          <option value="Selesai">Selesai</option>
-          <option value="Belum">Belum</option>
-          <option value="__BELUM_SELESAI__">Belum Selesai</option>
-        </select>
+    </details>
+
+    <div style="display:flex; align-items:center; width:100%; min-height:54px; box-sizing:border-box; margin-top:10px; margin-bottom:var(--sp-2); padding:4px 6px; border:1px solid #d8c9ef; border-radius:14px; background:#f5f0ff; box-shadow:0 2px 6px rgba(90,60,130,.07);">
+      <div style="flex:0 0 auto; padding:0 14px; font-size:var(--fs-sm); font-weight:800; letter-spacing:.04em; color:#5b3b82; white-space:nowrap;">CARI</div>
+      <div style="flex:1; min-width:0;">
+        <input id="FilterCari" style="display:block; width:100%; height:44px; box-sizing:border-box; padding:0 14px; border:1px solid #d8c9ef; border-radius:10px; background:#fff; color:var(--text,#17343d); font-size:var(--fs-sm); outline:none;" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
       </div>
-      <div class="f-item">
-        <label>Kategori</label>
-        <select id="FilterKategori" onchange="applyFilters()"><option value="">Semua kategori</option></select>
-      </div>
-      <div class="f-item">
-        <label>Area Kerja</label>
-        <select id="FilterArea" onchange="applyFilters()"><option value="">Semua area</option></select>
-      </div>
-      <div class="f-item">
-        <label>Bidang</label>
-        <select id="FilterBidang" onchange="applyFilters()"><option value="">Semua bidang</option></select>
-      </div>
-      <!-- Filter "Shift" dihapus (P1 §3.6): konsep Shift sudah dihapus total
-           dari backend, filter ini tidak pernah berfungsi. -->
-      <div class="f-item" style="flex:1; min-width:180px;">
-        <label>Cari</label>
-        <input id="FilterCari" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()">
-      </div>
-      <div class="f-item" style="min-width:auto;">
-        <label>&nbsp;</label>
-        <button class="btn" onclick="loadReportsBySelectedMonth()">
+    </div>
+
+    <div style="display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr); gap:var(--sp-2); align-items:center; margin-bottom:var(--sp-2);">
+      <div id="msgReport" style="width:100%; box-sizing:border-box; padding:10px 14px; border:1px solid var(--border,#d9e2e5); border-radius:12px; background:var(--surface-soft,#f7fbfc); font-size:var(--fs-sm); color:var(--muted); font-weight:600; text-align:left; min-height:44px; display:flex; align-items:center; white-space:nowrap; overflow:hidden;"></div>
+      <div style="display:flex; align-items:center; justify-content:flex-end; min-height:44px;">
+        <button type="button" class="btn" onclick="forceReloadLaporan()">
           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:var(--sp-1);"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
           Muat Ulang
         </button>
       </div>
+
     </div>
-
-
-    </details>
-
-    <div id="msgReport" style="font-size:var(--fs-sm); color:var(--muted); font-weight:600; margin-bottom:var(--sp-2);"></div>
 
     <div class="report-view-area">
       <!-- Pilihan tampilan hanya muncul di HP. CSS-only: tidak memanggil GAS/JS tambahan. -->
@@ -302,8 +306,7 @@
 <!-- ===================== MODAL: KONFIRMASI SIMPAN ===================== -->
   <div id="saveSuccessModalBg" class="modal-bg">
     <div class="modal" style="max-width:380px; text-align:center;">
-      <h3>Data telah disimpan</h3>
-      <div class="modal-sub" id="saveSuccessModalSub">Laporan berhasil disimpan.</div>
+      <h3>Laporan berhasil disimpan</h3>
       <div class="modal-actions" style="justify-content:center;">
         <button class="btn primary" onclick="closeSaveSuccessModal()">OK</button>
       </div>
