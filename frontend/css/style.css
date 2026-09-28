@@ -471,6 +471,20 @@
   .stat-grid .stat-card.status-belum{background:#fff1f2;border-color:#fca5a5;}
   .stat-grid .stat-card.status-belum .s-value,.stat-grid .stat-card.status-belum .s-label{color:#b91c1c;}
   .report-action{white-space:nowrap;}
+  /* Aksi selalu terlihat di sisi kanan tabel saat kolom horizontal panjang.
+     Tombol tetap mengikuti hak akses CanEdit/backend. */
+  .report-table-view th:last-child,
+  .report-table-view td:last-child{
+    position:sticky;
+    right:0;
+    z-index:3;
+    background:#fff;
+    box-shadow:-6px 0 8px rgba(15,23,42,.06);
+  }
+  .report-table-view th:last-child{
+    background:#e6f3f6;
+    z-index:4;
+  }
   .report-action .btn{padding:6px 9px;font-size:12px;}
   .report-row-selesai td:first-child{border-left:4px solid #22c55e;}
   .report-row-belum td:first-child{border-left:4px solid #ef4444;}
