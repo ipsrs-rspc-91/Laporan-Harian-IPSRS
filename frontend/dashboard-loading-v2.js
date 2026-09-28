@@ -161,6 +161,9 @@
       // Chart.js tidak lagi ditunggu di sini. Ia sudah dimuat paralel sejak
       // startup; navigasi Dashboard langsung memulai loadDashboard/API.
       setText('Sedang mengambil data statistik...');
+      if(typeof window.__ipsrsEnsureChart==='function'){
+        try{ window.__ipsrsEnsureChart(); }catch(_e){}
+      }
       try{
         originalGoPage(name, preserveInputMode);
       }catch(err){
