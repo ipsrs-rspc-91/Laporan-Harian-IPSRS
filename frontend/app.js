@@ -993,7 +993,7 @@
       _laporanSubTabLoading.rekap = false;
       _laporanSubTabLoading.daftar = false;
       _laporanSubTabLoading.saya = false;
-      _laporanNeedsRefresh = true;
+      // Tidak perlu state refresh tambahan; cache/report state diinvalidasi langsung.
 
       // Invalidasi response Laporan yang masih berjalan agar tidak boleh
       // menulis rawData setelah user sudah berada di halaman lain.
@@ -1054,7 +1054,6 @@
       // Siklus data baru dibuat setiap kali masuk dari menu utama.
       // Ini memutus seluruh state bersama rawData dari kunjungan sebelumnya.
       resetLaporanSubTabCache();
-      _laporanPageInitialized = true;
     }
     if(name === 'online'){
       if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
@@ -3118,8 +3117,7 @@
   }
   // Laporan tidak perlu mengulang request setiap kali user bolak-balik menu.
   // Refresh hanya dipaksa saat pertama dibuka atau setelah data laporan berubah.
-  let _laporanPageInitialized = false;
-  let _laporanNeedsRefresh = false;
+  // PERF STAGE 21: state yang hanya di-set tanpa pernah dibaca telah dihapus.
 
   function resetLaporanFilterControls_(options){
     const opts = options || {};
@@ -3259,7 +3257,7 @@
   }
 
   function resetLaporanSubTabCache(){
-    _laporanNeedsRefresh = false;
+    // Siklus baru ditentukan oleh _laporanSubTabLoaded + request sequence.
     _laporanSubTabLoaded.monitoring = false;
     _laporanSubTabLoaded.rekap = false;
     _laporanSubTabLoaded.daftar = false;
