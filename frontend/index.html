@@ -8,13 +8,13 @@
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL10">
+  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL4">
   <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
-  <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL10" as="script">
+  <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
-  <link rel="preload" href="./config.js?v=20260928-AUDITTOTAL10" as="script">
-  <link rel="preload" href="./app.js?v=20260928-AUDITTOTAL10" as="script">
-  <link rel="preload" href="./login-fast.js?v=20260928-AUDITTOTAL10" as="script">
+  <link rel="preload" href="./config.js?v=20260928-AUDITTOTAL3" as="script">
+  <link rel="preload" href="./app.js?v=20260928-AUDITTOTAL3" as="script">
+  <link rel="preload" href="./login-fast.js?v=20260928-AUDITTOTAL3" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
@@ -77,7 +77,7 @@
   </style>
   <script>
   (function(){
-    const VERSION='20260928-AUDITTOTAL10';
+    const VERSION='20260928-AUDITTOTAL4';
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -134,35 +134,8 @@
     window.__ipsrsPageReady.dashboard = null;
     window.__ipsrsPageReady.laporan = null;
     window.__ipsrsPageReady.online = null;
-     async function fragment(id,url){
-       const el=document.getElementById(id);
-       if(!el)throw new Error('Mount point not found: '+id);
-       const controller=new AbortController();
-       const timer=setTimeout(()=>controller.abort(),10000);
-       let r;
-       try{r=await fetch(url,{cache:'no-store',signal:controller.signal});}
-       catch(err){if(err&&err.name==='AbortError')throw new Error('Timeout memuat '+url);throw err;}
-       finally{clearTimeout(timer);}
-       if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');
-       const html=await r.text();
-       if(!html.trim())throw new Error('Halaman kosong: '+url);
-       el.outerHTML=html;
-       const mounted=document.getElementById(id);
-       const pageName=id.replace(/^page-/,'');
-       const activeNav=document.querySelector('.nav-item.active');
-       if(mounted&&mounted.classList.contains('page')&&activeNav&&activeNav.dataset.page===pageName)mounted.classList.add('active');
-       return true;
-     };
-     function script(src){
-       return new Promise((resolve,reject)=>{
-         const s=document.createElement('script');let done=false;
-         const timer=setTimeout(()=>{if(done)return;done=true;s.remove();reject(new Error('Timeout memuat '+src));},10000);
-         s.src=src;
-         s.onload=()=>{if(done)return;done=true;clearTimeout(timer);resolve();};
-         s.onerror=()=>{if(done)return;done=true;clearTimeout(timer);reject(new Error('Gagal memuat '+src));};
-         document.body.appendChild(s);
-       });
-     };
+    async function fragment(id,url){const el=document.getElementById(id);if(!el)throw new Error('Mount point not found: '+id);const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Gagal memuat '+url+' ('+r.status+')');el.outerHTML=await r.text();const mounted=document.getElementById(id);const pageName=id.replace(/^page-/,'');const activeNav=document.querySelector('.nav-item.active');if(mounted&&mounted.classList.contains('page')&&activeNav&&activeNav.dataset.page===pageName)mounted.classList.add('active');return true;}
+    function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Gagal memuat '+src));document.body.appendChild(s);});}
     function ensurePage(name){
       if(!lazyMounts[name]) return Promise.reject(new Error('Unknown lazy page: '+name));
       if(window.__ipsrsPageReady[name]) return window.__ipsrsPageReady[name];
@@ -186,9 +159,9 @@
     // Script ini baru dimuat setelah login berhasil agar startup login lebih ringan.
     let postAuthFeaturesPromise=null;
     const postAuthFeatureUrls=[
-      './required-fields-ui.js?v=20260928-AUDITTOTAL10',
-      './access-control.js?v=20260928-AUDITTOTAL10',
-      './access-policy-ui.js?v=20260928-AUDITTOTAL10'
+      './required-fields-ui.js?v=20260928-AUDITTOTAL4',
+      './access-control.js?v=20260928-AUDITTOTAL4',
+      './access-policy-ui.js?v=20260928-AUDITTOTAL4'
     ];
     window.__ipsrsLoadPostAuthFeatures=function(){
       if(postAuthFeaturesPromise) return postAuthFeaturesPromise;
@@ -201,17 +174,17 @@
       // PERF STAGE 2: ketiga dependency dasar ini independen.
       // Muat dan eksekusi bersamaan; app.js baru dijalankan setelah semuanya siap.
       await Promise.all([
-        script('js/static-data.js?v=20260928-AUDITTOTAL10'),
+        script('js/static-data.js?v=20260928-AUDITTOTAL3'),
         script('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js'),
-        script('./config.js?v=20260928-AUDITTOTAL10')
+        script('./config.js?v=20260928-AUDITTOTAL3')
       ]);
-      await script('./app.js?v=20260928-AUDITTOTAL10');
+      await script('./app.js?v=20260928-AUDITTOTAL3');
       // required-fields/access-control/access-policy dimuat setelah login.
       // PERF STAGE 22: kedua wrapper tidak saling bergantung setelah app.js siap.
       // Muat bersamaan agar startup tidak menunggu total waktu download keduanya.
       await Promise.all([
-        script('./login-fast.js?v=20260928-AUDITTOTAL10'),
-        script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL10')
+        script('./login-fast.js?v=20260928-AUDITTOTAL3'),
+        script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3')
       ]);
 
       // PERF STAGE 9: fitur khusus Laporan tidak dibutuhkan saat startup.
@@ -220,9 +193,9 @@
       window.__ipsrsLoadLaporanFeatures = function(){
         if(laporanFeaturesPromise) return laporanFeaturesPromise;
         const urls = [
-          './access-visibility-fix.js?v=20260928-AUDITTOTAL10',
-          './laporan-fast-v2.js?v=20260928-AUDITTOTAL10',
-          './laporan-loading-state.js?v=20260928-AUDITTOTAL10'
+          './access-visibility-fix.js?v=20260928-AUDITTOTAL4',
+          './laporan-fast-v2.js?v=20260928-AUDITTOTAL4',
+          './laporan-loading-state.js?v=20260928-AUDITTOTAL6'
         ];
         laporanFeaturesPromise = Promise.all(urls.map(script))
           .catch(function(err){
@@ -234,12 +207,11 @@
       };
       window.__ipsrsChartReady = null;
     }catch(e){console.error(e);const t=document.querySelector('.auth-loading-text');if(t)t.textContent='Gagal memuat aplikasi. Silakan muat ulang halaman.';}
-  })();
   </script>
 
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20260928-AUDITTOTAL10", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20260928-AUDITTOTAL3", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
     }
   </script>
 </body>
