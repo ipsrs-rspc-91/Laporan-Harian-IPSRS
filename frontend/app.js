@@ -592,6 +592,9 @@
       if(typeof window.__ipsrsEnsurePage==='function'){
         await window.__ipsrsEnsurePage('input');
       }
+      if(typeof window.__ipsrsInitInputUi==='function'){
+        window.__ipsrsInitInputUi();
+      }
       await afterAuthReady();
       hideLoginScreen();
       // Stage 3: fitur UI non-kritis dimuat di background setelah layar aplikasi
@@ -1789,16 +1792,16 @@
     });
     syncSparePartSection();
   }
-  // Inisialisasi UI Spare Part/Unit setelah DOM form tersedia.
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-      initSparePartSection();
-      initMasalahKegiatanAutoScroll();
-    });
-  }else{
+  // PERF STAGE 10: UI khusus Form Input baru diinisialisasi setelah
+  // Page_Input benar-benar dimuat setelah login. Sebelumnya listener global
+  // ini dipasang saat startup walaupun DOM Form Input belum tersedia.
+  let inputUiInitialized = false;
+  window.__ipsrsInitInputUi = function(){
+    if(inputUiInitialized) return;
+    inputUiInitialized = true;
     initSparePartSection();
     initMasalahKegiatanAutoScroll();
-  }
+  };
 
   function openTambahKategoriModal(){
     document.getElementById('kategoriBaruInput').value = '';
