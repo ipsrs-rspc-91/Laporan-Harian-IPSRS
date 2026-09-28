@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v1";
+const CACHE_NAME = "lhi-shell-v20260928-audit1";
 
 self.addEventListener("install", () => self.skipWaiting());
 
