@@ -75,6 +75,26 @@ try {
 } catch {}
 add('Changed-file impact scan','INFO',changed.length ? changed.join(', ') : 'No previous commit available');
 
+// Deferred-page navigation safety: every lazily mounted page must be guarded
+// before goPage() touches its DOM node. This prevents blank-screen races while
+// preserving lazy loading and parallel startup downloads.
+const indexPath=path.join(root,'frontend','index.html');
+const appPath=path.join(root,'frontend','app.js');
+if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
+  const indexText=fs.readFileSync(indexPath,'utf8');
+  const appText=fs.readFileSync(appPath,'utf8');
+  const hasDeferredPages=indexText.includes("deferredMounts") &&
+    indexText.includes("window.__ipsrsPageReady.laporan") &&
+    indexText.includes("window.__ipsrsPageReady.dashboard");
+  const hasNavigationGuard=appText.includes("ensureDeferredPageReady_") &&
+    appText.includes("deferredNames=new Set(['dashboard','laporan','online'])") &&
+    appText.includes("!document.getElementById('page-'+name)");
+  if(hasDeferredPages && hasNavigationGuard) pass('Deferred navigation race gate','Lazy page mounting is guarded before DOM activation');
+  else fail('Deferred navigation race gate','Deferred pages exist without a verified navigation readiness guard');
+}else{
+  fail('Deferred navigation race gate','frontend/index.html or frontend/app.js is missing');
+}
+
 const changedJs=changed.filter(x=>x.endsWith('.js'));
 if (changedJs.length) {
   const stale=[];
