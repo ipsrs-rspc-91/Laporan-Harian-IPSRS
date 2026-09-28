@@ -4240,7 +4240,9 @@
   // ============================================================
   async function afterAuthReady(){
     applyIdentityToUI();
-    buildMonthOptions();
+    // PERF STAGE 12: setelah Tahap 8, hanya Page_Input yang sudah di-mount.
+    // Jangan membangun kontrol Dashboard/Laporan yang DOM-nya belum tersedia.
+    // Form Input tetap diisi penuh karena langsung dipakai setelah login.
     populateStaticSelects();
     // Inisialisasi login HARUS ringan. Data tambahan dimuat di background/lazy
     // supaya user tidak tertahan di splash screen dan tidak ada navigasi tertunda.
