@@ -146,6 +146,17 @@
       return window.__ipsrsPageReady[name];
     }
     window.__ipsrsEnsurePage=ensurePage;
+    let chartReadyPromise=null;
+    function ensureChart(){
+      if(window.Chart) return Promise.resolve(window.Chart);
+      if(chartReadyPromise) return chartReadyPromise;
+      chartReadyPromise=script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js')
+        .then(()=>window.Chart)
+        .catch(err=>{ chartReadyPromise=null; console.warn('Chart.js load failed:',err); throw err; });
+      window.__ipsrsChartReady=chartReadyPromise;
+      return chartReadyPromise;
+    }
+    window.__ipsrsEnsureChart=ensureChart;
     try{
       await Promise.all(Object.entries(initialMounts).map(([id,url])=>fragment(id,url)));
       await script('js/static-data.js?v=20260928-AUDITTOTAL3');
