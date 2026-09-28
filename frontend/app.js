@@ -902,7 +902,11 @@
   function ensureDeferredPageReady_(name, timeoutMs){
     const pageId='page-'+String(name||'').trim();
     const existing=document.getElementById(pageId);
-    if(existing) return Promise.resolve(true);
+    // Placeholder <section id="page-*"> memang sudah ada di index.html,
+    // tetapi belum berarti fragment halaman sudah ter-mount. Hanya anggap
+    // siap jika elemen sudah memiliki isi dari fragment yang sebenarnya.
+    const isMounted=!!existing && String(existing.innerHTML || '').trim() !== '';
+    if(isMounted) return Promise.resolve(true);
 
     const readyMap=window.__ipsrsPageReady || {};
     let ready=readyMap[name];
@@ -950,24 +954,30 @@
     // Ini mencegah race condition: user dapat menekan menu Laporan/Dashboard
     // sebelum fragment HTML selesai di-mount. Tanpa guard ini, getElementById()
     // bernilai null dan seluruh area aplikasi dapat terlihat kosong.
-    if(IPSRS_DEFERRED_PAGE_NAMES.has(String(name||'')) && !document.getElementById('page-'+name)){
+    if(IPSRS_DEFERRED_PAGE_NAMES.has(String(name||''))){
+      const existingPage=document.getElementById('page-'+name);
+      const pageIsMounted=!!existingPage && String(existingPage.innerHTML || '').trim() !== '';
+      if(pageIsMounted){
+        // Halaman sudah benar-benar ter-mount; lanjutkan navigasi normal.
+      }else{
       const waitName=String(name);
       if(waitName==='laporan' && typeof window.__ipsrsShowLaporanLoading==='function'){
         try{ window.__ipsrsShowLaporanLoading('saya'); }catch(_e){}
       }
-      return ensureDeferredPageReady_(waitName,10000).then(function(ready){
-        if(!ready){
+        return ensureDeferredPageReady_(waitName,10000).then(function(ready){
+          if(!ready){
+            if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
+              try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
+            }
+            showDeferredPageError_(waitName);
+            return false;
+          }
           if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
             try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
           }
-          showDeferredPageError_(waitName);
-          return false;
-        }
-        if(waitName==='laporan' && typeof window.__ipsrsClearLaporanLoading==='function'){
-          try{ window.__ipsrsClearLaporanLoading(); }catch(_e){}
-        }
-        return goPage(waitName,preserveInputMode);
-      });
+          return goPage(waitName,preserveInputMode);
+        });
+      }
     }
 
     // Simpan status halaman SEBELUM class active dihapus.
