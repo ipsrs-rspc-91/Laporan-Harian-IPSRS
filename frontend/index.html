@@ -8,13 +8,13 @@
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL4">
+  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL7">
   <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
-  <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL3" as="script">
+  <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL7" as="script">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
-  <link rel="preload" href="./config.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./app.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./login-fast.js?v=20260928-AUDITTOTAL3" as="script">
+  <link rel="preload" href="./config.js?v=20260928-AUDITTOTAL7" as="script">
+  <link rel="preload" href="./app.js?v=20260928-AUDITTOTAL7" as="script">
+  <link rel="preload" href="./login-fast.js?v=20260928-AUDITTOTAL7" as="script">
   <style>
     .sub-tabs { display:flex; }
     .sub-tabs .sub-tab[data-subtab="saya"] { order:1; }
@@ -159,9 +159,9 @@
     // Script ini baru dimuat setelah login berhasil agar startup login lebih ringan.
     let postAuthFeaturesPromise=null;
     const postAuthFeatureUrls=[
-      './required-fields-ui.js?v=20260928-AUDITTOTAL4',
-      './access-control.js?v=20260928-AUDITTOTAL4',
-      './access-policy-ui.js?v=20260928-AUDITTOTAL4'
+      './required-fields-ui.js?v=20260928-AUDITTOTAL7',
+      './access-control.js?v=20260928-AUDITTOTAL7',
+      './access-policy-ui.js?v=20260928-AUDITTOTAL7'
     ];
     window.__ipsrsLoadPostAuthFeatures=function(){
       if(postAuthFeaturesPromise) return postAuthFeaturesPromise;
@@ -174,17 +174,17 @@
       // PERF STAGE 2: ketiga dependency dasar ini independen.
       // Muat dan eksekusi bersamaan; app.js baru dijalankan setelah semuanya siap.
       await Promise.all([
-        script('js/static-data.js?v=20260928-AUDITTOTAL3'),
+        script('js/static-data.js?v=20260928-AUDITTOTAL7'),
         script('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js'),
-        script('./config.js?v=20260928-AUDITTOTAL3')
+        script('./config.js?v=20260928-AUDITTOTAL7')
       ]);
-      await script('./app.js?v=20260928-AUDITTOTAL3');
+      await script('./app.js?v=20260928-AUDITTOTAL7');
       // required-fields/access-control/access-policy dimuat setelah login.
       // PERF STAGE 22: kedua wrapper tidak saling bergantung setelah app.js siap.
       // Muat bersamaan agar startup tidak menunggu total waktu download keduanya.
       await Promise.all([
-        script('./login-fast.js?v=20260928-AUDITTOTAL3'),
-        script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL3')
+        script('./login-fast.js?v=20260928-AUDITTOTAL7'),
+        script('./dashboard-loading-v2.js?v=20260928-AUDITTOTAL7')
       ]);
 
       // PERF STAGE 9: fitur khusus Laporan tidak dibutuhkan saat startup.
@@ -193,9 +193,9 @@
       window.__ipsrsLoadLaporanFeatures = function(){
         if(laporanFeaturesPromise) return laporanFeaturesPromise;
         const urls = [
-          './access-visibility-fix.js?v=20260928-AUDITTOTAL4',
-          './laporan-fast-v2.js?v=20260928-AUDITTOTAL4',
-          './laporan-loading-state.js?v=20260928-AUDITTOTAL6'
+          './access-visibility-fix.js?v=20260928-AUDITTOTAL7',
+          './laporan-fast-v2.js?v=20260928-AUDITTOTAL7',
+          './laporan-loading-state.js?v=20260928-AUDITTOTAL7'
         ];
         laporanFeaturesPromise = Promise.all(urls.map(script))
           .catch(function(err){
@@ -211,7 +211,7 @@
 
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20260928-AUDITTOTAL3", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20260928-AUDITTOTAL7", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
     }
   </script>
 </body>
