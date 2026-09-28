@@ -4151,7 +4151,19 @@
     return p;
   }
 
+  // DOM safety untuk Dashboard lazy-mount: elemen opsional hanya disentuh bila sudah tersedia.
+  function ensureDashboardDomSafety_(){
+    const adminStaffPanel = document.getElementById('adminStaffPanel');
+    const dashStaffFilterWrap = document.getElementById('dashStaffFilterWrap');
+    const dashStaffCard = document.getElementById('dashStaffCard');
+    if(adminStaffPanel) adminStaffPanel.classList.remove('hidden');
+    if(dashStaffFilterWrap) dashStaffFilterWrap.classList.remove('hidden');
+    if(dashStaffCard) dashStaffCard.classList.remove('hidden');
+    return !!document.getElementById('page-dashboard');
+  }
+
   async function loadDashboard(){
+    ensureDashboardDomSafety_();
     // Satu sumber status loading Dashboard: request ini sendiri.
     // Tidak lagi bergantung pada intersep window.fetch global.
     const dashboardLoadSeq = (window.__ipsrsDashboardLoadSeq || 0) + 1;
