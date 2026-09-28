@@ -130,10 +130,10 @@ if(a==="apiGetSystemInfo"){
  return{ok:true,data:{
    system_version:"20260928-AUDITTOTAL1",
    frontend_build:"20260928-AUDITTOTAL1",
-   api_version:"ipsrs-api v62",
+   api_version:"ipsrs-api v64",
    database_migration:"20260928092227",
    environment:"PRODUCTION",
-   git_commit:"2eb2f1a82fcfa4c5541193c7e98969a7dcc1f157",
+   git_commit:"4ce530bd2bb02da60761a4bdbbd88735c0ebe847",
    service_worker:"lhi-shell-v20260928-audittotal1",
    api_status:"ONLINE",
    database_status:"CONNECTED",
