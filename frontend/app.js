@@ -4145,14 +4145,9 @@
     // SENGAJA tidak fallback ke adminSelectedStaffId (default punya tab Laporan)
     // -- Dashboard punya pilihan sendiri lewat dropdown #DashStaff, default "Semua Petugas".
     const staffFilter = document.getElementById('DashStaff').value || null;
-    // Dashboard KPI hari ini harus selalu membaca status terbaru.
-    // Cache Monitoring tetap dipakai untuk halaman Laporan, tetapi entry
-    // monitoring untuk tanggal yang sedang ditampilkan di Dashboard
-    // dibersihkan sebelum request agar laporan yang baru masuk tidak tertahan
-    // oleh cache 30 detik.
-    if(typeof window.__ipsrsClearLaporanApiCache === 'function'){
-      window.__ipsrsClearLaporanApiCache('apiGetStaffMonitoring', [bulan, todayLocalISO()]);
-    }
+    // Dashboard sekarang menerima monitoring_today langsung dari
+    // apiDashboardStats. Tidak perlu lagi menyentuh cache Monitoring
+    // terpisah sebelum request Dashboard.
     try{
       const [statsJson, monJson] = await getDashboardDataCached_(bulan, staffFilter);
 
