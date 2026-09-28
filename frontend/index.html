@@ -106,7 +106,7 @@
 
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20260928-AUDIT1", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
     }
   </script>
 </body>
