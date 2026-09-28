@@ -178,15 +178,26 @@ if(a==="apiDashboardStats"){
  if(d.staffIdFilter)q=q.eq("staff_id",d.staffIdFilter);
  if(d.bidangFilter)q=q.eq("bidang_snapshot",d.bidangFilter);
  const {data:rawReports,error}=await q;if(error)throw error;
- // Counts include KA IPSRS. Detailed report payloads remain protected by reportPolicyBatch/canViewReport.
- const dashboardPolicy=await reportPolicyBatch(db,s,rawReports||[]);const rr:any[]=[];for(const r of rawReports||[])if(dashboardPolicy.visible.has(String(r.report_id)))rr.push(r);
- // KA IPSRS ikut dalam KPI kepatuhan/monitoring.
- // PRIVACY/STATISTICS SEPARATION:
- // Statistik/agregat BOLEH menghitung laporan KA IPSRS. Yang dibatasi untuk
- // petugas lain adalah payload/detail laporan KA IPSRS, bukan angka agregatnya.
- // reportPolicyBatch/rr tetap menjadi pagar untuk detail yang dapat dilihat.
- const aggregateReports=(rawReports||[]);
- const staffCountReports=(rawReports||[]).map((r:any)=>({staff_id:r.staff_id,tanggal:r.tanggal}));
+ // PERF P1: aggregate/KPI calculations do not need report-level visibility checks.
+ // Only the small "recent" detail payload needs reportPolicyBatch. This avoids
+ // loading owner roles / edit permissions for every report in the selected month.
+ const aggregateReports=rawReports||[];
+ const recentCandidates=aggregateReports.slice().sort((a:any,b:any)=>{
+   const d=String(b.tanggal||"").localeCompare(String(a.tanggal||""));
+   if(d)return d;
+   const p=String(b.pukul||"").localeCompare(String(a.pukul||""));
+   if(p)return p;
+   return String(b.created_at||"").localeCompare(String(a.created_at||""));
+ }).slice(0,12);
+ let rr:any[]=[];
+ let dashboardPolicy:any={visible:new Set<string>(),editable:new Set<string>()};
+ if(recentCandidates.length){
+   dashboardPolicy=await reportPolicyBatch(db,s,recentCandidates);
+   rr=recentCandidates.filter((r:any)=>dashboardPolicy.visible.has(String(r.report_id)));
+ }
+ // KA IPSRS remains included in KPI/aggregate statistics. Its report details
+ // are still excluded from the recent payload for non-KA users below.
+ const staffCountReports=aggregateReports.map((r:any)=>({staff_id:r.staff_id,tanggal:r.tanggal}));
  const total=aggregateReports.length,sel=aggregateReports.filter((r:any)=>r.status==="Selesai").length,bel=total-sel,cat:any={},ar:any={},sm:any={},pc:any={};for(const st of activeStaff||[])sm[st.staff_id]={staff_id:st.staff_id,nama:st.nama,role:st.role,bidang:st.bidang||"",value:0};let spare=0,unit=0;
  const newPartGroups:any={};const newUnitGroups:any={};let spareQty=0,unitQty=0;
  const qtyValue=(v:any)=>{const n=Number(String(v??"").trim().replace(/,/g,"."));return Number.isFinite(n)&&n>0?n:0};
