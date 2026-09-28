@@ -1,0 +1,5 @@
+[project_id]
+project_id = "tcrmlhfsroyhaxdfwyll"
+
+[functions.ipsrs-api]
+verify_jwt = true
