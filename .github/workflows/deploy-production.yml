@@ -19,9 +19,56 @@ env:
   SUPABASE_PROJECT_REF: tcrmlhfsroyhaxdfwyll
 
 jobs:
+  detect-changes:
+    name: Detect deployment targets
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      supabase: ${{ steps.changes.outputs.supabase }}
+      cloudflare: ${{ steps.changes.outputs.cloudflare }}
+    steps:
+      - name: Checkout audited commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+
+      - name: Detect changed components
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(git diff --name-only "${{ github.event.workflow_run.head_sha }}^" "${{ github.event.workflow_run.head_sha }}")"
+          echo "Changed files:"
+          printf '%s\n' "$files"
+
+          frontend=false
+          supabase=false
+          cloudflare=false
+
+          if printf '%s\n' "$files" | grep -q '^frontend/'; then
+            frontend=true
+          fi
+
+          if printf '%s\n' "$files" | grep -q '^supabase/'; then
+            supabase=true
+          fi
+
+          # Cloudflare Worker currently publishes ./frontend as its Worker assets.
+          # Therefore a frontend change is also a Cloudflare deployment change.
+          if printf '%s\n' "$files" | grep -Eq '^(frontend/|wrangler\.jsonc$)'; then
+            cloudflare=true
+          fi
+
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "supabase=$supabase" >> "$GITHUB_OUTPUT"
+          echo "cloudflare=$cloudflare" >> "$GITHUB_OUTPUT"
+
   deploy-supabase:
     name: Deploy Supabase Backend
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: detect-changes
+    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.supabase == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -67,7 +114,8 @@ jobs:
 
   deploy-cloudflare:
     name: Deploy Cloudflare Worker
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: detect-changes
+    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.cloudflare == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -96,7 +144,8 @@ jobs:
 
   deploy-pages:
     name: Deploy GitHub Pages
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: detect-changes
+    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -138,16 +187,23 @@ jobs:
 
   production-result:
     name: Production Deployment Gate
-    needs: [deploy-supabase, deploy-cloudflare, deploy-pages]
+    needs: [detect-changes, deploy-supabase, deploy-cloudflare, deploy-pages]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Block failed production deployment
-        if: ${{ needs.deploy-supabase.result != 'success' || needs.deploy-cloudflare.result != 'success' || needs.deploy-pages.result != 'success' }}
+        if: ${{ needs.detect-changes.result != 'success' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' }}
         run: |
           echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED"
-          echo "One or more production targets did not deploy successfully."
+          echo "A required deployment target failed or was cancelled."
           exit 1
 
+      - name: Deployment target summary
+        run: |
+          echo "Frontend/GitHub Pages: ${{ needs.detect-changes.outputs.frontend }}"
+          echo "Supabase: ${{ needs.detect-changes.outputs.supabase }}"
+          echo "Cloudflare Worker: ${{ needs.detect-changes.outputs.cloudflare }}"
+          echo "Skipped targets are intentional when their source files did not change."
+
       - name: Production deployment passed
-        run: echo "✅ IPSRS PRODUCTION DEPLOYMENT PASSED"
+        run: echo "✅ IPSRS SELECTIVE PRODUCTION DEPLOYMENT PASSED"
