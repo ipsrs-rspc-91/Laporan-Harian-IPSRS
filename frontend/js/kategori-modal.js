@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260929-KATEGORI-MODAL1
+   Build: 20260929-KATEGORI-MODAL2
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260929-KATEGORI-MODAL1';
+  const BUILD = '20260929-KATEGORI-MODAL2';
   const BASE = 'PEMELIHARAAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
@@ -63,6 +63,35 @@
         background:#eff6ff;border-radius:12px;color:#1e3a8a;
         font-size:13px;line-height:1.5;
       }
+      /* Pilihan modal PEMELIHARAAN */
+      #ipsrsKategoriModal1 .ipsrs-kat-body{padding-top:4px}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice{
+        min-height:70px;
+        padding:13px 15px;
+        border-width:1.5px;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"]{
+        border-color:#22a447;
+        background:#f0faF2;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"]:hover{
+        border-color:#16883a;
+        background:#e7f7eb;
+        box-shadow:0 0 0 2px rgba(34,164,71,.10);
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"]{
+        border-color:#e9c46a;
+        background:#fff9e8;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"]:hover{
+        border-color:#d7a52e;
+        background:#fff4d3;
+        box-shadow:0 0 0 2px rgba(233,196,106,.12);
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"] .ipsrs-kat-choice-title{color:#176b2e}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"] .ipsrs-kat-choice-title{color:#7a5700}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"] .ipsrs-kat-choice-desc,
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"] .ipsrs-kat-choice-desc{color:#5f6875}
       .ipsrs-kat-choice{
         width:100%; min-height:58px; margin:0 0 10px; padding:11px 14px;
         border:1px solid #cbd5e1; border-radius:12px; background:#fff;
@@ -126,13 +155,12 @@
       'PEMELIHARAAN',
       'Pilih jenis pemeliharaan',
       `
-        <div class="ipsrs-kat-info">Gunakan istilah operasional IPSRS yang sudah berlaku.</div>
         <button type="button" class="ipsrs-kat-choice" data-kat-schedule="terjadwal">
-          <span class="ipsrs-kat-choice-title">PEMELIHARAAN RUTIN SESUAI JADWAL</span>
+          <span class="ipsrs-kat-choice-title">RUTIN SESUAI JADWAL</span>
           <span class="ipsrs-kat-choice-desc">Pekerjaan dilakukan sesuai jadwal pemeliharaan rutin.</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-schedule="luar">
-          <span class="ipsrs-kat-choice-title">PEMELIHARAAN DI LUAR JADWAL RUTIN</span>
+          <span class="ipsrs-kat-choice-title">DI LUAR JADWAL RUTIN</span>
           <span class="ipsrs-kat-choice-desc">Pekerjaan pemeliharaan dilakukan di luar jadwal rutin.</span>
         </button>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
