@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260929-KATEGORI-MODAL6
+   Build: 20260929-KATEGORI-MODAL7
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260929-KATEGORI-MODAL6';
+  const BUILD = '20260929-KATEGORI-MODAL7';
   const BASE = 'PEMELIHARAAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
@@ -186,7 +186,7 @@
           <span class="ipsrs-kat-choice-desc">Tidak ada spare part atau material yang diganti.</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-replace="dengan">
-          <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL</span>
+          <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL BARU</span>
           <span class="ipsrs-kat-choice-desc">Ada spare part/material yang diganti atau digunakan.</span>
         </button>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-back>Kembali</button><button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
