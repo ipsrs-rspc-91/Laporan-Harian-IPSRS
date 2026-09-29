@@ -1123,14 +1123,32 @@
   // option tambah -- fungsinya cuma menampilkan pilihan yang sudah ada.
   // ============================================================
   function populateStaticSelects(){
-    const kategoriTargets = ['Kategori','FilterKategori'];
-    kategoriTargets.forEach(id => {
-      const sel = document.getElementById(id);
-      STATIC_KATEGORI.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k; opt.innerText = k;
-        sel.appendChild(opt);
-      });
+    // Kategori pada FORM INPUT memakai kategori induk. Rincian pekerjaan
+    // dipilih melalui modal bertahap agar dropdown tidak lagi menampilkan
+    // daftar kategori legacy yang panjang. FilterKategori tetap memakai
+    // STATIC_KATEGORI karena harus dapat memfilter laporan lama.
+    const kategoriInduk = [
+      'PEMELIHARAAN',
+      'PERBAIKAN',
+      'PEMASANGAN / INSTALASI',
+      'PEMERIKSAAN / INSPEKSI',
+      'PENGUJIAN / ANALISA',
+      'PERMINTAAN LAYANAN',
+      'PROYEK / RENOVASI',
+      'ADMINISTRASI / MANAJEMEN',
+      'LAINNYA'
+    ];
+    const kategoriSel = document.getElementById('Kategori');
+    kategoriInduk.forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k; opt.innerText = k;
+      kategoriSel.appendChild(opt);
+    });
+    const filterKategoriSel = document.getElementById('FilterKategori');
+    STATIC_KATEGORI.forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k; opt.innerText = k;
+      filterKategoriSel.appendChild(opt);
     });
     const areaTargets = ['AreaKerja','FilterArea'];
     areaTargets.forEach(id => {
