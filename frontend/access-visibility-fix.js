@@ -11,7 +11,8 @@
  * 4. Monitoring hanya menampilkan STAFF dengan status "Aktif".
  *    Backend tetap mengirim master lengkap; penyaringan ini hanya untuk UI.
  * 5. Setelah Page Laporan selesai dimount dan user sudah login, tab awal
- *    dipastikan kembali ke "Laporan Saya".
+ *    dipastikan kembali ke "Laporan Saya", kecuali ada navigasi internal
+ *    Dashboard -> Daftar Laporan yang sedang berlangsung.
  *
  * Backend GAS tetap menjadi otoritas keamanan dan tidak disentuh oleh file ini.
  */
@@ -78,7 +79,18 @@
     if(typeof window.goLaporanSubTab !== 'function') return;
 
     try{
-      window.goLaporanSubTab('saya');
+      // Jangan menimpa navigasi internal dari Dashboard.
+      // Saat kartu "Belum Selesai" diklik, app.js sudah menetapkan target
+      // "daftar". Default "saya" hanya berlaku untuk pembukaan Laporan biasa.
+      var dashboardDrilldown = window.__IPSRS_DASHBOARD_UNFINISHED_DRILLDOWN === true;
+      var dashboardTarget = String(window.__IPSRS_DASHBOARD_UNFINISHED_TARGET || '').toLowerCase();
+      var categoryTarget = (typeof window.getDashboardCategoryTarget_ === 'function')
+        ? String(window.getDashboardCategoryTarget_() || '').toLowerCase()
+        : '';
+      var target = (dashboardDrilldown || dashboardTarget === 'daftar' || categoryTarget === 'spare' || categoryTarget === 'unit')
+        ? 'daftar'
+        : 'saya';
+      window.goLaporanSubTab(target);
       initializedToken = token;
     }catch(err){
       console.warn('[ACCESS_VISIBILITY_FIX]',err);
