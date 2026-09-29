@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260929-KATEGORI-MODAL5
+   Build: 20260929-KATEGORI-MODAL6
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260929-KATEGORI-MODAL5';
+  const BUILD = '20260929-KATEGORI-MODAL6';
   const BASE = 'PEMELIHARAAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
@@ -193,8 +193,8 @@
     );
 
     document.querySelectorAll('[data-kat-schedule]').forEach(btn => {
-      btn.addEventListener('click', function(){
-        currentSchedule = this.dataset.katSchedule || '';
+      function chooseSchedule(){
+        currentSchedule = btn.dataset.katSchedule || '';
         document.getElementById('ipsrsKategoriModal1').classList.remove('show');
         const info = document.getElementById('ipsrsKategoriModal2Info');
         if(info){
@@ -203,7 +203,11 @@
             : 'PEMELIHARAAN DI LUAR JADWAL RUTIN dipilih.';
         }
         document.getElementById('ipsrsKategoriModal2').classList.add('show');
-      });
+      }
+      // Desktop: cukup arahkan kursor ke pilihan untuk lanjut ke modal berikutnya.
+      btn.addEventListener('mouseenter', chooseSchedule);
+      // Tetap dukung klik untuk touch/mobile dan sebagai fallback.
+      btn.addEventListener('click', chooseSchedule);
     });
 
     document.querySelectorAll('[data-kat-replace]').forEach(btn => {
