@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260929-KATEGORI-MODAL3
+   Build: 20260929-KATEGORI-MODAL4
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260929-KATEGORI-MODAL3';
+  const BUILD = '20260929-KATEGORI-MODAL4';
   const BASE = 'PEMELIHARAAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
@@ -50,10 +50,14 @@
         display:flex; align-items:center; justify-content:space-between;
         gap:12px; padding:18px 20px 12px;
       }
+      .ipsrs-kat-head > div:first-child{
+        flex:1;
+        text-align:center;
+      }
       .ipsrs-kat-title{font-size:18px;font-weight:800;color:#0f172a}
       .ipsrs-kat-sub{font-size:12px;color:#64748b;margin-top:4px}
       .ipsrs-kat-close{
-        width:34px;height:34px;border:0;border-radius:9px;background:#f8fafc;
+        width:34px;height:34px;flex:0 0 34px;border:0;border-radius:9px;background:#f8fafc;
         color:#475569;font-size:23px;line-height:1;cursor:pointer;
       }
       .ipsrs-kat-close:hover{background:#f1f5f9}
@@ -69,6 +73,7 @@
         min-height:70px;
         padding:13px 15px;
         border-width:1.5px;
+        text-align:center;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"]{
         border-color:#22a447;
@@ -240,8 +245,6 @@
     currentSchedule = '';
     const sel = document.getElementById('Kategori');
     if(!sel) return;
-    // Final value memakai kategori lama yang sudah ada, sehingga laporan lama
-    // dan logika spare-part existing tetap kompatibel.
     let opt = Array.from(sel.options).find(o => o.value === value);
     if(!opt){
       opt = document.createElement('option');
