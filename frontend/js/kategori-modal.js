@@ -8,6 +8,7 @@
 
   const BUILD = '20260929-KATEGORI-MODAL7';
   const BASE = 'PEMELIHARAAN';
+  const REPAIR = 'PERBAIKAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
     terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
@@ -192,6 +193,20 @@
       '<button type="button" class="ipsrs-kat-cancel" data-kat-back>Kembali</button><button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
     );
 
+    injectModal(
+      'ipsrsKategoriModal3',
+      'PERBAIKAN',
+      'Tentukan apakah ada penggantian spare part / material',
+      `
+        <button type="button" class="ipsrs-kat-choice" data-kat-repair="tanpa">
+          <span class="ipsrs-kat-choice-title">TANPA PENGGANTIAN SPARE PART / MATERIAL</span>
+        </button>
+        <button type="button" class="ipsrs-kat-choice" data-kat-repair="dengan">
+          <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL BARU</span>
+        </button>`,
+      '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
+    );
+
     document.querySelectorAll('[data-kat-schedule]').forEach(btn => {
       function chooseSchedule(){
         currentSchedule = btn.dataset.katSchedule || '';
@@ -208,6 +223,15 @@
       btn.addEventListener('mouseenter', chooseSchedule);
       // Tetap dukung klik untuk touch/mobile dan sebagai fallback.
       btn.addEventListener('click', chooseSchedule);
+    });
+
+    document.querySelectorAll('[data-kat-repair]').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const value = this.dataset.katRepair === 'dengan'
+          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
+          : 'PERBAIKAN SAJA';
+        finishKategori(value);
+      });
     });
 
     document.querySelectorAll('[data-kat-replace]').forEach(btn => {
@@ -234,11 +258,12 @@
   function openScheduleModal(){
     buildModals();
     document.getElementById('ipsrsKategoriModal2').classList.remove('show');
+    document.getElementById('ipsrsKategoriModal3').classList.remove('show');
     document.getElementById('ipsrsKategoriModal1').classList.add('show');
   }
 
   function cancelKategoriFlow(){
-    ['ipsrsKategoriModal1','ipsrsKategoriModal2'].forEach(id => {
+    ['ipsrsKategoriModal1','ipsrsKategoriModal2','ipsrsKategoriModal3'].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.classList.remove('show');
     });
@@ -294,6 +319,14 @@
         if(sel && sel.value === BASE){
           sel.value = '';
           openScheduleModal();
+          return;
+        }
+        if(sel && sel.value === REPAIR){
+          sel.value = '';
+          buildModals();
+          document.getElementById('ipsrsKategoriModal1').classList.remove('show');
+          document.getElementById('ipsrsKategoriModal2').classList.remove('show');
+          document.getElementById('ipsrsKategoriModal3').classList.add('show');
           return;
         }
         return originalHandleKategoriChange.apply(this, arguments);
