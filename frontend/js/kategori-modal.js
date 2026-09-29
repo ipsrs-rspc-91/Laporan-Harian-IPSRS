@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260929-KATEGORI-MODAL2
+   Build: 20260929-KATEGORI-MODAL3
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260929-KATEGORI-MODAL2';
+  const BUILD = '20260929-KATEGORI-MODAL3';
   const BASE = 'PEMELIHARAAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
@@ -157,11 +157,9 @@
       `
         <button type="button" class="ipsrs-kat-choice" data-kat-schedule="terjadwal">
           <span class="ipsrs-kat-choice-title">RUTIN SESUAI JADWAL</span>
-          <span class="ipsrs-kat-choice-desc">Pekerjaan dilakukan sesuai jadwal pemeliharaan rutin.</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-schedule="luar">
           <span class="ipsrs-kat-choice-title">DI LUAR JADWAL RUTIN</span>
-          <span class="ipsrs-kat-choice-desc">Pekerjaan pemeliharaan dilakukan di luar jadwal rutin.</span>
         </button>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
     );
