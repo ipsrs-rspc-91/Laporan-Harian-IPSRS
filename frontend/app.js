@@ -1196,7 +1196,19 @@
       if(!json || !json.ok || !json.data) return false;
       const areas = Array.isArray(json.data.areas) ? json.data.areas : [];
       const items = json.data.items && typeof json.data.items === 'object' ? json.data.items : {};
-      if(areas.length) MASTER_AREA = areas.map(x => String(x.name || '').trim()).filter(Boolean);
+      if(areas.length){
+        // Urutan master HARUS mengikuti sort_order Supabase.
+        // Jangan mengandalkan urutan object/response API.
+        MASTER_AREA = areas
+          .map(x => ({
+            name: String(x.name || '').trim(),
+            sort_order: Number(x.sort_order ?? 999999),
+            id: Number(x.id ?? 0)
+          }))
+          .filter(x => x.name)
+          .sort((a,b) => a.sort_order - b.sort_order || a.id - b.id)
+          .map(x => x.name);
+      }
       MASTER_ITEMS_BY_AREA = {};
       Object.keys(items).forEach(area => {
         MASTER_ITEMS_BY_AREA[area] = (Array.isArray(items[area]) ? items[area] : [])
