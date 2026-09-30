@@ -1373,6 +1373,38 @@
     setSparePartSection(!fields || fields.hidden);
   }
 
+  function setInputAuxSection_(fieldsId, toggleId, iconId, open){
+    const fields=document.getElementById(fieldsId);
+    const toggle=document.getElementById(toggleId);
+    const icon=document.getElementById(iconId);
+    if(!fields || !toggle) return;
+    const shouldOpen=!!open;
+    fields.hidden=!shouldOpen;
+    toggle.setAttribute('aria-expanded',shouldOpen?'true':'false');
+    if(icon) icon.textContent=shouldOpen?'−':'＋';
+  }
+
+  function togglePelaporSection(){
+    const fields=document.getElementById('pelaporFields');
+    setInputAuxSection_('pelaporFields','pelaporToggle','pelaporToggleIcon',!fields || fields.hidden);
+  }
+
+  function toggleNoLKSection(){
+    const fields=document.getElementById('noLKFields');
+    setInputAuxSection_('noLKFields','noLKToggle','noLKToggleIcon',!fields || fields.hidden);
+  }
+
+  function updateInputAuxSectionStatus_(){
+    const pelapor=String(document.getElementById('Pelapor')?.value||'').trim();
+    const nolk=String(document.getElementById('NoLK')?.value||'').trim();
+    const ps=document.getElementById('pelaporToggleStatus');
+    const ns=document.getElementById('noLKToggleStatus');
+    if(ps) ps.textContent=pelapor?'Sudah diisi':'Belum diisi';
+    if(ns) ns.textContent=nolk?'Sudah diisi':'Belum diisi';
+    if(pelapor) setInputAuxSection_('pelaporFields','pelaporToggle','pelaporToggleIcon',true);
+    if(nolk) setInputAuxSection_('noLKFields','noLKToggle','noLKToggleIcon',true);
+  }
+
   function syncSparePartSection(){
     const sel = document.getElementById('Kategori');
     const required = isSparePartRequiredCategory(sel ? sel.value : '');
