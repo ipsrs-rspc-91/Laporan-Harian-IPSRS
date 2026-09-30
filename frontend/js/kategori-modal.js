@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL19
+   Build: 20260930-KATEGORI-MODAL20
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL19';
+  const BUILD = '20260930-KATEGORI-MODAL20';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -167,6 +167,14 @@
       }
       #ipsrsKategoriModal3 .ipsrs-kat-choice:nth-of-type(2) .ipsrs-kat-choice-title{
         color:#006bd6;
+      }
+      #ipsrsKategoriModal3 .ipsrs-kat-choice:nth-of-type(2){
+        background:#eff6ff;
+        border-color:#93c5fd;
+      }
+      #ipsrsKategoriModal3 .ipsrs-kat-choice:nth-of-type(2):hover{
+        background:#dbeafe;
+        border-color:#60a5fa;
       }
       .ipsrs-kat-choice-desc{display:block;font-size:11px;color:#64748b;font-weight:500;margin-top:3px}
       .ipsrs-kat-footer{
