@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL21
+   Build: 20260930-KATEGORI-MODAL22
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL21';
+  const BUILD = '20260930-KATEGORI-MODAL22';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -74,81 +74,112 @@
         font-size:13px;line-height:1.5;
       }
       /* =========================================================
-         MODAL PEMELIHARAAN — MOBILE ELEGANT / LIGHTWEIGHT
-         Tidak memakai gambar eksternal. Ikon dibuat CSS/Unicode
-         sehingga tidak menambah network request.
+         MODAL PEMELIHARAAN — elegant card layout
          ========================================================= */
-      #ipsrsKategoriModal1{padding:14px}
       #ipsrsKategoriModal1 .ipsrs-kat-modal{
-        width:360px;max-width:calc(100vw - 28px);background:transparent;
-        border:0;border-radius:0;box-shadow:none;overflow:visible;
+        width:min(440px,100%);
+        background:#fff;
+        border:1px solid #e2e8f0;
+        border-radius:22px;
+        overflow:hidden;
+        box-shadow:0 24px 70px rgba(15,23,42,.28);
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-head,#ipsrsKategoriModal1 .ipsrs-kat-footer{display:none}
-      #ipsrsKategoriModal1 .ipsrs-kat-body{padding:0}
-      #ipsrsKategoriModal1 .ipsrs-kat-layout{display:flex;flex-direction:column;gap:18px}
+      #ipsrsKategoriModal1 .ipsrs-kat-head{
+        display:block;
+        padding:20px 58px 14px;
+        text-align:center;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-head > div:first-child{width:100%;text-align:center}
+      #ipsrsKategoriModal1 .ipsrs-kat-title{font-size:20px;font-weight:800;color:#0f172a}
+      #ipsrsKategoriModal1 .ipsrs-kat-sub{font-size:12px;color:#64748b;margin-top:4px}
+      #ipsrsKategoriModal1 .ipsrs-kat-close{
+        top:18px;right:18px;width:36px;height:36px;border-radius:11px;
+        background:#f8fafc;color:#475569;font-size:23px;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-body{padding:8px 18px 18px}
+      #ipsrsKategoriModal1 .ipsrs-kat-layout{display:flex;flex-direction:column;gap:14px}
       #ipsrsKategoriModal1 .ipsrs-kat-block{
-        display:grid;grid-template-columns:42% 58%;grid-template-rows:58px 58px;
-        min-height:116px;border-radius:18px;overflow:hidden;
-        box-shadow:0 10px 28px rgba(15,23,42,.18);position:relative;
+        display:grid;grid-template-columns:1fr;grid-template-rows:auto auto;
+        min-height:0;border-radius:17px;overflow:hidden;position:relative;
+        box-shadow:0 6px 18px rgba(15,23,42,.09);
       }
       #ipsrsKategoriModal1 .ipsrs-kat-block.green{
-        background:linear-gradient(135deg,#edf9e8 0%,#cdeabf 100%);
-        border:1px solid #80bd69;
+        background:linear-gradient(145deg,#f3fbef 0%,#e4f6dc 100%);
+        border:1px solid #a8d99a;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-block.yellow{
-        background:linear-gradient(135deg,#fff8d9 0%,#ffe69a 100%);
-        border:1px solid #e5b52b;
+        background:linear-gradient(145deg,#fffbed 0%,#fff2bf 100%);
+        border:1px solid #e8c75a;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block::before{
+        display:block;grid-column:1;grid-row:1;
+        padding:11px 15px 9px;
+        font-size:12px;font-weight:800;letter-spacing:.3px;
+        text-transform:uppercase;
+        border-bottom:1px solid rgba(71,85,105,.14);
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block.green::before{
+        content:"PEMELIHARAAN RUTIN  •  SESUAI JADWAL";
+        color:#166534;background:rgba(255,255,255,.32);
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block.yellow::before{
+        content:"PEMELIHARAAN DI LUAR JADWAL RUTIN";
+        color:#9a6700;background:rgba(255,255,255,.28);
       }
       #ipsrsKategoriModal1 .ipsrs-kat-choice{
-        min-width:0;min-height:0;width:100%;height:100%;margin:0;padding:8px 10px;
-        border:0;border-radius:0;display:flex;align-items:center;justify-content:center;
-        text-align:center;background:transparent;box-shadow:none;
+        min-width:0;min-height:55px;width:100%;height:auto;margin:0;padding:10px 14px;
+        border:0;border-radius:0;display:flex;align-items:center;justify-content:flex-start;
+        text-align:left;background:transparent;box-shadow:none;
         font-family:Arial,sans-serif;cursor:pointer;
         transition:background .14s ease,transform .14s ease;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-child{
-        grid-column:1;grid-row:1/3;border-right:1px solid rgba(71,85,105,.25);
-        flex-direction:column;gap:7px;padding:10px 7px;
+      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-of-type,
+      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-of-type(2){
+        grid-column:1;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-child(2){
-        grid-column:2;grid-row:1;border-bottom:1px solid rgba(71,85,105,.22);
-        justify-content:flex-start;text-align:left;padding-left:17px;
+      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-of-type{
+        grid-row:2;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-child(3){
-        grid-column:2;grid-row:2;justify-content:flex-start;text-align:left;padding-left:17px;
+      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-of-type(2){
+        grid-row:3;
+        border-top:1px solid rgba(71,85,105,.14);
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{background:rgba(255,255,255,.40);box-shadow:none;filter:none}
-      #ipsrsKategoriModal1 .ipsrs-kat-choice:active{transform:scale(.985)}
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-child::before{
-        content:"✓";width:34px;height:34px;display:flex;align-items:center;justify-content:center;
-        border-radius:50%;background:rgba(255,255,255,.70);font-size:21px;font-weight:800;
-        color:#19733a;box-shadow:0 2px 8px rgba(25,115,58,.14);
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{background:rgba(255,255,255,.52);box-shadow:none;filter:none}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:active{transform:scale(.99)}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice::before{
+        width:32px;height:32px;flex:0 0 32px;
+        display:flex;align-items:center;justify-content:center;
+        margin-right:11px;border-radius:50%;
+        background:rgba(255,255,255,.78);
+        font-size:16px;font-weight:800;
+        box-shadow:0 2px 7px rgba(15,23,42,.08);
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block.yellow>.ipsrs-kat-choice:first-child::before{
-        content:"⚒";color:#b36a00;
+      #ipsrsKategoriModal1 .ipsrs-kat-block.green>.ipsrs-kat-choice:first-of-type::before{
+        content:"✓";color:#15803d;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-child(2)::before,
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-child(3)::before{
-        width:30px;height:30px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;
-        border-radius:50%;margin-right:10px;background:rgba(255,255,255,.62);
-        font-size:15px;font-weight:800;
+      #ipsrsKategoriModal1 .ipsrs-kat-block.green>.ipsrs-kat-choice:nth-of-type(2)::before{
+        content:"⚙";color:#0875d1;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-child(2)::before{content:"✓";color:#16723a}
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-child(3)::before{content:"⚙";color:#0875d1}
+      #ipsrsKategoriModal1 .ipsrs-kat-block.yellow>.ipsrs-kat-choice:first-of-type::before{
+        content:"✓";color:#b36a00;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block.yellow>.ipsrs-kat-choice:nth-of-type(2)::before{
+        content:"⚙";color:#0875d1;
+      }
       #ipsrsKategoriModal1 .ipsrs-kat-choice-title{
-        display:block;font-size:13px;line-height:1.25;font-weight:700;color:#172033;
+        display:block;font-size:13px;line-height:1.3;font-weight:750;color:#172033;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-child .ipsrs-kat-choice-title{
-        font-size:13px;line-height:1.18;font-weight:800;text-align:center;
-      }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct$="dengan"] .ipsrs-kat-choice-title{
+      #ipsrsKategoriModal1 .ipsrs-kat-block.green>.ipsrs-kat-choice:nth-of-type(2) .ipsrs-kat-choice-title,
+      #ipsrsKategoriModal1 .ipsrs-kat-block.yellow>.ipsrs-kat-choice:nth-of-type(2) .ipsrs-kat-choice-title{
         color:#006bd6;
       }
-      @media(max-width:380px){
-        #ipsrsKategoriModal1 .ipsrs-kat-modal{width:100%}
-        #ipsrsKategoriModal1 .ipsrs-kat-block{grid-template-rows:56px 56px;min-height:112px}
-        #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:12px}
-        #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-child .ipsrs-kat-choice-title{font-size:12px}
+      @media(max-width:480px){
+        #ipsrsKategoriModal1 .ipsrs-kat-modal{width:100%;max-width:calc(100vw - 28px);border-radius:20px}
+        #ipsrsKategoriModal1 .ipsrs-kat-head{padding:18px 54px 12px}
+        #ipsrsKategoriModal1 .ipsrs-kat-body{padding:6px 14px 14px}
+        #ipsrsKategoriModal1 .ipsrs-kat-block::before{font-size:11px;padding:10px 13px 8px}
+        #ipsrsKategoriModal1 .ipsrs-kat-choice{min-height:54px;padding:9px 12px}
+        #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:13px}
       }
       .ipsrs-kat-choice{
         width:100%; min-height:58px; margin:0 0 10px; padding:11px 14px;
@@ -239,30 +270,24 @@
     injectModal(
       'ipsrsKategoriModal1',
       'PEMELIHARAAN',
-      'Pilih salah satu dari 4 pilihan',
+      'Pilih jenis pemeliharaan',
       `
         <div class="ipsrs-kat-layout">
           <div class="ipsrs-kat-block green">
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-tanpa">
-              <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>RUTIN<br>SESUAI JADWAL</span>
-            </button>
-            <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-tanpa">
               <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
             </button>
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-dengan">
-              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
             </button>
           </div>
 
           <div class="ipsrs-kat-block yellow">
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-tanpa">
-              <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>DI LUAR<br>JADWAL RUTIN</span>
-            </button>
-            <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-tanpa">
               <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
             </button>
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-dengan">
-              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
             </button>
           </div>
         </div>`,
