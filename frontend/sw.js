@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261001-monthpicker2";
+const CACHE_NAME = "lhi-shell-v20261001-monthpicker3";
 
 self.addEventListener("install", () => self.skipWaiting());
 
