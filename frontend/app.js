@@ -1022,6 +1022,11 @@
       // Ini memutus seluruh state bersama rawData dari kunjungan sebelumnya.
       resetLaporanSubTabCache();
       _laporanPageInitialized = true;
+
+      // Setiap kembali ke menu Laporan, reset card + FilterBulan ke bulan berjalan.
+      // Fragment Laporan tetap terpasang pada SPA, jadi inisialisasi fragment
+      // saja tidak cukup untuk menangani kunjungan berikutnya.
+      buildMonthOptions();
     }
     if(name === 'online'){
       if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
