@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL22
+   Build: 20260930-KATEGORI-MODAL23
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL22';
+  const BUILD = '20260930-KATEGORI-MODAL23';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -112,9 +112,12 @@
         border:1px solid #e8c75a;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-block::before{
-        display:block;grid-column:1;grid-row:1;
-        padding:11px 15px 9px;
-        font-size:12px;font-weight:800;letter-spacing:.3px;
+        display:flex;align-items:center;justify-content:center;
+        grid-column:1;grid-row:1;
+        min-height:48px;
+        padding:10px 15px;
+        font-size:15px;font-weight:850;letter-spacing:.25px;
+        line-height:1.2;text-align:center;
         text-transform:uppercase;
         border-bottom:1px solid rgba(71,85,105,.14);
       }
@@ -177,7 +180,10 @@
         #ipsrsKategoriModal1 .ipsrs-kat-modal{width:100%;max-width:calc(100vw - 28px);border-radius:20px}
         #ipsrsKategoriModal1 .ipsrs-kat-head{padding:18px 54px 12px}
         #ipsrsKategoriModal1 .ipsrs-kat-body{padding:6px 14px 14px}
-        #ipsrsKategoriModal1 .ipsrs-kat-block::before{font-size:11px;padding:10px 13px 8px}
+        #ipsrsKategoriModal1 .ipsrs-kat-block::before{
+          min-height:52px;padding:10px 12px;font-size:15px;
+          text-align:center;line-height:1.2;
+        }
         #ipsrsKategoriModal1 .ipsrs-kat-choice{min-height:54px;padding:9px 12px}
         #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:13px}
       }
