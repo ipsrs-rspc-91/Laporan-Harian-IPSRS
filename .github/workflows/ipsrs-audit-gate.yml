@@ -88,3 +88,4 @@ jobs:
         run: echo "✅ IPSRS FULL REGRESSION GATE PASSED"
 
 # Deployment trigger refresh: force the audited main branch through the existing gate.
+# Month Picker release trigger: 20261001-MONTHPICKER2.
