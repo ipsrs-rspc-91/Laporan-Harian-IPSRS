@@ -325,7 +325,7 @@
           <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL BARU</span>
           <span class="ipsrs-kat-choice-desc">Ada spare part/material yang diganti atau digunakan.</span>
         </button>`,
-      '<button type="button" class="ipsrs-kat-cancel" data-kat-back>Kembali</button><button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
+      '<button type="button" class="ipsrs-kat-cancel" data-kat-back>Kembali</button>'
     );
 
     injectModal(
