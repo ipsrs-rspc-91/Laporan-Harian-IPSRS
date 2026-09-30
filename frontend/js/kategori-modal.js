@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260929-KATEGORI-MODAL7
+   Build: 20260930-KATEGORI-MODAL10
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260929-KATEGORI-MODAL7';
+  const BUILD = '20260930-KATEGORI-MODAL10';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -73,36 +73,56 @@
         background:#eff6ff;border-radius:12px;color:#1e3a8a;
         font-size:13px;line-height:1.5;
       }
-      /* Pilihan modal PEMELIHARAAN */
-      #ipsrsKategoriModal1 .ipsrs-kat-body{padding-top:4px}
+      /* Modal PEMELIHARAAN — 4 pilihan langsung (2 x 2) */
+      #ipsrsKategoriModal1 .ipsrs-kat-body{padding:10px 14px 16px}
+      #ipsrsKategoriModal1 .ipsrs-kat-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:0;
+        border:1px solid #64748b;
+      }
       #ipsrsKategoriModal1 .ipsrs-kat-choice{
-        min-height:70px;
-        padding:13px 15px;
-        border-width:1.5px;
+        min-height:94px;
+        margin:0;
+        padding:12px 9px;
+        border:0;
+        border-right:1px solid #64748b;
+        border-bottom:1px solid #64748b;
+        border-radius:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
         text-align:center;
+        background:#fff;
+        box-shadow:none;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"]{
-        border-color:#22a447;
-        background:#f0faF2;
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:nth-child(2n){border-right:0}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:nth-last-child(-n+2){border-bottom:0}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="terjadwal-tanpa"],
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="terjadwal-dengan"]{
+        background:#d9efc8;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"]:hover{
-        border-color:#16883a;
-        background:#e7f7eb;
-        box-shadow:0 0 0 2px rgba(34,164,71,.10);
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="luar-tanpa"],
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="luar-dengan"]{
+        background:#fff0bd;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"]{
-        border-color:#e9c46a;
-        background:#fff9e8;
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{
+        filter:brightness(.96);
+        box-shadow:inset 0 0 0 2px rgba(37,99,235,.22);
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"]:hover{
-        border-color:#d7a52e;
-        background:#fff4d3;
-        box-shadow:0 0 0 2px rgba(233,196,106,.12);
+      #ipsrsKategoriModal1 .ipsrs-kat-choice-title{
+        font-size:13px;
+        line-height:1.45;
+        font-weight:700;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"] .ipsrs-kat-choice-title{color:#176b2e}
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"] .ipsrs-kat-choice-title{color:#7a5700}
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="terjadwal"] .ipsrs-kat-choice-desc,
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-schedule="luar"] .ipsrs-kat-choice-desc{color:#5f6875}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct$="dengan"] .ipsrs-kat-choice-title{
+        color:#006bd6;
+      }
+      @media(max-width:480px){
+        #ipsrsKategoriModal1 .ipsrs-kat-body{padding:8px 10px 12px}
+        #ipsrsKategoriModal1 .ipsrs-kat-choice{min-height:108px;padding:10px 7px}
+        #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:12px;line-height:1.5}
+      }
       .ipsrs-kat-choice{
         width:100%; min-height:58px; margin:0 0 10px; padding:11px 14px;
         border:1px solid #cbd5e1; border-radius:12px; background:#fff;
@@ -165,14 +185,22 @@
     injectModal(
       'ipsrsKategoriModal1',
       'PEMELIHARAAN',
-      'Pilih jenis pemeliharaan',
+      'Pilih salah satu dari 4 pilihan',
       `
-        <button type="button" class="ipsrs-kat-choice" data-kat-schedule="terjadwal">
-          <span class="ipsrs-kat-choice-title">RUTIN SESUAI JADWAL</span>
-        </button>
-        <button type="button" class="ipsrs-kat-choice" data-kat-schedule="luar">
-          <span class="ipsrs-kat-choice-title">DI LUAR JADWAL RUTIN</span>
-        </button>`,
+        <div class="ipsrs-kat-grid">
+          <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-tanpa">
+            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>RUTIN SESUAI<br>JADWAL<br><br>PEMELIHARAAN SAJA</span>
+          </button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-dengan">
+            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>RUTIN SESUAI<br>JADWAL<br><br>DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
+          </button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-tanpa">
+            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>DI LUAR JADWAL RUTIN<br><br>PEMELIHARAAN SAJA</span>
+          </button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-dengan">
+            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>DI LUAR JADWAL RUTIN<br><br>DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
+          </button>
+        </div>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
     );
 
@@ -207,22 +235,17 @@
       '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
     );
 
-    document.querySelectorAll('[data-kat-schedule]').forEach(btn => {
-      function chooseSchedule(){
-        currentSchedule = btn.dataset.katSchedule || '';
-        document.getElementById('ipsrsKategoriModal1').classList.remove('show');
-        const info = document.getElementById('ipsrsKategoriModal2Info');
-        if(info){
-          info.textContent = currentSchedule === 'terjadwal'
-            ? 'PEMELIHARAAN RUTIN SESUAI JADWAL dipilih.'
-            : 'PEMELIHARAAN DI LUAR JADWAL RUTIN dipilih.';
-        }
-        document.getElementById('ipsrsKategoriModal2').classList.add('show');
-      }
-      // Desktop: cukup arahkan kursor ke pilihan untuk lanjut ke modal berikutnya.
-      btn.addEventListener('mouseenter', chooseSchedule);
-      // Tetap dukung klik untuk touch/mobile dan sebagai fallback.
-      btn.addEventListener('click', chooseSchedule);
+    document.querySelectorAll('[data-kat-direct]').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const map = {
+          'terjadwal-tanpa': FINAL.terjadwal_tanpa,
+          'terjadwal-dengan': FINAL.terjadwal_dengan,
+          'luar-tanpa': FINAL.luar_tanpa,
+          'luar-dengan': FINAL.luar_dengan
+        };
+        const value = map[this.dataset.katDirect];
+        if(value) finishKategori(value);
+      });
     });
 
     document.querySelectorAll('[data-kat-repair]').forEach(btn => {
