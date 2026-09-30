@@ -400,31 +400,20 @@
       <input type="hidden" id="Pukul">
       <div class="smallnote">Klik sekali untuk memilih tanggal, jam, dan menit.</div>
 
-      <div id="pelaporSection" class="spare-part-section">
-        <button type="button" id="pelaporToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="pelaporFields" onclick="togglePelaporSection()">
+      <div id="pelaporLkSection" class="spare-part-section">
+        <button type="button" id="pelaporLkToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="pelaporLkFields" onclick="togglePelaporLkSection()">
           <span class="spare-part-toggle-main">
-            <span class="spare-part-toggle-title">Pelapor</span>
-            <span id="pelaporToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
+            <span class="spare-part-toggle-title">Pelapor / No LK</span>
+            <span id="pelaporLkToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
           </span>
-          <span id="pelaporToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
+          <span id="pelaporLkToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
         </button>
-        <div id="pelaporFields" class="spare-part-fields" hidden>
+        <div id="pelaporLkFields" class="spare-part-fields" hidden>
           <label for="Pelapor">Pelapor</label>
-          <input id="Pelapor" placeholder="Nama yang melapor" oninput="updateInputAuxSectionStatus_()">
-        </div>
-      </div>
+          <input id="Pelapor" placeholder="Nama yang melapor" oninput="updatePelaporLkStatus_()">
 
-      <div id="noLKSection" class="spare-part-section">
-        <button type="button" id="noLKToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="noLKFields" onclick="toggleNoLKSection()">
-          <span class="spare-part-toggle-main">
-            <span class="spare-part-toggle-title">No LK</span>
-            <span id="noLKToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
-          </span>
-          <span id="noLKToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
-        </button>
-        <div id="noLKFields" class="spare-part-fields" hidden>
           <label for="NoLK">No LK</label>
-          <input id="NoLK" oninput="updateInputAuxSectionStatus_()">
+          <input id="NoLK" oninput="updatePelaporLkStatus_()">
         </div>
       </div>
 
