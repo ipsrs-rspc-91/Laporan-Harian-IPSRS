@@ -34,7 +34,7 @@ const STATIC_KATEGORI = [
     "M.E. ( AC / Tata Udara / CHILLER )",
     "M.E. ( Telekomunikasi / MA. TV )",
     "M.E. ( Sistem Air Besih )",
-    "M.E. ( Boiler /Air Panas )",
+    "M.E. ( Heat Pump /Air Panas )",
     "M.E. ( Genset )",
     "M.E. ( Fire Alarm )",
     "M.E. ( Laundry )",
@@ -89,8 +89,8 @@ const STATIC_KATEGORI = [
     "M.E. ( Sistem Air Besih )": [
       "Pompa Deep Well","Meteran Air","Ground Tank","Roof Tank","Motor Roof Tank","Pompa Roof Tank","Motor Booster","Pompa Booster","Sensor WLC.","Sensor Radar / Pelampung.","Panel & Sirkuit Kontrol Air Bersih","Valve Inlet.","Valve Outlet.","Instalasi Plumbing Air Bersih","Strainer","Check Valve","Flexible Joint.","Pressure Gauge.","Pressure Tank","Pompa Dorong Air Bersih","Pompa jetpam","Sumur bor","Sistem-add1?","Sistem-add2?","Sistem-add2?"
     ],
-    "M.E. ( Boiler /Air Panas )": [
-      "Boiler","Calorifier","Tangki Kalori Fire","Water Heater","Softener","Chamsafe & Dosing Pump","Steam Trap","Pompa Feet Water","Tabung / Selang LPG","Thermostat","Selenoid","Instalasi Pipa Air Panas","Pressure Gauge Boiler","Presssure Switch","Check Valve Boiler","Flexible Hose","Valve Boiler","Tangki Supply Boiler","Motor Jockey Boiler","Pompa Jockey Boiler","Pompa Air Panas","Motor Air Panas","Panel & Sirkuit Kontrol Air Panas","Bell Alarm","pompa feed walter"
+    "M.E. ( Heat Pump /Air Panas )": [
+      "Heat Pump","Calorifier","Tangki Kalori Fire","Water Heater","Softener","Chamsafe & Dosing Pump","Steam Trap","Pompa Feet Water","Tabung / Selang LPG","Thermostat","Selenoid","Instalasi Pipa Air Panas","Pressure Gauge Heat Pump","Presssure Switch","Check Valve Heat Pump","Flexible Hose","Valve Heat Pump","Tangki Supply Boiler","Motor Jockey Boiler","Pompa Jockey Boiler","Pompa Air Panas","Motor Air Panas","Panel & Sirkuit Kontrol Air Panas","Bell Alarm","pompa feed walter"
     ],
     "M.E. ( Genset )": [
       "Filter Solar","Filter Oli","Filter Udara Genset","OLI","Radiator","Baterai / Accu","Charger Baterai","Tangki Solar","Pompa Solar","Motor ( Pompa Solar)","Water Fuel Separator","MCB / MCCB","Cerobong Asap","Panel Kontrol / AMF Genset","Tes Engine / Running","Selang katup","PLN Padam / Mati"," Keluar barang","Genset-add1?","Genset-add2?","Genset-add3?","Genset-add4?","Genset-add5?","Genset-add6?","Gensset-add7?"
