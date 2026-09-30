@@ -6,7 +6,7 @@
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL15';
+  const BUILD = '20260930-KATEGORI-MODAL17';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -30,13 +30,13 @@
     const style = document.createElement('style');
     style.id = 'ipsrs-kategori-modal-style';
     style.textContent = `
-      #ipsrsKategoriModal1, #ipsrsKategoriModal2{
+      #ipsrsKategoriModal1, #ipsrsKategoriModal2, #ipsrsKategoriModal3{
         position:fixed; inset:0; z-index:10120; display:none;
         align-items:center; justify-content:center; padding:18px;
         background:rgba(15,23,42,.48);
         backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
       }
-      #ipsrsKategoriModal1.show, #ipsrsKategoriModal2.show{display:flex;}
+      #ipsrsKategoriModal1.show, #ipsrsKategoriModal2.show, #ipsrsKategoriModal3.show{display:flex;}
       .ipsrs-kat-modal{
         width:min(430px,100%); background:#fff; border:1px solid #e2e8f0;
         border-radius:20px; overflow:hidden;
@@ -171,7 +171,7 @@
         background:#fff;color:#334155;font:inherit;font-weight:700;cursor:pointer;
       }
       @media(max-width:480px){
-        #ipsrsKategoriModal1,#ipsrsKategoriModal2{padding:14px}
+        #ipsrsKategoriModal1,#ipsrsKategoriModal2,#ipsrsKategoriModal3{padding:14px}
         .ipsrs-kat-modal{border-radius:18px}
         .ipsrs-kat-head{padding:16px 58px 10px}
         .ipsrs-kat-close{top:16px;right:16px}
