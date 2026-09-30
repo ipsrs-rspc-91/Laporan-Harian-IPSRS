@@ -261,6 +261,24 @@ if(a==="apiDashboardStats"){
 }
 if(a==="apiGetStaffReports"){const z=range(d.bulan),{data,error}=await db.from("reports").select("*").is("deleted_at",null).eq("staff_id",d.staffId).gte("tanggal",z.start).lte("tanggal",z.end);if(error)throw error;const visible:any[]=[];for(const r of data||[]){if(String(r.role_snapshot||"").toUpperCase()==="KA_IPSRS"||String(r.staff_id||"")==="KAIPSRS")continue;if(await canViewReport(db,s,r))visible.push(r);}return{ok:true,data:await Promise.all(visible.map(async(r:any)=>map(r,(await canEditReport(db,s,r)).ok)))}}
 if(a==="apiGetStaffPerformance"){const z=range(d.bulan),{data,error}=await db.from("reports").select("staff_id,role_snapshot,status").is("deleted_at",null).eq("staff_id",d.staffId).gte("tanggal",z.start).lte("tanggal",z.end);if(error)throw error;const rr:any[]=[];for(const r of data||[]){if(String(r.role_snapshot||"").toUpperCase()==="KA_IPSRS"||String(r.staff_id||"")==="KAIPSRS")continue;if(await canViewReport(db,s,r))rr.push(r);}const n=rr.length,sx=rr.filter((r:any)=>r.status==="Selesai").length;return{ok:true,data:{staff_id:d.staffId,total:n,selesai:sx,belum:n-sx,persentase:n?Math.round(sx/n*100):0}}}
+if(a==="apiGetMasterData"){
+ const {data,error}=await db.from("master_data")
+   .select("id,data_type,parent_id,name,sort_order,is_active")
+   .eq("is_active",true)
+   .order("data_type")
+   .order("sort_order")
+   .order("id");
+ if(error)throw error;
+ const areas:any[]=[]; const items:any={}; const categories:any[]=[]; const areaNameById:any={};
+ for(const x of data||[]){
+   const type=String(x.data_type||"").toUpperCase(), name=String(x.name||"").trim();
+   if(!name)continue;
+   if(type==="AREA"){areaNameById[x.id]=name;areas.push({id:x.id,name,sort_order:x.sort_order});}
+   else if(type==="ITEM"){const area=areaNameById[x.parent_id];if(area)(items[area]??=[]).push(name);}
+   else if(type==="KATEGORI")categories.push({id:x.id,name,sort_order:x.sort_order});
+ }
+ return{ok:true,data:{areas,items,kategori:categories}};
+}
 if(a==="apiGetKategoriKustom"){const {data,error}=await db.from("master_data").select("name").eq("data_type","KATEGORI").gte("id",695).eq("is_active",true).order("id");if(error)throw error;return{ok:true,kategori:(data||[]).map((x:any)=>x.name).sort((a:any,b:any)=>String(a).localeCompare(String(b),"id"))}}
 if(a==="apiGetAreaKerjaKustom"){const {data,error}=await db.from("master_data").select("name").eq("data_type","AREA").gte("id",700).eq("is_active",true).order("id");if(error)throw error;return{ok:true,area:(data||[]).map((x:any)=>x.name).sort((a:any,b:any)=>String(a).localeCompare(String(b),"id"))}}
 if(a==="apiGetItemKustom"){const {data,error}=await db.from("master_data").select("name,parent_id").eq("data_type","ITEM").gte("id",707).eq("is_active",true).order("id");if(error)throw error;const {data:aa,error:ae}=await db.from("master_data").select("id,name").eq("data_type","AREA");if(ae)throw ae;const nm:any={};for(const x of aa||[])nm[x.id]=x.name;const items:any={};for(const x of data||[]){const area=nm[x.parent_id];if(area)(items[area]??=[]).push(x.name)}return{ok:true,items}}
