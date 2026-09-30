@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL16
+   Build: 20260930-KATEGORI-MODAL18
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL17';
+  const BUILD = '20260930-KATEGORI-MODAL18';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -265,10 +265,10 @@
       'Tentukan apakah ada penggantian spare part / material',
       `
         <button type="button" class="ipsrs-kat-choice" data-kat-repair="tanpa">
-          <span class="ipsrs-kat-choice-title">TANPA PENGGANTIAN SPARE PART / MATERIAL</span>
+          <span class="ipsrs-kat-choice-title">PERBAIKAN SAJA</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-repair="dengan">
-          <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL BARU</span>
+          <span class="ipsrs-kat-choice-title">PERBAIKAN DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
         </button>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
     );
