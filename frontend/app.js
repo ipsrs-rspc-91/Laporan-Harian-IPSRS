@@ -66,6 +66,11 @@
   // Area Kerja -- bentuknya sama seperti ITEMS_BY_AREA (StaticData.html).
   // Dimuat sekali per sesi login lewat loadItemKustomAll().
   let CUSTOM_ITEMS_BY_AREA = {};
+  // MASTER DATA RUNTIME: Supabase adalah sumber kebenaran utama.
+  // STATIC_* / ITEMS_BY_AREA hanya fallback jika master Supabase belum berhasil dimuat.
+  let MASTER_AREA = Array.isArray(STATIC_AREA) ? STATIC_AREA.slice() : [];
+  let MASTER_ITEMS_BY_AREA = (typeof ITEMS_BY_AREA === 'object' && ITEMS_BY_AREA) ? ITEMS_BY_AREA : {};
+  let MASTER_DATA_LOADED = false;
 
   function getSession(){
     try{ const raw = sessionStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; }
@@ -411,6 +416,7 @@
       case 'apiHeartbeat':
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
+      case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
@@ -1153,7 +1159,7 @@
     const areaTargets = ['AreaKerja','FilterArea'];
     areaTargets.forEach(id => {
       const sel = document.getElementById(id);
-      STATIC_AREA.forEach(a => {
+      MASTER_AREA.forEach(a => {
         const opt = document.createElement('option');
         opt.value = a; opt.innerText = a;
         sel.appendChild(opt);
@@ -1178,6 +1184,53 @@
     // Dropdown "Shift" pada Monitoring dihapus dari HTML (P1 §3.6); tidak ada
     // lagi elemen #MonFilterShift untuk diisi di sini.
   }
+  /**
+   * MASTER DATA SUPABASE
+   * Supabase adalah sumber kebenaran untuk AREA dan ITEM.
+   * Satu request mengambil seluruh master aktif sehingga perubahan nama,
+   * penambahan, nonaktif, dan perubahan parent langsung diikuti frontend.
+   */
+  async function loadMasterDataFromSupabase(){
+    try{
+      const json = await authRun('apiGetMasterData');
+      if(!json || !json.ok || !json.data) return false;
+      const areas = Array.isArray(json.data.areas) ? json.data.areas : [];
+      const items = json.data.items && typeof json.data.items === 'object' ? json.data.items : {};
+      if(areas.length) MASTER_AREA = areas.map(x => String(x.name || '').trim()).filter(Boolean);
+      MASTER_ITEMS_BY_AREA = {};
+      Object.keys(items).forEach(area => {
+        MASTER_ITEMS_BY_AREA[area] = (Array.isArray(items[area]) ? items[area] : [])
+          .map(x => String(x || '').trim()).filter(Boolean);
+      });
+      MASTER_DATA_LOADED = true;
+
+      const currentArea = document.getElementById('AreaKerja')?.value || '';
+      const currentFilterArea = document.getElementById('FilterArea')?.value || '';
+      ['AreaKerja','FilterArea'].forEach(id => {
+        const sel = document.getElementById(id);
+        if(!sel) return;
+        const addNew = Array.from(sel.options).find(o => o.value === ADD_NEW_VALUE);
+        sel.innerHTML = '';
+        MASTER_AREA.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a; opt.innerText = a;
+          sel.appendChild(opt);
+        });
+        if(addNew) sel.appendChild(addNew);
+      });
+      setInputSelectValue('AreaKerja', currentArea);
+      setInputSelectValue('FilterArea', currentFilterArea);
+
+      const currentItem = document.getElementById('Item')?.value || '';
+      refreshItemOptions();
+      if(currentItem) setInputSelectValue('Item', currentItem);
+      return true;
+    }catch(e){
+      // Static fallback tetap aktif bila Supabase master gagal dimuat.
+      return false;
+    }
+  }
+
   /**
    * Kategori kustom (dibuat lewat option "+ Tambah Kategori Baru") disimpan
    * permanen di sheet KATEGORI_CUSTOM (lihat Reports.gs/Api.gs) supaya SEMUA
@@ -1920,9 +1973,9 @@
       return;
     }
     sel.innerHTML = '<option value="">Pilih item&hellip;</option>';
-    const staticItems = ITEMS_BY_AREA[area] || [];
-    const customItems = CUSTOM_ITEMS_BY_AREA[area] || [];
-    staticItems.concat(customItems).forEach(it => {
+    const masterItems = MASTER_ITEMS_BY_AREA[area] || [];
+    const fallbackCustomItems = CUSTOM_ITEMS_BY_AREA[area] || [];
+    masterItems.concat(fallbackCustomItems).forEach(it => {
       const opt = document.createElement('option');
       opt.value = it; opt.innerText = it;
       sel.appendChild(opt);
@@ -4272,26 +4325,13 @@
     // Data kustom tidak boleh berebut koneksi dengan proses login/halaman pertama.
     // Mulai sedikit setelah UI aktif; data bawaan tetap langsung tersedia.
     startIpsrsHeartbeat_();
-    _customDataReady = new Promise(resolve => setTimeout(resolve, 1200))
-      .then(() => Promise.all([loadKategoriKustom(), loadAreaKerjaKustom(), loadItemKustomAll()]))
-      .then(() => {
-        appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
-        appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
-
-        // Jangan menghapus Item yang sedang dipilih pada form EDIT ketika
-        // data kustom selesai dimuat di background.
-        const selectedItemBeforeRefresh =
-          (_reportFormMode === 'EDIT' && document.getElementById('Item'))
-            ? document.getElementById('Item').value
-            : '';
-
-        refreshItemOptions();
-
-        if(_reportFormMode === 'EDIT' && selectedItemBeforeRefresh){
-          setInputSelectValue('Item', selectedItemBeforeRefresh);
-        }
-      })
-      .catch(() => {});
+    // Master AREA/ITEM langsung disinkronkan dari Supabase.
+    // Tidak ada lagi jeda 1,2 detik atau edit manual static-data.js untuk perubahan master.
+    _customDataReady = loadMasterDataFromSupabase().then(() => {
+      appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
+      appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
+      refreshItemOptions();
+    }).catch(() => {});
   }
 
   async function checkAuthAndInit(){
