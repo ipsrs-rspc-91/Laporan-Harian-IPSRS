@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL12
+   Build: 20260930-KATEGORI-MODAL13
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL12';
+  const BUILD = '20260930-KATEGORI-MODAL13';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -354,18 +354,12 @@
     sel.dispatchEvent(new Event('change',{bubbles:true}));
   }
 
+  // Kategori induk PEMELIHARAAN sudah dibuat oleh app.js.
+  // Modal tidak boleh menambahkan option kedua karena dapat menyebabkan
+  // duplikasi ketika kategori-modal.js berjalan sebelum populateStaticSelects().
   function ensureBaseOption(){
     const sel = document.getElementById('Kategori');
-    if(!sel) return false;
-    if(!Array.from(sel.options).some(o => o.value === BASE)){
-      const opt = document.createElement('option');
-      opt.value = BASE;
-      opt.innerText = BASE;
-      const firstReal = Array.from(sel.options).find(o => o.value && o.value !== 'ADD_NEW');
-      if(firstReal) sel.insertBefore(opt, firstReal);
-      else sel.appendChild(opt);
-    }
-    return true;
+    return !!sel;
   }
 
   function install(){
