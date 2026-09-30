@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL23
+   Build: 20260930-KATEGORI-MODAL24
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL23';
+  const BUILD = '20260930-KATEGORI-MODAL24';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -130,11 +130,15 @@
         color:#9a6700;background:rgba(255,255,255,.28);
       }
       #ipsrsKategoriModal1 .ipsrs-kat-choice{
-        min-width:0;min-height:55px;width:100%;height:auto;margin:0;padding:10px 14px;
-        border:0;border-radius:0;display:flex;align-items:center;justify-content:flex-start;
-        text-align:left;background:transparent;box-shadow:none;
+        min-width:0;min-height:55px;width:calc(100% - 24px);height:auto;
+        margin:8px 12px;padding:10px 14px;
+        border:1px solid rgba(100,116,139,.28);
+        border-radius:13px;
+        display:flex;align-items:center;justify-content:flex-start;
+        text-align:left;background:rgba(255,255,255,.42);
+        box-shadow:0 2px 7px rgba(15,23,42,.045);
         font-family:Arial,sans-serif;cursor:pointer;
-        transition:background .14s ease,transform .14s ease;
+        transition:background .14s ease,border-color .14s ease,box-shadow .14s ease,transform .14s ease;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:first-of-type,
       #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-of-type(2){
@@ -145,9 +149,13 @@
       }
       #ipsrsKategoriModal1 .ipsrs-kat-block>.ipsrs-kat-choice:nth-of-type(2){
         grid-row:3;
-        border-top:1px solid rgba(71,85,105,.14);
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{background:rgba(255,255,255,.52);box-shadow:none;filter:none}
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{
+        background:rgba(255,255,255,.78);
+        border-color:rgba(37,99,235,.42);
+        box-shadow:0 4px 12px rgba(15,23,42,.08);
+        filter:none;
+      }
       #ipsrsKategoriModal1 .ipsrs-kat-choice:active{transform:scale(.99)}
       #ipsrsKategoriModal1 .ipsrs-kat-choice::before{
         width:32px;height:32px;flex:0 0 32px;
@@ -184,7 +192,10 @@
           min-height:52px;padding:10px 12px;font-size:15px;
           text-align:center;line-height:1.2;
         }
-        #ipsrsKategoriModal1 .ipsrs-kat-choice{min-height:54px;padding:9px 12px}
+        #ipsrsKategoriModal1 .ipsrs-kat-choice{
+          min-height:54px;width:calc(100% - 20px);margin:7px 10px;padding:9px 11px;
+          border-radius:12px;
+        }
         #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:13px}
       }
       .ipsrs-kat-choice{
