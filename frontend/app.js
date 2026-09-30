@@ -1143,12 +1143,12 @@
       sel.appendChild(option);
     }
 
+    // Setiap kali menu Laporan dibuka, card selalu kembali ke bulan berjalan.
+    // Pilihan bulan sebelumnya tidak dipertahankan saat berpindah menu.
+    const currentValue = year + '-' + String(currentMonth).padStart(2,'0');
     const filter = document.getElementById('FilterBulan');
-    const selected = filter && /^\d{4}-\d{2}$/.test(String(filter.value||''))
-      ? String(filter.value)
-      : year + '-' + String(currentMonth).padStart(2,'0');
-
-    sel.value = selected.slice(0,4) === String(year) ? selected : year + '-' + String(currentMonth).padStart(2,'0');
+    if(filter) filter.value = currentValue;
+    sel.value = currentValue;
     renderLaporanCardMonthDisplay_(sel.value);
   }
 
