@@ -2976,7 +2976,13 @@
       if(bidang && r.Bidang !== bidang) return false;
       if(adminSelectedStaffId && r.StaffID !== adminSelectedStaffId) return false;
       if(cari){
-        const hay = [r.Ruang, r.MasalahKegiatan, r.Tindakan, r.Item, r.NoLK, r.Petugas].join(' ').toLowerCase();
+        // Pencarian global: periksa SELURUH field pada record laporan.
+        // Tidak perlu menambah nama field di sini jika field baru ditambahkan.
+        const hay = Object.values(r)
+          .filter(v => v !== null && v !== undefined)
+          .map(v => typeof v === 'object' ? JSON.stringify(v) : String(v))
+          .join(' ')
+          .toLowerCase();
         if(hay.indexOf(cari) === -1) return false;
       }
       return true;
