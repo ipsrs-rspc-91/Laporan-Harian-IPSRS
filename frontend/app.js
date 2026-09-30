@@ -1113,9 +1113,56 @@
       });
       sel.value = opts[0].val;
     });
-    document.getElementById('Tanggal').value = todayLocalISO();
+
+    // Kartu bulan pada Daftar Laporan adalah pemilih bulan langsung.
+    // Pilihan selalu Januari-Desember pada tahun berjalan dan ditampilkan
+    // singkat: Jan 2026, Feb 2026, ... Des 2026.
+    buildLaporanCardMonthOptions_();
+
+    const tanggalEl = document.getElementById('Tanggal');
+    if(tanggalEl) tanggalEl.value = todayLocalISO();
     const monTanggal = document.getElementById('MonTanggal');
     if(monTanggal) monTanggal.value = todayLocalISO();
+  }
+
+  function buildLaporanCardMonthOptions_(){
+    const sel = document.getElementById('lapBulanPicker');
+    if(!sel) return;
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const shortMonths = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const currentMonth = now.getMonth() + 1;
+
+    sel.innerHTML = '';
+    for(let month=1; month<=12; month++){
+      const value = year + '-' + String(month).padStart(2,'0');
+      const option = document.createElement('option');
+      option.value = value;
+      option.innerText = shortMonths[month-1] + ' ' + year;
+      sel.appendChild(option);
+    }
+
+    const filter = document.getElementById('FilterBulan');
+    const selected = filter && /^\d{4}-\d{2}$/.test(String(filter.value||''))
+      ? String(filter.value)
+      : year + '-' + String(currentMonth).padStart(2,'0');
+
+    sel.value = selected.slice(0,4) === String(year) ? selected : year + '-' + String(currentMonth).padStart(2,'0');
+  }
+
+  function selectLaporanCardMonth(value){
+    const val = String(value || '').trim();
+    if(!/^\d{4}-\d{2}$/.test(val)) return;
+
+    const filter = document.getElementById('FilterBulan');
+    if(filter) filter.value = val;
+
+    // Kartu bulan dan FilterBulan memakai sumber nilai yang sama.
+    // Muat ulang daftar sesuai bulan yang dipilih tanpa mengubah filter lain.
+    if(typeof window.loadReportsBySelectedMonth === 'function'){
+      window.loadReportsBySelectedMonth(false);
+    }
   }
 
   // ============================================================
@@ -3047,7 +3094,7 @@
     if(el('lapTotal')) el('lapTotal').innerText = total;
     if(el('lapSelesai')) el('lapSelesai').innerText = selesai;
     if(el('lapBelum')) el('lapBelum').innerText = belum;
-    if(el('lapBulanIni')) el('lapBulanIni').innerText = bulan || '-';
+    if(el('lapBulanPicker') && bulan) el('lapBulanPicker').value = String(bulan);
     bindDaftarUnfinishedDrilldown();
   }
 
