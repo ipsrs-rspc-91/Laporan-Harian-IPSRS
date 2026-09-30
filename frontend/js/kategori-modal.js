@@ -1,6 +1,6 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL15
+   Build: 20260930-KATEGORI-MODAL16
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
@@ -365,47 +365,45 @@
   function install(){
     const sel = document.getElementById('Kategori');
     if(!sel) return false;
-    if(typeof window.handleKategoriChange !== 'function' && !sel.__ipsrsKategoriOriginalChange) return false;
 
     buildModals();
     ensureBaseOption();
 
-    // Bind langsung ke elemen <select>, bukan hanya mengandalkan onchange
-    // inline. Ini mencegah modal PERBAIKAN gagal terbuka bila handler global
-    // belum siap saat script ini pertama kali boot atau tertimpa oleh script lain.
-    if(!sel.__ipsrsKategoriOriginalChange){
-      const inlineHandler = sel.onchange;
-      originalHandleKategoriChange =
-        (typeof window.handleKategoriChange === 'function' && !window.handleKategoriChange.__ipsrsKategoriModal)
-          ? window.handleKategoriChange
-          : (typeof inlineHandler === 'function' ? inlineHandler : null);
-      sel.__ipsrsKategoriOriginalChange = originalHandleKategoriChange;
-
-      function wrappedHandleKategoriChange(event){
+    // Tangkap event CHANGE pada fase CAPTURE, sebelum onchange inline milik
+    // app.js. Dengan cara ini PERBAIKAN/PEMELIHARAAN pasti masuk ke modal,
+    // sementara kategori lain tetap memakai handler bawaan app.js.
+    if(!sel.__ipsrsKategoriModalCapture){
+      const modalChangeHandler = function(event){
         const currentSel = document.getElementById('Kategori');
-        if(currentSel && currentSel.value === BASE){
+        if(!currentSel) return;
+
+        const value = String(currentSel.value || '').trim();
+        if(value === BASE){
+          event.preventDefault();
+          event.stopImmediatePropagation();
           currentSel.value = '';
           openScheduleModal();
-          return false;
+          return;
         }
-        if(currentSel && currentSel.value === REPAIR){
+
+        if(value === REPAIR){
+          event.preventDefault();
+          event.stopImmediatePropagation();
           currentSel.value = '';
           buildModals();
-          document.getElementById('ipsrsKategoriModal1').classList.remove('show');
-          document.getElementById('ipsrsKategoriModal2').classList.remove('show');
-          document.getElementById('ipsrsKategoriModal3').classList.add('show');
-          return false;
+          ['ipsrsKategoriModal1','ipsrsKategoriModal2'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.classList.remove('show');
+          });
+          const repairModal = document.getElementById('ipsrsKategoriModal3');
+          if(repairModal) repairModal.classList.add('show');
         }
-        if(typeof originalHandleKategoriChange === 'function'){
-          return originalHandleKategoriChange.call(this, event);
-        }
-      }
+      };
 
-      wrappedHandleKategoriChange.__ipsrsKategoriModal = true;
-      wrappedHandleKategoriChange.__ipsrsOriginal = originalHandleKategoriChange;
-      sel.onchange = wrappedHandleKategoriChange;
-      window.handleKategoriChange = wrappedHandleKategoriChange;
+      sel.addEventListener('change', modalChangeHandler, true);
+      sel.__ipsrsKategoriModalCapture = modalChangeHandler;
     }
+
     return true;
   }
 
