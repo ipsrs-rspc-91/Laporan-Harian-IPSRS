@@ -1125,6 +1125,9 @@
     if(monTanggal) monTanggal.value = todayLocalISO();
   }
 
+  // Dipanggil index.html setiap kali fragment Laporan dipasang ulang.
+  window.buildMonthOptions = buildMonthOptions;
+
   function buildLaporanCardMonthOptions_(){
     const sel = document.getElementById('lapBulanPicker');
     if(!sel) return;
