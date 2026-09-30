@@ -1149,11 +1149,28 @@
       : year + '-' + String(currentMonth).padStart(2,'0');
 
     sel.value = selected.slice(0,4) === String(year) ? selected : year + '-' + String(currentMonth).padStart(2,'0');
+    renderLaporanCardMonthDisplay_(sel.value);
+  }
+
+  function renderLaporanCardMonthDisplay_(value){
+    const display = document.getElementById('lapBulanPickerDisplay');
+    if(!display) return;
+    const val = String(value || '').trim();
+    const match = val.match(/^(\d{4})-(\d{2})$/);
+    if(!match) return;
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const monthIndex = Number(match[2]) - 1;
+    if(monthIndex < 0 || monthIndex > 11) return;
+    const monthEl = display.querySelector('.lap-bulan-picker-month');
+    const yearEl = display.querySelector('.lap-bulan-picker-year');
+    if(monthEl) monthEl.innerText = months[monthIndex];
+    if(yearEl) yearEl.innerText = match[1];
   }
 
   function selectLaporanCardMonth(value){
     const val = String(value || '').trim();
     if(!/^\d{4}-\d{2}$/.test(val)) return;
+    renderLaporanCardMonthDisplay_(val);
 
     const filter = document.getElementById('FilterBulan');
     if(filter) filter.value = val;
