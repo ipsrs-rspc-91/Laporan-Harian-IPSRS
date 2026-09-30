@@ -1188,7 +1188,13 @@
     try{
       const json = await authRun('apiGetKategoriKustom');
       if(json && json.ok && Array.isArray(json.kategori)){
-        json.kategori.forEach(k => appendKategoriOption(k));
+        // Kategori kustom/legacy hanya untuk FILTER, bukan dropdown Kategori
+        // pada Form Input. Form Input sekarang memakai 9 kategori induk.
+        // Ini mencegah kategori lama (mis. "Buat SP3") dan kategori induk
+        // yang tersimpan sebagai data kustom muncul/duplikat di Form Input.
+        json.kategori.forEach(k => {
+          insertOptionBeforeAddNew(document.getElementById('FilterKategori'), k, k);
+        });
       }
     }catch(e){ /* gagal ambil kategori kustom bukan error fatal -- kategori bawaan tetap jalan */ }
   }
