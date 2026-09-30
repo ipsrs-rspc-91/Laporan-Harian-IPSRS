@@ -339,7 +339,7 @@
         <button type="button" class="ipsrs-kat-choice" data-kat-repair="dengan">
           <span class="ipsrs-kat-choice-title">PERBAIKAN DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
         </button>`,
-      '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
+      ''
     );
 
     document.querySelectorAll('[data-kat-direct]').forEach(btn => {
@@ -377,7 +377,6 @@
       });
     });
 
-    document.querySelectorAll('[data-kat-cancel]').forEach(btn => btn.addEventListener('click', cancelKategoriFlow));
     const back = document.querySelector('[data-kat-back]');
     if(back) back.addEventListener('click', function(){
       document.getElementById('ipsrsKategoriModal2').classList.remove('show');
