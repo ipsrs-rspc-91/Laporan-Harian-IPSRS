@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL10
+   Build: 20260930-KATEGORI-MODAL11
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL10';
+  const BUILD = '20260930-KATEGORI-MODAL11';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -73,55 +73,105 @@
         background:#eff6ff;border-radius:12px;color:#1e3a8a;
         font-size:13px;line-height:1.5;
       }
-      /* Modal PEMELIHARAAN — 4 pilihan langsung (2 x 2) */
-      #ipsrsKategoriModal1 .ipsrs-kat-body{padding:10px 14px 16px}
-      #ipsrsKategoriModal1 .ipsrs-kat-grid{
+      /* Modal PEMELIHARAAN — mengikuti desain referensi:
+         2 blok terpisah, masing-masing kiri 1 sel tinggi + kanan 2 sel. */
+      #ipsrsKategoriModal1{
+        padding:0;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-modal{
+        width:320px;
+        max-width:calc(100vw - 28px);
+        background:transparent;
+        border:0;
+        border-radius:0;
+        box-shadow:none;
+        overflow:visible;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-head,
+      #ipsrsKategoriModal1 .ipsrs-kat-footer{
+        display:none;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-body{
+        padding:0;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-layout{
+        display:flex;
+        flex-direction:column;
+        gap:38px;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block{
         display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:0;
-        border:1px solid #64748b;
+        grid-template-columns:120px 1fr;
+        grid-template-rows:40px 40px;
+        border:1px solid #222;
+        background:#fff;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-choice{
-        min-height:94px;
+        min-height:0;
+        width:100%;
+        height:100%;
         margin:0;
-        padding:12px 9px;
+        padding:5px 7px;
         border:0;
-        border-right:1px solid #64748b;
-        border-bottom:1px solid #64748b;
         border-radius:0;
         display:flex;
         align-items:center;
         justify-content:center;
         text-align:center;
-        background:#fff;
+        background:transparent;
         box-shadow:none;
+        font-family:Arial,sans-serif;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice:nth-child(2n){border-right:0}
-      #ipsrsKategoriModal1 .ipsrs-kat-choice:nth-last-child(-n+2){border-bottom:0}
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="terjadwal-tanpa"],
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="terjadwal-dengan"]{
-        background:#d9efc8;
+      #ipsrsKategoriModal1 .ipsrs-kat-block > .ipsrs-kat-choice:first-child{
+        grid-column:1;
+        grid-row:1 / 3;
+        border-right:1px solid #222;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="luar-tanpa"],
-      #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct="luar-dengan"]{
-        background:#fff0bd;
+      #ipsrsKategoriModal1 .ipsrs-kat-block > .ipsrs-kat-choice:nth-child(2){
+        grid-column:2;
+        grid-row:1;
+        border-bottom:1px solid #222;
       }
-      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{
-        filter:brightness(.96);
-        box-shadow:inset 0 0 0 2px rgba(37,99,235,.22);
+      #ipsrsKategoriModal1 .ipsrs-kat-block > .ipsrs-kat-choice:nth-child(3){
+        grid-column:2;
+        grid-row:2;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block.green{
+        background:#c6e0b4;
+      }
+      #ipsrsKategoriModal1 .ipsrs-kat-block.yellow{
+        background:#ffe699;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-choice-title{
-        font-size:13px;
-        line-height:1.45;
-        font-weight:700;
+        display:block;
+        font-size:12px;
+        line-height:1.35;
+        font-weight:400;
+        color:#111;
       }
       #ipsrsKategoriModal1 .ipsrs-kat-choice[data-kat-direct$="dengan"] .ipsrs-kat-choice-title{
         color:#006bd6;
       }
+      #ipsrsKategoriModal1 .ipsrs-kat-choice:hover{
+        background:rgba(255,255,255,.16);
+        box-shadow:none;
+        filter:none;
+      }
       @media(max-width:480px){
-        #ipsrsKategoriModal1 .ipsrs-kat-body{padding:8px 10px 12px}
-        #ipsrsKategoriModal1 .ipsrs-kat-choice{min-height:108px;padding:10px 7px}
-        #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:12px;line-height:1.5}
+        #ipsrsKategoriModal1 .ipsrs-kat-modal{
+          width:320px;
+        }
+        #ipsrsKategoriModal1 .ipsrs-kat-layout{
+          gap:38px;
+        }
+        #ipsrsKategoriModal1 .ipsrs-kat-block{
+          grid-template-columns:120px 1fr;
+          grid-template-rows:40px 40px;
+        }
+        #ipsrsKategoriModal1 .ipsrs-kat-choice-title{
+          font-size:12px;
+          line-height:1.35;
+        }
       }
       .ipsrs-kat-choice{
         width:100%; min-height:58px; margin:0 0 10px; padding:11px 14px;
@@ -187,21 +237,32 @@
       'PEMELIHARAAN',
       'Pilih salah satu dari 4 pilihan',
       `
-        <div class="ipsrs-kat-grid">
-          <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-tanpa">
-            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>RUTIN SESUAI<br>JADWAL<br><br>PEMELIHARAAN SAJA</span>
-          </button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-dengan">
-            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>RUTIN SESUAI<br>JADWAL<br><br>DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
-          </button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-tanpa">
-            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>DI LUAR JADWAL RUTIN<br><br>PEMELIHARAAN SAJA</span>
-          </button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-dengan">
-            <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>DI LUAR JADWAL RUTIN<br><br>DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
-          </button>
+        <div class="ipsrs-kat-layout">
+          <div class="ipsrs-kat-block green">
+            <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-tanpa">
+              <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>RUTIN<br>SESUAI<br>JADWAL</span>
+            </button>
+            <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-tanpa">
+              <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
+            </button>
+            <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-dengan">
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
+            </button>
+          </div>
+
+          <div class="ipsrs-kat-block yellow">
+            <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-tanpa">
+              <span class="ipsrs-kat-choice-title">PEMELIHARAAN<br>DI LUAR<br>SESUAI<br>JADWAL</span>
+            </button>
+            <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-tanpa">
+              <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
+            </button>
+            <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-dengan">
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN<br>MATERIAL / SPARE PART BARU</span>
+            </button>
+          </div>
         </div>`,
-      '<button type="button" class="ipsrs-kat-cancel" data-kat-cancel>Batalkan</button>'
+      ''
     );
 
     injectModal(
