@@ -82,9 +82,7 @@
     opacity:.65;
   }
 
-  #page-input .spare-part-section,
-  #page-input .input-collapsible-section{margin-top:12px;margin-bottom:var(--sp-3);}
-  #page-input .input-collapsible-section .spare-part-fields{border-top:0;}
+  #page-input .spare-part-section{margin-top:12px;margin-bottom:var(--sp-3);}
 
 
 /* Border field non-wajib: dibuat sekitar 20% lebih tegas agar lebih mudah terlihat. */
@@ -402,7 +400,7 @@
       <input type="hidden" id="Pukul">
       <div class="smallnote">Klik sekali untuk memilih tanggal, jam, dan menit.</div>
 
-      <div id="pelaporSection" class="input-collapsible-section">
+      <div id="pelaporSection" class="spare-part-section">
         <button type="button" id="pelaporToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="pelaporFields" onclick="togglePelaporSection()">
           <span class="spare-part-toggle-main">
             <span class="spare-part-toggle-title">Pelapor</span>
@@ -416,7 +414,7 @@
         </div>
       </div>
 
-      <div id="noLKSection" class="input-collapsible-section">
+      <div id="noLKSection" class="spare-part-section">
         <button type="button" id="noLKToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="noLKFields" onclick="toggleNoLKSection()">
           <span class="spare-part-toggle-main">
             <span class="spare-part-toggle-title">No LK</span>
