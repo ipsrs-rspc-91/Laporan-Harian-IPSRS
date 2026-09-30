@@ -1373,36 +1373,32 @@
     setSparePartSection(!fields || fields.hidden);
   }
 
-  function setInputAuxSection_(fieldsId, toggleId, iconId, open){
-    const fields=document.getElementById(fieldsId);
-    const toggle=document.getElementById(toggleId);
-    const icon=document.getElementById(iconId);
+  function setPelaporLkSection(open){
+    const fields = document.getElementById('pelaporLkFields');
+    const toggle = document.getElementById('pelaporLkToggle');
+    const icon = document.getElementById('pelaporLkToggleIcon');
     if(!fields || !toggle) return;
-    const shouldOpen=!!open;
-    fields.hidden=!shouldOpen;
-    toggle.setAttribute('aria-expanded',shouldOpen?'true':'false');
-    if(icon) icon.textContent=shouldOpen?'−':'＋';
+    const shouldOpen = !!open;
+    fields.hidden = !shouldOpen;
+    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    if(icon) icon.textContent = shouldOpen ? '−' : '＋';
   }
 
-  function togglePelaporSection(){
-    const fields=document.getElementById('pelaporFields');
-    setInputAuxSection_('pelaporFields','pelaporToggle','pelaporToggleIcon',!fields || fields.hidden);
+  function togglePelaporLkSection(){
+    const fields = document.getElementById('pelaporLkFields');
+    setPelaporLkSection(!fields || fields.hidden);
   }
 
-  function toggleNoLKSection(){
-    const fields=document.getElementById('noLKFields');
-    setInputAuxSection_('noLKFields','noLKToggle','noLKToggleIcon',!fields || fields.hidden);
-  }
-
-  function updateInputAuxSectionStatus_(){
-    const pelapor=String(document.getElementById('Pelapor')?.value||'').trim();
-    const nolk=String(document.getElementById('NoLK')?.value||'').trim();
-    const ps=document.getElementById('pelaporToggleStatus');
-    const ns=document.getElementById('noLKToggleStatus');
-    if(ps) ps.textContent=pelapor?'Sudah diisi':'Belum diisi';
-    if(ns) ns.textContent=nolk?'Sudah diisi':'Belum diisi';
-    if(pelapor) setInputAuxSection_('pelaporFields','pelaporToggle','pelaporToggleIcon',true);
-    if(nolk) setInputAuxSection_('noLKFields','noLKToggle','noLKToggleIcon',true);
+  function updatePelaporLkStatus_(){
+    const pelapor = String(document.getElementById('Pelapor')?.value || '').trim();
+    const nolk = String(document.getElementById('NoLK')?.value || '').trim();
+    const status = document.getElementById('pelaporLkToggleStatus');
+    if(status){
+      if(pelapor && nolk) status.textContent = 'Sudah diisi';
+      else if(pelapor) status.textContent = 'Pelapor diisi';
+      else if(nolk) status.textContent = 'No LK diisi';
+      else status.textContent = 'Belum diisi';
+    }
   }
 
   function syncSparePartSection(){
