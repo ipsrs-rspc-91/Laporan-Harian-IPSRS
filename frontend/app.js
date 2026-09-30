@@ -1394,10 +1394,7 @@
     const nolk = String(document.getElementById('NoLK')?.value || '').trim();
     const status = document.getElementById('pelaporLkToggleStatus');
     if(status){
-      if(pelapor && nolk) status.textContent = 'Sudah diisi';
-      else if(pelapor) status.textContent = 'Pelapor diisi';
-      else if(nolk) status.textContent = 'No LK diisi';
-      else status.textContent = 'Belum diisi';
+      status.textContent = (pelapor || nolk) ? 'Sudah diisi' : 'Belum diisi';
     }
   }
 
