@@ -111,7 +111,10 @@
     <div class="stat-card"><div class="s-value" id="lapTotal">0</div><div class="s-label">Total Laporan</div></div>
     <div class="stat-card status-selesai"><div class="s-value" id="lapSelesai">0</div><div class="s-label">Selesai</div></div>
     <div class="stat-card status-belum"><div class="s-value" id="lapBelum">0</div><div class="s-label">Belum</div></div>
-    <div class="stat-card"><div class="s-value" id="lapBulanIni">-</div><div class="s-label">Bulan Ini</div></div>
+    <div class="stat-card laporan-month-picker-card" title="Pilih bulan laporan">
+      <select id="lapBulanPicker" class="lap-bulan-picker" aria-label="Pilih bulan laporan" onchange="selectLaporanCardMonth(this.value)"></select>
+      <div class="s-label">Bulan Laporan</div>
+    </div>
   </div>
   <div id="adminStaffPanel" class="admin-staff-panel card">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--sp-2);">
