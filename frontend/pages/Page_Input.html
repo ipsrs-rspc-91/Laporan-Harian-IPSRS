@@ -82,7 +82,10 @@
     opacity:.65;
   }
 
-  #page-input .spare-part-section{margin-top:12px;margin-bottom:var(--sp-3);}
+  #page-input .spare-part-section,
+  #page-input .input-collapsible-section{margin-top:12px;margin-bottom:var(--sp-3);}
+  #page-input .input-collapsible-section .spare-part-fields{border-top:0;}
+
 
 /* Border field non-wajib: dibuat sekitar 20% lebih tegas agar lebih mudah terlihat. */
 #page-input input:not([type="hidden"]),
@@ -399,11 +402,33 @@
       <input type="hidden" id="Pukul">
       <div class="smallnote">Klik sekali untuk memilih tanggal, jam, dan menit.</div>
 
-      <label for="Pelapor">Pelapor</label>
-      <input id="Pelapor" placeholder="Nama yang melapor">
+      <div id="pelaporSection" class="input-collapsible-section">
+        <button type="button" id="pelaporToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="pelaporFields" onclick="togglePelaporSection()">
+          <span class="spare-part-toggle-main">
+            <span class="spare-part-toggle-title">Pelapor</span>
+            <span id="pelaporToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
+          </span>
+          <span id="pelaporToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
+        </button>
+        <div id="pelaporFields" class="spare-part-fields" hidden>
+          <label for="Pelapor">Pelapor</label>
+          <input id="Pelapor" placeholder="Nama yang melapor">
+        </div>
+      </div>
 
-      <label for="NoLK">No LK</label>
-      <input id="NoLK">
+      <div id="noLKSection" class="input-collapsible-section">
+        <button type="button" id="noLKToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="noLKFields" onclick="toggleNoLKSection()">
+          <span class="spare-part-toggle-main">
+            <span class="spare-part-toggle-title">No LK</span>
+            <span id="noLKToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
+          </span>
+          <span id="noLKToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
+        </button>
+        <div id="noLKFields" class="spare-part-fields" hidden>
+          <label for="NoLK">No LK</label>
+          <input id="NoLK">
+        </div>
+      </div>
 
       <label for="Ruang">Ruang</label>
       <input id="Ruang" placeholder="Contoh: IGD, Ruang Anggrek">
