@@ -1790,26 +1790,19 @@
     try{
       const vv = window.visualViewport;
       const viewportTop = vv ? vv.offsetTop : 0;
-      const viewportHeight = vv ? vv.height : window.innerHeight;
-      const viewportBottom = viewportTop + viewportHeight;
 
-      // INSTRUKSI: Kategori tidak boleh naik terlalu tinggi.
-      // Sisakan ruang yang jelas di atas field agar teks "KATEGORI"
-      // tetap terlihat setelah pilihan dibuat.
-      const SAFE_TOP = viewportTop + 145;
-      const SAFE_BOTTOM = viewportBottom - 16;
+      // KATEGORI HARUS NAIK OTOMATIS setelah dipilih.
+      // Tetapi jangan ditempelkan ke bagian atas layar.
+      // Target posisi field dibuat 220px dari atas viewport sehingga
+      // label "KATEGORI" tetap berada di area layar dan tidak hilang.
+      const TARGET_TOP = viewportTop + 220;
       const rect = field.getBoundingClientRect();
 
-      let delta = 0;
-      if(rect.top < SAFE_TOP){
-        delta = rect.top - SAFE_TOP;
-      }else if(rect.bottom > SAFE_BOTTOM){
-        delta = rect.bottom - SAFE_BOTTOM;
-      }else{
-        // Sudah terlihat: jangan gerakkan form sama sekali.
-        return;
-      }
+      // Hanya naik. Jika Kategori sudah berada di atas target,
+      // jangan diturunkan lagi.
+      if(rect.top <= TARGET_TOP) return;
 
+      const delta = rect.top - TARGET_TOP;
       const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
       const nextTop = Math.max(
         0,
@@ -1823,7 +1816,6 @@
       console.warn('Kategori smart scroll:', err);
     }
   }
-
   // Setelah Area Kerja / Item dipilih, tombol Simpan Laporan
   // tetap menjadi target agar bagian bawah form dapat langsung digunakan.
   // .content adalah scroll container utama, jadi posisi dihitung terhadap
