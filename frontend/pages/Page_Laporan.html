@@ -110,12 +110,14 @@
   <div class="laporan-summary" id="laporanSummaryGrid">
     <div class="stat-card"><div class="s-value" id="lapTotal">0</div><div class="s-label">Total Laporan</div></div>
     <div class="stat-card status-selesai"><div class="s-value" id="lapSelesai">0</div><div class="s-label">Selesai</div></div>
-    <div class="stat-card status-belum"><div class="s-value" id="lapBelum">0</div><div class="s-label">Belum</div></div>
-    <div class="stat-card laporan-month-picker-card" title="Pilih bulan laporan" style="position:relative;cursor:pointer;">
+    <div class="stat-card status-belum laporan-click-card" title="Klik untuk melihat laporan yang belum selesai" style="position:relative;cursor:pointer;">
+      <div class="lap-card-action-hint" aria-hidden="true" style="position:absolute;top:12px;right:14px;font-size:12px;font-weight:700;opacity:.72;white-space:nowrap;">Lihat laporan →</div>
+      <div class="s-value" id="lapBelum">0</div>
+      <div class="s-label">Belum</div>
+    </div>
+    <div class="stat-card laporan-month-picker-card laporan-click-card" title="Klik untuk memilih bulan laporan" style="position:relative;cursor:pointer;">
+      <div class="lap-card-action-hint" aria-hidden="true" style="position:absolute;top:12px;right:14px;font-size:12px;font-weight:700;opacity:.72;white-space:nowrap;">Pilih bulan ▾</div>
       <div id="lapBulanPickerDisplay" class="lap-bulan-picker-display" aria-hidden="true" style="display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:72px;line-height:1;">
-        <span class="lap-bulan-picker-month" style="font-size:clamp(27px,8vw,36px);font-weight:800;color:var(--primary-dark);white-space:nowrap;">-</span>
-        <span class="lap-bulan-picker-year" style="margin-top:3px;font-size:clamp(20px,6vw,28px);font-weight:800;color:var(--primary-dark);white-space:nowrap;">-</span>
-      </div>
       <select id="lapBulanPicker" class="lap-bulan-picker" aria-label="Pilih bulan laporan" onchange="selectLaporanCardMonth(this.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;">
       </select>
       <div class="s-label">Bulan Laporan</div>
