@@ -90,3 +90,4 @@ jobs:
 # Deployment trigger refresh: force the audited main branch through the existing gate.
 # Month Picker release trigger: 20261001-MONTHPICKER2.
 # Clickable cards release audit: 20261001.
+# Month display fix release trigger: 20261001-MONTHPICKER4.
