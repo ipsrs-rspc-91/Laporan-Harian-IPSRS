@@ -1998,6 +1998,15 @@
 
       clearTimeout(keyboardResizeTimer);
       keyboardResizeTimer = setTimeout(function(){
+        // KATEGORI HARUS mengikuti aturan khususnya sendiri.
+        // Jangan pernah menjalankan moveActiveFieldAboveKeyboard() untuk
+        // Kategori karena fungsi tersebut dapat menarik form terlalu jauh
+        // ke atas dan membuat label KATEGORI hilang.
+        if(keyboardFocusedField.id === 'Kategori'){
+          positionKategoriField();
+          return;
+        }
+
         moveActiveFieldAboveKeyboard('smooth');
       }, 50);
     }
