@@ -3119,7 +3119,15 @@
     if(el('lapTotal')) el('lapTotal').innerText = total;
     if(el('lapSelesai')) el('lapSelesai').innerText = selesai;
     if(el('lapBelum')) el('lapBelum').innerText = belum;
-    if(el('lapBulanPicker') && bulan) el('lapBulanPicker').value = String(bulan);
+    if(el('lapBulanPicker') && bulan){
+      el('lapBulanPicker').value = String(bulan);
+      renderLaporanCardMonthDisplay_(String(bulan));
+    }
+    // Fallback: pastikan card tetap menampilkan bulan berjalan/terpilih
+    // walaupun fragment Laporan selesai dimuat setelah inisialisasi awal.
+    if(!bulan && el('lapBulanPicker')){
+      renderLaporanCardMonthDisplay_(el('lapBulanPicker').value);
+    }
     bindDaftarUnfinishedDrilldown();
   }
 
