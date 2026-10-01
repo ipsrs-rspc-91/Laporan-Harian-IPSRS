@@ -1767,14 +1767,64 @@
   }
 
   // ============================================================
-  // POSISI SELECT BAWAH FORM -> TOMBOL SIMPAN
-  // Kategori, Area Kerja, dan Item semuanya memakai satu target scroll:
-  // tombol Simpan Laporan. Ini mencegah mekanisme scroll lama saling
-  // menarik posisi form ke Item atau field lain.
+  // POSISI SELECT BAWAH FORM
+  // Area Kerja + Item tetap memakai target tombol Simpan.
+  // KATEGORI sengaja DIPISAH: setelah dipilih, posisi Kategori harus tetap
+  // dekat posisi semula agar label "KATEGORI" tetap terlihat di HP.
   // ============================================================
 
-  // Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan Laporan
-  // harus langsung berada di area layar yang bisa ditekan tanpa geser manual.
+  // Khusus Kategori: jangan memaksa scroll ke tombol Simpan.
+  // Jika Kategori sudah terlihat, tidak ada scroll tambahan.
+  // Jika browser Android menaruhnya terlalu dekat/di bawah batas viewport,
+  // cukup koreksi seperlunya dengan jarak atas yang aman.
+  function positionKategoriField(){
+    const content = getKeyboardContent();
+    const field = document.getElementById('Kategori');
+    if(!content || !field) return;
+
+    const mobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!mobile) return;
+
+    try{
+      const vv = window.visualViewport;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+
+      // Label KATEGORI berada tepat di atas select. Sisakan ruang agar
+      // label tidak ikut hilang saat browser melakukan auto-scroll.
+      const SAFE_TOP = viewportTop + 82;
+      const SAFE_BOTTOM = viewportBottom - 16;
+      const rect = field.getBoundingClientRect();
+
+      let delta = 0;
+      if(rect.top < SAFE_TOP){
+        delta = rect.top - SAFE_TOP;
+      }else if(rect.bottom > SAFE_BOTTOM){
+        delta = rect.bottom - SAFE_BOTTOM;
+      }else{
+        // Sudah terlihat: jangan gerakkan form sama sekali.
+        return;
+      }
+
+      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+      const nextTop = Math.max(
+        0,
+        Math.min(content.scrollTop + delta, maxScroll)
+      );
+
+      if(Math.abs(nextTop - content.scrollTop) < 2) return;
+
+      content.scrollTo({top:nextTop, behavior:'auto'});
+    }catch(err){
+      console.warn('Kategori smart scroll:', err);
+    }
+  }
+
+  // Setelah Area Kerja / Item dipilih, tombol Simpan Laporan
+  // tetap menjadi target agar bagian bawah form dapat langsung digunakan.
   // .content adalah scroll container utama, jadi posisi dihitung terhadap
   // visual viewport Android (termasuk saat keyboard masih terbuka).
   function positionInputSaveButton(){
@@ -1849,10 +1899,21 @@
 
       clearKeyboardMoveTimers();
 
-      // Kategori, Area Kerja, dan Item semuanya memakai SATU target:
-      // tombol Simpan Laporan. Tidak lagi diarahkan ke Item atau fungsi
-      // positioning Kategori lama.
-      if(field.id === 'Kategori' || field.id === 'AreaKerja' || field.id === 'Item'){
+      // Kategori sengaja tidak memakai target tombol Simpan.
+      // Tujuannya agar setelah memilih kategori, label KATEGORI tetap terlihat.
+      if(field.id === 'Kategori'){
+        keyboardFocusedField = field;
+        keyboardScrollTarget = field;
+        [60, 180, 360].forEach(function(delay){
+          keyboardMoveTimers.push(setTimeout(function(){
+            positionKategoriField();
+          }, delay));
+        });
+        return;
+      }
+
+      // Area Kerja dan Item tetap memakai target tombol Simpan.
+      if(field.id === 'AreaKerja' || field.id === 'Item'){
         keyboardFocusedField = field;
         keyboardScrollTarget = document.getElementById('btnSaveInput') || field;
 
@@ -1887,10 +1948,22 @@
 
     document.addEventListener('change', function(event){
       // Android dapat mengubah nilai <select> tanpa memindahkan fokus secara
-      // konsisten. Setelah Kategori / Area Kerja / Item dipilih, tombol Simpan
-      // harus menjadi target tunggal dan terlihat penuh.
+      // konsisten. Kategori diperlakukan khusus agar tidak melompat terlalu
+      // jauh ke atas setelah pilihan dibuat.
+      if(event.target && event.target.id === 'Kategori'){
+        keyboardFocusedField = event.target;
+        keyboardScrollTarget = event.target;
+        clearKeyboardMoveTimers();
+        [60, 180, 360].forEach(function(delay){
+          keyboardMoveTimers.push(setTimeout(function(){
+            positionKategoriField();
+          }, delay));
+        });
+        return;
+      }
+
+      // Area Kerja dan Item tetap menggunakan target tombol Simpan.
       if(event.target && (
-        event.target.id === 'Kategori' ||
         event.target.id === 'AreaKerja' ||
         event.target.id === 'Item'
       )){
