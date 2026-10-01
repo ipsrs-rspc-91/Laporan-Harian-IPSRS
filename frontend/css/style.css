@@ -923,3 +923,7 @@
     margin-bottom:0;
   }
 }
+
+/* FINAL MOBILE SAFETY: Daftar Laporan must remain one vertical column. */
+#subtab-daftar{display:block !important;width:100%;max-width:100%;box-sizing:border-box;}
+#subtab-daftar > *{width:100%;max-width:100%;box-sizing:border-box;}
