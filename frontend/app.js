@@ -1793,9 +1793,10 @@
       const viewportHeight = vv ? vv.height : window.innerHeight;
       const viewportBottom = viewportTop + viewportHeight;
 
-      // Label KATEGORI berada tepat di atas select. Sisakan ruang agar
-      // label tidak ikut hilang saat browser melakukan auto-scroll.
-      const SAFE_TOP = viewportTop + 82;
+      // INSTRUKSI: Kategori tidak boleh naik terlalu tinggi.
+      // Sisakan ruang yang jelas di atas field agar teks "KATEGORI"
+      // tetap terlihat setelah pilihan dibuat.
+      const SAFE_TOP = viewportTop + 145;
       const SAFE_BOTTOM = viewportBottom - 16;
       const rect = field.getBoundingClientRect();
 
