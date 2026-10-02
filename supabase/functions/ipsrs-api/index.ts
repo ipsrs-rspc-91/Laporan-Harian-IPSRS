@@ -1,3 +1,4 @@
+// BUILD-METADATA: 20261001-KATEGORI-SCROLL4 | rollback baseline 20261002-KATEGORI-SCROLL
 import { withSupabase } from "npm:@supabase/server@1.8.0";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
