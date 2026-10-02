@@ -1200,6 +1200,33 @@
   // untuk MEMFILTER daftar laporan, bukan mengisi laporan baru) TIDAK diberi
   // option tambah -- fungsinya cuma menampilkan pilihan yang sudah ada.
   // ============================================================
+  // Urutan Area Kerja dinamis berdasarkan bidang petugas.
+  // Master Supabase tetap menjadi sumber data; sort_order database tidak diubah.
+  function getPrioritizedAreaList_(areas){
+    const list=Array.isArray(areas)?areas.slice():[];
+    const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
+    if(!bidang) return list;
+
+    let isMine;
+    if(bidang==='me'){
+      isMine=name => /^m\.e\b/i.test(String(name||'').trim());
+    }else if(bidang==='sipil'){
+      isMine=name => /^sipil\b/i.test(String(name||'').trim());
+    }else if(bidang==='elektromedik'){
+      isMine=name => /^elektromedik\b/i.test(String(name||'').trim());
+    }else if(bidang==='kesling'){
+      isMine=name => /^kesling\b/i.test(String(name||'').trim());
+    }else if(bidang==='workshop'){
+      // Workshop belum mempunyai prefix Area Kerja khusus di master.
+      // Jangan memindahkan area lain secara asumsi.
+      return list;
+    }else{
+      return list;
+    }
+
+    return list.filter(isMine).concat(list.filter(a=>!isMine(a)));
+  }
+
   function populateStaticSelects(){
     // Kategori pada FORM INPUT memakai kategori induk. Rincian pekerjaan
     // dipilih melalui modal bertahap agar dropdown tidak lagi menampilkan
@@ -1231,7 +1258,10 @@
     const areaTargets = ['AreaKerja','FilterArea'];
     areaTargets.forEach(id => {
       const sel = document.getElementById(id);
-      MASTER_AREA.forEach(a => {
+      const areasForDisplay = id === 'AreaKerja'
+        ? getPrioritizedAreaList_(MASTER_AREA)
+        : MASTER_AREA;
+      areasForDisplay.forEach(a => {
         const opt = document.createElement('option');
         opt.value = a; opt.innerText = a;
         sel.appendChild(opt);
@@ -1295,7 +1325,10 @@
         if(!sel) return;
         const addNew = Array.from(sel.options).find(o => o.value === ADD_NEW_VALUE);
         sel.innerHTML = '';
-        MASTER_AREA.forEach(a => {
+        const areasForDisplay = id === 'AreaKerja'
+          ? getPrioritizedAreaList_(MASTER_AREA)
+          : MASTER_AREA;
+        areasForDisplay.forEach(a => {
           const opt = document.createElement('option');
           opt.value = a; opt.innerText = a;
           sel.appendChild(opt);
