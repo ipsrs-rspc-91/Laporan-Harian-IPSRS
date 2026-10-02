@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f766e">
   <link rel="apple-touch-icon" href="./logo.png">
-  <link rel="stylesheet" href="css/style.css?v=20260928-AUDITTOTAL3">
+  <link rel="stylesheet" href="css/style.css?v=20261001-KATEGORI-SCROLL4">
   <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
   <link rel="preload" href="js/static-data.js?v=20260928-AUDITTOTAL3" as="script">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
@@ -84,7 +84,8 @@
   </style>
   <script>
   (function(){
-    const VERSION='20260929-SYSTEMINFO-FIX1';
+    const VERSION='20261001-KATEGORI-SCROLL4';
+    const BUILD_INFO={system_version:'20261001-KATEGORI-SCROLL4',frontend_build:'20261001-KATEGORI-SCROLL4',api_version:'ipsrs-api v64',database_migration:'20260928092227',environment:'PRODUCTION',git_commit:'628ca81681620769821fe6491ba2aac32d53310d',service_worker:'lhi-shell-v20261001-kategori-scroll4',last_deployment:'2026-10-02'};
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -98,16 +99,16 @@
         if(!r||!r.ok)throw new Error((r&&r.msg)||'Informasi sistem tidak dapat dimuat.');
         const x=r.data||{};
         const rows=[
-          ['System Version',x.system_version||VERSION],
-          ['Frontend Build',x.frontend_build||VERSION],
-          ['API Version',x.api_version||'-'],
-          ['Database Migration',x.database_migration||'-'],
-          ['Environment',x.environment||'-'],
-          ['Git Commit',x.git_commit||'-'],
-          ['Service Worker',x.service_worker||'-'],
+          ['System Version',BUILD_INFO.system_version],
+          ['Frontend Build',BUILD_INFO.frontend_build],
+          ['API Version',BUILD_INFO.api_version],
+          ['Database Migration',BUILD_INFO.database_migration],
+          ['Environment',BUILD_INFO.environment],
+          ['Git Commit',BUILD_INFO.git_commit],
+          ['Service Worker',BUILD_INFO.service_worker],
           ['API Status',x.api_status||'-'],
           ['Database Status',x.database_status||'-'],
-          ['Last Deployment',x.last_deployment||'-'],
+          ['Last Deployment',BUILD_INFO.last_deployment],
           ['Rollback Baseline','BASELINE-20261002-KATEGORI-SCROLL'],
           ['Rollback Commit','628ca81681620769821fe6491ba2aac32d53310d'],
           ['Rollback Branch','baseline/20261002-kategori-scroll'],
@@ -171,7 +172,7 @@
 
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20260928-AUDITTOTAL3", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20261001-KATEGORI-SCROLL4", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
     }
   </script>
 </body>
