@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261001-kategori-scroll4";
+const CACHE_NAME = "lhi-shell-v20261002-kategori-scroll5";
 
 self.addEventListener("install", () => self.skipWaiting());
 
