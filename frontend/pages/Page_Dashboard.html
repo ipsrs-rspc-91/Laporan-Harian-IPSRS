@@ -65,13 +65,13 @@
     <div class="s-value" id="statSelesai">0</div>
     <div class="s-label">Selesai</div>
   </div>
-  <button type="button" class="stat-card status-belum" id="dashBelumSelesaiCard" onclick="openDashboardUnfinishedReports()" style="text-align:left; cursor:pointer;">
+  <button type="button" class="stat-card status-belum laporan-click-card" id="dashBelumSelesaiCard" onclick="openDashboardUnfinishedReports()" title="Klik untuk melihat laporan yang belum selesai" style="position:relative;text-align:left;cursor:pointer;">
+    <div class="lap-card-action-hint" aria-hidden="true" style="position:absolute;top:12px;right:14px;font-size:12px;font-weight:700;opacity:.72;white-space:nowrap;">Lihat laporan →</div>
     <div class="s-icon" style="background:var(--warning-bg); color:var(--warning);">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
     </div>
     <div class="s-value" id="statBelum">0</div>
     <div class="s-label">Belum Selesai</div>
-    <div class="smallnote">Lihat Laporan →</div>
   </button>
   <div class="stat-card">
     <div class="s-icon" style="background:var(--primary-light); color:var(--primary);">
