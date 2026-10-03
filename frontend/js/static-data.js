@@ -45,7 +45,7 @@ const STATIC_KATEGORI = [
     "ELEKTROMEDIK  ( Gas Medis )",
     "KESLING ( Umum )",
     "KESLING ( Sistem IPAL )",
-    "Kesling (Sistem Air Bersih)",
+    "KESLING (Sistem Air Bersih)",
     "KESLING (Sistem Limbah B3)",
     "KITCHEN /DAPUR",
     "CEK LIST M.E. / UTILITI",
@@ -110,7 +110,7 @@ const STATIC_KATEGORI = [
       "Manifest Jalan Hijau","Misting","Fogging","Lampu BL Insect killer","Trap massal","Bilik Disenfeksi","Desinfektan limbah B3","Limbah Medis B3","Bau Bangkai","Dispenser Viorek",],
     "KESLING ( Sistem IPAL )": [
       "IPAL","Sarang Tawon","Microplus","Blower STP","Motor ( Blower STP )","Diffuser","Timer Switch Blower","Pompa Submersible","Communitor","Sensor WLC","Sensor Radar / Pelampung","Valve","Flexible Joint","Karbon Aktip",],
-    "Kesling (Sistem Air Bersih)": [
+    "KESLING (Sistem Air Bersih)": [
       "Pompa Deep Well","Meteran Air","Ground Tank","Roof Tank","Motor Roof Tank","Pompa Roof Tank","Motor Booster","Pompa Booster","Sensor WLC.","Sensor Radar / Pelampung.","Panel & Sirkuit Kontrol Air Bersih","Valve Inlet.","Valve Outlet.","Instalasi Plumbing Air Bersih","Strainer","Check Valve","Flexible Joint.","Pressure Gauge.","Pressure Tank","Pompa Dorong Air Bersih","Pompa jetpam","Sumur bor"
     ],
     "KESLING (Sistem Limbah B3)": [
