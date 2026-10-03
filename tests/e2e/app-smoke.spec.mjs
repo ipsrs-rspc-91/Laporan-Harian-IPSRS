@@ -29,17 +29,20 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
 });
 
 test('IPSRS critical frontend assets are reachable', async ({ request }) => {
-  const assets = [
-    '/index.html',
-    '/app.js?v=20261001-MONTHPICKER2',
-    '/config.js?v=20260928-AUDITTOTAL3',
-    '/laporan-fast-v2.js?v=20260928-AUDITTOTAL3',
-    '/login-fast.js?v=20260928-AUDITTOTAL3',
-    '/dashboard-loading-v2.js?v=20260928-AUDITTOTAL3',
-    '/access-policy-ui.js?v=20260928-AUDITTOTAL3',
-    '/sw.js?v=20260928-AUDITTOTAL3'
-  ];
+  const indexResponse = await request.get('/index.html');
+  expect(indexResponse.ok(), '/index.html').toBeTruthy();
+  const indexHtml = await indexResponse.text();
 
+  // Derive the asset URLs from the same index.html that production serves.
+  // This prevents the smoke test from silently testing obsolete hard-coded
+  // cache versions after a frontend JS update.
+  const scriptAssets = [...indexHtml.matchAll(/<(?:script|link)\\b[^>]*(?:src|href)=["']([^"']+)["']/gi)]
+    .map(m => m[1])
+    .filter(src => /^\\.?\\/?(?:app|config|laporan-fast-v2|login-fast|dashboard-loading-v2|access-policy-ui|static-data|required-fields-ui|access-control|access-visibility-fix|laporan-loading-state|js\\/kategori-modal)\\.js(?:\\?[^"'#]*)?$/i.test(src.replace(/^\\//,'')));
+
+  expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
+
+  const assets = ['/index.html', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\\.\\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
