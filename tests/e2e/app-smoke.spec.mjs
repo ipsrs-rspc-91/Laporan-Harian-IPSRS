@@ -64,3 +64,43 @@ test('Delete Report control is present but hidden outside edit mode', async ({ p
   await expect(deleteButton).toBeAttached();
   await expect(deleteButton).toBeHidden();
 });
+
+
+test('dashboard-load', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-dashboard')).toBeAttached({timeout:10000});
+  await expect(page.locator('#DashBulan')).toBeAttached();
+  await expect(page.locator('#statTotal')).toBeAttached();
+  await expect(page.locator('#statSelesai')).toBeAttached();
+  await expect(page.locator('#statBelum')).toBeAttached();
+});
+
+test('unfinished-drilldown', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('#dashBelumSelesaiCard');
+  await expect(card).toBeAttached({timeout:10000});
+  await expect(card).toHaveAttribute('onclick', 'openDashboardUnfinishedReports()');
+  const fnType = await page.evaluate(() => typeof window.openDashboardUnfinishedReports);
+  expect(fnType).toBe('function');
+});
+
+test('dashboard-spare-part-table', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#dashSparePartCard')).toBeAttached({timeout:10000});
+  await expect(page.locator('#dashUnitBaruCard')).toBeAttached();
+  await expect(page.locator('#dashSparePartStats')).toBeAttached();
+  await expect(page.locator('#dashUnitBaruStats')).toBeAttached();
+  await expect(page.locator('#statSparePartTotalQty')).toBeAttached();
+  await expect(page.locator('#statUnitBaruTotalQty')).toBeAttached();
+});
+
+test('dashboard-mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const dashboard = page.locator('#page-dashboard');
+  await expect(dashboard).toBeAttached({timeout:10000});
+  const overflow = await dashboard.evaluate(el => el.scrollWidth > el.clientWidth);
+  expect(overflow, 'Dashboard must not overflow horizontally on mobile').toBeFalsy();
+  const tableWraps = page.locator('.dashboard-new-item-table-wrap');
+  expect(await tableWraps.count()).toBeGreaterThanOrEqual(2);
+});
