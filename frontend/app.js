@@ -1229,24 +1229,50 @@
   }
 
   function rebuildKategoriSelects_(keepKategori, keepFilterKategori){
-    const targets = [
-      ['Kategori', keepKategori || ''],
-      ['FilterKategori', keepFilterKategori || '']
+    // FORM INPUT: hanya kategori induk. Rincian PEMELIHARAAN/PERBAIKAN
+    // dipilih melalui modal bertahap. Jangan memasukkan MASTER_KATEGORI
+    // (kategori rincian dari Supabase) langsung ke #Kategori.
+    const kategoriInduk = [
+      'PEMELIHARAAN',
+      'PERBAIKAN',
+      'PEMASANGAN / INSTALASI',
+      'PEMERIKSAAN / INSPEKSI',
+      'PENGUJIAN / ANALISA',
+      'PERMINTAAN LAYANAN',
+      'PROYEK / RENOVASI',
+      'ADMINISTRASI / MANAJEMEN',
+      'LAINNYA'
     ];
-    targets.forEach(([id, current]) => {
-      const sel = document.getElementById(id);
-      if(!sel) return;
-      const addNew = Array.from(sel.options).find(o => o.value === ADD_NEW_VALUE);
-      sel.innerHTML = '<option value="">Pilih kategori&hellip;</option>';
-      MASTER_KATEGORI.forEach(k => {
+    const kategoriSel = document.getElementById('Kategori');
+    if(kategoriSel){
+      const addNew = Array.from(kategoriSel.options).find(o => o.value === ADD_NEW_VALUE);
+      kategoriSel.innerHTML = '<option value="">Pilih kategori&hellip;</option>';
+      kategoriInduk.forEach(k => {
         const opt = document.createElement('option');
         opt.value = k;
         opt.innerText = k;
-        sel.appendChild(opt);
+        kategoriSel.appendChild(opt);
       });
-      if(addNew) sel.appendChild(addNew);
-      if(current) setInputSelectValue(id, current);
-    });
+      if(addNew) kategoriSel.appendChild(addNew);
+      if(keepKategori) setInputSelectValue('Kategori', keepKategori);
+    }
+
+    // FILTER LAPORAN: tetap memakai kategori detail/master agar laporan lama
+    // dapat difilter tanpa mengubah alur Form Input.
+    const filterSel = document.getElementById('FilterKategori');
+    if(filterSel){
+      const addNew = Array.from(filterSel.options).find(o => o.value === ADD_NEW_VALUE);
+      filterSel.innerHTML = '<option value="">Pilih kategori&hellip;</option>';
+      const filterKategori = Array.isArray(STATIC_KATEGORI) ? STATIC_KATEGORI : [];
+      filterKategori.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.innerText = k;
+        filterSel.appendChild(opt);
+      });
+      if(addNew) filterSel.appendChild(addNew);
+      if(keepFilterKategori) setInputSelectValue('FilterKategori', keepFilterKategori);
+    }
   }
 
   function populateStaticSelects(){
