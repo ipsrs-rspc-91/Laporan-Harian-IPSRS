@@ -3254,9 +3254,13 @@
         if(r.Status === 'Selesai') return false;
       }else if(status && r.Status !== status) return false;
       if(isDashboardSparePartFilter){
-        if(!isSparePartReportCategory_(r.Kategori)) return false;
+        const kind=String(r.SparePartUnitKind||r.spare_part_unit_kind||'').trim().toUpperCase();
+        const status=String(r.SparePartUnitStatus||r.spare_part_unit_status||'').trim().toUpperCase();
+        if(!((kind==='SPARE PART / MATERIAL'&&status==='BARU') || isSparePartReportCategory_(r.Kategori))) return false;
       }else if(isDashboardUnitFilter){
-        if(!isUnitBaruReportCategory_(r.Kategori)) return false;
+        const kind=String(r.SparePartUnitKind||r.spare_part_unit_kind||'').trim().toUpperCase();
+        const status=String(r.SparePartUnitStatus||r.spare_part_unit_status||'').trim().toUpperCase();
+        if(!((kind==='UNIT'&&status==='BARU') || isUnitBaruReportCategory_(r.Kategori))) return false;
       }else if(kategori && r.Kategori !== kategori) return false;
       if(area && r.AreaKerja !== area) return false;
       if(bidang && r.Bidang !== bidang) return false;
