@@ -1,4 +1,4 @@
-version: "1.1"
+version: "1.2"
 project: "Laporan-Harian-IPSRS"
 policy: "locked modules require explicit user approval before behavioral change"
 last_reviewed: "2026-10-04"
@@ -18,6 +18,7 @@ modules:
       - "frontend/css/style.css"
       - "frontend/laporan-fast-v2.js"
       - "frontend/access-visibility-fix.js"
+      - "frontend/dashboard-loading-v2.js"
     protected_behaviors:
       - "Belum Selesai card drilldown"
       - "spare-part/new-item dashboard table"
@@ -40,6 +41,7 @@ modules:
       - "frontend/js/static-data.js"
       - "frontend/index.html"
       - "frontend/pages/Page_Input.html"
+      - "frontend/required-fields-ui.js"
     protected_behaviors:
       - "parent category selection"
       - "category modal flow"
@@ -84,6 +86,8 @@ modules:
       - "frontend/login-fast.js"
       - "frontend/access-control.js"
       - "frontend/access-policy-ui.js"
+      - "frontend/pages/Page_Login.html"
+      - "frontend/config.js"
       - "supabase/functions/ipsrs-api/index.ts"
     protected_behaviors:
       - "login"
@@ -106,6 +110,7 @@ modules:
       - "frontend/pages/Page_Laporan.html"
       - "frontend/app.js"
       - "frontend/laporan-fast-v2.js"
+      - "frontend/laporan-loading-state.js"
       - "supabase/functions/ipsrs-api/index.ts"
     protected_behaviors:
       - "create report"
@@ -147,6 +152,8 @@ modules:
     protected_files:
       - "frontend/index.html"
       - "frontend/sw.js"
+      - "frontend/manifest.json"
+      - "frontend/config.js"
     protected_behaviors:
       - "asset versioning"
       - "service worker update"
@@ -200,3 +207,83 @@ global_rules:
   - "Any failed regression against a LOCKED module blocks deployment."
   - "A module becomes LOCKED only after its required regression and production verification are evidenced."
   - "After approved update: UNLOCK -> CHANGE -> TEST -> VERIFY -> new version/baseline -> RE-LOCK."
+
+
+  - id: REKAP
+    name: "Rekap Bulanan / Month Picker"
+    status: STABLE_CANDIDATE
+    version: "REKAP-BASELINE-PENDING"
+    baseline_commit: "c35f7b83b33d3c80abe070e07ee03544693ec070"
+    protected_files:
+      - "frontend/pages/Page_Rekap.html"
+      - "frontend/app.js"
+    protected_behaviors:
+      - "monthly recap"
+      - "month picker"
+      - "month display consistency"
+    regression_tests:
+      - "monthly-recap"
+      - "month-picker"
+
+  - id: MONITORING
+    name: "Monitoring Staf / Page Online"
+    status: STABLE_CANDIDATE
+    version: "MONITORING-BASELINE-PENDING"
+    baseline_commit: "c35f7b83b33d3c80abe070e07ee03544693ec070"
+    protected_files:
+      - "frontend/pages/Page_Online.html"
+      - "frontend/app.js"
+      - "frontend/access-visibility-fix.js"
+    protected_behaviors:
+      - "active staff monitoring"
+      - "Page Online rendering"
+    regression_tests:
+      - "staff-monitoring"
+
+  - id: AUDIT_LOG
+    name: "Audit Log / History"
+    status: STABLE_CANDIDATE
+    version: "AUDIT-BASELINE-PENDING"
+    baseline_commit: "c35f7b83b33d3c80abe070e07ee03544693ec070"
+    protected_files:
+      - "supabase/functions/ipsrs-api/index.ts"
+      - "supabase/migrations"
+    protected_behaviors:
+      - "audit log creation"
+      - "report history"
+      - "delete audit trail"
+    regression_tests:
+      - "audit-log"
+
+  - id: CLOUDFLARE
+    name: "Cloudflare runtime / Worker / assets"
+    status: STABLE_CANDIDATE
+    version: "CF-BASELINE-PENDING"
+    baseline_commit: "c35f7b83b33d3c80abe070e07ee03544693ec070"
+    protected_files:
+      - "wrangler.jsonc"
+      - ".github/workflows/deploy-production.yml"
+    protected_behaviors:
+      - "Worker asset serving"
+      - "production Worker deployment"
+      - "GitHub remains backup during migration"
+    regression_tests:
+      - "cloudflare-http-smoke"
+      - "source-deployment-parity"
+
+  - id: CICD
+    name: "CI/CD / Audit Gate"
+    status: STABLE_CANDIDATE
+    version: "CICD-BASELINE-PENDING"
+    baseline_commit: "c35f7b83b33d3c80abe070e07ee03544693ec070"
+    protected_files:
+      - ".github/workflows/ipsrs-audit-gate.yml"
+      - ".github/workflows/deploy-production.yml"
+      - "scripts/audit-total.mjs"
+    protected_behaviors:
+      - "audit gate"
+      - "browser regression gate"
+      - "deployment gate"
+    regression_tests:
+      - "audit-gate"
+      - "browser-regression-gate"
