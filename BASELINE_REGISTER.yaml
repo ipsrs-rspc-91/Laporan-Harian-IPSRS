@@ -34,12 +34,13 @@ baselines:
     purpose: "Completed operational Project Control Book chapters 001-040"
     status: "REFERENCE"
 
+  - id: "BASE-2026-10-04-CONTROL"
+    commit: "482c2815c60bb50426c27f2cc873723c998ce4d9"
+    purpose: "Initial project control book, lock register, baseline register, regression matrix and AI audit protocol"
+    status: "CURRENT_CONTROL"
+
 rules:
   - "Never delete a baseline that is the only known recovery point for a module."
   - "A new baseline replaces an old baseline only after regression and deployment verification."
   - "A baseline is not automatically a production-approved state."
 
-  - id: "BASE-2026-10-04-CONTROL"
-    commit: "482c2815c60bb50426c27f2cc873723c998ce4d9"
-    purpose: "Initial project control book, lock register, baseline register, regression matrix and AI audit protocol"
-    status: "CURRENT_CONTROL"
