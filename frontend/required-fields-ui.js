@@ -5,7 +5,7 @@
   'use strict';
 
   const REQUIRED_IDS = ['Ruang','MasalahKegiatan','Tindakan','Kategori','AreaKerja','Item'];
-  const DYNAMIC_IDS = ['SparePartUnit','Type','Jumlah'];
+  const DYNAMIC_IDS = ['SparePartUnitKind','SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
 
   function fieldBox(id){
     const el = document.getElementById(id);
@@ -63,8 +63,11 @@
 
     // Field penggantian hanya wajib pada kategori yang memang menyatakan
     // ada Spare Part Baru / Unit Baru.
-    const replacement = isReplacementCategory();
+    const kindEl=document.getElementById('SparePartUnitKind');
+    const kind=String(kindEl?.value||'').trim().toUpperCase();
+    const replacement = isReplacementCategory() || !!kind;
     DYNAMIC_IDS.forEach(id => setRequiredVisual(id, replacement));
+
   }
 
   function init(){
@@ -74,6 +77,11 @@
     if(kategori && !kategori.dataset.ipsrsRequiredVisualBound){
       kategori.addEventListener('change', updateRequiredFieldVisuals);
       kategori.dataset.ipsrsRequiredVisualBound = '1';
+    }
+    const kind=document.getElementById('SparePartUnitKind');
+    if(kind && !kind.dataset.ipsrsRequiredVisualBound){
+      kind.addEventListener('change', updateRequiredFieldVisuals);
+      kind.dataset.ipsrsRequiredVisualBound='1';
     }
 
     // Page Input dapat di-remount. Amati hanya area form agar ringan.
