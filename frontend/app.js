@@ -70,6 +70,7 @@
   // STATIC_* / ITEMS_BY_AREA hanya fallback jika master Supabase belum berhasil dimuat.
   let MASTER_AREA = Array.isArray(STATIC_AREA) ? STATIC_AREA.slice() : [];
   let MASTER_ITEMS_BY_AREA = (typeof ITEMS_BY_AREA === 'object' && ITEMS_BY_AREA) ? ITEMS_BY_AREA : {};
+  let MASTER_KATEGORI = Array.isArray(STATIC_KATEGORI) ? STATIC_KATEGORI.slice() : [];
   let MASTER_DATA_LOADED = false;
 
   function getSession(){
@@ -1227,34 +1228,31 @@
     return list.filter(isMine).concat(list.filter(a=>!isMine(a)));
   }
 
-  function populateStaticSelects(){
-    // Kategori pada FORM INPUT memakai kategori induk. Rincian pekerjaan
-    // dipilih melalui modal bertahap agar dropdown tidak lagi menampilkan
-    // daftar kategori legacy yang panjang. FilterKategori tetap memakai
-    // STATIC_KATEGORI karena harus dapat memfilter laporan lama.
-    const kategoriInduk = [
-      'PEMELIHARAAN',
-      'PERBAIKAN',
-      'PEMASANGAN / INSTALASI',
-      'PEMERIKSAAN / INSPEKSI',
-      'PENGUJIAN / ANALISA',
-      'PERMINTAAN LAYANAN',
-      'PROYEK / RENOVASI',
-      'ADMINISTRASI / MANAJEMEN',
-      'LAINNYA'
+  function rebuildKategoriSelects_(keepKategori, keepFilterKategori){
+    const targets = [
+      ['Kategori', keepKategori || ''],
+      ['FilterKategori', keepFilterKategori || '']
     ];
-    const kategoriSel = document.getElementById('Kategori');
-    kategoriInduk.forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.innerText = k;
-      kategoriSel.appendChild(opt);
+    targets.forEach(([id, current]) => {
+      const sel = document.getElementById(id);
+      if(!sel) return;
+      const addNew = Array.from(sel.options).find(o => o.value === ADD_NEW_VALUE);
+      sel.innerHTML = '<option value="">Pilih kategori&hellip;</option>';
+      MASTER_KATEGORI.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.innerText = k;
+        sel.appendChild(opt);
+      });
+      if(addNew) sel.appendChild(addNew);
+      if(current) setInputSelectValue(id, current);
     });
-    const filterKategoriSel = document.getElementById('FilterKategori');
-    STATIC_KATEGORI.forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.innerText = k;
-      filterKategoriSel.appendChild(opt);
-    });
+  }
+
+  function populateStaticSelects(){
+    // Master Area, Item, dan Kategori memakai Supabase setelah berhasil
+    // dimuat. STATIC_* hanya fallback awal bila API master belum tersedia.
+    rebuildKategoriSelects_();
     const areaTargets = ['AreaKerja','FilterArea'];
     areaTargets.forEach(id => {
       const sel = document.getElementById(id);
@@ -1298,6 +1296,18 @@
       if(!json || !json.ok || !json.data) return false;
       const areas = Array.isArray(json.data.areas) ? json.data.areas : [];
       const items = json.data.items && typeof json.data.items === 'object' ? json.data.items : {};
+      const kategori = Array.isArray(json.data.kategori) ? json.data.kategori : [];
+      if(kategori.length){
+        MASTER_KATEGORI = kategori
+          .map(x => ({
+            name: String(x.name || '').trim(),
+            sort_order: Number(x.sort_order ?? 999999),
+            id: Number(x.id ?? 0)
+          }))
+          .filter(x => x.name)
+          .sort((a,b) => a.sort_order - b.sort_order || a.id - b.id)
+          .map(x => x.name);
+      }
       if(areas.length){
         // Urutan master HARUS mengikuti sort_order Supabase.
         // Jangan mengandalkan urutan object/response API.
@@ -1318,6 +1328,8 @@
       });
       MASTER_DATA_LOADED = true;
 
+      const currentKategori = document.getElementById('Kategori')?.value || '';
+      const currentFilterKategori = document.getElementById('FilterKategori')?.value || '';
       const currentArea = document.getElementById('AreaKerja')?.value || '';
       const currentFilterArea = document.getElementById('FilterArea')?.value || '';
       ['AreaKerja','FilterArea'].forEach(id => {
@@ -1335,6 +1347,7 @@
         });
         if(addNew) sel.appendChild(addNew);
       });
+      rebuildKategoriSelects_(currentKategori, currentFilterKategori);
       setInputSelectValue('AreaKerja', currentArea);
       setInputSelectValue('FilterArea', currentFilterArea);
 
@@ -2087,8 +2100,11 @@
     if(!nama){ setMsg('kategoriBaruMsg', 'Nama kategori wajib diisi.', true); return; }
     setMsg('kategoriBaruMsg', 'Menyimpan...');
     try{
-      const json = await authRun('apiTambahKategori', nama, STATIC_KATEGORI);
+      const json = await authRun('apiTambahKategori', nama, MASTER_KATEGORI);
       if(json && json.ok){
+        if(!MASTER_KATEGORI.some(x => String(x).trim().toLowerCase() === String(json.kategori).trim().toLowerCase())){
+          MASTER_KATEGORI.push(json.kategori);
+        }
         appendKategoriOption(json.kategori);
         document.getElementById('Kategori').value = json.kategori;
         closeTambahKategoriModal();
@@ -2130,8 +2146,11 @@
     if(!nama){ setMsg('areaBaruMsg', 'Nama area kerja wajib diisi.', true); return; }
     setMsg('areaBaruMsg', 'Menyimpan...');
     try{
-      const json = await authRun('apiTambahAreaKerja', nama, STATIC_AREA);
+      const json = await authRun('apiTambahAreaKerja', nama, MASTER_AREA);
       if(json && json.ok){
+        if(!MASTER_AREA.some(x => String(x).trim().toLowerCase() === String(json.area).trim().toLowerCase())){
+          MASTER_AREA.push(json.area);
+        }
         appendAreaKerjaOption(json.area);
         document.getElementById('AreaKerja').value = json.area;
         refreshItemOptions();
@@ -2206,11 +2225,13 @@
     if(!nama){ setMsg('itemBaruMsg', 'Nama item wajib diisi.', true); return; }
     setMsg('itemBaruMsg', 'Menyimpan...');
     try{
-      const existingForArea = (ITEMS_BY_AREA[area] || []).concat(CUSTOM_ITEMS_BY_AREA[area] || []);
+      const existingForArea = (MASTER_ITEMS_BY_AREA[area] || []).concat(CUSTOM_ITEMS_BY_AREA[area] || []);
       const json = await authRun('apiTambahItem', area, nama, existingForArea);
       if(json && json.ok){
-        if(!CUSTOM_ITEMS_BY_AREA[area]) CUSTOM_ITEMS_BY_AREA[area] = [];
-        CUSTOM_ITEMS_BY_AREA[area].push(json.item);
+        if(!MASTER_ITEMS_BY_AREA[area]) MASTER_ITEMS_BY_AREA[area] = [];
+        if(!MASTER_ITEMS_BY_AREA[area].some(x => String(x).trim().toLowerCase() === String(json.item).trim().toLowerCase())){
+          MASTER_ITEMS_BY_AREA[area].push(json.item);
+        }
         refreshItemOptions();
         document.getElementById('Item').value = json.item;
         closeTambahItemModal();
