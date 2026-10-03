@@ -1,4 +1,4 @@
-version: "1.2"
+version: "1.3"
 project: "Laporan-Harian-IPSRS"
 last_reviewed: "2026-10-04"
 
@@ -18,10 +18,6 @@ baselines:
     purpose: "KESLING normalization and area prioritization"
     status: "REFERENCE"
 
-  - id: "BASE-2026-10-04-CONTROL"
-    commit: "482c2815c60bb50426c27f2cc873723c998ce4d9"
-    purpose: "Initial project control book, lock register, baseline register, regression matrix and AI audit protocol"
-    status: "CURRENT_CONTROL"
 
   - id: "BASE-2026-10-04-CONTROL-AUDIT-GATE"
     commit: "869ec51da37648f810e2d89f8c425cc8ec21765c"
