@@ -1,0 +1,3 @@
+SPMU production deployment marker
+Audited commit: 09d5027fef3a504a147457633a28eead406b720b
+Purpose: ensure the fully audited SPMU code already present on main is published to GitHub Pages and Cloudflare.
