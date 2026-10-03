@@ -34,6 +34,11 @@ baselines:
     purpose: "Completed operational Project Control Book chapters 001-040"
     status: "REFERENCE"
 
+  - id: "BASE-2026-10-04-SPARE-MATERIAL-UNIT-CHECKPOINT"
+    commit: "2313688c677b509e3bbe8b861d477e3438df2a2d"
+    purpose: "Recovery checkpoint immediately before SPARE PART / MATERIAL / UNIT implementation"
+    status: "RECOVERY_CHECKPOINT"
+
   - id: "BASE-2026-10-04-CONTROL"
     commit: "482c2815c60bb50426c27f2cc873723c998ce4d9"
     purpose: "Initial project control book, lock register, baseline register, regression matrix and AI audit protocol"
