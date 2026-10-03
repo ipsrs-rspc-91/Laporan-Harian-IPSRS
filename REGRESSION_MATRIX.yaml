@@ -1,0 +1,37 @@
+version: "1.0"
+project: "Laporan-Harian-IPSRS"
+
+tests:
+  KAT:
+    - category-parent-flow
+    - category-modal-flow
+    - category-submit
+    - category-filter
+    - required-fields
+  DASH:
+    - dashboard-load
+    - unfinished-drilldown
+    - dashboard-spare-part-table
+    - dashboard-mobile
+  KESLING:
+    - area-master-reconciliation
+    - kesling-area-order
+    - bidang-prioritization
+  AUTH:
+    - login
+    - session
+    - permission-ui
+    - permission-api
+  GLOBAL:
+    - asset-version-cache
+    - pwa-service-worker
+    - production-smoke
+    - source-deployment-parity
+    - backend-deployment-parity
+
+gate:
+  fail_on_locked_module_regression: true
+  fail_on_missing_asset_version_after_js_change: true
+  fail_on_production_parity_mismatch: true
+  fail_on_security_regression: true
+  fail_on_unverified_cloudflare_deployment: true
