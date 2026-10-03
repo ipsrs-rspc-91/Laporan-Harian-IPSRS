@@ -1,5 +1,8 @@
 # PROJECT CONTROL — Laporan-Harian-IPSRS
 
+> Audit gate syntax fix applied in `fa51116949d8a145f9778719aec2694c4abfbe56`; re-validation required before promoting any additional module to LOCKED.
+
+
 **Control Book Version:** 1.0.0  
 **Created:** 2026-10-04  
 **Repository:** ipsrs-rspc-91/Laporan-Harian-IPSRS  
