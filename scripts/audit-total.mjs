@@ -132,6 +132,11 @@ function lockGateSelfTest(){
   if(!dash || kat) throw new Error('LOCK gate self-test failed: protected LOCKED file parsing is incorrect');
   const touched=parsed.filter(x=>x.file==='frontend/pages/Page_Dashboard.html');
   if(touched.length!==1) throw new Error('LOCK gate self-test failed: unauthorized dummy change was not detected');
+  const unauthorizedWithoutUnlock=touched.filter(x=>![''].includes(x.module));
+  if(unauthorizedWithoutUnlock.length!==1) throw new Error('LOCK gate self-test failed: missing unlock did not block DASH');
+  const overrides=['DASH'];
+  const unauthorizedWithUnlock=touched.filter(x=>!overrides.includes(x.module));
+  if(unauthorizedWithUnlock.length!==0) throw new Error('LOCK gate self-test failed: explicit [UNLOCK DASH] did not authorize DASH');
   return true;
 }
 try{ lockGateSelfTest(); pass('LOCK gate self-test','Synthetic DASH LOCKED file change is detected; STABLE_CANDIDATE files are excluded'); }
