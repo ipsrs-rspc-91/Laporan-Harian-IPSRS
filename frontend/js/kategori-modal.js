@@ -19,7 +19,7 @@
   let originalHandleKategoriChange = null;
   let currentSchedule = '';
 
-  function esc(v){
+  function kategoriModalEsc(v){
     return String(v == null ? '' : v)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -268,8 +268,8 @@
       <div class="ipsrs-kat-modal">
         <div class="ipsrs-kat-head">
           <div>
-            <div class="ipsrs-kat-title">${esc(title)}</div>
-            <div class="ipsrs-kat-sub">${esc(subtitle)}</div>
+            <div class="ipsrs-kat-title">${kategoriModalEsc(title)}</div>
+            <div class="ipsrs-kat-sub">${kategoriModalEsc(subtitle)}</div>
           </div>
           <button type="button" class="ipsrs-kat-close" aria-label="Tutup" data-kat-close>×</button>
         </div>
@@ -430,7 +430,7 @@
     return !!sel;
   }
 
-  function install(){
+  function kategoriModalInstall(){
     const sel = document.getElementById('Kategori');
     if(!sel) return false;
 
@@ -475,16 +475,16 @@
     return true;
   }
 
-  function boot(){
+  function kategoriModalBoot(){
     let tries = 0;
     const timer = setInterval(function(){
       tries++;
-      if(install() || tries >= 60) clearInterval(timer);
+      if(kategoriModalInstall() || tries >= 60) clearInterval(timer);
     }, 100);
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  else kategoriModalBoot();
 
   window.__ipsrsKategoriModalBuild = BUILD;
 })();
