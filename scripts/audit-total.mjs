@@ -95,23 +95,8 @@ if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
   fail('Deferred navigation race gate','frontend/index.html or frontend/app.js is missing');
 }
 
-// LOCK REGISTER GATE — protected source files cannot change without explicit unlock token.
-const lockRegisterPath=path.join(root,'LOCK_REGISTER.yaml');
-if(fs.existsSync(lockRegisterPath) && changed.length){
-  const lockText=fs.readFileSync(lockRegisterPath,'utf8');
-  const lines=lockText.split(/\r?\n/);
-  let currentId='', currentStatus='', protectedMode=false;
-  const lockedFiles=[];
-  for(const line of lines){
-    const id=line.match(/^  - id:\s*([^#]+)$/); if(id){ currentId=id[1].trim().replaceAll('"',''); currentStatus=''; protectedMode=false; continue; }
-    const st=line.match(/^    status:\s*([^#]+)$/); if(st){ currentStatus=st[1].trim().replaceAll('"',''); protectedMode=false; continue; }
-    if(/^    protected_files:\s*$/.test(line)){ protectedMode=true; continue; }
-    if(protectedMode){
-      const fm=line.match(/^      -\s*"([^"]+)"$/);
-      if(fm && currentStatus==='LOCKED') lockedFiles.push({file:fm[1],module:currentId});
-      if(!/^      -/.test(line) && line.trim() && !/^\s/.test(line)) protectedMode=false;
-    }
-  }
+function parseLockedProtectedFiles(lockText){
+  const lockedFiles=parseLockedProtectedFiles(lockText);
   const touched=lockedFiles.filter(x=>changed.includes(x.file));
   let commitMessage='';
   try{ commitMessage=execFileSync('git',['log','-1','--pretty=%B'],{encoding:'utf8'}).trim(); }catch{}
