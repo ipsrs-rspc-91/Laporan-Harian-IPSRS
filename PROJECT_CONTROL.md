@@ -1,9 +1,9 @@
 # PROJECT CONTROL — Laporan-Harian-IPSRS
 
-> Audit gate syntax fix applied in `fa51116949d8a145f9778719aec2694c4abfbe56`; re-validation required before promoting any additional module to LOCKED.
+> Audit gate was corrected and self-tested in c35f7b83b33d3c80abe070e07ee03544693ec070; production/browser workflow verification remains required before promoting additional modules to LOCKED.
 
 
-**Control Book Version:** 1.0.0  
+**Control Book Version:** 1.1.0  
 **Created:** 2026-10-04  
 **Repository:** ipsrs-rspc-91/Laporan-Harian-IPSRS  
 **Production target:** Cloudflare  
@@ -125,3 +125,73 @@ Locks are behavioral, not merely file-based. A single file may contain multiple 
 
 ## 10. Migration rule
 The Control Book and its machine-readable registers remain in GitHub even after production migrates to Cloudflare. A Cloudflare Control Plane may mirror/control these records later, but GitHub remains the independent recovery copy.
+
+## 11. Chapter completion status — 2026-10-04
+The 40 chapters are the required audit scope. A chapter is not COMPLETE merely because it appears in the table of contents.
+
+| Chapter | Current status | Evidence / note |
+|---|---|---|
+| 001 | PARTIAL | Repository, target architecture and migration posture recorded above. |
+| 002 | PARTIAL | GitHub → Cloudflare Worker → Supabase current path recorded; final D1 target recorded. |
+| 003 | PARTIAL | Key control files, frontend, Supabase and workflow paths are known; full file/function inventory still required. |
+| 004–009 | PARTIAL | Module boundaries exist in LOCK_REGISTER; full source audit still required. |
+| 010 | PARTIAL | REKAP module registered; implementation and regression evidence pending. |
+| 011 | PARTIAL | MONITORING module registered; implementation and regression evidence pending. |
+| 012–018 | PARTIAL | AUTH, REPORT, MASTER, SECURITY and AUDIT_LOG controls registered; source/database audit pending. |
+| 019–021 | PARTIAL | PWA, cache and performance controls registered; numeric production baselines pending. |
+| 022 | PARTIAL | DASH browser tests are now implemented; remaining matrix tests are explicitly PLANNED. |
+| 023–026 | PARTIAL | GitHub/Cloudflare/Supabase/CI controls registered; parity/deployment audit pending. |
+| 027 | WARNING | Current backup evidence is insufficient for full restore certification; full backup/restore procedure is required. |
+| 028–034 | PARTIAL | Required control scope exists, but production/data/security/parity evidence is not yet complete. |
+| 035 | ACTIVE | Change log begins with the current audit-control corrections below. |
+| 036 | ACTIVE | Known issues are recorded below and must remain visible until closed. |
+| 037 | ACTIVE | Baselines are controlled through BASELINE_REGISTER.yaml. |
+| 038–040 | ACTIVE | Change-control, audit procedure and command contract are defined by this book and AI_AUDIT_PROTOCOL.md. |
+
+## 12. Change log — control-system corrections
+- 869ec51da37648f810e2d89f8c425cc8ec21765c3 — corrected audit lock/secret-scan regex escaping.
+- c34e9d1f96d0252f7015d27653e05768e3cd89c3 — corrected BASELINE_REGISTER structure and recorded the audit-gate checkpoint.
+- 373890d45bde872c901c2be8c06eca38407eca12 — added IMPLEMENTED/PLANNED status to regression tests.
+- a676abb9f3910f38c2d055f472c43393376ae0b9 — implemented four DASH regression tests.
+- c35f7b83b33d3c80abe070e07ee03544693ec070 — repaired LOCK gate parser and added executable synthetic self-test.
+- a354fd45d4f0a7c888cea1ced5981fe5af43dc67 — expanded protected files/modules in LOCK_REGISTER.
+
+## 13. Known issues / open gates
+1. DASH is LOCKED, but its new browser tests still require a successful CI run before this control revision can be considered fully verified.
+2. KAT, KESLING, AUTH, REPORT, MASTER, PWA, PERFORMANCE and SECURITY remain STABLE_CANDIDATE until their required regression and production evidence exists.
+3. Cloudflare source/deployment parity has not yet been certified from this control revision.
+4. Supabase database/RLS/API parity has not yet been fully audited.
+5. Backup/restore has not yet been certified as a full project recovery path.
+6. Numeric performance baselines are not yet captured for startup, Dashboard, reports and Monitoring.
+7. Remaining PLANNED regression IDs must be implemented before corresponding modules can become LOCKED.
+
+## 14. Baseline / checkpoint policy
+- Never delete the only recovery baseline for a module.
+- Every approved behavioral update gets a new commit checkpoint after regression.
+- A source checkpoint is not a production-approved checkpoint until deployment and smoke verification are evidenced.
+- GitHub remains the independent recovery copy during and after Cloudflare migration.
+
+## 15. Backup / rollback minimum procedure
+### GitHub source recovery
+1. Preserve the target commit SHA in BASELINE_REGISTER.yaml.
+2. Clone/export the repository at that exact SHA.
+3. Preserve .github, frontend, supabase, wrangler.jsonc, migrations and control registers.
+4. Verify the exported tree before using it for recovery.
+
+### Supabase recovery
+1. Preserve migration history and Edge Function source in GitHub.
+2. Export database schema and required production data using the authorized Supabase/Postgres backup mechanism.
+3. Record project ref, migration state and Edge Function version.
+4. Restore schema first, then data, then Edge Function.
+5. Run RLS/auth/report smoke tests before reconnecting production.
+
+### Cloudflare recovery
+1. Preserve Worker name, deployment/version identifier and asset source.
+2. Keep the last known-good Worker deployment reference.
+3. Re-deploy the known-good source/asset set from GitHub.
+4. Verify HTTP, asset versions and backend connectivity before declaring rollback complete.
+
+Current limitation: this section is a procedure, not proof that a complete automated backup archive has already been produced.
+
+## 16. Control principle
+The Control Book is a gate, not a diary. Any PASS must have evidence; any missing evidence remains PARTIAL/WARNING; any failed LOCKED-module regression blocks deployment.
