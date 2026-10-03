@@ -1,0 +1,103 @@
+version: "1.0"
+project: "Laporan-Harian-IPSRS"
+policy: "locked modules require explicit user approval before behavioral change"
+last_reviewed: "2026-10-04"
+
+# Status meanings:
+# LOCKED = protected; explicit user request required to modify.
+# STABLE_CANDIDATE = source appears stable but production verification is still required.
+# UNLOCKED = actively being changed/tested.
+# BLOCKED = known regression or verification failure.
+
+modules:
+  - id: KAT
+    name: "Sistem Kategori"
+    status: STABLE_CANDIDATE
+    version: "KAT-2026.10.04.01"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "frontend/app.js"
+      - "frontend/js/kategori-modal.js"
+      - "frontend/js/static-data.js"
+      - "frontend/index.html"
+      - "frontend/pages/Page_Input.html"
+    protected_behaviors:
+      - "parent category selection"
+      - "category modal flow"
+      - "category selection and save"
+      - "category filter compatibility"
+      - "required-field behavior"
+    regression_tests:
+      - "category-parent-flow"
+      - "category-modal-flow"
+      - "category-submit"
+      - "category-filter"
+    note: "Recent source fix exists; promote to LOCKED only after production verification."
+
+  - id: DASH
+    name: "Dashboard"
+    status: LOCKED
+    version: "DASH-2026.10.03.01"
+    baseline_commit: "27177ad80bd4f8faf6757f38a25ff497a828dff3"
+    protected_files:
+      - "frontend/pages/Page_Dashboard.html"
+      - "frontend/css/style.css"
+      - "frontend/laporan-fast-v2.js"
+      - "frontend/access-visibility-fix.js"
+    protected_behaviors:
+      - "Belum Selesai card drilldown"
+      - "spare-part/new-item dashboard table"
+      - "mobile table containment"
+    regression_tests:
+      - "dashboard-load"
+      - "unfinished-drilldown"
+      - "dashboard-spare-part-table"
+      - "dashboard-mobile"
+
+  - id: KESLING
+    name: "KESLING area/master-data behavior"
+    status: STABLE_CANDIDATE
+    version: "KES-2026.10.03.01"
+    baseline_commit: "a10f4ad08ac317ae61a023c0365a982df2902040"
+    protected_files:
+      - "frontend/js/static-data.js"
+      - "frontend/index.html"
+      - "frontend/app.js"
+    protected_behaviors:
+      - "four KESLING areas"
+      - "area prioritization by bidang"
+      - "Air Bersih casing"
+      - "Limbah B3 ordering"
+    regression_tests:
+      - "area-master-reconciliation"
+      - "kesling-area-order"
+      - "bidang-prioritization"
+    note: "Source/data fixes are established; production parity must be verified before full LOCK."
+
+  - id: AUTH
+    name: "Login / Session / Access Control"
+    status: STABLE_CANDIDATE
+    version: "AUTH-BASELINE-PENDING"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "frontend/app.js"
+      - "frontend/login-fast.js"
+      - "frontend/access-control.js"
+      - "frontend/access-policy-ui.js"
+      - "supabase/functions/ipsrs-api/index.ts"
+    protected_behaviors:
+      - "login"
+      - "session"
+      - "role/permission enforcement"
+    regression_tests:
+      - "login"
+      - "session"
+      - "permission-ui"
+      - "permission-api"
+    note: "Do not treat as fully locked until end-to-end security tests are confirmed."
+
+global_rules:
+  - "A change to a shared file does not authorize changes to all modules in that file."
+  - "LOCKED means explicit user approval is required."
+  - "Any failed regression against a LOCKED module blocks deployment."
+  - "After an approved update, the module must receive a new version and baseline, then be re-locked."
