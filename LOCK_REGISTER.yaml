@@ -201,6 +201,28 @@ modules:
       - "audit-log"
       - "delete-safety"
 
+  - id: CONTROL_BOOK
+    name: "Project Control Book / Control Registers"
+    status: LOCKED
+    version: "CONTROL-2026.10.04.01"
+    baseline_commit: "d415f5e12bec67f0a592515b56b7d72e1127b62a"
+    protected_files:
+      - "PROJECT_CONTROL.md"
+      - "LOCK_REGISTER.yaml"
+      - "BASELINE_REGISTER.yaml"
+      - "REGRESSION_MATRIX.yaml"
+      - "AI_AUDIT_PROTOCOL.md"
+    protected_behaviors:
+      - "40-chapter control-book structure"
+      - "lock/unlock governance"
+      - "baseline/checkpoint governance"
+      - "regression gate definitions"
+      - "AI change-control protocol"
+    regression_tests:
+      - "audit-gate"
+      - "browser-regression-gate"
+    verification: "Control Book 001-040 completed and committed; future changes require explicit control-system request and must preserve lock/baseline/regression governance."
+
 global_rules:
   - "A shared file may belong to multiple modules; changing it never authorizes unrelated module behavior changes."
   - "LOCKED requires explicit user approval before behavioral change."
