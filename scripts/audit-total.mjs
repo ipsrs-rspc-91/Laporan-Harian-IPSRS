@@ -115,7 +115,7 @@ if(fs.existsSync(lockRegisterPath) && changed.length){
   const touched=lockedFiles.filter(x=>changed.includes(x.file));
   let commitMessage='';
   try{ commitMessage=execFileSync('git',['log','-1','--pretty=%B'],{encoding:'utf8'}).trim(); }catch{}
-  const overrides=(commitMessage.match(/\\[UNLOCK\\s+([A-Z0-9_-]+)\\]/gi)||[]).map(x=>x.replace(/^\\[UNLOCK\\s+/i,'').replace(/\\]$/,'').toUpperCase());
+  const overrides=(commitMessage.match(/\[UNLOCK\s+([A-Z0-9_-]+)\]/gi)||[]).map(x=>x.replace(/^\[UNLOCK\s+/i,'').replace(/\]$/,'').toUpperCase());
   const unauthorized=touched.filter(x=>!overrides.includes(x.module.toUpperCase()));
   if(unauthorized.length){
     fail('LOCK register gate',unauthorized.map(x=>x.file+' protected by '+x.module).join('\\n')+'\\nExplicit commit authorization required: [UNLOCK MODULE_ID]');
