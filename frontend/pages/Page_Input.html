@@ -434,21 +434,21 @@
       <div id="sparePartSection" class="spare-part-section">
         <button type="button" id="sparePartToggle" class="spare-part-toggle" aria-expanded="false" aria-controls="sparePartFields" onclick="toggleSparePartSection()">
           <span class="spare-part-toggle-main">
-            <span class="spare-part-toggle-title">Spare Part / Unit</span>
+            <span class="spare-part-toggle-title">SPARE PART / MATERIAL / UNIT</span>
             <span id="sparePartToggleStatus" class="spare-part-toggle-status">Belum diisi</span>
           </span>
           <span id="sparePartToggleIcon" class="spare-part-toggle-icon" aria-hidden="true">＋</span>
         </button>
 
         <div id="sparePartFields" class="spare-part-fields" hidden>
-          <label for="SparePartUnit">Spare Part / Unit</label>
-          <input id="SparePartUnit">
-
-          <label for="Type">Type</label>
-          <input id="Type">
-
-          <label for="Jumlah">Jumlah</label>
-          <input id="Jumlah" type="number" min="0">
+          <label for="SparePartUnitKind">SPARE PART / MATERIAL / UNIT</label>
+          <select id="SparePartUnitKind" onchange="handleSparePartUnitKindChange()">
+            <option value="">Pilih SPARE PART / MATERIAL / UNIT...</option>
+            <option value="SPARE PART / MATERIAL">SPARE PART / MATERIAL</option>
+            <option value="UNIT">UNIT</option>
+          </select>
+          <div id="sparePartUnitModalHost"></div>
+          <div class="smallnote">Pilih SPARE PART / MATERIAL atau UNIT. Data BARU/KANIBAL akan dicatat untuk rekap otomatis.</div>
         </div>
       </div>
 
