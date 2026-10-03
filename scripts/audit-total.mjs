@@ -96,6 +96,51 @@ if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
 }
 
 function parseLockedProtectedFiles(lockText){
+  const lines=lockText.split(/\r?\n/);
+  let currentId='', currentStatus='', protectedMode=false;
+  const lockedFiles=[];
+  for(const line of lines){
+    const id=line.match(/^  - id:\s*([^#]+)$/);
+    if(id){ currentId=id[1].trim().replaceAll('"',''); currentStatus=''; protectedMode=false; continue; }
+    const st=line.match(/^    status:\s*([^#]+)$/);
+    if(st){ currentStatus=st[1].trim().replaceAll('"',''); protectedMode=false; continue; }
+    if(/^    protected_files:\s*$/.test(line)){ protectedMode=true; continue; }
+    if(protectedMode){
+      const fm=line.match(/^      -\s*"([^"]+)"$/);
+      if(fm && currentStatus==='LOCKED') lockedFiles.push({file:fm[1],module:currentId});
+      if(!/^      -/.test(line) && line.trim() && !/^\s/.test(line)) protectedMode=false;
+    }
+  }
+  return lockedFiles;
+}
+
+function lockGateSelfTest(){
+  const fixture=[
+    'modules:',
+    '  - id: DASH',
+    '    status: LOCKED',
+    '    protected_files:',
+    '      - "frontend/pages/Page_Dashboard.html"',
+    '  - id: KAT',
+    '    status: STABLE_CANDIDATE',
+    '    protected_files:',
+    '      - "frontend/app.js"'
+  ].join('\n');
+  const parsed=parseLockedProtectedFiles(fixture);
+  const dash=parsed.some(x=>x.module==='DASH' && x.file==='frontend/pages/Page_Dashboard.html');
+  const kat=parsed.some(x=>x.module==='KAT');
+  if(!dash || kat) throw new Error('LOCK gate self-test failed: protected LOCKED file parsing is incorrect');
+  const touched=parsed.filter(x=>x.file==='frontend/pages/Page_Dashboard.html');
+  if(touched.length!==1) throw new Error('LOCK gate self-test failed: unauthorized dummy change was not detected');
+  return true;
+}
+try{ lockGateSelfTest(); pass('LOCK gate self-test','Synthetic DASH LOCKED file change is detected; STABLE_CANDIDATE files are excluded'); }
+catch(e){ fail('LOCK gate self-test',e.message); }
+
+// LOCK REGISTER GATE — protected source files cannot change without explicit unlock token.
+const lockRegisterPath=path.join(root,'LOCK_REGISTER.yaml');
+if(fs.existsSync(lockRegisterPath) && changed.length){
+  const lockText=fs.readFileSync(lockRegisterPath,'utf8');
   const lockedFiles=parseLockedProtectedFiles(lockText);
   const touched=lockedFiles.filter(x=>changed.includes(x.file));
   let commitMessage='';
@@ -103,7 +148,7 @@ function parseLockedProtectedFiles(lockText){
   const overrides=(commitMessage.match(/\[UNLOCK\s+([A-Z0-9_-]+)\]/gi)||[]).map(x=>x.replace(/^\[UNLOCK\s+/i,'').replace(/\]$/,'').toUpperCase());
   const unauthorized=touched.filter(x=>!overrides.includes(x.module.toUpperCase()));
   if(unauthorized.length){
-    fail('LOCK register gate',unauthorized.map(x=>x.file+' protected by '+x.module).join('\n')+'\\nExplicit commit authorization required: [UNLOCK MODULE_ID]');
+    fail('LOCK register gate',unauthorized.map(x=>x.file+' protected by '+x.module).join('\n')+'\nExplicit commit authorization required: [UNLOCK MODULE_ID]');
   }else if(touched.length){
     warn('LOCK register gate','Protected file change explicitly authorized: '+touched.map(x=>x.file).join(', '));
   }else{
