@@ -1,4 +1,4 @@
-version: "1.0"
+version: "1.1"
 project: "Laporan-Harian-IPSRS"
 last_reviewed: "2026-10-04"
 
@@ -17,6 +17,16 @@ baselines:
     commit: "a10f4ad08ac317ae61a023c0365a982df2902040"
     purpose: "KESLING normalization and area prioritization"
     status: "REFERENCE"
+
+  - id: "BASE-2026-10-04-CONTROL"
+    commit: "482c2815c60bb50426c27f2cc873723c998ce4d9"
+    purpose: "Initial project control book, lock register, baseline register, regression matrix and AI audit protocol"
+    status: "CURRENT_CONTROL"
+
+  - id: "BASE-2026-10-04-CONTROL-AUDIT-GATE"
+    commit: "869ec51da37648f810e2d89f8c425cc8ec21765c"
+    purpose: "Corrected lock gate and secret scan regex parsing"
+    status: "CURRENT_CONTROL"
 
 rules:
   - "Never delete a baseline that is the only known recovery point for a module."
