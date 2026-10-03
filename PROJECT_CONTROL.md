@@ -378,9 +378,9 @@ Untuk penggantian, modal wajib menjaga field:
 - `edit_permissions`
 
 **Field laporan yang dipetakan backend antara lain:**
-report_id, staff_id, nama_snapshot, bidang_snapshot, role_snapshot, tanggal, pelapor, pukul, nolk, ruang, masalah_kegiatan, tindakan, status, keterangan, kategori, area_kerja, item, spare_part_unit, type, jumlah, created_at, updated_at, created_by_*, updated_by_*, version, deleted_at.
+report_id, staff_id, nama_snapshot, bidang_snapshot, role_snapshot, tanggal, pelapor, pukul, nolk, ruang, masalah_kegiatan, tindakan, status, keterangan, kategori, area_kerja, item, spare_part_unit_kind, spare_part_unit_status, spare_part_unit, type, jumlah, created_at, updated_at, created_by_*, updated_by_*, version, deleted_at.
 
-**Status:** DOCUMENTED; full schema/RLS live certification = OPEN.
+**Konsep SPARE PART / MATERIAL / UNIT:** laporan baru menyimpan klasifikasi `SPARE PART / MATERIAL` atau `UNIT`, status `BARU/KANIBAL/LAINNYA`, nama, type dan jumlah. Rekap BARU tidak lagi bergantung pada nama kategori; kategori lama tetap didukung sebagai fallback kompatibilitas.\n\n**Status:** DOCUMENTED; full schema/RLS live certification = OPEN.
 
 ---
 
