@@ -144,6 +144,33 @@ modules:
       - "item-master-reconciliation"
       - "category-master-reconciliation"
 
+  - id: SPARE_MATERIAL_UNIT
+    name: "SPARE PART / MATERIAL / UNIT"
+    status: STABLE_CANDIDATE
+    version: "SPMU-2026.10.04.01"
+    baseline_commit: "2313688c677b509e3bbe8b861d477e3438df2a2d"
+    protected_files:
+      - "frontend/pages/Page_Input.html"
+      - "frontend/app.js"
+      - "frontend/required-fields-ui.js"
+      - "frontend/js/static-data.js"
+      - "frontend/js/kategori-modal.js"
+      - "frontend/pages/Page_Laporan.html"
+      - "frontend/pages/Page_Dashboard.html"
+      - "supabase/functions/ipsrs-api/index.ts"
+      - "supabase/migrations"
+    protected_behaviors:
+      - "SPARE PART / MATERIAL / UNIT selection"
+      - "BARU / KANIBAL / LAINNYA classification"
+      - "mandatory four-field modal data"
+      - "automatic new-item recap"
+      - "legacy category compatibility"
+    regression_tests:
+      - "spare-material-unit-input"
+      - "spare-material-unit-validation"
+      - "spare-material-unit-recap"
+      - "spare-material-unit-legacy-compatibility"
+
   - id: PWA
     name: "PWA / Service Worker / Cache"
     status: STABLE_CANDIDATE
