@@ -1512,15 +1512,15 @@
   function isSparePartReportCategory_(value){
     const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
     return [
-      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
-      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
-      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL'
     ].includes(normalized);
   }
 
   function isUnitBaruReportCategory_(value){
     const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
-    return normalized === 'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)';
+    return normalized === 'PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT';
   }
 
   function openDashboardNewCategory(kind){
@@ -1558,11 +1558,54 @@
   function isSparePartRequiredCategory(value){
     const normalized = String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
     return new Set([
-      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
-      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
-      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU',
-      'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)'
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT'
     ]).has(normalized);
+  }
+
+  function getSparePartUnitKind_(){
+    return String(document.getElementById('SparePartUnitKind')?.value || '').trim().toUpperCase();
+  }
+
+  function getSparePartUnitStatus_(){
+    return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
+  }
+
+  function handleSparePartUnitKindChange(){
+    const kind=getSparePartUnitKind_();
+    const host=document.getElementById('sparePartUnitModalHost');
+    if(!host) return;
+    if(!kind){ host.innerHTML=''; updateSparePartToggleStatus(); return; }
+    const prefix=kind==='UNIT'?'UNIT':'SPARE PART / MATERIAL';
+    host.innerHTML=`
+      <div class="spare-part-field">
+        <label for="SparePartUnitStatus">${prefix} — kondisi</label>
+        <select id="SparePartUnitStatus">
+          <option value="">Pilih kondisi...</option>
+          <option value="BARU">${prefix} BARU</option>
+          <option value="KANIBAL">${prefix} KANIBAL</option>
+          <option value="LAINNYA">${prefix} .....</option>
+        </select>
+      </div>
+      <div class="spare-part-field">
+        <label for="SparePartUnit">Nama ${prefix}</label>
+        <input id="SparePartUnit" placeholder="Nama ${prefix}">
+      </div>
+      <div class="spare-part-field">
+        <label for="Type">Type</label>
+        <input id="Type" placeholder="Type">
+      </div>
+      <div class="spare-part-field">
+        <label for="Jumlah">Jumlah</label>
+        <input id="Jumlah" type="number" min="0" step="any" placeholder="Jumlah">
+      </div>`;
+    ['SparePartUnit','Type','Jumlah'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.addEventListener('input',updateSparePartToggleStatus);
+    });
+    updateSparePartToggleStatus();
   }
 
   function setSparePartSection(open){
@@ -1610,14 +1653,11 @@
   function syncSparePartSection(){
     const sel = document.getElementById('Kategori');
     const required = isSparePartRequiredCategory(sel ? sel.value : '');
-    const hasValue = ['SparePartUnit','Type','Jumlah'].some(id =>
+    const kind = getSparePartUnitKind_();
+    const hasValue = ['SparePartUnit','Type','Jumlah','SparePartUnitStatus'].some(id =>
       String(document.getElementById(id)?.value || '').trim()
     );
-    // Buka otomatis bila kategori memang mewajibkan data atau field sudah
-    // berisi data (misalnya saat membuka laporan lama untuk diedit).
-    if(required || hasValue){
-      setSparePartSection(true);
-    }
+    if(required || kind || hasValue) setSparePartSection(true);
     updateSparePartToggleStatus();
   }
 
@@ -2664,9 +2704,11 @@
       Ruang: document.getElementById('Ruang').value.trim(),
       MasalahKegiatan: document.getElementById('MasalahKegiatan').value.trim(),
       Tindakan: document.getElementById('Tindakan').value.trim(),
-      SparePartUnit: document.getElementById('SparePartUnit').value.trim(),
-      Type: document.getElementById('Type').value.trim(),
-      Jumlah: document.getElementById('Jumlah').value.trim(),
+      SparePartUnitKind: getSparePartUnitKind_(),
+      SparePartUnitStatus: getSparePartUnitStatus_(),
+      SparePartUnit: document.getElementById('SparePartUnit')?.value.trim() || '',
+      Type: document.getElementById('Type')?.value.trim() || '',
+      Jumlah: document.getElementById('Jumlah')?.value.trim() || '',
       Status: document.getElementById('Status').value,
       Kategori: document.getElementById('Kategori').value,
       AreaKerja: document.getElementById('AreaKerja').value,
@@ -2695,13 +2737,18 @@
     // Spare Part / Unit, Type, dan Jumlah. Harus konsisten dengan backend.
     const kategoriBaru = String(p.Kategori || '').trim().replace(/\s+/g, ' ').toUpperCase();
     const kategoriWajibBaru = new Set([
-      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
-      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU',
-      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU',
-      'PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)'
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT'
     ]);
-    if(kategoriWajibBaru.has(kategoriBaru)){
-      if(!String(p.SparePartUnit || '').trim()) missing.push('Spare Part / Unit');
+    const kind=String(p.SparePartUnitKind || '').trim().toUpperCase();
+    const status=String(p.SparePartUnitStatus || '').trim().toUpperCase();
+    const materialOrUnitRequired = kategoriWajibBaru.has(kategoriBaru) || !!kind;
+    if(materialOrUnitRequired){
+      if(!kind) missing.push('SPARE PART / MATERIAL / UNIT');
+      if(!status) missing.push('Kondisi SPARE PART / MATERIAL / UNIT');
+      if(!String(p.SparePartUnit || '').trim()) missing.push(kind==='UNIT'?'Nama UNIT':'Nama SPARE PART / MATERIAL');
       if(!String(p.Type || '').trim()) missing.push('Type');
       if(!String(p.Jumlah || '').trim()) missing.push('Jumlah');
     }
@@ -2807,6 +2854,8 @@
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
+    const kind = document.getElementById('SparePartUnitKind'); if(kind) kind.value='';
+    const host = document.getElementById('sparePartUnitModalHost'); if(host) host.innerHTML='';
     const kategori = document.getElementById('Kategori');
     const area = document.getElementById('AreaKerja');
     if(kategori) kategori.value = '';
@@ -3005,6 +3054,8 @@
       Ruang: getReportField_(latest, ['Ruang','ruang']),
       MasalahKegiatan: getReportField_(latest, ['MasalahKegiatan','masalah_kegiatan']),
       Tindakan: getReportField_(latest, ['Tindakan','tindakan']),
+      SparePartUnitKind: getReportField_(latest, ['SparePartUnitKind','spare_part_unit_kind']),
+      SparePartUnitStatus: getReportField_(latest, ['SparePartUnitStatus','spare_part_unit_status']),
       SparePartUnit: getReportField_(latest, ['SparePartUnit','spare_part_unit']),
       Type: getReportField_(latest, ['Type','type']),
       Jumlah: getReportField_(latest, ['Jumlah','jumlah']),
@@ -3024,9 +3075,17 @@
     document.getElementById('Ruang').value = editData.Ruang || '';
     document.getElementById('MasalahKegiatan').value = editData.MasalahKegiatan || '';
     document.getElementById('Tindakan').value = editData.Tindakan || '';
-    document.getElementById('SparePartUnit').value = editData.SparePartUnit || '';
-    document.getElementById('Type').value = editData.Type || '';
-    document.getElementById('Jumlah').value = editData.Jumlah || '';
+    const kindEl=document.getElementById('SparePartUnitKind');
+    if(kindEl){
+      kindEl.value=editData.SparePartUnitKind || '';
+      handleSparePartUnitKindChange();
+    }
+    const statusEl=document.getElementById('SparePartUnitStatus');
+    if(statusEl) statusEl.value=editData.SparePartUnitStatus || '';
+    const spEl=document.getElementById('SparePartUnit'); if(spEl) spEl.value=editData.SparePartUnit || '';
+    const typeEl=document.getElementById('Type'); if(typeEl) typeEl.value=editData.Type || '';
+    const qtyEl=document.getElementById('Jumlah'); if(qtyEl) qtyEl.value=editData.Jumlah || '';
+    updateSparePartToggleStatus();
     setStatusValue(editData.Status || '');
 
     setInputSelectValue('Kategori', editData.Kategori || '');
@@ -3918,7 +3977,7 @@
   // Satu form dipakai untuk CREATE dan EDIT. Hanya mode, ID laporan,
   // data awal, dan endpoint penyimpanan yang berbeda.
   const INPUT_EDITABLE_IDS = ['Tanggal','Pelapor','Pukul','NoLK','Ruang',
-    'MasalahKegiatan','Tindakan','SparePartUnit','Type','Jumlah','Status',
+    'MasalahKegiatan','Tindakan','SparePartUnitKind','SparePartUnitStatus','SparePartUnit','Type','Jumlah','Status',
     'Kategori','AreaKerja','Item','Keterangan'];
 
 
