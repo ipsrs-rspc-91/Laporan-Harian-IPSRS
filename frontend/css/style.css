@@ -472,6 +472,8 @@
   .stat-grid .stat-card.status-selesai{background:#f0fdf4;border-color:#86efac;}
   .stat-grid .stat-card.status-selesai .s-value,.stat-grid .stat-card.status-selesai .s-label{color:#166534;}
   .stat-grid .stat-card.status-belum{background:#fff1f2;border-color:#fca5a5;}
+  .stat-grid .stat-card.status-belum{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .stat-grid .stat-card.status-belum .s-value{font-size:39px;line-height:1.05;font-weight:800;color:#b91c1c;}
   .stat-grid .stat-card.status-belum .s-value,.stat-grid .stat-card.status-belum .s-label{color:#b91c1c;}
   .report-action{white-space:nowrap;}
   /* Aksi mengikuti scroll horizontal normal: Edit hanya terlihat saat tabel digeser ke kanan. */
