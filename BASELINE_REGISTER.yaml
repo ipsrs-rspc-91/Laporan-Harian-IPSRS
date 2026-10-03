@@ -1,4 +1,4 @@
-version: "1.1"
+version: "1.2"
 project: "Laporan-Harian-IPSRS"
 last_reviewed: "2026-10-04"
 
@@ -26,6 +26,11 @@ baselines:
   - id: "BASE-2026-10-04-CONTROL-AUDIT-GATE"
     commit: "869ec51da37648f810e2d89f8c425cc8ec21765c"
     purpose: "Corrected lock gate and secret scan regex parsing"
+    status: "CURRENT_CONTROL"
+
+  - id: "BASE-2026-10-04-AUDIT-GATE-SELFTEST"
+    commit: "2211f5e3e8b10b406c2a0370c047749ccdfbd4d8"
+    purpose: "LOCK gate regex correction plus synthetic unauthorized/authorized DASH test"
     status: "CURRENT_CONTROL"
 
 rules:
