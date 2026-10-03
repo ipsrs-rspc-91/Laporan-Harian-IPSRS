@@ -1,54 +1,90 @@
-version: "1.1"
+version: "1.2"
 project: "Laporan-Harian-IPSRS"
 last_reviewed: "2026-10-04"
 
 tests:
   KAT:
-    - category-parent-flow
-    - category-modal-flow
-    - category-submit
-    - category-filter
-    - required-fields
+    - id: "category-parent-flow"
+      status: "PLANNED"
+    - id: "category-modal-flow"
+      status: "PLANNED"
+    - id: "category-submit"
+      status: "PLANNED"
+    - id: "category-filter"
+      status: "PLANNED"
+    - id: "required-fields"
+      status: "PLANNED"
   DASH:
-    - dashboard-load
-    - unfinished-drilldown
-    - dashboard-spare-part-table
-    - dashboard-mobile
+    - id: "dashboard-load"
+      status: "IMPLEMENTED"
+    - id: "unfinished-drilldown"
+      status: "IMPLEMENTED"
+    - id: "dashboard-spare-part-table"
+      status: "IMPLEMENTED"
+    - id: "dashboard-mobile"
+      status: "IMPLEMENTED"
   KESLING:
-    - area-master-reconciliation
-    - kesling-area-order
-    - bidang-prioritization
+    - id: "area-master-reconciliation"
+      status: "PLANNED"
+    - id: "kesling-area-order"
+      status: "PLANNED"
+    - id: "bidang-prioritization"
+      status: "PLANNED"
   AUTH:
-    - login
-    - session
-    - permission-ui
-    - permission-api
+    - id: "login"
+      status: "PLANNED"
+    - id: "session"
+      status: "PLANNED"
+    - id: "permission-ui"
+      status: "PLANNED"
+    - id: "permission-api"
+      status: "PLANNED"
   REPORT:
-    - report-create
-    - report-list
-    - report-edit-permission
-    - report-delete-safety
-    - report-filter
+    - id: "report-create"
+      status: "PLANNED"
+    - id: "report-list"
+      status: "PLANNED"
+    - id: "report-edit-permission"
+      status: "PLANNED"
+    - id: "report-delete-safety"
+      status: "PLANNED"
+    - id: "report-filter"
+      status: "PLANNED"
   MASTER:
-    - area-master-reconciliation
-    - item-master-reconciliation
-    - category-master-reconciliation
+    - id: "area-master-reconciliation"
+      status: "PLANNED"
+    - id: "item-master-reconciliation"
+      status: "PLANNED"
+    - id: "category-master-reconciliation"
+      status: "PLANNED"
   PWA:
-    - asset-version-cache
-    - pwa-service-worker
+    - id: "asset-version-cache"
+      status: "PLANNED"
+    - id: "pwa-service-worker"
+      status: "PLANNED"
   PERFORMANCE:
-    - startup-performance
-    - dashboard-performance
-    - report-performance
+    - id: "startup-performance"
+      status: "PLANNED"
+    - id: "dashboard-performance"
+      status: "PLANNED"
+    - id: "report-performance"
+      status: "PLANNED"
   SECURITY:
-    - permission-api
-    - rls
-    - audit-log
-    - delete-safety
+    - id: "permission-api"
+      status: "PLANNED"
+    - id: "rls"
+      status: "PLANNED"
+    - id: "audit-log"
+      status: "PLANNED"
+    - id: "delete-safety"
+      status: "PLANNED"
   GLOBAL:
-    - production-smoke
-    - source-deployment-parity
-    - backend-deployment-parity
+    - id: "production-smoke"
+      status: "PLANNED"
+    - id: "source-deployment-parity"
+      status: "PLANNED"
+    - id: "backend-deployment-parity"
+      status: "PLANNED"
 
 gate:
   fail_on_locked_module_regression: true
