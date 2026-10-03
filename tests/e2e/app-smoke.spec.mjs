@@ -50,7 +50,7 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
 
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
 
-  const assets = ['/index.html', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\\.\\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
+  const assets = ['/index.html', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
