@@ -23,6 +23,15 @@ tests:
       status: "IMPLEMENTED"
     - id: "dashboard-mobile"
       status: "IMPLEMENTED"
+  SPARE_MATERIAL_UNIT:
+    - id: "spare-material-unit-input"
+      status: "PLANNED"
+    - id: "spare-material-unit-validation"
+      status: "PLANNED"
+    - id: "spare-material-unit-recap"
+      status: "PLANNED"
+    - id: "spare-material-unit-legacy-compatibility"
+      status: "PLANNED"
   KESLING:
     - id: "area-master-reconciliation"
       status: "PLANNED"
