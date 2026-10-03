@@ -1,4 +1,4 @@
-version: "1.2"
+version: "1.3"
 project: "Laporan-Harian-IPSRS"
 policy: "locked modules require explicit user approval before behavioral change"
 last_reviewed: "2026-10-04"
@@ -223,14 +223,6 @@ modules:
       - "browser-regression-gate"
     verification: "Control Book 001-040 completed and committed; future changes require explicit control-system request and must preserve lock/baseline/regression governance."
 
-global_rules:
-  - "A shared file may belong to multiple modules; changing it never authorizes unrelated module behavior changes."
-  - "LOCKED requires explicit user approval before behavioral change."
-  - "Any failed regression against a LOCKED module blocks deployment."
-  - "A module becomes LOCKED only after its required regression and production verification are evidenced."
-  - "After approved update: UNLOCK -> CHANGE -> TEST -> VERIFY -> new version/baseline -> RE-LOCK."
-
-
   - id: REKAP
     name: "Rekap Bulanan / Month Picker"
     status: STABLE_CANDIDATE
@@ -309,3 +301,12 @@ global_rules:
     regression_tests:
       - "audit-gate"
       - "browser-regression-gate"
+
+
+global_rules:
+  - "A shared file may belong to multiple modules; changing it never authorizes unrelated module behavior changes."
+  - "LOCKED requires explicit user approval before behavioral change."
+  - "Any failed regression against a LOCKED module blocks deployment."
+  - "A module becomes LOCKED only after its required regression and production verification are evidenced."
+  - "After approved update: UNLOCK -> CHANGE -> TEST -> VERIFY -> new version/baseline -> RE-LOCK."
+
