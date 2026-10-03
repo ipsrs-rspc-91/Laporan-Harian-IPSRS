@@ -15,6 +15,12 @@ function materialUnitStatus(p:any){
  const s=normalizeCategory(p?.SparePartUnitStatus);
  return s==="BARU"?"BARU":s==="KANIBAL"?"KANIBAL":s==="LAINNYA"?"LAINNYA":"";
 }
+const MATERIAL_UNIT_REQUIRED_CATEGORIES=new Set([
+ "PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL",
+ "PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL",
+ "PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL",
+ "PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT"
+]);
 function normalizeCategory(v:any){return String(v||"").trim().replace(/\s+/g," ").toUpperCase()}
 function categoryKind(v:any){const n=normalizeCategory(v);return{spare:SPARE_PART_NEW_CATEGORIES.has(n),unit:UNIT_NEW_CATEGORIES.has(n)}}
 function isNewCategory(v:any){const k=categoryKind(v);return k.spare||k.unit}
