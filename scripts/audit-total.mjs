@@ -98,16 +98,32 @@ if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
 const changedJs=changed.filter(x=>x.endsWith('.js'));
 if (changedJs.length) {
   const stale=[];
-  for (const jf of changedJs) {
-    for (const hf of htmlFiles) {
-      const s=fs.readFileSync(hf,'utf8');
-      const srcs=[...s.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)].map(m=>m[1]);
+  const currentRefs=new Map();
+  for (const hf of htmlFiles) {
+    const current=fs.readFileSync(hf,'utf8');
+    const srcs=[...current.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)].map(m=>m[1]);
+    for (const jf of changedJs) {
       const hit=srcs.find(x=>x.split('?')[0].endsWith(jf) || x.split('?')[0].endsWith(path.basename(jf)));
-      if (hit && !hit.includes('?v=') && !hit.includes('?version=')) stale.push(jf+' referenced by '+rel(hf)+' without cache version');
+      if (!hit) continue;
+      if (!hit.includes('?v=') && !hit.includes('?version=')) {
+        stale.push(jf+' referenced by '+rel(hf)+' without cache version');
+        continue;
+      }
+      const baseRef = process.env.GITHUB_EVENT_NAME==='pull_request'
+        ? (() => { try { return execFileSync('git',['show','origin/'+process.env.GITHUB_BASE_REF+':'+rel(hf)],{encoding:'utf8'}); } catch { return ''; } })()
+        : (() => { try { return execFileSync('git',['show','HEAD^:'+rel(hf)],{encoding:'utf8'}); } catch { return ''; } })();
+      if (baseRef) {
+        const baseSrcs=[...baseRef.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)].map(m=>m[1]);
+        const baseHit=baseSrcs.find(x=>x.split('?')[0].endsWith(jf) || x.split('?')[0].endsWith(path.basename(jf)));
+        if (baseHit && baseHit===hit) {
+          stale.push(jf+' changed but '+rel(hf)+' kept the same cache version: '+hit);
+        }
+      }
+      currentRefs.set(jf,hit);
     }
   }
   if (stale.length) fail('Cache/version impact gate',stale.join('\n'));
-  else pass('Cache/version impact gate','Changed JS dependencies have cache-versioned HTML references');
+  else pass('Cache/version impact gate','Changed JS dependencies have cache-versioned HTML references that changed with the dependency');
 } else pass('Cache/version impact gate','No changed frontend JS detected');
 
 const functionNames=new Map();
