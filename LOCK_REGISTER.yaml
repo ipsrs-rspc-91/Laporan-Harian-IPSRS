@@ -1,15 +1,34 @@
-version: "1.0"
+version: "1.1"
 project: "Laporan-Harian-IPSRS"
 policy: "locked modules require explicit user approval before behavioral change"
 last_reviewed: "2026-10-04"
 
-# Status meanings:
-# LOCKED = protected; explicit user request required to modify.
-# STABLE_CANDIDATE = source appears stable but production verification is still required.
-# UNLOCKED = actively being changed/tested.
-# BLOCKED = known regression or verification failure.
+# LOCKED is granted only after source + regression + production verification.
+# STABLE_CANDIDATE means source is a reference point but production proof is incomplete.
+# BLOCKED means a known verification/regression/deployment issue exists.
 
 modules:
+  - id: DASH
+    name: "Dashboard"
+    status: LOCKED
+    version: "DASH-2026.10.03.01"
+    baseline_commit: "27177ad80bd4f8faf6757f38a25ff497a828dff3"
+    protected_files:
+      - "frontend/pages/Page_Dashboard.html"
+      - "frontend/css/style.css"
+      - "frontend/laporan-fast-v2.js"
+      - "frontend/access-visibility-fix.js"
+    protected_behaviors:
+      - "Belum Selesai card drilldown"
+      - "spare-part/new-item dashboard table"
+      - "mobile table containment"
+    regression_tests:
+      - "dashboard-load"
+      - "unfinished-drilldown"
+      - "dashboard-spare-part-table"
+      - "dashboard-mobile"
+    verification: "source baseline established; production lock retained from prior verified regression work"
+
   - id: KAT
     name: "Sistem Kategori"
     status: STABLE_CANDIDATE
@@ -32,27 +51,8 @@ modules:
       - "category-modal-flow"
       - "category-submit"
       - "category-filter"
-    note: "Recent source fix exists; promote to LOCKED only after production verification."
-
-  - id: DASH
-    name: "Dashboard"
-    status: LOCKED
-    version: "DASH-2026.10.03.01"
-    baseline_commit: "27177ad80bd4f8faf6757f38a25ff497a828dff3"
-    protected_files:
-      - "frontend/pages/Page_Dashboard.html"
-      - "frontend/css/style.css"
-      - "frontend/laporan-fast-v2.js"
-      - "frontend/access-visibility-fix.js"
-    protected_behaviors:
-      - "Belum Selesai card drilldown"
-      - "spare-part/new-item dashboard table"
-      - "mobile table containment"
-    regression_tests:
-      - "dashboard-load"
-      - "unfinished-drilldown"
-      - "dashboard-spare-part-table"
-      - "dashboard-mobile"
+      - "required-fields"
+    verification: "source fix established; Cloudflare production parity and full browser regression are still required before LOCKED"
 
   - id: KESLING
     name: "KESLING area/master-data behavior"
@@ -72,7 +72,7 @@ modules:
       - "area-master-reconciliation"
       - "kesling-area-order"
       - "bidang-prioritization"
-    note: "Source/data fixes are established; production parity must be verified before full LOCK."
+    verification: "source/data correction established; production parity still required"
 
   - id: AUTH
     name: "Login / Session / Access Control"
@@ -94,10 +94,109 @@ modules:
       - "session"
       - "permission-ui"
       - "permission-api"
-    note: "Do not treat as fully locked until end-to-end security tests are confirmed."
+    verification: "full end-to-end security verification still required"
+
+  - id: REPORT
+    name: "Daftar Laporan / Input / Report Lifecycle"
+    status: STABLE_CANDIDATE
+    version: "REPORT-BASELINE-PENDING"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "frontend/pages/Page_Input.html"
+      - "frontend/pages/Page_Laporan.html"
+      - "frontend/app.js"
+      - "frontend/laporan-fast-v2.js"
+      - "supabase/functions/ipsrs-api/index.ts"
+    protected_behaviors:
+      - "create report"
+      - "view reports"
+      - "edit permissions"
+      - "delete/soft-delete safety"
+      - "report filters"
+    regression_tests:
+      - "report-create"
+      - "report-list"
+      - "report-edit-permission"
+      - "report-delete-safety"
+      - "report-filter"
+
+  - id: MASTER
+    name: "Master Area / Item / Category data"
+    status: STABLE_CANDIDATE
+    version: "MASTER-BASELINE-PENDING"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "frontend/app.js"
+      - "frontend/js/static-data.js"
+      - "supabase/functions/ipsrs-api/index.ts"
+    protected_behaviors:
+      - "master area"
+      - "master item"
+      - "master category"
+      - "frontend/API/database reconciliation"
+    regression_tests:
+      - "area-master-reconciliation"
+      - "item-master-reconciliation"
+      - "category-master-reconciliation"
+
+  - id: PWA
+    name: "PWA / Service Worker / Cache"
+    status: STABLE_CANDIDATE
+    version: "PWA-BASELINE-PENDING"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "frontend/index.html"
+      - "frontend/sw.js"
+    protected_behaviors:
+      - "asset versioning"
+      - "service worker update"
+      - "PWA install/runtime"
+    regression_tests:
+      - "asset-version-cache"
+      - "pwa-service-worker"
+
+  - id: PERFORMANCE
+    name: "Performance / loading"
+    status: STABLE_CANDIDATE
+    version: "PERF-BASELINE-PENDING"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "frontend/index.html"
+      - "frontend/app.js"
+      - "frontend/laporan-fast-v2.js"
+    protected_behaviors:
+      - "startup loading"
+      - "dashboard loading"
+      - "report loading"
+      - "monitoring loading"
+    regression_tests:
+      - "startup-performance"
+      - "dashboard-performance"
+      - "report-performance"
+
+  - id: SECURITY
+    name: "Backend authorization / RLS / audit safety"
+    status: STABLE_CANDIDATE
+    version: "SEC-BASELINE-PENDING"
+    baseline_commit: "34f81f6838222dfd2245b4cc48ccba6976c31d87"
+    protected_files:
+      - "supabase/functions/ipsrs-api/index.ts"
+      - "supabase/migrations"
+    protected_behaviors:
+      - "API authentication"
+      - "API authorization"
+      - "RLS"
+      - "audit log"
+      - "soft-delete safety"
+    regression_tests:
+      - "permission-api"
+      - "rls"
+      - "audit-log"
+      - "delete-safety"
 
 global_rules:
-  - "A change to a shared file does not authorize changes to all modules in that file."
-  - "LOCKED means explicit user approval is required."
+  - "A shared file may belong to multiple modules; changing it never authorizes unrelated module behavior changes."
+  - "LOCKED requires explicit user approval before behavioral change."
   - "Any failed regression against a LOCKED module blocks deployment."
-  - "After an approved update, the module must receive a new version and baseline, then be re-locked."
+  - "A module becomes LOCKED only after its required regression and production verification are evidenced."
+  - "After approved update: UNLOCK -> CHANGE -> TEST -> VERIFY -> new version/baseline -> RE-LOCK."
