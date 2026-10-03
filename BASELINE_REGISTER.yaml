@@ -1,0 +1,24 @@
+version: "1.0"
+project: "Laporan-Harian-IPSRS"
+last_reviewed: "2026-10-04"
+
+baselines:
+  - id: "BASE-2026-10-03-CATEGORY"
+    commit: "27177ad80bd4f8faf6757f38a25ff497a828dff3"
+    purpose: "Known-good checkpoint before category corrective update"
+    status: "REFERENCE"
+
+  - id: "BASE-2026-10-04-CATEGORY-FIX"
+    commit: "34f81f6838222dfd2245b4cc48cc6976c31d87"
+    purpose: "Category fix + production asset discovery/cache audit hardening"
+    status: "CURRENT_CANDIDATE"
+
+  - id: "BASE-2026-10-03-KESLING"
+    commit: "a10f4ad08ac317ae61a023c0365a982df2902040"
+    purpose: "KESLING normalization and area prioritization"
+    status: "REFERENCE"
+
+rules:
+  - "Never delete a baseline that is the only known recovery point for a module."
+  - "A new baseline replaces an old baseline only after regression and deployment verification."
+  - "A baseline is not automatically a production-approved state."
