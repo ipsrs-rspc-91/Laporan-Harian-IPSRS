@@ -36,9 +36,17 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   // Derive the asset URLs from the same index.html that production serves.
   // This prevents the smoke test from silently testing obsolete hard-coded
   // cache versions after a frontend JS update.
-  const scriptAssets = [...indexHtml.matchAll(/<(?:script|link)\\b[^>]*(?:src|href)=["']([^"']+)["']/gi)]
+  const scriptAssets = [...indexHtml.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']([^"']+)["']/gi)]
     .map(m => m[1])
-    .filter(src => /^\\.?\\/?(?:app|config|laporan-fast-v2|login-fast|dashboard-loading-v2|access-policy-ui|static-data|required-fields-ui|access-control|access-visibility-fix|laporan-loading-state|js\\/kategori-modal)\\.js(?:\\?[^"'#]*)?$/i.test(src.replace(/^\\//,'')));
+    .filter(src => {
+      const clean = src.split('?')[0].split('#')[0].replace(/^\.\//, '').replace(/^\//, '');
+      return clean.endsWith('.js') && [
+        'app.js','config.js','laporan-fast-v2.js','login-fast.js',
+        'dashboard-loading-v2.js','access-policy-ui.js','static-data.js',
+        'required-fields-ui.js','access-control.js','access-visibility-fix.js',
+        'laporan-loading-state.js','js/kategori-modal.js'
+      ].includes(clean);
+    });
 
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
 
