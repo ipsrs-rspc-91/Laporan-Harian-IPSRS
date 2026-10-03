@@ -1,5 +1,6 @@
-version: "1.0"
+version: "1.1"
 project: "Laporan-Harian-IPSRS"
+last_reviewed: "2026-10-04"
 
 tests:
   KAT:
@@ -22,9 +23,29 @@ tests:
     - session
     - permission-ui
     - permission-api
-  GLOBAL:
+  REPORT:
+    - report-create
+    - report-list
+    - report-edit-permission
+    - report-delete-safety
+    - report-filter
+  MASTER:
+    - area-master-reconciliation
+    - item-master-reconciliation
+    - category-master-reconciliation
+  PWA:
     - asset-version-cache
     - pwa-service-worker
+  PERFORMANCE:
+    - startup-performance
+    - dashboard-performance
+    - report-performance
+  SECURITY:
+    - permission-api
+    - rls
+    - audit-log
+    - delete-safety
+  GLOBAL:
     - production-smoke
     - source-deployment-parity
     - backend-deployment-parity
@@ -35,3 +56,4 @@ gate:
   fail_on_production_parity_mismatch: true
   fail_on_security_regression: true
   fail_on_unverified_cloudflare_deployment: true
+  fail_on_unverified_supabase_parity: true
