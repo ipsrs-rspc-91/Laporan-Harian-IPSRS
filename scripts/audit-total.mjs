@@ -47,7 +47,7 @@ for (const f of htmlFiles) {
 if (!failures.some(x=>x.name.startsWith('Referenced asset exists:'))) pass('HTML asset references','All local script/style references resolve');
 
 const allText = files.filter(f=>/\.(js|html|css|sql|json|yml|yaml|md)$/i.test(f));
-const secretPatterns = [/SUPABASE_SERVICE_ROLE_KEY\\s*[:=]/gi,/sb_secret_[A-Za-z0-9_-]+/g,/-----BEGIN (?:RSA|OPENSSH|EC|PRIVATE) KEY-----/g];
+const secretPatterns = [/SUPABASE_SERVICE_ROLE_KEY\s*[:=]/gi,/sb_secret_[A-Za-z0-9_-]+/g,/-----BEGIN (?:RSA|OPENSSH|EC|PRIVATE) KEY-----/g];
 for (const f of allText) {
   const s=fs.readFileSync(f,'utf8');
   for (const re of secretPatterns) {
@@ -99,7 +99,7 @@ if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
 const lockRegisterPath=path.join(root,'LOCK_REGISTER.yaml');
 if(fs.existsSync(lockRegisterPath) && changed.length){
   const lockText=fs.readFileSync(lockRegisterPath,'utf8');
-  const lines=lockText.split(/\\r?\\n/);
+  const lines=lockText.split(/\r?\n/);
   let currentId='', currentStatus='', protectedMode=false;
   const lockedFiles=[];
   for(const line of lines){
@@ -118,7 +118,7 @@ if(fs.existsSync(lockRegisterPath) && changed.length){
   const overrides=(commitMessage.match(/\[UNLOCK\s+([A-Z0-9_-]+)\]/gi)||[]).map(x=>x.replace(/^\[UNLOCK\s+/i,'').replace(/\]$/,'').toUpperCase());
   const unauthorized=touched.filter(x=>!overrides.includes(x.module.toUpperCase()));
   if(unauthorized.length){
-    fail('LOCK register gate',unauthorized.map(x=>x.file+' protected by '+x.module).join('\\n')+'\\nExplicit commit authorization required: [UNLOCK MODULE_ID]');
+    fail('LOCK register gate',unauthorized.map(x=>x.file+' protected by '+x.module).join('\n')+'\\nExplicit commit authorization required: [UNLOCK MODULE_ID]');
   }else if(touched.length){
     warn('LOCK register gate','Protected file change explicitly authorized: '+touched.map(x=>x.file).join(', '));
   }else{
