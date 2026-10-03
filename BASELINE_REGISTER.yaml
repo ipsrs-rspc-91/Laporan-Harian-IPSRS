@@ -33,6 +33,11 @@ baselines:
     purpose: "LOCK gate regex correction plus synthetic unauthorized/authorized DASH test"
     status: "CURRENT_CONTROL"
 
+  - id: "BASE-2026-10-04-CONTROL-BOOK-COMPLETE"
+    commit: "d415f5e12bec67f0a592515b56b7d72e1127b62a"
+    purpose: "Completed operational Project Control Book chapters 001-040"
+    status: "REFERENCE"
+
 rules:
   - "Never delete a baseline that is the only known recovery point for a module."
   - "A new baseline replaces an old baseline only after regression and deployment verification."
