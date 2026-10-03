@@ -177,7 +177,7 @@
     return true;
   }
 
-  function install(){
+  function laporanLoadingInstall(){
     installStyle();
 
     /* Request-level loader: dipertahankan untuk operasi data. */
@@ -201,8 +201,8 @@
     window.__ipsrsLaporanLoadingError=showError;
   }
 
-  function boot(){
-    install();
+  function laporanLoadingBoot(){
+    laporanLoadingInstall();
     var tries=0;
     var timer=setInterval(function(){
       tries++;
@@ -213,5 +213,5 @@
     },500);
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else laporanLoadingBoot();
 })();
