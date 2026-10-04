@@ -1,5 +1,5 @@
-/* RELEASE CHECKPOINT: SPMU data-only selected-field rendering */
 #!/usr/bin/env node
+/* RELEASE CHECKPOINT: SPMU data-only selected-field rendering */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
