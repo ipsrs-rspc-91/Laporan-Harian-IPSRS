@@ -33,7 +33,11 @@ const MATERIAL_UNIT_REQUIRED_CATEGORIES=new Set([
 ]);
 function normalizeCategory(v:any){return String(v||"").trim().replace(/\s+/g," ").toUpperCase()}
 function categoryKind(v:any){const n=normalizeCategory(v);return{spare:SPARE_PART_NEW_CATEGORIES.has(n),unit:UNIT_NEW_CATEGORIES.has(n)}}
-function isNewCategory(v:any){const k=categoryKind(v);return k.spare||k.unit}
+function isNewCategory(v:any){
+ const n=normalizeCategory(v);
+ const k=categoryKind(n);
+ return MATERIAL_UNIT_REQUIRED_CATEGORIES.has(n)||k.spare||k.unit;
+}
 // PERF 20260923: read paths use short-lived cache + selective payloads; date index added in Supabase migration.
 const reportCache=new Map<string,{at:number,value:any}>(); const CACHE_TTL=5000;
 const accessSettingCache=new Map<string,{at:number,value:string}>();
