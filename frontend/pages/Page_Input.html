@@ -908,3 +908,22 @@
   display:none !important;
 }
 </style>
+<!-- SPMU-FINAL-VISIBILITY-CONTRACT-20261004 -->
+<style>
+/* FINAL SPMU VISIBILITY CONTRACT
+   Empty UNIT/SPARE choice must disappear once the group has any complete data.
+   This rule intentionally uses !important because the compact-layout rule
+   above also uses !important on .spmu-choice display:flex. */
+#page-input .spmu-choice-group.has-value .spmu-choice.is-empty-option{
+  display:none !important;
+}
+
+/* If both sides are genuinely complete, keep both data rows visible.
+   They stack vertically inside the same SPMU group. */
+#page-input .spmu-choice-group.has-both-value .spmu-choice{
+  display:flex !important;
+  width:100% !important;
+  grid-column:1 / -1 !important;
+}
+</style>
+
