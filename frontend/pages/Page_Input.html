@@ -533,12 +533,13 @@
           </div>
           <div class="spmu-modal-body">
             <div class="spmu-modal-field">
-              <label for="SparePartUnitStatus">KONDISI <span class="required-mark">*</span></label>
+              <label for="SparePartUnitStatus">KONDISI / SUMBER <span class="required-mark">*</span></label>
               <select id="SparePartUnitStatus" required>
-                <option value="">Pilih kondisi...</option>
-                <option value="BARU">BARU</option>
-                <option value="KANIBAL">KANIBAL</option>
-                <option value="LAINNYA">LAINNYA</option>
+                <option value="">Pilih kondisi / sumber...</option>
+                <option value="BARU">SPARE PART / MATERIAL BARU</option>
+                <option value="KANIBAL">SPARE PART / MATERIAL KANIBAL</option>
+                <option value="DARI UNIT / RUANGAN LAIN">SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN</option>
+                <option value="STOK IPSRS">SPARE PART / MATERIAL STOK IPSRS</option>
               </select>
             </div>
             <div class="spmu-modal-field">
@@ -555,7 +556,7 @@
             </div>
           </div>
           <div class="spmu-modal-footer">
-            <button type="button" class="btn btn-primary" onclick="saveSparePartUnitModal()">Simpan</button>
+            <button type="button" class="btn btn-primary" onclick="saveSparePartUnitModal()">OK</button>
           </div>
         </div>
       </div>
