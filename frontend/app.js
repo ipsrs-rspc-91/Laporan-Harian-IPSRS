@@ -1989,11 +1989,15 @@
     const spareHas=isSpmuSideComplete_(spare);
 
     const group=document.querySelector('#sparePartSection .spmu-choice-group');
+    const kategoriValue=document.getElementById('Kategori')?.value || '';
+    const spareCategory=isSparePartReportCategory_(kategoriValue);
     if(group){
       group.classList.toggle('has-value',unitHas || spareHas);
       group.classList.toggle('has-unit-value',unitHas);
       group.classList.toggle('has-spare-value',spareHas);
       group.classList.toggle('has-both-value',unitHas && spareHas);
+      group.classList.toggle('spmu-category-spare',spareCategory);
+      group.classList.toggle('spmu-category-compact',!spareCategory);
     }
 
     const renderSide=(id,kind,side,hasValue)=>{
@@ -2044,7 +2048,10 @@
     renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
 
     const actionWrap=document.getElementById('spmuActionMenuWrap');
-    if(actionWrap) actionWrap.hidden=!(unitHas || spareHas);
+    if(actionWrap){
+      actionWrap.hidden=!(unitHas || spareHas);
+      actionWrap.classList.toggle('spmu-action-compact',!spareCategory);
+    }
 
     // If both sides have data, the UI still shows ONE full-width field.
     // The stored UNIT + SPARE data remain independent in SPMU_STATE/payload.
