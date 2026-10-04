@@ -34,6 +34,8 @@
   .required-fields-modal-btn:active{transform:translateY(1px);}
   @keyframes requiredModalIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 
+  /* STATUS HEIGHT CONTRACT: total visual height is exactly 80px.
+     box-sizing:border-box prevents height + padding from making the field taller. */
   #page-input .status-choice-group{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -43,6 +45,7 @@
   }
   #page-input .status-choice{
     appearance:none;
+    box-sizing:border-box;
     width:100%;
     min-height:80px;
     height:80px;
@@ -54,7 +57,7 @@
     align-items:center;
     justify-content:center;
     gap:9px;
-    padding:12px 14px;
+    padding:0 10px;
     font:inherit;
     font-weight:700;
     cursor:pointer;
@@ -408,7 +411,8 @@
     }
   }
   @media (max-width:480px){
-    #page-input .status-choice{min-height:80px;height:80px;padding:10px 8px;}
+    /* Keep mobile total height at exactly 80px; padding is inside the box. */
+    #page-input .status-choice{box-sizing:border-box;min-height:80px;height:80px;padding:0 8px;}
   }
   /* SPMU: approved compact layout — one size for ALL categories/states. */
   #page-input .spmu-choice-group .spmu-choice{
