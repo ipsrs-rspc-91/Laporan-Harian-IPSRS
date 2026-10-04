@@ -1925,6 +1925,14 @@
     const unitHas=isSpmuSideComplete_(unit);
     const spareHas=isSpmuSideComplete_(spare);
 
+    const group=document.querySelector('#sparePartSection .spmu-choice-group');
+    if(group){
+      group.classList.toggle('has-value',unitHas || spareHas);
+      group.classList.toggle('has-unit-value',unitHas);
+      group.classList.toggle('has-spare-value',spareHas);
+      group.classList.toggle('has-both-value',unitHas && spareHas);
+    }
+
     const renderSide=(id,kind,side,hasValue)=>{
       const el=document.getElementById(id);
       if(!el) return;
@@ -1945,8 +1953,8 @@
         ? side.status+' • '+side.type+' • Jumlah: '+side.qty
         : summaryText;
 
-      // Filled side is plain text data only: no button role, no keyboard
-      // action, no click handler, no chevron affordance.
+      // FILLED: this same field is data-only. No UNIT/SPARE button,
+      // no chevron, no click, no keyboard action.
       if(hasValue){
         el.removeAttribute('role');
         el.removeAttribute('tabindex');
@@ -1956,7 +1964,7 @@
         return;
       }
 
-      // Empty side remains the only selectable state.
+      // EMPTY: this field is the only selectable button.
       el.setAttribute('role','button');
       el.setAttribute('tabindex','0');
       el.setAttribute('aria-haspopup','dialog');
@@ -1969,16 +1977,18 @@
       };
     };
 
-    if(unitHas){
-      renderSide('spmuUnitChoice','UNIT',unit,true);
-    }else{
-      renderSide('spmuUnitChoice','UNIT',unit,false);
-    }
+    renderSide('spmuUnitChoice','UNIT',unit,unitHas);
+    renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
 
-    if(spareHas){
-      renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,true);
-    }else{
-      renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,false);
+    // If both sides have data, the UI still shows ONE full-width field.
+    // The stored UNIT + SPARE data remain independent in SPMU_STATE/payload.
+    if(unitHas && spareHas){
+      const unitTitle=document.getElementById('spmuUnitTitle');
+      const unitSummary=document.getElementById('spmuUnitSummary');
+      if(unitTitle) unitTitle.textContent=unit.name+' • '+spare.name;
+      if(unitSummary) unitSummary.textContent=
+        'UNIT: '+unit.status+' • '+unit.type+' • Jumlah: '+unit.qty+
+        ' | SPARE PART / MATERIAL: '+spare.status+' • '+spare.type+' • Jumlah: '+spare.qty;
     }
   }
 
