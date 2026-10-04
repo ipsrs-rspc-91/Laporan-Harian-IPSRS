@@ -289,16 +289,48 @@ if(a==="apiDashboardStats"){
  const total=aggregateReports.length,sel=aggregateReports.filter((r:any)=>r.status==="Selesai").length,bel=total-sel,cat:any={},ar:any={},sm:any={},pc:any={};for(const st of activeStaff||[])sm[st.staff_id]={staff_id:st.staff_id,nama:st.nama,role:st.role,bidang:st.bidang||"",value:0};let spare=0,unit=0;
  const newPartGroups:any={};const newUnitGroups:any={};let spareQty=0,unitQty=0;
  const qtyValue=(v:any)=>{const n=Number(String(v??"").trim().replace(/,/g,"."));return Number.isFinite(n)&&n>0?n:0};
- const addNewGroup=(bucket:any,r:any)=>{const name=String(r.spare_part_unit||r.item||"").trim()||"Tidak diisi";const type=String(r.type||"").trim()||"-";const key=(name+"||"+type).toLocaleLowerCase("id");if(!bucket[key])bucket[key]={nama:name,type,jumlah:0,laporan:0};bucket[key].jumlah+=qtyValue(r.jumlah);bucket[key].laporan++};
+ const addNewGroup=(bucket:any,nameValue:any,typeValue:any,qtyValueRaw:any)=>{
+   const name=String(nameValue||"").trim()||"Tidak diisi";
+   const type=String(typeValue||"").trim()||"-";
+   const key=(name+"||"+type).toLocaleLowerCase("id");
+   if(!bucket[key])bucket[key]={nama:name,type,jumlah:0,laporan:0};
+   bucket[key].jumlah+=qtyValue(qtyValueRaw);
+   bucket[key].laporan++;
+ };
  for(const r of aggregateReports){
    if(r.kategori)cat[r.kategori]=(cat[r.kategori]||0)+1;
    const kind=normalizeCategory(r.spare_part_unit_kind);
    const status=normalizeCategory(r.spare_part_unit_status);
    const legacy=categoryKind(r.kategori);
-   const isSpareBaru=(kind==="SPARE PART / MATERIAL"&&status==="BARU")||(!kind&&legacy.spare);
-   const isUnitBaru=(kind==="UNIT"&&status==="BARU")||(!kind&&legacy.unit);
-   if(isSpareBaru){spare++;const q=qtyValue(r.jumlah);spareQty+=q;addNewGroup(newPartGroups,r)}
-   if(isUnitBaru){unit++;const q=qtyValue(r.jumlah);unitQty+=q;addNewGroup(newUnitGroups,r)}
+
+   // SPMU v15: aggregate UNIT and SPARE PART / MATERIAL independently.
+   // Dual-side reports may contain both sides, so do not force them through
+   // the single legacy kind/name/type/jumlah fields.
+   const unitStatus=normalizeCategory(r.unit_status);
+   const spareStatus=normalizeCategory(r.spare_part_material_status);
+   const unitIsNew=unitStatus==="BARU" || (!r.unit_status && kind==="UNIT" && status==="BARU") || (!r.unit_status && !kind && legacy.unit);
+   const spareIsNew=spareStatus==="BARU" || (!r.spare_part_material_status && kind==="SPARE PART / MATERIAL" && status==="BARU") || (!r.spare_part_material_status && !kind && legacy.spare);
+
+   if(spareIsNew){
+     spare++;
+     const q=qtyValue(r.spare_part_material_jumlah ?? (kind==="SPARE PART / MATERIAL" ? r.jumlah : legacy.spare ? r.jumlah : null));
+     spareQty+=q;
+     addNewGroup(newPartGroups,
+       r.spare_part_material || (kind==="SPARE PART / MATERIAL" ? r.spare_part_unit : legacy.spare ? r.spare_part_unit : r.item),
+       r.spare_part_material_type || (kind==="SPARE PART / MATERIAL" ? r.type : legacy.spare ? r.type : ""),
+       r.spare_part_material_jumlah ?? (kind==="SPARE PART / MATERIAL" ? r.jumlah : legacy.spare ? r.jumlah : null)
+     );
+   }
+   if(unitIsNew){
+     unit++;
+     const q=qtyValue(r.unit_jumlah ?? (kind==="UNIT" ? r.jumlah : legacy.unit ? r.jumlah : null));
+     unitQty+=q;
+     addNewGroup(newUnitGroups,
+       r.unit_name || (kind==="UNIT" ? r.spare_part_unit : legacy.unit ? r.spare_part_unit : r.item),
+       r.unit_type || (kind==="UNIT" ? r.type : legacy.unit ? r.type : ""),
+       r.unit_jumlah ?? (kind==="UNIT" ? r.jumlah : legacy.unit ? r.jumlah : null)
+     );
+   }
    if(r.area_kerja)ar[r.area_kerja]=(ar[r.area_kerja]||0)+1;
    const p=r.status_pencapaian||r.status||"Belum Diisi";pc[p]=(pc[p]||0)+1
  }
