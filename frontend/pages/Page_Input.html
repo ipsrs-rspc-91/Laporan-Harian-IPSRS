@@ -390,14 +390,35 @@
     height:38px !important;
     padding:3px 12px !important;
     overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
   }
   #page-input .spmu-choice-group .spmu-choice-title{
     display:block !important;
+    width:100% !important;
     font-size:12px !important;
     line-height:1.15 !important;
+    text-align:center !important;
     white-space:nowrap !important;
     overflow:hidden !important;
     text-overflow:ellipsis !important;
+  }
+  /* Saat data sudah dipilih, tinggi mengikuti isi nama/data dan teks tetap terpusat. */
+  #page-input .spmu-choice-group .spmu-choice.has-value{
+    height:auto !important;
+    min-height:38px !important;
+    padding:6px 62px 6px 12px !important;
+    overflow:visible !important;
+  }
+  #page-input .spmu-choice-group .spmu-choice.has-value .spmu-choice-title{
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
   }
   #page-input .spmu-choice-group .spmu-choice-summary{
     display:block !important;
