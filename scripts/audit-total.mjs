@@ -57,6 +57,20 @@ for (const f of allText) {
 }
 if (!failures.some(x=>x.name==='Secret exposure scan')) pass('Secret exposure scan','No exposed service-role key/private-key patterns found in tracked text');
 
+if (fs.existsSync(indexPath)) {
+  const indexTextForCache = fs.readFileSync(indexPath,'utf8');
+  const appRefs = [...indexTextForCache.matchAll(/app\\.js\\?v=([^"'\\s&]+)/g)].map(m=>m[1]);
+  const uniqueAppRefs = [...new Set(appRefs)];
+  if (uniqueAppRefs.length === 1) {
+    pass('app.js cache-version consistency','All index.html app.js references use the same cache version: '+uniqueAppRefs[0]);
+  } else if (uniqueAppRefs.length > 1) {
+    fail('app.js cache-version consistency','index.html contains inconsistent app.js cache versions: '+uniqueAppRefs.join(', '));
+  } else {
+    fail('app.js cache-version consistency','index.html does not contain a versioned app.js reference');
+  }
+}
+
+
 const migrationDir=path.join(root,'supabase','migrations');
 if (fs.existsSync(migrationDir)) {
   const names=fs.readdirSync(migrationDir).filter(x=>x.endsWith('.sql'));
