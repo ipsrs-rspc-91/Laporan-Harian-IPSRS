@@ -2027,10 +2027,9 @@
 
       const title=document.getElementById(titleId);
       const summary=document.getElementById(summaryId);
-      // Filled state must remain explicit about WHICH side is filled.
-      // Keep the type label as the title and show the complete four-field data
-      // in the same box so UNIT cannot be confused with SPARE PART / MATERIAL.
-      if(title) title.textContent=titleText;
+      // FILLED: show DATA ONLY. Do not repeat UNIT or SPARE PART / MATERIAL
+      // inside the selected field; the section label already identifies the field.
+      if(title) title.textContent=hasValue ? '' : titleText;
       if(summary) summary.textContent=hasValue
         ? side.name+' • '+side.status+' • '+side.type+' • Jumlah: '+side.qty
         : summaryText;
@@ -2068,15 +2067,20 @@
       actionWrap.classList.toggle('spmu-action-compact',!spareCategory);
     }
 
-    // If both sides have data, the UI still shows ONE full-width field.
-    // The stored UNIT + SPARE data remain independent in SPMU_STATE/payload.
+    // If both sides have data, show both datasets without type labels.
+    // The section label already identifies the field; UNIT/SPARE labels are
+    // deliberately omitted from the selected content.
     if(unitHas && spareHas){
       const unitTitle=document.getElementById('spmuUnitTitle');
+      const spareTitle=document.getElementById('spmuSpareTitle');
       const unitSummary=document.getElementById('spmuUnitSummary');
-      if(unitTitle) unitTitle.textContent='UNIT + SPARE PART / MATERIAL';
+      const spareSummary=document.getElementById('spmuSpareSummary');
+      if(unitTitle) unitTitle.textContent='';
+      if(spareTitle) spareTitle.textContent='';
       if(unitSummary) unitSummary.textContent=
-        'UNIT: '+unit.name+' • '+unit.status+' • '+unit.type+' • Jumlah: '+unit.qty+
-        ' | SPARE PART / MATERIAL: '+spare.name+' • '+spare.status+' • '+spare.type+' • Jumlah: '+spare.qty;
+        unit.name+' • '+unit.status+' • '+unit.type+' • Jumlah: '+unit.qty;
+      if(spareSummary) spareSummary.textContent=
+        spare.name+' • '+spare.status+' • '+spare.type+' • Jumlah: '+spare.qty;
     }
   }
 
