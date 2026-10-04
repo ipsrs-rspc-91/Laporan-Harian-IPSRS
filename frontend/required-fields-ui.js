@@ -41,10 +41,14 @@
     // field wajib pada kategori lain yang kebetulan mengandung kata tersebut.
     const normalized = value.replace(/\s+/g, ' ').toUpperCase();
     const requiredNewCategories = new Set([
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT',
+      // Compatibility: historical category values remain valid/readable.
       'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL',
       'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
-      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
-      'PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT'
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL'
     ]);
     return requiredNewCategories.has(normalized);
   }
