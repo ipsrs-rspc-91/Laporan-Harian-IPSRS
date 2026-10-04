@@ -1832,6 +1832,13 @@
     updateSparePartToggleStatus();
   }
 
+  function openSelectedSparePartUnitModal_(){
+    const kind = getSparePartUnitKind_();
+    if(kind === 'UNIT' || kind === 'SPARE PART / MATERIAL'){
+      openSparePartUnitModal(kind);
+    }
+  }
+
   function updateSparePartToggleStatus(){
     const part = String(document.getElementById('SparePartUnit')?.value || '').trim();
     const type = String(document.getElementById('Type')?.value || '').trim();
@@ -1839,40 +1846,58 @@
     const kind = getSparePartUnitKind_();
     const status = getSparePartUnitStatus_();
 
-    const summary = [];
-    if(status) summary.push(status);
-    if(part) summary.push(part);
-    if(type) summary.push(type);
-    if(qty) summary.push('Jumlah: ' + qty);
-
-    const hasValue = summary.length > 0;
+    const hasValue = !!(kind && (status || part || type || qty));
     const unitSummary = document.getElementById('spmuUnitSummary');
     const spareSummary = document.getElementById('spmuSpareSummary');
     const unitChoice = document.getElementById('spmuUnitChoice');
     const spareChoice = document.getElementById('spmuSpareChoice');
 
-    const text = hasValue ? summary.join(' • ') : 'Belum diisi';
-
-    // Kondisi awal: dua pilihan sederhana.
-    // Setelah OK: sisi yang terisi menjadi field data, sedangkan sisi lain
-    // menjadi pilihan untuk mengganti jenis UNIT/SPARE PART / MATERIAL.
+    // Detail hasil modal sengaja TIDAK ditaruh di dalam tombol pilihan.
+    // Tombol hanya berfungsi sebagai pilihan/dropdown UNIT atau SPARE PART/MATERIAL.
     if(unitSummary){
-      unitSummary.textContent = kind === 'UNIT'
-        ? text
-        : (hasValue ? 'Pilih UNIT' : 'Belum diisi');
+      unitSummary.textContent = kind === 'UNIT' && hasValue ? 'Sudah diisi' : 'Pilih UNIT';
     }
     if(spareSummary){
-      spareSummary.textContent = kind === 'SPARE PART / MATERIAL'
-        ? text
-        : (hasValue ? 'Pilih SPARE PART / MATERIAL' : 'Belum diisi');
+      spareSummary.textContent = kind === 'SPARE PART / MATERIAL' && hasValue
+        ? 'Sudah diisi'
+        : 'Pilih SPARE PART / MATERIAL';
     }
 
     unitChoice?.classList.toggle('is-selected', kind === 'UNIT' && hasValue);
     spareChoice?.classList.toggle('is-selected', kind === 'SPARE PART / MATERIAL' && hasValue);
     unitChoice?.classList.toggle('has-value', kind === 'UNIT' && hasValue);
     spareChoice?.classList.toggle('has-value', kind === 'SPARE PART / MATERIAL' && hasValue);
-    unitChoice?.classList.toggle('is-empty-option', hasValue && kind !== 'UNIT');
-    spareChoice?.classList.toggle('is-empty-option', hasValue && kind !== 'SPARE PART / MATERIAL');
+    unitChoice?.classList.toggle('is-empty-option', !(kind === 'UNIT' && hasValue));
+    spareChoice?.classList.toggle('is-empty-option', !(kind === 'SPARE PART / MATERIAL' && hasValue));
+
+    const detail = document.getElementById('spmuSelectedDetail');
+    if(!detail) return;
+
+    if(!hasValue){
+      detail.hidden = true;
+      return;
+    }
+
+    const prefix = kind === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
+    const title = document.getElementById('spmuDetailTitle');
+    const statusLabel = document.getElementById('spmuDetailStatusLabel');
+    const nameLabel = document.getElementById('spmuDetailNameLabel');
+    const typeLabel = document.getElementById('spmuDetailTypeLabel');
+    const statusEl = document.getElementById('spmuDetailStatus');
+    const nameEl = document.getElementById('spmuDetailName');
+    const typeEl = document.getElementById('spmuDetailType');
+    const qtyEl = document.getElementById('spmuDetailQty');
+
+    if(title) title.textContent = 'DATA ' + prefix;
+    if(statusLabel) statusLabel.textContent = kind === 'UNIT' ? 'JENIS UNIT' : 'KONDISI / SUMBER';
+    if(nameLabel) nameLabel.textContent = 'NAMA ' + prefix;
+    if(typeLabel) typeLabel.textContent = 'TYPE ' + (kind === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL');
+    if(statusEl) statusEl.textContent = status || '-';
+    if(nameEl) nameEl.textContent = part || '-';
+    if(typeEl) typeEl.textContent = type || '-';
+    if(qtyEl) qtyEl.textContent = qty || '-';
+
+    detail.hidden = false;
   }
 
   // ============================================================
