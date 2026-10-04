@@ -2065,6 +2065,23 @@
     renderSide('spmuUnitChoice','UNIT',unit,unitHas);
     renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
 
+    // FINAL RUNTIME CONTRACT:
+    // If either side has complete data, the other empty choice is not a
+    // second field. It must disappear, including against legacy !important CSS.
+    const anySpmuValue=unitHas || spareHas;
+    [
+      ['spmuUnitChoice',unitHas],
+      ['spmuSpareChoice',spareHas]
+    ].forEach(([id,hasValue])=>{
+      const choice=document.getElementById(id);
+      if(!choice) return;
+      if(anySpmuValue && !hasValue){
+        choice.style.setProperty('display','none','important');
+      }else{
+        choice.style.removeProperty('display');
+      }
+    });
+
     const actionWrap=document.getElementById('spmuActionMenuWrap');
     if(actionWrap){
       actionWrap.hidden=!(unitHas || spareHas);
