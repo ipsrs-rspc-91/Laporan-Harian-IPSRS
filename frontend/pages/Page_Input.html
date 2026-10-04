@@ -92,46 +92,52 @@
     overflow:hidden;
     background:#fff;
   }
+  #page-input .spmu-choice-wrap{
+    position:relative;
+    width:100%;
+  }
   #page-input .spmu-choice-group.has-value{grid-template-columns:1fr;}
   #page-input .spmu-choice-group.has-value .spmu-choice.is-empty-option{display:none;}
   #page-input .spmu-choice-group.has-value .spmu-choice.has-value{
     grid-column:1 / -1;
     border-right:0;
     width:100%;
+    padding-right:62px;
   }
   #page-input .spmu-choice-group.has-both-value .spmu-choice#spmuSpareChoice{display:none;}
   #page-input .spmu-action-menu-wrap{
     position:absolute;
-    right:5px;
+    right:7px;
     top:50%;
     transform:translateY(-50%);
-    z-index:20;
+    z-index:30;
   }
-  #page-input .spmu-choice-group.has-value .spmu-action-menu-wrap[hidden]{display:none;}
+  #page-input .spmu-action-menu-wrap[hidden]{display:none;}
   #page-input .spmu-action-menu-trigger{
-    width:34px;
-    height:34px;
-    border:0;
-    border-radius:9px;
+    width:38px;
+    height:38px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
     background:#f8fafc;
     color:#475569;
     display:flex;
     align-items:center;
     justify-content:center;
-    font:inherit;
-    font-size:21px;
-    font-weight:800;
-    line-height:1;
+    padding:0;
     cursor:pointer;
     touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    box-shadow:0 1px 3px rgba(15,23,42,.08);
   }
-  #page-input .spmu-action-menu-trigger:hover{background:#eef2f7;}
+  #page-input .spmu-action-menu-trigger svg{pointer-events:none;}
+  #page-input .spmu-action-menu-trigger:hover{background:#f1f5f9;}
+  #page-input .spmu-action-menu-trigger:active{transform:scale(.96);}
   #page-input .spmu-action-menu-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
   #page-input .spmu-action-menu{
     position:absolute;
-    top:calc(100% + 6px);
+    top:calc(100% + 7px);
     right:0;
-    min-width:230px;
+    min-width:235px;
     padding:5px;
     background:#fff;
     border:1px solid #d7dee3;
@@ -627,24 +633,30 @@
     <div>
       <div id="sparePartSection" class="spare-part-section">
         <label>SPARE PART / MATERIAL / UNIT <span class="required-mark">*</span></label>
-        <div class="spmu-choice-group" role="group" aria-label="Pilih jenis penggantian">
-          <div id="spmuUnitChoice" class="spmu-choice is-empty-option" data-spmu-kind="UNIT">
-            <span id="spmuUnitTitle" class="spmu-choice-title">UNIT</span>
-            <span id="spmuUnitSummary" class="spmu-choice-summary">Pilih UNIT</span>
-            <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
-          </div>
-          <div id="spmuSpareChoice" class="spmu-choice is-empty-option" data-spmu-kind="SPARE PART / MATERIAL">
-            <span id="spmuSpareTitle" class="spmu-choice-title">SPARE PART / MATERIAL</span>
-            <span id="spmuSpareSummary" class="spmu-choice-summary">Pilih SPARE PART / MATERIAL</span>
-            <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
+        <div id="spmuChoiceWrap" class="spmu-choice-wrap">
+          <div class="spmu-choice-group" role="group" aria-label="Pilih jenis penggantian">
+            <div id="spmuUnitChoice" class="spmu-choice is-empty-option" data-spmu-kind="UNIT">
+              <span id="spmuUnitTitle" class="spmu-choice-title">UNIT</span>
+              <span id="spmuUnitSummary" class="spmu-choice-summary">Pilih UNIT</span>
+              <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
+            </div>
+            <div id="spmuSpareChoice" class="spmu-choice is-empty-option" data-spmu-kind="SPARE PART / MATERIAL">
+              <span id="spmuSpareTitle" class="spmu-choice-title">SPARE PART / MATERIAL</span>
+              <span id="spmuSpareSummary" class="spmu-choice-summary">Pilih SPARE PART / MATERIAL</span>
+              <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
+            </div>
           </div>
           <div id="spmuActionMenuWrap" class="spmu-action-menu-wrap" hidden>
             <button id="spmuActionMenuTrigger" type="button" class="spmu-action-menu-trigger"
               aria-label="Tambah atau ubah SPARE PART / MATERIAL / UNIT"
-              aria-haspopup="menu" aria-expanded="false" onclick="toggleSpmuActionMenu(event)">⌄</button>
+              aria-haspopup="menu" aria-expanded="false">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6"></path>
+              </svg>
+            </button>
             <div id="spmuActionMenu" class="spmu-action-menu" role="menu" hidden>
-              <button type="button" role="menuitem" onclick="chooseSpmuAction('SPARE PART / MATERIAL',event)">SPARE PART / MATERIAL</button>
-              <button type="button" role="menuitem" onclick="chooseSpmuAction('UNIT',event)">UNIT</button>
+              <button type="button" role="menuitem" data-spmu-action="SPARE PART / MATERIAL">SPARE PART / MATERIAL</button>
+              <button type="button" role="menuitem" data-spmu-action="UNIT">UNIT</button>
             </div>
           </div>
         </div>
