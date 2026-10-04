@@ -11,9 +11,9 @@
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
-    terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+    terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL',
     luar_tanpa: 'PEMELIHARAAN DILUAR JADWAL RUTIN',
-    luar_dengan: 'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'
+    luar_dengan: 'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL'
   };
 
   let originalHandleKategoriChange = null;
@@ -295,7 +295,7 @@
               <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
             </button>
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-dengan">
-              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT / UNIT</span>
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT</span>
             </button>
           </div>
 
@@ -313,7 +313,7 @@
 
     injectModal(
       'ipsrsKategoriModal2',
-      'PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PENGGANTIAN SPARE PART / MATERIAL',
       'Tentukan apakah ada penggantian',
       `
         <div class="ipsrs-kat-info" id="ipsrsKategoriModal2Info">Pilih salah satu pilihan berikut.</div>
@@ -358,7 +358,7 @@
     document.querySelectorAll('[data-kat-repair]').forEach(btn => {
       btn.addEventListener('click', function(){
         const value = this.dataset.katRepair === 'dengan'
-          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'
+          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL'
           : 'PERBAIKAN SAJA';
         finishKategori(value);
       });
