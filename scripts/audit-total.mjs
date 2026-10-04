@@ -1,3 +1,4 @@
+/* RELEASE CHECKPOINT: SPMU data-only selected-field rendering */
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
