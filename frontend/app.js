@@ -1573,13 +1573,6 @@
     return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
   }
 
-  function getSparePartUnitKind_(){
-    return String(document.getElementById('SparePartUnitKind')?.value || '').trim().toUpperCase();
-  }
-
-  function getSparePartUnitStatus_(){
-    return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
-  }
 
   // ============================================================
   // PELAPOR / NO LK — KONTROL LAMA YANG HARUS TETAP UTUH
