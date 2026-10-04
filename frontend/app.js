@@ -1627,9 +1627,9 @@
       ? '<option value="">Pilih jenis UNIT...</option><option value="BARU">UNIT BARU</option><option value="KANIBAL">UNIT KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">UNIT DARI UNIT / RUANGAN LAIN</option><option value="LAINNYA">UNIT LAINNYA</option>'
       : '<option value="">Pilih kondisi / sumber...</option><option value="BARU">SPARE PART / MATERIAL BARU</option><option value="KANIBAL">SPARE PART / MATERIAL KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN</option><option value="STOK IPSRS">SPARE PART / MATERIAL STOK IPSRS</option>';
 
-    if(nameLabel) nameLabel.innerHTML = 'NAMA ' + prefix + ' <span class="required-mark">*</span>';
+    if(nameLabel) nameLabel.textContent = 'NAMA ' + prefix;
     if(nameInput) nameInput.placeholder = 'Nama ' + prefix;
-    if(typeLabel) typeLabel.innerHTML = 'TYPE ' + (isUnit ? 'UNIT' : 'SPARE PART / MATERIAL') + ' <span class="required-mark">*</span>';
+    if(typeLabel) typeLabel.textContent = 'TYPE ' + (isUnit ? 'UNIT' : 'SPARE PART / MATERIAL');
     if(typeInput) typeInput.placeholder = 'Type / spesifikasi ' + (isUnit ? 'unit' : 'spare part / material');
   }
 
