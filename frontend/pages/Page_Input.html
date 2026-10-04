@@ -147,24 +147,85 @@
   }
   #page-input .spmu-choice.is-selected .spmu-choice-chevron{color:#2563eb;}
   #page-input .spmu-choice-summary{
-    display:-webkit-box;
+    display:block;
     margin-top:5px;
     font-size:11px;
     color:var(--text-muted);
-    font-weight:600;
+    font-weight:700;
     line-height:1.35;
-    white-space:normal;
-    overflow:hidden;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    -webkit-box-orient:vertical;
-    -webkit-line-clamp:3;
-    min-height:30px;
   }
   #page-input .spmu-choice.is-selected .spmu-choice-summary{color:#2563eb;}
   #page-input .spmu-choice.is-empty-option .spmu-choice-summary{
     color:#64748b;
     font-weight:700;
+  }
+  /* Detail hasil modal TIDAK lagi ditumpuk/diringkas di dalam tombol pilihan. */
+  #page-input .spmu-selected-detail{
+    margin-top:10px;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    background:#f8fbff;
+    overflow:hidden;
+  }
+  #page-input .spmu-selected-detail[hidden]{display:none;}
+  #page-input .spmu-selected-detail-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    border-bottom:1px solid #dbeafe;
+    background:#eff6ff;
+  }
+  #page-input .spmu-selected-detail-title{
+    font-size:13px;
+    font-weight:800;
+    color:#1d4ed8;
+  }
+  #page-input .spmu-selected-detail-edit{
+    width:30px;
+    height:30px;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:#2563eb;
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #page-input .spmu-selected-detail-edit:hover{background:#dbeafe;}
+  #page-input .spmu-selected-detail-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px 12px;
+    padding:10px 12px 12px;
+  }
+  #page-input .spmu-selected-detail-item{
+    min-width:0;
+  }
+  #page-input .spmu-selected-detail-label{
+    display:block;
+    margin-bottom:2px;
+    font-size:10px;
+    font-weight:800;
+    color:#64748b;
+    text-transform:uppercase;
+  }
+  #page-input .spmu-selected-detail-value{
+    display:block;
+    font-size:13px;
+    line-height:1.3;
+    font-weight:700;
+    color:#0f172a;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  @media(max-width:480px){
+    #page-input .spmu-selected-detail-grid{grid-template-columns:1fr 1fr;gap:8px 10px;}
+    #page-input .spmu-selected-detail-value{font-size:12px;}
   }
   #page-input .spmu-modal-bg{
     position:fixed;inset:0;z-index:10040;display:flex;align-items:center;justify-content:center;
@@ -561,20 +622,44 @@
       <div id="sparePartSection" class="spare-part-section">
         <label>SPARE PART / MATERIAL / UNIT <span class="required-mark">*</span></label>
         <div class="spmu-choice-group" role="group" aria-label="Pilih jenis penggantian">
-          <button type="button" id="spmuUnitChoice" class="spmu-choice" onclick="openSparePartUnitModal('UNIT')" aria-haspopup="dialog">
+          <button type="button" id="spmuUnitChoice" class="spmu-choice is-empty-option" onclick="openSparePartUnitModal('UNIT')" aria-haspopup="dialog">
             <span class="spmu-choice-head">
               <span class="spmu-choice-title">UNIT</span>
             </span>
-            <span id="spmuUnitSummary" class="spmu-choice-summary">Belum diisi</span>
+            <span id="spmuUnitSummary" class="spmu-choice-summary">Pilih UNIT</span>
             <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
           </button>
-          <button type="button" id="spmuSpareChoice" class="spmu-choice" onclick="openSparePartUnitModal('SPARE PART / MATERIAL')" aria-haspopup="dialog">
+          <button type="button" id="spmuSpareChoice" class="spmu-choice is-empty-option" onclick="openSparePartUnitModal('SPARE PART / MATERIAL')" aria-haspopup="dialog">
             <span class="spmu-choice-head">
               <span class="spmu-choice-title">SPARE PART / MATERIAL</span>
             </span>
-            <span id="spmuSpareSummary" class="spmu-choice-summary">Belum diisi</span>
+            <span id="spmuSpareSummary" class="spmu-choice-summary">Pilih SPARE PART / MATERIAL</span>
             <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
           </button>
+        </div>
+        <div id="spmuSelectedDetail" class="spmu-selected-detail" hidden>
+          <div class="spmu-selected-detail-head">
+            <div id="spmuDetailTitle" class="spmu-selected-detail-title">DATA SPARE PART / MATERIAL</div>
+            <button type="button" id="spmuDetailEdit" class="spmu-selected-detail-edit" onclick="openSelectedSparePartUnitModal_()" aria-label="Ubah data">⌄</button>
+          </div>
+          <div class="spmu-selected-detail-grid">
+            <div class="spmu-selected-detail-item">
+              <span id="spmuDetailStatusLabel" class="spmu-selected-detail-label">KONDISI / SUMBER</span>
+              <span id="spmuDetailStatus" class="spmu-selected-detail-value">-</span>
+            </div>
+            <div class="spmu-selected-detail-item">
+              <span id="spmuDetailNameLabel" class="spmu-selected-detail-label">NAMA SPARE PART / MATERIAL</span>
+              <span id="spmuDetailName" class="spmu-selected-detail-value">-</span>
+            </div>
+            <div class="spmu-selected-detail-item">
+              <span id="spmuDetailTypeLabel" class="spmu-selected-detail-label">TYPE SPARE PART / MATERIAL</span>
+              <span id="spmuDetailType" class="spmu-selected-detail-value">-</span>
+            </div>
+            <div class="spmu-selected-detail-item">
+              <span class="spmu-selected-detail-label">JUMLAH</span>
+              <span id="spmuDetailQty" class="spmu-selected-detail-value">-</span>
+            </div>
+          </div>
         </div>
         <input type="hidden" id="SparePartUnitKind" value="">
       </div>
