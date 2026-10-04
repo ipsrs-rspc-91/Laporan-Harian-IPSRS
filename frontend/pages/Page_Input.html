@@ -380,21 +380,31 @@
   @media (max-width:480px){
     #page-input .status-choice{min-height:50px;padding:10px 8px;}
   }
-  /* SPMU: fixed button size for ALL categories, matching the approved mobile layout. */
+  /* SPMU: approved mobile layout — fixed compact height for ALL categories. */
   #page-input .spmu-choice-group .spmu-choice{
+    box-sizing:border-box !important;
     min-height:82px !important;
     height:82px !important;
-    padding:10px 12px !important;
+    padding:10px 8px !important;
+    overflow:hidden !important;
   }
   #page-input .spmu-choice-group .spmu-choice-title{
+    display:block !important;
     font-size:14px !important;
     line-height:1.25 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
   }
   #page-input .spmu-choice-group .spmu-choice-summary{
+    display:block !important;
     font-size:11px !important;
-    line-height:1.35 !important;
-    min-height:30px !important;
-    margin-top:5px !important;
+    line-height:1.25 !important;
+    min-height:0 !important;
+    margin-top:4px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
   }
   #page-input .spmu-choice-group{
     border-radius:12px;
