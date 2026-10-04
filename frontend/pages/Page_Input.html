@@ -380,24 +380,24 @@
   @media (max-width:480px){
     #page-input .status-choice{min-height:50px;padding:10px 8px;}
   }
-  /* SPMU compact mode: final override after responsive rules. */
-  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice{
-    min-height:46px !important;
-    height:46px !important;
-    padding:5px 8px !important;
+  /* SPMU: fixed button size for ALL categories, matching the approved mobile layout. */
+  #page-input .spmu-choice-group .spmu-choice{
+    min-height:82px !important;
+    height:82px !important;
+    padding:10px 12px !important;
   }
-  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice-title{
+  #page-input .spmu-choice-group .spmu-choice-title{
+    font-size:14px !important;
+    line-height:1.25 !important;
+  }
+  #page-input .spmu-choice-group .spmu-choice-summary{
     font-size:11px !important;
-    line-height:1.05 !important;
+    line-height:1.35 !important;
+    min-height:30px !important;
+    margin-top:5px !important;
   }
-  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice-summary{
-    font-size:9px !important;
-    line-height:1.05 !important;
-    min-height:0 !important;
-    margin-top:1px !important;
-  }
-  #page-input .spmu-choice-group.spmu-category-compact{
-    border-radius:10px;
+  #page-input .spmu-choice-group{
+    border-radius:12px;
   }
 </style>
 
