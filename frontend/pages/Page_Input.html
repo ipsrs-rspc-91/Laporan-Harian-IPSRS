@@ -100,6 +100,64 @@
     width:100%;
   }
   #page-input .spmu-choice-group.has-both-value .spmu-choice#spmuSpareChoice{display:none;}
+  #page-input .spmu-action-menu-wrap{
+    position:absolute;
+    right:5px;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:20;
+  }
+  #page-input .spmu-choice-group.has-value .spmu-action-menu-wrap[hidden]{display:none;}
+  #page-input .spmu-action-menu-trigger{
+    width:34px;
+    height:34px;
+    border:0;
+    border-radius:9px;
+    background:#f8fafc;
+    color:#475569;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font:inherit;
+    font-size:21px;
+    font-weight:800;
+    line-height:1;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  #page-input .spmu-action-menu-trigger:hover{background:#eef2f7;}
+  #page-input .spmu-action-menu-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  #page-input .spmu-action-menu{
+    position:absolute;
+    top:calc(100% + 6px);
+    right:0;
+    min-width:230px;
+    padding:5px;
+    background:#fff;
+    border:1px solid #d7dee3;
+    border-radius:11px;
+    box-shadow:0 12px 30px rgba(15,23,42,.16);
+    z-index:100;
+  }
+  #page-input .spmu-action-menu[hidden]{display:none;}
+  #page-input .spmu-action-menu button{
+    width:100%;
+    min-height:42px;
+    padding:8px 11px;
+    border:0;
+    border-radius:8px;
+    background:#fff;
+    color:var(--text);
+    text-align:left;
+    font:inherit;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  #page-input .spmu-action-menu button:hover{background:#f8fafc;}
+  #page-input .spmu-action-menu button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;}
+  #page-input .spmu-choice-group.has-value{position:relative;}
+
   #page-input .spmu-choice{
     position:relative;
     min-height:64px;
@@ -579,6 +637,15 @@
             <span id="spmuSpareTitle" class="spmu-choice-title">SPARE PART / MATERIAL</span>
             <span id="spmuSpareSummary" class="spmu-choice-summary">Pilih SPARE PART / MATERIAL</span>
             <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
+          </div>
+          <div id="spmuActionMenuWrap" class="spmu-action-menu-wrap" hidden>
+            <button id="spmuActionMenuTrigger" type="button" class="spmu-action-menu-trigger"
+              aria-label="Tambah atau ubah SPARE PART / MATERIAL / UNIT"
+              aria-haspopup="menu" aria-expanded="false" onclick="toggleSpmuActionMenu(event)">⌄</button>
+            <div id="spmuActionMenu" class="spmu-action-menu" role="menu" hidden>
+              <button type="button" role="menuitem" onclick="chooseSpmuAction('SPARE PART / MATERIAL',event)">SPARE PART / MATERIAL</button>
+              <button type="button" role="menuitem" onclick="chooseSpmuAction('UNIT',event)">UNIT</button>
+            </div>
           </div>
         </div>
         <input type="hidden" id="SparePartUnitKind" value="">
