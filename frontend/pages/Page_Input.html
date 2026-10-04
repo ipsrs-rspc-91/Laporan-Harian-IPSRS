@@ -108,6 +108,14 @@
   #page-input .spmu-choice:last-child{border-right:0;}
   #page-input .spmu-choice:hover{background:#f8fafc;}
   #page-input .spmu-choice:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;}
+  #page-input .spmu-choice.has-value{
+    background:#fff;
+    color:var(--text);
+    cursor:default;
+    box-shadow:none;
+  }
+  #page-input .spmu-choice.has-value:hover{background:#fff;}
+  #page-input .spmu-choice.has-value .spmu-choice-chevron{display:none!important;}
   #page-input .spmu-choice.is-selected{
     background:#eff6ff;
     color:#1d4ed8;
@@ -554,16 +562,16 @@
       <div id="sparePartSection" class="spare-part-section">
         <label>SPARE PART / MATERIAL / UNIT <span class="required-mark">*</span></label>
         <div class="spmu-choice-group" role="group" aria-label="Pilih jenis penggantian">
-          <button type="button" id="spmuUnitChoice" class="spmu-choice is-empty-option" onclick="openSparePartUnitModal('UNIT')" aria-haspopup="dialog">
+          <div id="spmuUnitChoice" class="spmu-choice is-empty-option" data-spmu-kind="UNIT">
             <span id="spmuUnitTitle" class="spmu-choice-title">UNIT</span>
             <span id="spmuUnitSummary" class="spmu-choice-summary">Pilih UNIT</span>
             <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <button type="button" id="spmuSpareChoice" class="spmu-choice is-empty-option" onclick="openSparePartUnitModal('SPARE PART / MATERIAL')" aria-haspopup="dialog">
+          </div>
+          <div id="spmuSpareChoice" class="spmu-choice is-empty-option" data-spmu-kind="SPARE PART / MATERIAL">
             <span id="spmuSpareTitle" class="spmu-choice-title">SPARE PART / MATERIAL</span>
             <span id="spmuSpareSummary" class="spmu-choice-summary">Pilih SPARE PART / MATERIAL</span>
             <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
-          </button>
+          </div>
         </div>
         <input type="hidden" id="SparePartUnitKind" value="">
       </div>
