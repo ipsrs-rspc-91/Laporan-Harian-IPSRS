@@ -92,6 +92,14 @@
     overflow:hidden;
     background:#fff;
   }
+  #page-input .spmu-choice-group.has-value{grid-template-columns:1fr;}
+  #page-input .spmu-choice-group.has-value .spmu-choice.is-empty-option{display:none;}
+  #page-input .spmu-choice-group.has-value .spmu-choice.has-value{
+    grid-column:1 / -1;
+    border-right:0;
+    width:100%;
+  }
+  #page-input .spmu-choice-group.has-both-value .spmu-choice#spmuSpareChoice{display:none;}
   #page-input .spmu-choice{
     position:relative;
     min-height:64px;
