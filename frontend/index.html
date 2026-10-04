@@ -76,6 +76,16 @@
       border-color: #d07a76 !important;
       box-shadow: none !important;
     }
+
+    /* STATUS: the required-field marker belongs to the two status buttons,
+       not to their wrapper. Prevent the red wrapper border from overlapping
+       the button fields. */
+    #page-input .status-choice-group.ipsrs-required-field {
+      border: 0 !important;
+      box-shadow: none !important;
+      outline: 0 !important;
+      background: transparent !important;
+    }
     #page-input .ipsrs-required-label::after {
       content: " *";
       color: #d07a76;
