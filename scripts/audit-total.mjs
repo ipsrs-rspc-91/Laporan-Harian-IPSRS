@@ -206,7 +206,7 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
 
   const inlineHandlers=[...page.matchAll(/onclick=["']([^"']+)["']/gi)]
     .map(m=>m[1].split(/\s*[;(]/)[0])
-    .filter(x=>x && /^[A-Za-z_$][\w$]*$/.test(x));
+    .filter(x=>x && x!=='if' && /^[A-Za-z_$][\w$]*$/.test(x));
   const fnNames=new Set([...app.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]));
   const missingHandlers=[...new Set(inlineHandlers.filter(x=>!fnNames.has(x)))];
   if(missingHandlers.length) fail('Page_Input handler contract','Inline handlers without matching app.js function: '+missingHandlers.join(', '));
