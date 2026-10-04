@@ -45,10 +45,12 @@
   }
   #page-input .status-choice{
     appearance:none;
-    box-sizing:border-box;
-    width:100%;
-    min-height:80px;
-    height:80px;
+    box-sizing:border-box !important;
+    width:100% !important;
+    min-height:80px !important;
+    height:80px !important;
+    max-height:80px !important;
+    overflow:hidden !important;
     border:1px solid var(--border);
     border-radius:var(--radius-sm);
     background:#fff;
@@ -57,7 +59,7 @@
     align-items:center;
     justify-content:center;
     gap:9px;
-    padding:0 10px;
+    padding:0 10px !important;
     font:inherit;
     font-weight:700;
     cursor:pointer;
@@ -412,7 +414,7 @@
   }
   @media (max-width:480px){
     /* Keep mobile total height at exactly 80px; padding is inside the box. */
-    #page-input .status-choice{box-sizing:border-box;min-height:80px;height:80px;padding:0 8px;}
+    #page-input .status-choice{box-sizing:border-box !important;min-height:80px !important;height:80px !important;max-height:80px !important;padding:0 8px !important;}
   }
   /* SPMU: approved compact layout — one size for ALL categories/states. */
   #page-input .spmu-choice-group .spmu-choice{
