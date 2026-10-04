@@ -882,7 +882,20 @@
   <div id="msgInput" style="margin-top:var(--sp-2); font-size:var(--fs-base); font-weight:700;"></div>
 </div>
 
-      </section>
+      
+<!-- SPMU-DATA-ONLY-LAST-GUARD-20261004 -->
+<style>
+/* FINAL SPMU CONTRACT: if the selected box contains data, the type label
+   and the old in-box chevron are forbidden. This is deliberately the LAST
+   SPMU rule in this fragment so later responsive rules cannot undo it. */
+#page-input .spmu-choice:has(.spmu-choice-summary:not(:empty)) .spmu-choice-title{
+  display:none !important;
+}
+#page-input .spmu-choice:has(.spmu-choice-summary:not(:empty)) .spmu-choice-chevron{
+  display:none !important;
+}
+</style>
+</section>
 
 
 <style>
