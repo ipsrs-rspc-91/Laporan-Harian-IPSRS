@@ -27,6 +27,7 @@ const files = walk(root);
 const rel = p => path.relative(root,p).replaceAll(path.sep,'/');
 const jsFiles = files.filter(f => f.endsWith('.js') && !f.includes('/supabase/functions/'));
 const htmlFiles = files.filter(f => f.endsWith('.html'));
+const indexPath=path.join(root,'frontend','index.html');
 
 for (const f of jsFiles) {
   try { execFileSync('node', ['--check', f], {stdio:'pipe'}); }
@@ -92,7 +93,6 @@ add('Changed-file impact scan','INFO',changed.length ? changed.join(', ') : 'No 
 // Deferred-page navigation safety: every lazily mounted page must be guarded
 // before goPage() touches its DOM node. This prevents blank-screen races while
 // preserving lazy loading and parallel startup downloads.
-const indexPath=path.join(root,'frontend','index.html');
 const appPath=path.join(root,'frontend','app.js');
 if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
   const indexText=fs.readFileSync(indexPath,'utf8');
