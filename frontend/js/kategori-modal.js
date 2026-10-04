@@ -304,7 +304,7 @@
               <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
             </button>
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-dengan">
-              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT / UNIT</span>
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT</span>
             </button>
           </div>
         </div>`,
@@ -337,7 +337,7 @@
           <span class="ipsrs-kat-choice-title">PERBAIKAN SAJA</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-repair="dengan">
-          <span class="ipsrs-kat-choice-title">PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT / UNIT</span>
+          <span class="ipsrs-kat-choice-title">PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT</span>
         </button>`,
       ''
     );
