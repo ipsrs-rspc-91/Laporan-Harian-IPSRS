@@ -197,12 +197,14 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   if(missingChoices.length) fail('SPMU choice contract','Missing choices: '+missingChoices.join(', '));
   else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the approved four choices');
 
-  const allowedStatus=[
-    'BARU','KANIBAL','DARI UNIT / RUANGAN LAIN','LAINNYA','STOK IPSRS'
+  const backendStatusValues=[
+    'BARU','KANIBAL','DARI UNIT / RUANGAN LAIN','LAINNYA'
   ];
-  const statusGate=allowedStatus.every(x=>api.includes('"'+x+'"'));
-  if(!statusGate) fail('SPMU backend status contract','Backend does not preserve all approved status/source values');
-  else pass('SPMU backend status contract','Backend preserves BARU, KANIBAL, DARI UNIT / RUANGAN LAIN, LAINNYA and STOK IPSRS');
+  const statusGate=backendStatusValues.every(x=>api.includes('"'+x+'"'));
+  const legacyForbidden=api.includes('"STOK IPSRS"');
+  if(!statusGate) fail('SPMU backend status contract','Backend does not preserve the four approved status/source values');
+  else if(legacyForbidden) fail('SPMU backend status contract','Forbidden legacy status/source STOK IPSRS is still accepted by backend');
+  else pass('SPMU backend status contract','Backend accepts exactly the four approved status/source values: BARU, KANIBAL, DARI UNIT / RUANGAN LAIN, LAINNYA');
 
   const inlineHandlers=[...page.matchAll(/onclick=["']([^"']+)["']/gi)]
     .map(m=>m[1].split(/\s*[;(]/)[0])
