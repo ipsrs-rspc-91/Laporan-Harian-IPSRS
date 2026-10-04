@@ -4,7 +4,7 @@
 >
 > **Prinsip utama:** Buku Induk yang lengkap tidak berarti seluruh sistem otomatis berstatus PASS. Bab harus terdokumentasi lengkap, sedangkan status teknis tetap mengikuti bukti audit nyata.
 
-**Control Book Version:** 2.0.0  
+**Control Book Version:** 2.1.0  
 **Tanggal penyelesaian struktur:** 2026-10-04  
 **Repository:** ipsrs-rspc-91/Laporan-Harian-IPSRS  
 **Branch utama:** main  
@@ -989,3 +989,67 @@ Alasannya bukan karena Buku Induk belum jadi, tetapi karena bukti teknis yang me
 
 > **Jangan ubah kode dulu. Panggil Buku Induk → tentukan modul → cek lock → cek baseline → petakan dampak → baru ubah → test → deploy → verify → re-lock.**
 
+
+
+---
+
+# 041 — PROMPT MASTER AUDIT KOMPREHENSIF END-TO-END
+
+**Nama standar:** PROMPT MASTER AUDIT IPSRS
+
+Prompt ini adalah SOP operasional wajib setiap kali pengguna meminta audit/perbaikan dengan istilah “komprehensif”, “total”, “end-to-end”, atau instruksi yang secara substansi meminta pemeriksaan menyeluruh.
+
+## PROMPT MASTER
+
+> **ATURAN WAJIB — JANGAN DILANGGAR**
+>
+> Saya meminta pekerjaan ini dilakukan secara **KOMPREHENSIF / END-TO-END**.
+>
+> **Arti KOMPREHENSIF:** jangan hanya memeriksa file atau fungsi yang terlihat berhubungan langsung dengan gejala. Telusuri seluruh jalur yang dapat menyebabkan masalah, termasuk hubungan antar-file, antar-fungsi, CSS, DOM, state, cache, deployment, dan production.
+>
+> **WAJIB lakukan:**
+>
+> 1. **Pahami masalah** — identifikasi actual behavior, expected behavior, dan gejala sebenarnya. Jangan langsung mengubah kode.
+> 2. **Audit seluruh jalur terkait** — HTML/DOM, CSS, JavaScript, semua fungsi pembaca/penulis/render/update, event listener, modal, state/class DOM, conditional logic, selector, specificity, important rules, urutan stylesheet, inline style, MutationObserver, cache/version, service worker, file pemanggil/penerima, backend/API/database bila relevan, serta permission/access control bila relevan.
+> 3. **Trace akar masalah** dari DATA/INPUT → STATE/LOGIC → JAVASCRIPT → DOM → CSS → RENDER → HASIL USER. Jangan berhenti pada gejala.
+> 4. **Buat state matrix** untuk seluruh kondisi relevan, minimal kosong, UNIT saja, SPARE saja, keduanya, kategori berbeda, data lama, dan data baru bila relevan.
+> 5. **Periksa konflik dan regression** — termasuk kode lama, CSS lama, important rules, cache, observer, dan fungsi lain yang dapat membatalkan perbaikan.
+> 6. **Baru lakukan perubahan kode** setelah akar masalah cukup jelas. Jika menyatakan “sudah diperbaiki”, WAJIB menunjukkan file, fungsi/section, kode sebelum, kode sesudah/snippet final, dan alasan perubahan.
+> 7. **Audit ulang setelah perbaikan** — root cause, seluruh state matrix, konflik lama, regression, dan error baru.
+> 8. **Deployment harus dipisahkan** menjadi CODE CHANGE, AUDIT TOTAL, GITHUB PAGES, CLOUDFLARE, SUPABASE/backend bila relevan, dan PRODUCTION VERIFICATION.
+> 9. **Production verification wajib** bila status “live/selesai” akan dinyatakan. Audit PASS bukan bukti UI production benar.
+> 10. **Aturan bukti:** DATA → PEMERIKSAAN → TEMUAN → PERBAIKAN → AUDIT → DEPLOY → PRODUCTION → KESIMPULAN.
+> 11. Jika bukti belum tersedia, tulis **“BELUM BISA MEMASTIKAN”**. Jangan mengarang status.
+> 12. Jangan hanya menambal fix sebelumnya jika fix sebelumnya ternyata salah sasaran. Audit ulang seluruh mekanisme terkait.
+> 13. “Komprehensif” berarti **seluruh rantai penyebab**, bukan sekadar lebih banyak file.
+> 14. Jika ada kontradiksi, tampilkan konflik dan tentukan berdasarkan kode/data/bukti.
+>
+> **Format laporan akhir wajib:**
+> 1. Akar masalah
+> 2. File/fungsi yang diperiksa
+> 3. Perubahan
+> 4. Snippet kode final
+> 5. State yang diuji
+> 6. Regression check
+> 7. Audit Total
+> 8. GitHub Pages
+> 9. Cloudflare
+> 10. Supabase/backend bila relevan
+> 11. Production verification
+> 12. Bukti
+> 13. Kesimpulan
+>
+> **Jika salah satu tahap belum terbukti, jangan menyatakan pekerjaan selesai.**
+
+## Aturan penerapan
+
+- Prompt Master ini adalah **SOP**, bukan saran.
+- Tidak perlu pengguna mengulang definisi “komprehensif” setiap kali.
+- Setiap perubahan source/config/control file tetap mengikuti lifecycle pada Bab 038.
+- Setiap klaim “sudah diperbaiki” wajib disertai snippet perubahan kode.
+- Setiap klaim “sudah audit”, “sudah deploy”, “sudah live”, atau “sudah selesai” wajib memiliki bukti yang sesuai.
+- **Audit Total PASS ≠ Deployment PASS ≠ Production Verification PASS.**
+- Jika Cloudflare gagal, status Cloudflare wajib FAILURE/NOT LIVE walaupun GitHub Pages PASS.
+- Jika production belum diverifikasi, status wajib **BELUM BISA MEMASTIKAN / NOT CERTIFIED**.
+
+**Status:** ACTIVE — SOP WAJIB.
