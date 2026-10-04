@@ -1,4 +1,4 @@
--- SPMU dual-side storage: UNIT and SPARE PART / MATERIAL can both be populated
+-- SPMU dual-side storage v1: UNIT and SPARE PART / MATERIAL can both be populated
 -- independently in the same report. Legacy SPMU columns remain for compatibility.
 alter table public.reports
   add column if not exists unit_status text,
