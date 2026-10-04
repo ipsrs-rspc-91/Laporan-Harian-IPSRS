@@ -225,6 +225,24 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   const missingChoices=[...checkPairs(unitPairs),...checkPairs(sparePairs)];
   if(missingChoices.length) fail('SPMU choice contract','Missing/incorrect label-value pairs: '+missingChoices.join(', '));
 
+  // SPMU empty-state regression: no helper placeholders are allowed inside the two selectors.
+  if(page.includes('Pilih UNIT</span>') || page.includes('Pilih SPARE PART / MATERIAL</span>')){
+    fail('SPMU empty selector contract','Obsolete "Pilih UNIT"/"Pilih SPARE PART / MATERIAL" helper text is present in the choice buttons');
+  }else if(!/id="spmuUnitSummary"[^>]*aria-hidden="true"[^>]*><\/span>/.test(page) || !/id="spmuSpareSummary"[^>]*aria-hidden="true"[^>]*><\/span>/.test(page)){
+    fail('SPMU empty selector contract','SPMU summary placeholders are not empty/hidden in the base markup');
+  }else{
+    pass('SPMU empty selector contract','Empty UNIT/SPARE selectors contain no placeholder helper text');
+  }
+
+  // SPMU compact-size regression: enforce the final cascade rule explicitly.
+  if(!/SPMU FINAL UI CONTRACT/.test(page) ||
+     !/min-height:38px !important;/.test(page) ||
+     !/height:38px !important;/.test(page)){
+    fail('SPMU compact-size contract','Final SPMU CSS does not enforce the required 38px compact control height');
+  }else{
+    pass('SPMU compact-size contract','Final SPMU CSS enforces 38px controls across categories');
+  }
+
   const dualSideUiContract = [
     'const SPMU_STATE = {',
     'function captureSpmuModalState_(',
