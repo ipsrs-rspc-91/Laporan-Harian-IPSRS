@@ -252,7 +252,8 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   const dualApiMissing=dualApiFields.filter(x=>!api.includes(x));
   if(dualApiMissing.length) fail('SPMU dual-side API mapping','Missing: '+dualApiMissing.join(', '));
   else pass('SPMU dual-side API mapping','Eight independent database fields are mapped in API.');
-  else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the exact four approved label-value pairs');
+
+  if(!missingChoices.length) pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the exact four approved label-value pairs');
 
   const backendStatusValues=[
     'BARU','KANIBAL','DARI UNIT / RUANGAN LAIN','LAINNYA'
