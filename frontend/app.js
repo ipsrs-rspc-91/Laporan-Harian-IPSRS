@@ -2019,7 +2019,7 @@
       const titleId=kind==='UNIT'?'spmuUnitTitle':'spmuSpareTitle';
       const summaryId=kind==='UNIT'?'spmuUnitSummary':'spmuSpareSummary';
       const titleText=kind==='UNIT'?'UNIT':'SPARE PART / MATERIAL';
-      const summaryText=kind==='UNIT'?'Pilih UNIT':'Pilih SPARE PART / MATERIAL';
+      const summaryText='';
 
       el.classList.toggle('has-value',hasValue);
       el.classList.toggle('is-empty-option',!hasValue);
