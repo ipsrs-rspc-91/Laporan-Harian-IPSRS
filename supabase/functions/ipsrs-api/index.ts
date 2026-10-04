@@ -17,8 +17,7 @@ function materialUnitStatus(p:any){
    "BARU",
    "KANIBAL",
    "DARI UNIT / RUANGAN LAIN",
-   "LAINNYA",
-   "STOK IPSRS"
+   "LAINNYA"
  ]);
  return allowed.has(s) ? s : "";
 }
