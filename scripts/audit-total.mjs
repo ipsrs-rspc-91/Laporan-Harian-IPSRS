@@ -191,11 +191,26 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   if(missingSpmu.length) fail('SPMU field contract','Missing or unmapped: '+missingSpmu.join(', '));
   else pass('SPMU field contract','All 5 SPMU data fields are present and mapped frontend -> required-fields -> API');
 
-  const unitChoices=['UNIT BARU','UNIT KANIBAL','UNIT DARI UNIT / RUANGAN LAIN','UNIT LAINNYA'];
-  const spareChoices=['SPARE PART / MATERIAL BARU','SPARE PART / MATERIAL KANIBAL','SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN','SPARE PART / MATERIAL LAINNYA'];
-  const missingChoices=[...unitChoices,...spareChoices].filter(x=>!page.includes(x) && !app.includes(x));
-  if(missingChoices.length) fail('SPMU choice contract','Missing choices: '+missingChoices.join(', '));
-  else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the approved four choices');
+  const unitPairs=[
+    ['BARU','UNIT BARU'],['KANIBAL','UNIT KANIBAL'],
+    ['DARI UNIT / RUANGAN LAIN','UNIT DARI UNIT / RUANGAN LAIN'],['LAINNYA','UNIT LAINNYA']
+  ];
+  const sparePairs=[
+    ['BARU','SPARE PART / MATERIAL BARU'],['KANIBAL','SPARE PART / MATERIAL KANIBAL'],
+    ['DARI UNIT / RUANGAN LAIN','SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN'],
+    ['LAINNYA','SPARE PART / MATERIAL LAINNYA']
+  ];
+  const checkPairs=(pairs)=>{
+    const missing=[];
+    for(const [value,label] of pairs){
+      const exact='<option value="'+value+'">'+label+'</option>';
+      if(!page.includes(exact) && !app.includes(exact)) missing.push(value+' -> '+label);
+    }
+    return missing;
+  };
+  const missingChoices=[...checkPairs(unitPairs),...checkPairs(sparePairs)];
+  if(missingChoices.length) fail('SPMU choice contract','Missing/incorrect label-value pairs: '+missingChoices.join(', '));
+  else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the exact four approved label-value pairs');
 
   const backendStatusValues=[
     'BARU','KANIBAL','DARI UNIT / RUANGAN LAIN','LAINNYA'
