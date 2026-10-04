@@ -234,6 +234,14 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
     pass('SPMU empty selector contract','Empty UNIT/SPARE selectors contain no placeholder helper text');
   }
 
+  // SPMU filled-state contract: selected content must not repeat UNIT/SPARE labels.
+  if(/title\.textContent=hasValue \? '' : titleText/.test(appJs) &&
+     !/UNIT: '\+unit\.name|SPARE PART \/ MATERIAL: '\+spare\.name/.test(appJs)){
+    pass('SPMU selected data-only contract','Filled SPMU content omits UNIT/SPARE labels');
+  }else{
+    fail('SPMU selected data-only contract','Filled SPMU content still contains UNIT/SPARE labels');
+  }
+
   // SPMU compact-size regression: enforce the final cascade rule explicitly.
   if(!/SPMU FINAL UI CONTRACT/.test(page) ||
      !/min-height:38px !important;/.test(page) ||
