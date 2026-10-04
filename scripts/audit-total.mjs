@@ -235,8 +235,8 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   }
 
   // SPMU filled-state contract: selected content must not repeat UNIT/SPARE labels.
-  if(/title\.textContent=hasValue \? '' : titleText/.test(appJs) &&
-     !/UNIT: '\+unit\.name|SPARE PART \/ MATERIAL: '\+spare\.name/.test(appJs)){
+  if(/title\.textContent=hasValue \? '' : titleText/.test(fs.readFileSync(path.join(root,'frontend','app.js'),'utf8')) &&
+     !/UNIT: '\+unit\.name|SPARE PART \/ MATERIAL: '\+spare\.name/.test(fs.readFileSync(path.join(root,'frontend','app.js'),'utf8'))){
     pass('SPMU selected data-only contract','Filled SPMU content omits UNIT/SPARE labels');
   }else{
     fail('SPMU selected data-only contract','Filled SPMU content still contains UNIT/SPARE labels');
