@@ -1581,6 +1581,36 @@
     return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
   }
 
+  // ============================================================
+  // PELAPOR / NO LK — KONTROL LAMA YANG HARUS TETAP UTUH
+  // Satu card, tertutup default. Klik + membuka Pelapor dan No LK
+  // bersamaan. Jangan digabung dengan logika SPMU.
+  // ============================================================
+  function setPelaporLkSection(open){
+    const fields = document.getElementById('pelaporLkFields');
+    const toggle = document.getElementById('pelaporLkToggle');
+    const icon = document.getElementById('pelaporLkToggleIcon');
+    if(!fields || !toggle) return;
+    const shouldOpen = !!open;
+    fields.hidden = !shouldOpen;
+    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    if(icon) icon.textContent = shouldOpen ? '−' : '＋';
+  }
+
+  function togglePelaporLkSection(){
+    const fields = document.getElementById('pelaporLkFields');
+    setPelaporLkSection(!fields || fields.hidden);
+  }
+
+  function updatePelaporLkStatus_(){
+    const pelapor = String(document.getElementById('Pelapor')?.value || '').trim();
+    const nolk = String(document.getElementById('NoLK')?.value || '').trim();
+    const status = document.getElementById('pelaporLkToggleStatus');
+    if(status){
+      status.textContent = (pelapor || nolk) ? 'Sudah diisi' : 'Belum diisi';
+    }
+  }
+
   function configureSparePartUnitModal_(kind){
     const normalized = String(kind || '').trim().toUpperCase();
     const status = document.getElementById('SparePartUnitStatus');
