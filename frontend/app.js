@@ -1633,9 +1633,89 @@
     if(typeInput) typeInput.placeholder = 'Type / spesifikasi ' + (isUnit ? 'unit' : 'spare part / material');
   }
 
+  function scrollSparePartSectionIntoView_(){
+    const section = document.getElementById('sparePartSection');
+    if(!section) return;
+    const mobile = window.matchMedia
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
+    if(!mobile) return;
+
+    const content = getKeyboardContent();
+    if(!content) return;
+
+    try{
+      const vv = window.visualViewport;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const targetTop = viewportTop + 90;
+      const rect = section.getBoundingClientRect();
+      if(rect.top < targetTop) return;
+
+      const delta = rect.top - targetTop;
+      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+      const nextTop = Math.max(0, Math.min(content.scrollTop + delta, maxScroll));
+      if(Math.abs(nextTop - content.scrollTop) >= 2){
+        content.scrollTo({top:nextTop, behavior:'smooth'});
+      }
+    }catch(_e){}
+  }
+
+  function keepSparePartModalFieldVisible_(field){
+    if(!field || !field.getClientRects().length) return;
+    const modal = document.getElementById('sparePartUnitModal');
+    const box = modal ? modal.querySelector('.spmu-modal') : null;
+    if(!modal || !box || modal.hidden) return;
+
+    try{
+      const vv = window.visualViewport;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+      const GAP = 24;
+      const rect = field.getBoundingClientRect();
+
+      if(rect.bottom > viewportBottom - GAP){
+        const delta = rect.bottom - (viewportBottom - GAP);
+        box.scrollTop += delta;
+      }else if(rect.top < viewportTop + GAP){
+        box.scrollTop -= (viewportTop + GAP) - rect.top;
+      }
+    }catch(_e){}
+  }
+
+  function setupSparePartModalKeyboardScroll_(){
+    const modal = document.getElementById('sparePartUnitModal');
+    if(!modal || modal.dataset.keyboardScrollReady === '1') return;
+    modal.dataset.keyboardScrollReady = '1';
+
+    modal.addEventListener('focusin', function(e){
+      const field = e.target;
+      if(!field || !field.matches('input, select, textarea')) return;
+      [0,80,180,320,500].forEach(function(delay){
+        setTimeout(function(){
+          keepSparePartModalFieldVisible_(field);
+        }, delay);
+      });
+    });
+
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize', function(){
+        const field = modal.querySelector('input:focus, select:focus, textarea:focus');
+        if(!field) return;
+        [0,100,250].forEach(function(delay){
+          setTimeout(function(){
+            keepSparePartModalFieldVisible_(field);
+          }, delay);
+        });
+      });
+    }
+  }
+
   function openSparePartUnitModal(kind){
     const normalized = String(kind || '').trim().toUpperCase();
     if(normalized !== 'UNIT' && normalized !== 'SPARE PART / MATERIAL') return;
+
+    scrollSparePartSectionIntoView_();
 
     const kindEl = document.getElementById('SparePartUnitKind');
     if(kindEl) kindEl.value = normalized;
@@ -1645,6 +1725,7 @@
     const prefix = normalized === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
     if(title) title.textContent = prefix;
     configureSparePartUnitModal_(normalized);
+    setupSparePartModalKeyboardScroll_();
 
     document.getElementById('spmuUnitChoice')?.classList.toggle('is-selected', normalized === 'UNIT');
     document.getElementById('spmuSpareChoice')?.classList.toggle('is-selected', normalized === 'SPARE PART / MATERIAL');
@@ -1654,6 +1735,7 @@
     requestAnimationFrame(()=>{
       const first = document.getElementById('SparePartUnitStatus');
       if(first) first.focus({preventScroll:true});
+      keepSparePartModalFieldVisible_(first);
     });
   }
 
