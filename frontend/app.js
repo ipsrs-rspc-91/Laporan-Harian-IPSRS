@@ -1636,6 +1636,7 @@
   function scrollSparePartSectionIntoView_(){
     const section = document.getElementById('sparePartSection');
     if(!section) return;
+
     const mobile = window.matchMedia
       ? window.matchMedia('(max-width: 768px)').matches
       : true;
@@ -1647,19 +1648,66 @@
     try{
       const vv = window.visualViewport;
       const viewportTop = vv ? vv.offsetTop : 0;
+
+      // Spare Part berada dekat bagian bawah form. Jangan hanya memakai
+      // scrollIntoView karena scroll container dapat mentok di maxScroll.
+      // Tambahkan ruang bawah terlebih dahulu agar section benar-benar
+      // dapat diposisikan di area atas layar.
+      const originalPadding = parseFloat(
+        getComputedStyle(content).paddingBottom || '0'
+      ) || 0;
+      const requiredPadding = Math.max(originalPadding, 240);
+      if(originalPadding < requiredPadding){
+        content.style.paddingBottom = requiredPadding + 'px';
+      }
+
       const targetTop = viewportTop + 90;
       const rect = section.getBoundingClientRect();
-      if(rect.top < targetTop) return;
-
       const delta = rect.top - targetTop;
-      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-      const nextTop = Math.max(0, Math.min(content.scrollTop + delta, maxScroll));
-      if(Math.abs(nextTop - content.scrollTop) >= 2){
-        content.scrollTo({top:nextTop, behavior:'smooth'});
-      }
-    }catch(_e){}
-  }
 
+      if(Math.abs(delta) < 4) return;
+
+      const maxScroll = Math.max(
+        0,
+        content.scrollHeight - content.clientHeight
+      );
+
+      // Langsung hitung posisi scroll. Ini lebih deterministik pada Android
+      // daripada scrollIntoView() pada nested scroll container.
+      const nextTop = Math.max(
+        0,
+        Math.min(content.scrollTop + delta, maxScroll)
+      );
+
+      content.scrollTo({
+        top: nextTop,
+        behavior: 'auto'
+      });
+
+      // Koreksi kedua setelah layout Android selesai.
+      requestAnimationFrame(function(){
+        const rect2 = section.getBoundingClientRect();
+        const delta2 = rect2.top - targetTop;
+        if(Math.abs(delta2) < 4) return;
+
+        const maxScroll2 = Math.max(
+          0,
+          content.scrollHeight - content.clientHeight
+        );
+        const correctedTop = Math.max(
+          0,
+          Math.min(content.scrollTop + delta2, maxScroll2)
+        );
+
+        content.scrollTo({
+          top: correctedTop,
+          behavior: 'auto'
+        });
+      });
+    }catch(err){
+      console.warn('Spare Part section positioning:', err);
+    }
+  }
   function keepSparePartModalFieldVisible_(field){
     if(!field || !field.getClientRects().length) return;
     const modal = document.getElementById('sparePartUnitModal');
