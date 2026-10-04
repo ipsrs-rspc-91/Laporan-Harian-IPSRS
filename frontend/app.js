@@ -1573,6 +1573,84 @@
     return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
   }
 
+  // SPMU v15: UNIT dan SPARE PART/MATERIAL adalah dua sisi independen.
+  // Masing-masing menyimpan 4 field sendiri. Modal yang sama hanya menjadi
+  // editor untuk sisi yang sedang diklik.
+  const SPMU_STATE = {
+    UNIT: {status:'', name:'', type:'', qty:''},
+    'SPARE PART / MATERIAL': {status:'', name:'', type:'', qty:''}
+  };
+  window.__IPSRS_SPMU_STATE = SPMU_STATE;
+
+  function resetSpmuState_(){
+    SPMU_STATE.UNIT={status:'',name:'',type:'',qty:''};
+    SPMU_STATE['SPARE PART / MATERIAL']={status:'',name:'',type:'',qty:''};
+    const ids=['SparePartUnitKind','SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
+    ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    updateSparePartToggleStatus();
+  }
+
+  function getSpmuSide_(kind){
+    return SPMU_STATE[kind==='UNIT'?'UNIT':'SPARE PART / MATERIAL'];
+  }
+
+  function captureSpmuModalState_(){
+    const kind=getSparePartUnitKind_();
+    if(kind!=='UNIT' && kind!=='SPARE PART / MATERIAL') return;
+    const side=getSpmuSide_(kind);
+    side.status=getSparePartUnitStatus_();
+    side.name=String(document.getElementById('SparePartUnit')?.value||'').trim();
+    side.type=String(document.getElementById('Type')?.value||'').trim();
+    side.qty=String(document.getElementById('Jumlah')?.value||'').trim();
+  }
+
+  function loadSpmuModalState_(kind){
+    const side=getSpmuSide_(kind);
+    const status=document.getElementById('SparePartUnitStatus');
+    const name=document.getElementById('SparePartUnit');
+    const type=document.getElementById('Type');
+    const qty=document.getElementById('Jumlah');
+    if(status)status.value=side.status||'';
+    if(name)name.value=side.name||'';
+    if(type)type.value=side.type||'';
+    if(qty)qty.value=side.qty||'';
+  }
+
+  function isSpmuSideComplete_(side){
+    return !!(side && side.status && side.name && side.type && String(side.qty).trim());
+  }
+
+  function getSpmuPayload_(){
+    const unit=getSpmuSide_('UNIT');
+    const spare=getSpmuSide_('SPARE PART / MATERIAL');
+    const unitComplete=isSpmuSideComplete_(unit);
+    const spareComplete=isSpmuSideComplete_(spare);
+    const legacyKind=unitComplete && !spareComplete
+      ? 'UNIT'
+      : spareComplete && !unitComplete
+        ? 'SPARE PART / MATERIAL'
+        : '';
+    const legacy=legacyKind==='UNIT'?unit:legacyKind==='SPARE PART / MATERIAL'?spare:null;
+    return {
+      UnitStatus:unitComplete?unit.status:'',
+      UnitName:unitComplete?unit.name:'',
+      UnitType:unitComplete?unit.type:'',
+      UnitJumlah:unitComplete?unit.qty:'',
+      SparePartMaterialStatus:spareComplete?spare.status:'',
+      SparePartMaterial:spareComplete?spare.name:'',
+      SparePartMaterialType:spareComplete?spare.type:'',
+      SparePartMaterialJumlah:spareComplete?spare.qty:'',
+      // Legacy contract remains populated when exactly one side is used.
+      // Bila dua sisi terisi, data lengkap memakai field dual-side di atas.
+      SparePartUnitKind:legacyKind,
+      SparePartUnitStatus:legacy?.status||'',
+      SparePartUnit:legacy?.name||'',
+      Type:legacy?.type||'',
+      Jumlah:legacy?.qty||''
+    };
+  }
+
+
 
   // ============================================================
   // PELAPOR / NO LK — KONTROL LAMA YANG HARUS TETAP UTUH
@@ -1758,20 +1836,10 @@
 
     scrollSparePartSectionIntoView_();
 
+    // Simpan dulu sisi yang sedang aktif; jangan pernah menghapus sisi lain.
+    captureSpmuModalState_();
+
     const kindEl = document.getElementById('SparePartUnitKind');
-    const previousKind = String(kindEl?.value || '').trim().toUpperCase();
-    const previousHasValue = !!(
-      String(document.getElementById('SparePartUnitStatus')?.value || '').trim() ||
-      String(document.getElementById('SparePartUnit')?.value || '').trim() ||
-      String(document.getElementById('Type')?.value || '').trim() ||
-      String(document.getElementById('Jumlah')?.value || '').trim()
-    );
-    if(previousKind && previousKind !== normalized && previousHasValue){
-      ['SparePartUnitStatus','SparePartUnit','Type','Jumlah'].forEach(function(id){
-        const el=document.getElementById(id);
-        if(el) el.value='';
-      });
-    }
     if(kindEl) kindEl.value = normalized;
 
     const modal = document.getElementById('sparePartUnitModal');
@@ -1779,6 +1847,7 @@
     const prefix = normalized === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
     if(title) title.textContent = prefix;
     configureSparePartUnitModal_(normalized);
+    loadSpmuModalState_(normalized);
     setupSparePartModalKeyboardScroll_();
 
     document.getElementById('spmuUnitChoice')?.classList.toggle('is-selected', normalized === 'UNIT');
@@ -1794,8 +1863,11 @@
   }
 
   function closeSparePartUnitModal(){
+    // Perubahan yang sedang diketik tidak menjadi data tersimpan sampai OK.
     const modal = document.getElementById('sparePartUnitModal');
     if(modal) modal.hidden = true;
+    const kindEl=document.getElementById('SparePartUnitKind');
+    if(kindEl) kindEl.value='';
     updateSparePartToggleStatus();
   }
 
@@ -1807,38 +1879,33 @@
     }
 
     const ids = ['SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
-
-    // Jangan gunakan pesan validasi bawaan browser berbahasa Inggris.
-    // Gunakan pesan validasi Bahasa Indonesia untuk modal ini.
     ids.forEach(id => {
       const el = document.getElementById(id);
-      if(el && typeof el.setCustomValidity === 'function'){
-        el.setCustomValidity('');
-      }
+      if(el && typeof el.setCustomValidity === 'function') el.setCustomValidity('');
     });
 
     const missing = ids.filter(id => !String(document.getElementById(id)?.value || '').trim());
     if(missing.length){
       const first = document.getElementById(missing[0]);
       if(first){
-        if(typeof first.setCustomValidity === 'function'){
-          first.setCustomValidity('Kolom ini wajib diisi.');
-        }
+        if(typeof first.setCustomValidity === 'function') first.setCustomValidity('Kolom ini wajib diisi.');
         first.reportValidity ? first.reportValidity() : first.focus();
         first.focus();
       }
       return;
     }
 
+    // OK menyimpan data hanya untuk sisi yang sedang diedit.
+    captureSpmuModalState_();
+    const kindEl=document.getElementById('SparePartUnitKind');
+    if(kindEl) kindEl.value='';
     updateSparePartToggleStatus();
     closeSparePartUnitModal();
   }
 
   function handleSparePartUnitKindChange(){
     const kind = getSparePartUnitKind_();
-    if(kind === 'UNIT' || kind === 'SPARE PART / MATERIAL'){
-      openSparePartUnitModal(kind);
-    }
+    if(kind === 'UNIT' || kind === 'SPARE PART / MATERIAL') openSparePartUnitModal(kind);
   }
 
   function syncSparePartSection(){
@@ -1846,12 +1913,14 @@
   }
 
   function updateSparePartToggleStatus(){
-    const part = String(document.getElementById('SparePartUnit')?.value || '').trim();
-    const type = String(document.getElementById('Type')?.value || '').trim();
-    const qty = String(document.getElementById('Jumlah')?.value || '').trim();
-    const kind = getSparePartUnitKind_();
-    const status = getSparePartUnitStatus_();
-    const hasValue = !!(kind && status && part && type && qty);
+    // Pastikan state sisi aktif selalu mencerminkan modal sebelum rendering.
+    const activeKind=getSparePartUnitKind_();
+    if(activeKind==='UNIT' || activeKind==='SPARE PART / MATERIAL') captureSpmuModalState_();
+
+    const unit=getSpmuSide_('UNIT');
+    const spare=getSpmuSide_('SPARE PART / MATERIAL');
+    const unitHas=isSpmuSideComplete_(unit);
+    const spareHas=isSpmuSideComplete_(spare);
 
     const unitTitle = document.getElementById('spmuUnitTitle');
     const unitSummary = document.getElementById('spmuUnitSummary');
@@ -1860,31 +1929,28 @@
     const unitChoice = document.getElementById('spmuUnitChoice');
     const spareChoice = document.getElementById('spmuSpareChoice');
 
-    if(kind === 'UNIT' && hasValue){
-      if(unitTitle) unitTitle.textContent = part;
-      if(unitSummary) unitSummary.textContent = status + ' • ' + type + ' • Jumlah: ' + qty;
-      if(spareTitle) spareTitle.textContent = 'SPARE PART / MATERIAL';
-      if(spareSummary) spareSummary.textContent = 'Pilih SPARE PART / MATERIAL';
-    }else if(kind === 'SPARE PART / MATERIAL' && hasValue){
-      if(spareTitle) spareTitle.textContent = part;
-      if(spareSummary) spareSummary.textContent = status + ' • ' + type + ' • Jumlah: ' + qty;
-      if(unitTitle) unitTitle.textContent = 'UNIT';
-      if(unitSummary) unitSummary.textContent = 'Pilih UNIT';
+    if(unitHas){
+      if(unitTitle) unitTitle.textContent = unit.name;
+      if(unitSummary) unitSummary.textContent = unit.status + ' • ' + unit.type + ' • Jumlah: ' + unit.qty;
     }else{
       if(unitTitle) unitTitle.textContent = 'UNIT';
       if(unitSummary) unitSummary.textContent = 'Pilih UNIT';
+    }
+
+    if(spareHas){
+      if(spareTitle) spareTitle.textContent = spare.name;
+      if(spareSummary) spareSummary.textContent = spare.status + ' • ' + spare.type + ' • Jumlah: ' + spare.qty;
+    }else{
       if(spareTitle) spareTitle.textContent = 'SPARE PART / MATERIAL';
       if(spareSummary) spareSummary.textContent = 'Pilih SPARE PART / MATERIAL';
     }
 
-    const unitSelected = kind === 'UNIT' && hasValue;
-    const spareSelected = kind === 'SPARE PART / MATERIAL' && hasValue;
-    unitChoice?.classList.toggle('is-selected', unitSelected);
-    spareChoice?.classList.toggle('is-selected', spareSelected);
-    unitChoice?.classList.toggle('has-value', unitSelected);
-    spareChoice?.classList.toggle('has-value', spareSelected);
-    unitChoice?.classList.toggle('is-empty-option', !unitSelected);
-    spareChoice?.classList.toggle('is-empty-option', !spareSelected);
+    unitChoice?.classList.toggle('is-selected', unitHas);
+    spareChoice?.classList.toggle('is-selected', spareHas);
+    unitChoice?.classList.toggle('has-value', unitHas);
+    spareChoice?.classList.toggle('has-value', spareHas);
+    unitChoice?.classList.toggle('is-empty-option', !unitHas);
+    spareChoice?.classList.toggle('is-empty-option', !spareHas);
   }
 
   function getKeyboardContent(){
@@ -2895,11 +2961,7 @@
       Ruang: document.getElementById('Ruang').value.trim(),
       MasalahKegiatan: document.getElementById('MasalahKegiatan').value.trim(),
       Tindakan: document.getElementById('Tindakan').value.trim(),
-      SparePartUnitKind: getSparePartUnitKind_(),
-      SparePartUnitStatus: getSparePartUnitStatus_(),
-      SparePartUnit: document.getElementById('SparePartUnit')?.value.trim() || '',
-      Type: document.getElementById('Type')?.value.trim() || '',
-      Jumlah: document.getElementById('Jumlah')?.value.trim() || '',
+      ...getSpmuPayload_(),
       Status: document.getElementById('Status').value,
       Kategori: document.getElementById('Kategori').value,
       AreaKerja: document.getElementById('AreaKerja').value,
@@ -2933,16 +2995,19 @@
       'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL',
       'PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT'
     ]);
-    const kind=String(p.SparePartUnitKind || '').trim().toUpperCase();
-    const status=String(p.SparePartUnitStatus || '').trim().toUpperCase();
-    const materialOrUnitRequired = kategoriWajibBaru.has(kategoriBaru) || !!kind;
-    if(materialOrUnitRequired){
-      if(!kind) missing.push('SPARE PART / MATERIAL / UNIT');
-      if(!status) missing.push('Kondisi SPARE PART / MATERIAL / UNIT');
-      if(!String(p.SparePartUnit || '').trim()) missing.push(kind==='UNIT'?'Nama UNIT':'Nama SPARE PART / MATERIAL');
-      if(!String(p.Type || '').trim()) missing.push('Type');
-      if(!String(p.Jumlah || '').trim()) missing.push('Jumlah');
+    const unitComplete=!!(String(p.UnitStatus||'').trim() && String(p.UnitName||'').trim() && String(p.UnitType||'').trim() && String(p.UnitJumlah||'').trim());
+    const spareComplete=!!(String(p.SparePartMaterialStatus||'').trim() && String(p.SparePartMaterial||'').trim() && String(p.SparePartMaterialType||'').trim() && String(p.SparePartMaterialJumlah||'').trim());
+    const unitPartial=!!(String(p.UnitStatus||'').trim() || String(p.UnitName||'').trim() || String(p.UnitType||'').trim() || String(p.UnitJumlah||'').trim());
+    const sparePartial=!!(String(p.SparePartMaterialStatus||'').trim() || String(p.SparePartMaterial||'').trim() || String(p.SparePartMaterialType||'').trim() || String(p.SparePartMaterialJumlah||'').trim());
+    const legacyKind=String(p.SparePartUnitKind||'').trim().toUpperCase();
+    const legacyComplete=!!(legacyKind && String(p.SparePartUnitStatus||'').trim() && String(p.SparePartUnit||'').trim() && String(p.Type||'').trim() && String(p.Jumlah||'').trim());
+    const anySide=unitComplete || spareComplete || legacyComplete;
+    const materialOrUnitRequired = kategoriWajibBaru.has(kategoriBaru) || anySide || unitPartial || sparePartial;
+    if(materialOrUnitRequired && !anySide){
+      missing.push('SPARE PART / MATERIAL / UNIT');
     }
+    if(unitPartial && !unitComplete) missing.push('Data UNIT belum lengkap');
+    if(sparePartial && !spareComplete) missing.push('Data SPARE PART / MATERIAL belum lengkap');
     return missing;
   }
 
@@ -3045,7 +3110,7 @@
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
-    const kind = document.getElementById('SparePartUnitKind'); if(kind) kind.value='';
+    resetSpmuState_();
     const host = document.getElementById('sparePartUnitModalHost'); if(host) host.innerHTML='';
     const kategori = document.getElementById('Kategori');
     const area = document.getElementById('AreaKerja');
@@ -3250,6 +3315,14 @@
       SparePartUnit: getReportField_(latest, ['SparePartUnit','spare_part_unit']),
       Type: getReportField_(latest, ['Type','type']),
       Jumlah: getReportField_(latest, ['Jumlah','jumlah']),
+      UnitStatus: getReportField_(latest, ['UnitStatus','unit_status']),
+      UnitName: getReportField_(latest, ['UnitName','unit_name']),
+      UnitType: getReportField_(latest, ['UnitType','unit_type']),
+      UnitJumlah: getReportField_(latest, ['UnitJumlah','unit_jumlah']),
+      SparePartMaterialStatus: getReportField_(latest, ['SparePartMaterialStatus','spare_part_material_status']),
+      SparePartMaterial: getReportField_(latest, ['SparePartMaterial','spare_part_material']),
+      SparePartMaterialType: getReportField_(latest, ['SparePartMaterialType','spare_part_material_type']),
+      SparePartMaterialJumlah: getReportField_(latest, ['SparePartMaterialJumlah','spare_part_material_jumlah']),
       Status: getReportField_(latest, ['Status','status']),
       Kategori: getReportField_(latest, ['Kategori','kategori']),
       AreaKerja: getReportField_(latest, ['AreaKerja','area_kerja']),
@@ -3266,13 +3339,19 @@
     document.getElementById('Ruang').value = editData.Ruang || '';
     document.getElementById('MasalahKegiatan').value = editData.MasalahKegiatan || '';
     document.getElementById('Tindakan').value = editData.Tindakan || '';
-    const kindEl=document.getElementById('SparePartUnitKind');
-    if(kindEl) kindEl.value=editData.SparePartUnitKind || '';
-    const statusEl=document.getElementById('SparePartUnitStatus');
-    if(statusEl) statusEl.value=editData.SparePartUnitStatus || '';
-    const spEl=document.getElementById('SparePartUnit'); if(spEl) spEl.value=editData.SparePartUnit || '';
-    const typeEl=document.getElementById('Type'); if(typeEl) typeEl.value=editData.Type || '';
-    const qtyEl=document.getElementById('Jumlah'); if(qtyEl) qtyEl.value=editData.Jumlah || '';
+    resetSpmuState_();
+    const legacyKind=String(editData.SparePartUnitKind||'').trim().toUpperCase();
+    if(editData.UnitName || editData.UnitStatus || editData.UnitType || String(editData.UnitJumlah||'').trim()){
+      SPMU_STATE.UNIT={status:String(editData.UnitStatus||'').trim().toUpperCase(),name:String(editData.UnitName||'').trim(),type:String(editData.UnitType||'').trim(),qty:String(editData.UnitJumlah??'').trim()};
+    }else if(legacyKind==='UNIT'){
+      SPMU_STATE.UNIT={status:String(editData.SparePartUnitStatus||'').trim().toUpperCase(),name:String(editData.SparePartUnit||'').trim(),type:String(editData.Type||'').trim(),qty:String(editData.Jumlah??'').trim()};
+    }
+    if(editData.SparePartMaterial || editData.SparePartMaterialStatus || editData.SparePartMaterialType || String(editData.SparePartMaterialJumlah||'').trim()){
+      SPMU_STATE['SPARE PART / MATERIAL']={status:String(editData.SparePartMaterialStatus||'').trim().toUpperCase(),name:String(editData.SparePartMaterial||'').trim(),type:String(editData.SparePartMaterialType||'').trim(),qty:String(editData.SparePartMaterialJumlah??'').trim()};
+    }else if(legacyKind==='SPARE PART / MATERIAL'){
+      SPMU_STATE['SPARE PART / MATERIAL']={status:String(editData.SparePartUnitStatus||'').trim().toUpperCase(),name:String(editData.SparePartUnit||'').trim(),type:String(editData.Type||'').trim(),qty:String(editData.Jumlah??'').trim()};
+    }
+    const kindEl=document.getElementById('SparePartUnitKind'); if(kindEl) kindEl.value='';
     updateSparePartToggleStatus();
     setStatusValue(editData.Status || '');
 
@@ -3442,13 +3521,15 @@
         if(r.Status === 'Selesai') return false;
       }else if(status && r.Status !== status) return false;
       if(isDashboardSparePartFilter){
-        const kind=String(r.SparePartUnitKind||r.spare_part_unit_kind||'').trim().toUpperCase();
-        const status=String(r.SparePartUnitStatus||r.spare_part_unit_status||'').trim().toUpperCase();
-        if(!((kind==='SPARE PART / MATERIAL'&&status==='BARU') || isSparePartReportCategory_(r.Kategori))) return false;
+        const spareKind=String(r.SparePartMaterialStatus||r.spare_part_material_status||'').trim().toUpperCase();
+        const legacyKind=String(r.SparePartUnitKind||r.spare_part_unit_kind||'').trim().toUpperCase();
+        const legacyStatus=String(r.SparePartUnitStatus||r.spare_part_unit_status||'').trim().toUpperCase();
+        if(!((spareKind==='BARU') || (legacyKind==='SPARE PART / MATERIAL'&&legacyStatus==='BARU') || isSparePartReportCategory_(r.Kategori))) return false;
       }else if(isDashboardUnitFilter){
-        const kind=String(r.SparePartUnitKind||r.spare_part_unit_kind||'').trim().toUpperCase();
-        const status=String(r.SparePartUnitStatus||r.spare_part_unit_status||'').trim().toUpperCase();
-        if(!((kind==='UNIT'&&status==='BARU') || isUnitBaruReportCategory_(r.Kategori))) return false;
+        const unitStatus=String(r.UnitStatus||r.unit_status||'').trim().toUpperCase();
+        const legacyKind=String(r.SparePartUnitKind||r.spare_part_unit_kind||'').trim().toUpperCase();
+        const legacyStatus=String(r.SparePartUnitStatus||r.spare_part_unit_status||'').trim().toUpperCase();
+        if(!((unitStatus==='BARU') || (legacyKind==='UNIT'&&legacyStatus==='BARU') || isUnitBaruReportCategory_(r.Kategori))) return false;
       }else if(kategori && r.Kategori !== kategori) return false;
       if(area && r.AreaKerja !== area) return false;
       if(bidang && r.Bidang !== bidang) return false;

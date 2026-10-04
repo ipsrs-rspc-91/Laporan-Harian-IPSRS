@@ -224,6 +224,34 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   };
   const missingChoices=[...checkPairs(unitPairs),...checkPairs(sparePairs)];
   if(missingChoices.length) fail('SPMU choice contract','Missing/incorrect label-value pairs: '+missingChoices.join(', '));
+
+  const dualSideUiContract = [
+    'const SPMU_STATE = {',
+    'function captureSpmuModalState_(',
+    'function getSpmuPayload_(',
+    'function resetSpmuState_(',
+    'if(unitHas)',
+    'if(spareHas)',
+    'UnitStatus','UnitName','UnitType','UnitJumlah',
+    'SparePartMaterialStatus','SparePartMaterial','SparePartMaterialType','SparePartMaterialJumlah'
+  ];
+  const dualMissing = dualSideUiContract.filter(x => !app.includes(x) && !api.includes(x));
+  if(dualMissing.length) fail('SPMU dual-side independent state', 'Missing: '+dualMissing.join(', '));
+  else pass('SPMU dual-side independent state','UNIT and SPARE PART / MATERIAL have independent state and payload fields; an empty side keeps its selectable button.');
+
+  if(page.includes('previousKind !== normalized') && page.includes("['SparePartUnitStatus','SparePartUnit','Type','Jumlah'].forEach")){
+    fail('SPMU no cross-side data deletion','Old behavior still clears the other side when switching UNIT/SPARE PART.');
+  }else{
+    pass('SPMU no cross-side data deletion','Switching between sides does not delete the previously saved side.');
+  }
+
+  const dualApiFields=[
+    'unit_status','unit_name','unit_type','unit_jumlah',
+    'spare_part_material_status','spare_part_material','spare_part_material_type','spare_part_material_jumlah'
+  ];
+  const dualApiMissing=dualApiFields.filter(x=>!api.includes(x));
+  if(dualApiMissing.length) fail('SPMU dual-side API mapping','Missing: '+dualApiMissing.join(', '));
+  else pass('SPMU dual-side API mapping','Eight independent database fields are mapped in API.');
   else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the exact four approved label-value pairs');
 
   const backendStatusValues=[

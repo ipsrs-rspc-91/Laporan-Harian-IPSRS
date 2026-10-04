@@ -65,7 +65,10 @@
     // ada Spare Part Baru / Unit Baru.
     const kindEl=document.getElementById('SparePartUnitKind');
     const kind=String(kindEl?.value||'').trim().toUpperCase();
-    const replacement = isReplacementCategory() || !!kind;
+    const state=window.__IPSRS_SPMU_STATE || null;
+    const hasUnit=!!(state?.UNIT?.status || state?.UNIT?.name || state?.UNIT?.type || String(state?.UNIT?.qty??'').trim());
+    const hasSpare=!!(state?.['SPARE PART / MATERIAL']?.status || state?.['SPARE PART / MATERIAL']?.name || state?.['SPARE PART / MATERIAL']?.type || String(state?.['SPARE PART / MATERIAL']?.qty??'').trim());
+    const replacement = isReplacementCategory() || !!kind || hasUnit || hasSpare;
     DYNAMIC_IDS.forEach(id => setRequiredVisual(id, replacement));
 
   }
