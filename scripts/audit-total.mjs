@@ -278,7 +278,7 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   else if(page.includes('id="spmuSelectedDetail"') || app.includes('function openSelectedSparePartUnitModal_(')) fail('SPMU same-box UI contract','Separate SPMU detail card/helper is still present; selected data must remain inside the same left/right field box');
   else if(!/title\.textContent=hasValue\?side\.name:titleText/.test(app) || !/summary\.textContent=hasValue/.test(app)) fail('SPMU same-box UI contract','Selected UNIT/SPARE data is not rendered into the same choice boxes');
   else if(!/spmu-choice-group\.has-value/.test(page) || !/has-value.*is-empty-option/.test(page)) fail('SPMU full-field UI contract','Filled SPMU state does not collapse to one full-width field and hide the empty selector');
-  else if(!/if\(unitHas && spareHas\)\{[\s\S]*?spmuUnitTitle[\s\S]*?spmuSpareChoice/.test(app)) fail('SPMU dual-filled UI contract','When both sides are filled, one full field is not used to display the combined data');
+  else if(!/if\(unitHas && spareHas\)\{/.test(app) || !/unitTitle\.textContent=unit\.name\+' • '\+spare\.name/.test(app)) fail('SPMU dual-filled UI contract','When both sides are filled, one full field is not used to display the combined data');
   else if(!/if\(hasValue\)\{[\s\S]*?removeAttribute\('role'\)[\s\S]*?onclick=null[\s\S]*?onkeydown=null/.test(app)) fail('SPMU filled-field UI contract','Filled SPMU field still behaves as a button');
   else pass('SPMU same-box UI contract','EMPTY state shows two selectors; once any data is saved, the UI shows one full-width data field only, with no UNIT/SPARE button behavior');
 
