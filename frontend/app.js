@@ -1852,14 +1852,34 @@
     if(type) summary.push(type);
     if(qty) summary.push('Jumlah: ' + qty);
 
+    const hasValue = summary.length > 0;
     const unitSummary = document.getElementById('spmuUnitSummary');
     const spareSummary = document.getElementById('spmuSpareSummary');
-    const text = summary.length ? summary.join(' • ') : 'Belum diisi';
-    if(unitSummary) unitSummary.textContent = kind === 'UNIT' ? text : 'Belum diisi';
-    if(spareSummary) spareSummary.textContent = kind === 'SPARE PART / MATERIAL' ? text : 'Belum diisi';
+    const unitChoice = document.getElementById('spmuUnitChoice');
+    const spareChoice = document.getElementById('spmuSpareChoice');
 
-    document.getElementById('spmuUnitChoice')?.classList.toggle('is-selected', kind === 'UNIT');
-    document.getElementById('spmuSpareChoice')?.classList.toggle('is-selected', kind === 'SPARE PART / MATERIAL');
+    const text = hasValue ? summary.join(' • ') : 'Belum diisi';
+
+    // Kondisi awal: dua pilihan sederhana.
+    // Setelah OK: sisi yang terisi menjadi field data, sedangkan sisi lain
+    // menjadi pilihan untuk mengganti jenis UNIT/SPARE PART / MATERIAL.
+    if(unitSummary){
+      unitSummary.textContent = kind === 'UNIT'
+        ? text
+        : (hasValue ? 'Pilih UNIT' : 'Belum diisi');
+    }
+    if(spareSummary){
+      spareSummary.textContent = kind === 'SPARE PART / MATERIAL'
+        ? text
+        : (hasValue ? 'Pilih SPARE PART / MATERIAL' : 'Belum diisi');
+    }
+
+    unitChoice?.classList.toggle('is-selected', kind === 'UNIT' && hasValue);
+    spareChoice?.classList.toggle('is-selected', kind === 'SPARE PART / MATERIAL' && hasValue);
+    unitChoice?.classList.toggle('has-value', kind === 'UNIT' && hasValue);
+    spareChoice?.classList.toggle('has-value', kind === 'SPARE PART / MATERIAL' && hasValue);
+    unitChoice?.classList.toggle('is-empty-option', hasValue && kind !== 'UNIT');
+    spareChoice?.classList.toggle('is-empty-option', hasValue && kind !== 'SPARE PART / MATERIAL');
   }
 
   // ============================================================
