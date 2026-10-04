@@ -192,7 +192,7 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   else pass('SPMU field contract','All 5 SPMU data fields are present and mapped frontend -> required-fields -> API');
 
   const unitChoices=['UNIT BARU','UNIT KANIBAL','UNIT DARI UNIT / RUANGAN LAIN','UNIT LAINNYA'];
-  const spareChoices=['SPARE PART / MATERIAL BARU','SPARE PART / MATERIAL KANIBAL','SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN','SPARE PART / MATERIAL STOK IPSRS'];
+  const spareChoices=['SPARE PART / MATERIAL BARU','SPARE PART / MATERIAL KANIBAL','SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN','SPARE PART / MATERIAL LAINNYA'];
   const missingChoices=[...unitChoices,...spareChoices].filter(x=>!page.includes(x) && !app.includes(x));
   if(missingChoices.length) fail('SPMU choice contract','Missing choices: '+missingChoices.join(', '));
   else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the approved four choices');
