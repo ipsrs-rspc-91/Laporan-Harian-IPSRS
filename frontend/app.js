@@ -1573,6 +1573,16 @@
     return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
   }
 
+  // Modal title is the authoritative side selector at save time.
+  // This prevents a stale/incorrect hidden kind from sending SPARE PART /
+  // MATERIAL data into the UNIT state.
+  function getSpmuModalKind_(){
+    const title=String(document.getElementById('spmuModalTitle')?.textContent || '').trim().toUpperCase();
+    if(title === 'UNIT') return 'UNIT';
+    if(title === 'SPARE PART / MATERIAL') return 'SPARE PART / MATERIAL';
+    return getSparePartUnitKind_();
+  }
+
   // SPMU v15: UNIT dan SPARE PART/MATERIAL adalah dua sisi independen.
   // Masing-masing menyimpan 4 field sendiri. Modal yang sama hanya menjadi
   // editor untuk sisi yang sedang diklik.
@@ -1873,11 +1883,13 @@
   }
 
   function saveSparePartUnitModal(){
-    const kind = getSparePartUnitKind_();
+    const kind = getSpmuModalKind_();
     if(!kind){
       openSparePartUnitModal('UNIT');
       return;
     }
+    const kindEl=document.getElementById('SparePartUnitKind');
+    if(kindEl) kindEl.value=kind;
 
     const ids = ['SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
     ids.forEach(id => {
