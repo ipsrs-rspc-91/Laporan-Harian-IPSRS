@@ -1944,13 +1944,31 @@
   function setupSpmuActionMenu_(){
     if(window.__IPSRS_SPMU_ACTION_MENU_READY__) return;
     window.__IPSRS_SPMU_ACTION_MENU_READY__=true;
+
     document.addEventListener('click',function(event){
+      const trigger=event.target.closest && event.target.closest('#spmuActionMenuTrigger');
+      const action=event.target.closest && event.target.closest('#spmuActionMenu [data-spmu-action]');
       const menu=document.getElementById('spmuActionMenu');
-      const trigger=document.getElementById('spmuActionMenuTrigger');
-      if(!menu || menu.hidden) return;
-      if((trigger && trigger.contains(event.target)) || menu.contains(event.target)) return;
-      closeSpmuActionMenu_();
+
+      if(trigger){
+        event.preventDefault();
+        event.stopPropagation();
+        toggleSpmuActionMenu(event);
+        return;
+      }
+
+      if(action){
+        event.preventDefault();
+        event.stopPropagation();
+        chooseSpmuAction(action.getAttribute('data-spmu-action'),event);
+        return;
+      }
+
+      if(menu && !menu.hidden && !menu.contains(event.target)){
+        closeSpmuActionMenu_();
+      }
     });
+
     document.addEventListener('keydown',function(event){
       if(event.key==='Escape') closeSpmuActionMenu_();
     });
@@ -1958,7 +1976,6 @@
 
   function updateSparePartToggleStatus(){
     setupSpmuActionMenu_();
-    closeSpmuActionMenu_();
     // Render each side independently.
     // EMPTY: selectable field showing UNIT / SPARE PART-MATERIAL.
     // FILLED: the same field becomes plain data text only — no button,
