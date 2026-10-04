@@ -2105,6 +2105,15 @@
     }
   }
 
+  // MOBILE KEYBOARD SMART SCROLL STATE — restored from 2026-10-03 checkpoint.
+  // These state variables are required by the focusin/change/viewport handlers.
+  // Without them, clearKeyboardMoveTimers() throws before any scroll can run.
+  let keyboardFocusedField = null;
+  let keyboardScrollTarget = null;
+  let keyboardMoveTimers = [];
+  let keyboardResizeTimer = null;
+  let keyboardOriginalPadding = null;
+
   function getKeyboardContent(){
     return document.querySelector('.content');
   }
