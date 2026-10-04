@@ -93,12 +93,13 @@
     background:#fff;
   }
   #page-input .spmu-choice{
+    position:relative;
     min-height:64px;
     border:0;
     border-right:1px solid #cbd3d7;
     background:#fff;
     color:var(--text);
-    padding:10px 12px;
+    padding:10px 34px 10px 12px;
     text-align:center;
     cursor:pointer;
     font:inherit;
@@ -112,7 +113,39 @@
     color:#1d4ed8;
     box-shadow:inset 0 0 0 2px rgba(37,99,235,.18);
   }
+  #page-input .spmu-choice.is-empty-option{
+    background:#fff;
+    color:var(--text);
+  }
+  #page-input .spmu-choice-head{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    min-width:0;
+  }
   #page-input .spmu-choice-title{display:block;font-size:14px;font-weight:800;line-height:1.25;}
+  #page-input .spmu-choice-chevron{
+    display:none;
+    position:absolute;
+    right:9px;
+    top:50%;
+    transform:translateY(-50%);
+    width:22px;
+    height:22px;
+    align-items:center;
+    justify-content:center;
+    color:#64748b;
+    font-size:19px;
+    line-height:1;
+    font-weight:800;
+    pointer-events:none;
+  }
+  #page-input .spmu-choice.has-value .spmu-choice-chevron,
+  #page-input .spmu-choice.is-empty-option .spmu-choice-chevron{
+    display:flex;
+  }
+  #page-input .spmu-choice.is-selected .spmu-choice-chevron{color:#2563eb;}
   #page-input .spmu-choice-summary{
     display:-webkit-box;
     margin-top:5px;
@@ -129,6 +162,10 @@
     min-height:30px;
   }
   #page-input .spmu-choice.is-selected .spmu-choice-summary{color:#2563eb;}
+  #page-input .spmu-choice.is-empty-option .spmu-choice-summary{
+    color:#64748b;
+    font-weight:700;
+  }
   #page-input .spmu-modal-bg{
     position:fixed;inset:0;z-index:10040;display:flex;align-items:center;justify-content:center;
     padding:18px;background:rgba(15,23,42,.48);
@@ -166,8 +203,9 @@
     display:flex;justify-content:flex-end;padding:8px 18px 18px;
   }
   @media(max-width:480px){
-    #page-input .spmu-choice{min-height:60px;padding:9px 7px;}
+    #page-input .spmu-choice{min-height:60px;padding:9px 30px 9px 7px;}
     #page-input .spmu-choice-title{font-size:13px;}
+    #page-input .spmu-choice-chevron{right:7px;width:20px;height:20px;font-size:18px;}
     #page-input .spmu-choice-summary{font-size:11px;line-height:1.35;min-height:30px;}
     #page-input .spmu-modal-bg{padding:12px;align-items:flex-start;}
     #page-input .spmu-modal{max-height:calc(100dvh - 24px);border-radius:18px;margin-top:12px;}
@@ -524,12 +562,18 @@
         <label>SPARE PART / MATERIAL / UNIT <span class="required-mark">*</span></label>
         <div class="spmu-choice-group" role="group" aria-label="Pilih jenis penggantian">
           <button type="button" id="spmuUnitChoice" class="spmu-choice" onclick="openSparePartUnitModal('UNIT')" aria-haspopup="dialog">
-            <span class="spmu-choice-title">UNIT</span>
+            <span class="spmu-choice-head">
+              <span class="spmu-choice-title">UNIT</span>
+            </span>
             <span id="spmuUnitSummary" class="spmu-choice-summary">Belum diisi</span>
+            <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
           </button>
           <button type="button" id="spmuSpareChoice" class="spmu-choice" onclick="openSparePartUnitModal('SPARE PART / MATERIAL')" aria-haspopup="dialog">
-            <span class="spmu-choice-title">SPARE PART / MATERIAL</span>
+            <span class="spmu-choice-head">
+              <span class="spmu-choice-title">SPARE PART / MATERIAL</span>
+            </span>
             <span id="spmuSpareSummary" class="spmu-choice-summary">Belum diisi</span>
+            <span class="spmu-choice-chevron" aria-hidden="true">⌄</span>
           </button>
         </div>
         <input type="hidden" id="SparePartUnitKind" value="">
