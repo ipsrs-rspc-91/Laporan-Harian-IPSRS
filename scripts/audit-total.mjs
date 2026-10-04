@@ -165,6 +165,56 @@ if(fs.existsSync(lockRegisterPath) && changed.length){
   fail('LOCK register gate','LOCK_REGISTER.yaml is missing');
 }
 
+// Shared Input regression contract — protects existing Pelapor/No LK while SPMU changes.
+const inputContractPath=path.join(root,'frontend','pages','Page_Input.html');
+const inputAppPath=path.join(root,'frontend','app.js');
+const inputRequiredPath=path.join(root,'frontend','required-fields-ui.js');
+const inputApiPath=path.join(root,'supabase','functions','ipsrs-api','index.ts');
+if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsSync(inputRequiredPath) && fs.existsSync(inputApiPath)){
+  const page=fs.readFileSync(inputContractPath,'utf8');
+  const app=fs.readFileSync(inputAppPath,'utf8');
+  const req=fs.readFileSync(inputRequiredPath,'utf8');
+  const api=fs.readFileSync(inputApiPath,'utf8');
+
+  const protectedPelapor = [
+    'id="Pelapor"','id="NoLK"','id="pelaporLkFields"',
+    'id="pelaporLkToggle"','id="pelaporLkToggleIcon"',
+    'function setPelaporLkSection(','function togglePelaporLkSection(',
+    'function updatePelaporLkStatus_('
+  ];
+  const missingPelapor=protectedPelapor.filter(x=>!(page.includes(x)||app.includes(x)));
+  if(missingPelapor.length) fail('Protected Pelapor/No LK contract', 'Missing: '+missingPelapor.join(', '));
+  else pass('Protected Pelapor/No LK contract','Pelapor/No LK markup and control functions are present');
+
+  const spmuFields=['SparePartUnitKind','SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
+  const missingSpmu=spmuFields.filter(x=>!page.includes('id="'+x+'"') || !req.includes(x) || !api.includes(x));
+  if(missingSpmu.length) fail('SPMU field contract','Missing or unmapped: '+missingSpmu.join(', '));
+  else pass('SPMU field contract','All 5 SPMU data fields are present and mapped frontend -> required-fields -> API');
+
+  const unitChoices=['UNIT BARU','UNIT KANIBAL','UNIT DARI UNIT / RUANGAN LAIN','UNIT LAINNYA'];
+  const spareChoices=['SPARE PART / MATERIAL BARU','SPARE PART / MATERIAL KANIBAL','SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN','SPARE PART / MATERIAL STOK IPSRS'];
+  const missingChoices=[...unitChoices,...spareChoices].filter(x=>!page.includes(x) && !app.includes(x));
+  if(missingChoices.length) fail('SPMU choice contract','Missing choices: '+missingChoices.join(', '));
+  else pass('SPMU choice contract','UNIT and SPARE PART / MATERIAL each retain the approved four choices');
+
+  const allowedStatus=[
+    'BARU','KANIBAL','DARI UNIT / RUANGAN LAIN','LAINNYA','STOK IPSRS'
+  ];
+  const statusGate=allowedStatus.every(x=>api.includes('"'+x+'"'));
+  if(!statusGate) fail('SPMU backend status contract','Backend does not preserve all approved status/source values');
+  else pass('SPMU backend status contract','Backend preserves BARU, KANIBAL, DARI UNIT / RUANGAN LAIN, LAINNYA and STOK IPSRS');
+
+  const inlineHandlers=[...page.matchAll(/onclick=["']([^"']+)["']/gi)]
+    .map(m=>m[1].split(/\s*[;(]/)[0])
+    .filter(x=>x && /^[A-Za-z_$][\\w$]*$/.test(x));
+  const fnNames=new Set([...app.matchAll(/function\\s+([A-Za-z_$][\\w$]*)\\s*\\(/g)].map(m=>m[1]));
+  const missingHandlers=[...new Set(inlineHandlers.filter(x=>!fnNames.has(x)))];
+  if(missingHandlers.length) fail('Page_Input handler contract','Inline handlers without matching app.js function: '+missingHandlers.join(', '));
+  else pass('Page_Input handler contract','All simple inline handlers have matching app.js functions');
+}else{
+  fail('Input regression contract','Required Page_Input/app.js/required-fields/API files are missing');
+}
+
 const changedJs=changed.filter(x=>x.endsWith('.js'));
 if (changedJs.length) {
   const stale=[];
