@@ -295,7 +295,7 @@
               <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
             </button>
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="terjadwal-dengan">
-              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN MATERIAL / SPARE PART</span>
             </button>
           </div>
 
@@ -304,7 +304,7 @@
               <span class="ipsrs-kat-choice-title">PEMELIHARAAN SAJA</span>
             </button>
             <button type="button" class="ipsrs-kat-choice" data-kat-direct="luar-dengan">
-              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
+              <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN MATERIAL / SPARE PART</span>
             </button>
           </div>
         </div>`,
@@ -322,7 +322,7 @@
           <span class="ipsrs-kat-choice-desc">Tidak ada spare part atau material yang diganti.</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-replace="dengan">
-          <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL BARU</span>
+          <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL</span>
           <span class="ipsrs-kat-choice-desc">Ada spare part/material yang diganti atau digunakan.</span>
         </button>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-back>Kembali</button>'
@@ -337,7 +337,7 @@
           <span class="ipsrs-kat-choice-title">PERBAIKAN SAJA</span>
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-repair="dengan">
-          <span class="ipsrs-kat-choice-title">PERBAIKAN DENGAN PENGGANTIAN MATERIAL / SPARE PART BARU</span>
+          <span class="ipsrs-kat-choice-title">PERBAIKAN DENGAN PENGGANTIAN MATERIAL / SPARE PART</span>
         </button>`,
       ''
     );
@@ -358,7 +358,7 @@
     document.querySelectorAll('[data-kat-repair]').forEach(btn => {
       btn.addEventListener('click', function(){
         const value = this.dataset.katRepair === 'dengan'
-          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
+          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL'
           : 'PERBAIKAN SAJA';
         finishKategori(value);
       });
