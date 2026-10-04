@@ -34,22 +34,23 @@
   .required-fields-modal-btn:active{transform:translateY(1px);}
   @keyframes requiredModalIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-  /* STATUS HEIGHT CONTRACT: total visual height is exactly 80px.
-     box-sizing:border-box prevents height + padding from making the field taller. */
+  /* STATUS HEIGHT CONTRACT: target visual height on the Android screenshot is ~80 physical px.
+     The browser viewport is density-scaled, so 46 CSS px renders at about 80 physical px
+     on the supplied device. Do not use 80 CSS px here; that is the source of the oversized box. */
   #page-input .status-choice-group{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
     gap:10px;
     margin-top:6px;
-    height:80px;
+    height:46px;
   }
   #page-input .status-choice{
     appearance:none;
     box-sizing:border-box !important;
     width:100% !important;
-    min-height:80px !important;
-    height:80px !important;
-    max-height:80px !important;
+    min-height:46px !important;
+    height:46px !important;
+    max-height:46px !important;
     overflow:hidden !important;
     border:1px solid var(--border);
     border-radius:var(--radius-sm);
@@ -413,8 +414,8 @@
     }
   }
   @media (max-width:480px){
-    /* Keep mobile total height at exactly 80px; padding is inside the box. */
-    #page-input .status-choice{box-sizing:border-box !important;min-height:80px !important;height:80px !important;max-height:80px !important;padding:0 8px !important;}
+    /* Keep mobile status box at 46 CSS px, approximately 80 physical px on the supplied Android screen. */
+    #page-input .status-choice{box-sizing:border-box !important;min-height:46px !important;height:46px !important;max-height:46px !important;padding:0 8px !important;}
   }
   /* SPMU: approved compact layout — one size for ALL categories/states. */
   #page-input .spmu-choice-group .spmu-choice{
