@@ -43,22 +43,17 @@ jobs:
           echo "Changed files:"
           printf '%s\n' "$files"
 
-          frontend=false
-          supabase=false
-          cloudflare=false
+          # A successful full audit is the deployment authorization point.
+          # Do not deploy based only on the single audit-gate commit: frontend changes
+          # can be followed by audit-only commits (cache/audit fixes), which previously
+          # caused the actual frontend change to remain undeployed.
+          frontend=true
 
-          if printf '%s\n' "$files" | grep -q '^frontend/'; then
-            frontend=true
-          fi
+          supabase=false
+          cloudflare=true
 
           if printf '%s\n' "$files" | grep -q '^supabase/'; then
             supabase=true
-          fi
-
-          # Cloudflare Worker currently publishes ./frontend as its Worker assets.
-          # Therefore a frontend change is also a Cloudflare deployment change.
-          if printf '%s\n' "$files" | grep -Eq '^(frontend/|wrangler\.jsonc$)'; then
-            cloudflare=true
           fi
 
           echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
@@ -203,7 +198,7 @@ jobs:
           echo "Frontend/GitHub Pages: ${{ needs.detect-changes.outputs.frontend }}"
           echo "Supabase: ${{ needs.detect-changes.outputs.supabase }}"
           echo "Cloudflare Worker: ${{ needs.detect-changes.outputs.cloudflare }}"
-          echo "Skipped targets are intentional when their source files did not change."
+          echo "Frontend/Cloudflare deploy after every successful full audit; Supabase deploy only when supabase files changed."
 
       - name: Production deployment passed
         run: echo "✅ IPSRS SELECTIVE PRODUCTION DEPLOYMENT PASSED"
