@@ -1863,6 +1863,7 @@
   }
 
   function closeSparePartUnitModal(){
+    closeSpmuActionMenu_();
     // Perubahan yang sedang diketik tidak menjadi data tersimpan sampai OK.
     const modal = document.getElementById('sparePartUnitModal');
     if(modal) modal.hidden = true;
@@ -1912,7 +1913,52 @@
     updateSparePartToggleStatus();
   }
 
+  function closeSpmuActionMenu_(){
+    const menu=document.getElementById('spmuActionMenu');
+    const trigger=document.getElementById('spmuActionMenuTrigger');
+    if(menu) menu.hidden=true;
+    if(trigger) trigger.setAttribute('aria-expanded','false');
+  }
+
+  function toggleSpmuActionMenu(event){
+    if(event) event.stopPropagation();
+    const group=document.querySelector('#sparePartSection .spmu-choice-group.has-value');
+    const menu=document.getElementById('spmuActionMenu');
+    const trigger=document.getElementById('spmuActionMenuTrigger');
+    if(!group || !menu || !trigger) return;
+    const willOpen=menu.hidden;
+    if(willOpen){
+      menu.hidden=false;
+      trigger.setAttribute('aria-expanded','true');
+    }else{
+      closeSpmuActionMenu_();
+    }
+  }
+
+  function chooseSpmuAction(kind,event){
+    if(event) event.stopPropagation();
+    closeSpmuActionMenu_();
+    if(kind==='UNIT' || kind==='SPARE PART / MATERIAL') openSparePartUnitModal(kind);
+  }
+
+  function setupSpmuActionMenu_(){
+    if(window.__IPSRS_SPMU_ACTION_MENU_READY__) return;
+    window.__IPSRS_SPMU_ACTION_MENU_READY__=true;
+    document.addEventListener('click',function(event){
+      const menu=document.getElementById('spmuActionMenu');
+      const trigger=document.getElementById('spmuActionMenuTrigger');
+      if(!menu || menu.hidden) return;
+      if((trigger && trigger.contains(event.target)) || menu.contains(event.target)) return;
+      closeSpmuActionMenu_();
+    });
+    document.addEventListener('keydown',function(event){
+      if(event.key==='Escape') closeSpmuActionMenu_();
+    });
+  }
+
   function updateSparePartToggleStatus(){
+    setupSpmuActionMenu_();
+    closeSpmuActionMenu_();
     // Render each side independently.
     // EMPTY: selectable field showing UNIT / SPARE PART-MATERIAL.
     // FILLED: the same field becomes plain data text only — no button,
@@ -1953,8 +1999,8 @@
         ? side.status+' • '+side.type+' • Jumlah: '+side.qty
         : summaryText;
 
-      // FILLED: this same field is data-only. No UNIT/SPARE button,
-      // no chevron, no click, no keyboard action.
+      // FILLED: this same field remains data-only. The only interaction is
+      // the dedicated dropdown at the right side of the full-width field.
       if(hasValue){
         el.removeAttribute('role');
         el.removeAttribute('tabindex');
@@ -1979,6 +2025,9 @@
 
     renderSide('spmuUnitChoice','UNIT',unit,unitHas);
     renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
+
+    const actionWrap=document.getElementById('spmuActionMenuWrap');
+    if(actionWrap) actionWrap.hidden=!(unitHas || spareHas);
 
     // If both sides have data, the UI still shows ONE full-width field.
     // The stored UNIT + SPARE data remain independent in SPMU_STATE/payload.
