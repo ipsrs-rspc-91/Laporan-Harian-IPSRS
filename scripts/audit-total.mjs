@@ -59,7 +59,7 @@ if (!failures.some(x=>x.name==='Secret exposure scan')) pass('Secret exposure sc
 
 if (fs.existsSync(indexPath)) {
   const indexTextForCache = fs.readFileSync(indexPath,'utf8');
-  const appRefs = [...indexTextForCache.matchAll(/app\\.js\\?v=([^"'\\s&]+)/g)].map(m=>m[1]);
+  const appRefs = [...indexTextForCache.matchAll(/app\.js\?v=([^"'\s&]+)/g)].map(m=>m[1]);
   const uniqueAppRefs = [...new Set(appRefs)];
   if (uniqueAppRefs.length === 1) {
     pass('app.js cache-version consistency','All index.html app.js references use the same cache version: '+uniqueAppRefs[0]);
