@@ -1910,8 +1910,8 @@
 
     // OK menyimpan data hanya untuk sisi yang sedang diedit.
     captureSpmuModalState_();
-    const kindEl=document.getElementById('SparePartUnitKind');
-    if(kindEl) kindEl.value='';
+    const kindElClear=document.getElementById('SparePartUnitKind');
+    if(kindElClear) kindElClear.value='';
     updateSparePartToggleStatus();
     closeSparePartUnitModal();
   }
