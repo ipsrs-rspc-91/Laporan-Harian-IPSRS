@@ -805,11 +805,34 @@ Known checkpoints include:
 
 # 038 — CHANGE CONTROL
 
-## If user requests a feature/fix
-Use this exact lifecycle:
+## SOP WAJIB — SETIAP INSTRUKSI PERUBAHAN HARUS OTOMATIS AUDIT + DEPLOY
+
+Mulai berlaku sebagai aturan operasional proyek:
+
+1. **Setiap instruksi pengguna yang menghasilkan perubahan pada source/config/control file wajib otomatis masuk pipeline AUDIT TOTAL.**
+2. **Setiap perubahan yang lolos AUDIT TOTAL wajib otomatis diteruskan ke DEPLOY PRODUCTION** sesuai target yang terdampak.
+3. **Tidak boleh menunggu instruksi kedua** seperti “audit”, “deploy”, atau “lanjutkan deploy” setelah perubahan dibuat.
+4. Alur otomatis wajib:
+   **CHANGE → AUDIT TOTAL → BROWSER/CROSS-MODULE REGRESSION → CACHE/VERSION CHECK → DEPLOY → PRODUCTION VERIFY/SMOKE → STATUS AKHIR.**
+5. **Audit gagal = deployment diblokir.**
+6. **Deployment gagal = status akhir bukan PASS/LIVE.**
+7. **Production smoke/verification gagal = status akhir bukan PRODUCTION VERIFIED.**
+8. Untuk perubahan frontend, target produksi Cloudflare wajib diverifikasi; GitHub Pages dijalankan sesuai workflow.
+9. Untuk perubahan backend/database, target Supabase yang terdampak wajib diverifikasi sesuai workflow.
+10. Setiap hasil wajib dilaporkan terpisah sebagai:
+    - **CODE CHANGE**
+    - **AUDIT TOTAL**
+    - **DEPLOYMENT**
+    - **PRODUCTION VERIFY**
+    - **FINAL STATUS**
+11. **Tidak boleh menyatakan “sudah deploy”, “sudah live”, atau “sudah selesai” tanpa bukti run/deployment/production yang sesuai.**
+12. Instruksi yang hanya meminta informasi/status dan **tidak mengubah sistem** tidak memicu deployment; tetapi pemeriksaan status tetap harus menggunakan bukti aktual.
+13. Perubahan kontrol/SOP sendiri mengikuti aturan yang sama dan wajib diaudit serta dideploy otomatis.
+
+## Lifecycle wajib
 
 ```
-USER REQUEST
+USER INSTRUCTION
    ↓
 IDENTIFY MODULE
    ↓
@@ -825,28 +848,26 @@ CHECK LOCK
    ├─ LOCKED → require explicit request for that module
    └─ not locked → continue
    ↓
-CREATE CHECKPOINT
-   ↓
 CHANGE MINIMUM SCOPE
    ↓
-STATIC TEST
+AUTO AUDIT TOTAL
    ↓
-TARGET REGRESSION
+AUTO BROWSER / CROSS-MODULE REGRESSION
    ↓
-CROSS-MODULE REGRESSION
+AUTO CACHE / VERSION CHECK
    ↓
-CACHE/VERSION CHECK
+AUTO DEPLOY
    ↓
-DEPLOY
+AUTO PRODUCTION VERIFY / SMOKE
    ↓
-PRODUCTION SMOKE
+REPORT CODE + AUDIT + DEPLOY + VERIFY + FINAL STATUS
    ↓
 UPDATE CHANGE LOG + BASELINE
    ↓
 RE-LOCK
 ```
 
-**No silent scope expansion.**
+**No silent scope expansion. No manual deploy step after a completed code change.**
 
 ---
 
