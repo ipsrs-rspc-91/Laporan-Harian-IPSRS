@@ -21,7 +21,9 @@ env:
 jobs:
   detect-changes:
     name: Detect deployment targets
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Always start the deployment gate, then validate the triggering audit result inside the runner.
+    # This avoids a workflow_run race leaving the deploy job skipped.
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -39,6 +41,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          audit_conclusion="${{ github.event.workflow_run.conclusion }}"
+          echo "Triggering audit conclusion: $audit_conclusion"
+          if [ "$audit_conclusion" != "success" ]; then
+            echo "❌ Deployment blocked: triggering IPSRS Automated Audit Gate was not successful."
+            exit 1
+          fi
+
           files="$(git diff --name-only "${{ github.event.workflow_run.head_sha }}^" "${{ github.event.workflow_run.head_sha }}")"
           echo "Changed files:"
           printf '%s\n' "$files"
