@@ -1641,10 +1641,23 @@
     }
 
     const ids = ['SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
+
+    // Jangan gunakan pesan validasi bawaan browser berbahasa Inggris.
+    // Gunakan pesan validasi Bahasa Indonesia untuk modal ini.
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(el && typeof el.setCustomValidity === 'function'){
+        el.setCustomValidity('');
+      }
+    });
+
     const missing = ids.filter(id => !String(document.getElementById(id)?.value || '').trim());
     if(missing.length){
       const first = document.getElementById(missing[0]);
       if(first){
+        if(typeof first.setCustomValidity === 'function'){
+          first.setCustomValidity('Kolom ini wajib diisi.');
+        }
         first.reportValidity ? first.reportValidity() : first.focus();
         first.focus();
       }
