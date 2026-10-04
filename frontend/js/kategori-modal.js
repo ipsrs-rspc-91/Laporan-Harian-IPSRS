@@ -313,7 +313,7 @@
 
     injectModal(
       'ipsrsKategoriModal2',
-      'PENGGANTIAN SPARE PART / MATERIAL',
+      'PENGGANTIAN SPARE PART / MATERIAL / UNIT',
       'Tentukan apakah ada penggantian',
       `
         <div class="ipsrs-kat-info" id="ipsrsKategoriModal2Info">Pilih salah satu pilihan berikut.</div>
@@ -323,7 +323,7 @@
         </button>
         <button type="button" class="ipsrs-kat-choice" data-kat-replace="dengan">
           <span class="ipsrs-kat-choice-title">DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT</span>
-          <span class="ipsrs-kat-choice-desc">Ada spare part/material yang diganti atau digunakan.</span>
+          <span class="ipsrs-kat-choice-desc">Ada spare part/material/unit yang diganti atau digunakan.</span>
         </button>`,
       '<button type="button" class="ipsrs-kat-cancel" data-kat-back>Kembali</button>'
     );
