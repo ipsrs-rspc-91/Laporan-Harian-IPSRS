@@ -268,7 +268,7 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
     'id="spmuUnitChoice"','id="spmuSpareChoice"',
     'id="spmuUnitTitle"','id="spmuUnitSummary"',
     'id="spmuSpareTitle"','id="spmuSpareSummary"',
-    'id="spmuActionMenuWrap"','id="spmuActionMenuTrigger"','id="spmuActionMenu"',
+    'id="spmuChoiceWrap"','id="spmuActionMenuWrap"','id="spmuActionMenuTrigger"','id="spmuActionMenu"',
     'function updateSparePartToggleStatus(){',
     'function toggleSpmuActionMenu(',
     'function chooseSpmuAction(',
@@ -284,8 +284,9 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   else if(!/if\(unitHas && spareHas\)\{/.test(app) || !/unitTitle\.textContent=unit\.name\+' • '\+spare\.name/.test(app)) fail('SPMU dual-filled UI contract','When both sides are filled, one full field is not used to display the combined data');
   else if(!/if\(hasValue\)\{[\s\S]*?removeAttribute\('role'\)[\s\S]*?onclick=null[\s\S]*?onkeydown=null/.test(app)) fail('SPMU filled-field UI contract','Filled SPMU field still behaves as a button');
   else if(!/spmuActionMenuWrap.*hidden/.test(page) || !/spmuActionMenu.*role="menu"/.test(page)) fail('SPMU action dropdown contract','Filled SPMU state does not expose the required right-side dropdown menu');
-  else if(!/chooseSpmuAction\('SPARE PART \/ MATERIAL',event\)/.test(page) || !/chooseSpmuAction\('UNIT',event\)/.test(page)) fail('SPMU action dropdown contract','Right-side dropdown does not contain exactly SPARE PART / MATERIAL and UNIT actions');
-  else pass('SPMU same-box UI contract','EMPTY state shows two selectors; once any data is saved, one full-width data field remains with a right-side dropdown for SPARE PART / MATERIAL or UNIT');
+  else if(!/data-spmu-action="SPARE PART \/ MATERIAL"/.test(page) || !/data-spmu-action="UNIT"/.test(page)) fail('SPMU action dropdown contract','Right-side dropdown does not contain exactly SPARE PART / MATERIAL and UNIT actions');
+  else if(!/closest\('#spmuActionMenuTrigger'\)/.test(app) || !/closest\('#spmuActionMenu \[data-spmu-action\]'\)/.test(app)) fail('SPMU action dropdown contract','Dropdown click handling is not delegated robustly');
+  else pass('SPMU same-box UI contract','EMPTY state shows two selectors; once any data is saved, one full-width data field remains with an elegant clickable right-side dropdown for SPARE PART / MATERIAL or UNIT');
 
   const inlineHandlers=[...page.matchAll(/onclick=["']([^"']+)["']/gi)]
     .map(m=>m[1].split(/\s*[;(]/)[0])
