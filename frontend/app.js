@@ -1969,8 +1969,17 @@
       };
     };
 
-    renderSide('spmuUnitChoice','UNIT',unit,unitHas);
-    renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
+    if(unitHas){
+      renderSide('spmuUnitChoice','UNIT',unit,true);
+    }else{
+      renderSide('spmuUnitChoice','UNIT',unit,false);
+    }
+
+    if(spareHas){
+      renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,true);
+    }else{
+      renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,false);
+    }
   }
 
   function getKeyboardContent(){
