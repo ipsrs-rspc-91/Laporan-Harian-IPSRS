@@ -828,6 +828,13 @@ Mulai berlaku sebagai aturan operasional proyek:
 11. **Tidak boleh menyatakan “sudah deploy”, “sudah live”, atau “sudah selesai” tanpa bukti run/deployment/production yang sesuai.**
 12. Instruksi yang hanya meminta informasi/status dan **tidak mengubah sistem** tidak memicu deployment; tetapi pemeriksaan status tetap harus menggunakan bukti aktual.
 13. Perubahan kontrol/SOP sendiri mengikuti aturan yang sama dan wajib diaudit serta dideploy otomatis.
+14. **SETIAP INSTRUKSI PERUBAHAN dari pengguna wajib diperlakukan sebagai satu siklus lengkap:** setelah kode diubah, **langsung cek Audit Total, lalu cek Deployment, lalu cek Production Verification** berdasarkan status GitHub Actions aktual. Tidak boleh hanya mengandalkan bahwa workflow “akan berjalan”.
+15. **Sebelum menyatakan “sudah audit”, “sudah deploy”, atau “sudah live”, wajib ada bukti run aktual.** Status yang berbeda wajib disebutkan secara terpisah:
+    - Audit SUCCESS ≠ Deployment SUCCESS.
+    - Deployment SUCCESS ≠ Production Verification SUCCESS.
+    - Jika salah satu gagal, status akhir wajib menyebut **FAILURE** dan alasan/fakta yang tersedia.
+16. **Tidak ada instruksi lanjutan yang diperlukan dari pengguna** untuk memulai audit/deploy setelah perubahan kode dibuat. Pipeline harus berjalan otomatis sesuai workflow proyek.
+17. Jika deployment otomatis gagal karena credential, secret, permission, atau konfigurasi environment, **jangan menganggap perubahan sudah live**; laporkan hambatan tersebut dan perlakukan sebagai kegagalan deployment sampai terbukti berhasil.
 
 ## Lifecycle wajib
 
