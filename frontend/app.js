@@ -2032,7 +2032,7 @@
       if(title){
         title.textContent=hasValue ? '' : titleText;
         // Hard runtime contract: filled field must never display UNIT/SPARE title.
-        title.style.display=hasValue ? 'none' : '';
+        title.style.setProperty('display', hasValue ? 'none' : '', 'important');
       }
       if(summary) summary.textContent=hasValue
         ? side.name+' • '+side.status+' • '+side.type+' • Jumlah: '+side.qty
