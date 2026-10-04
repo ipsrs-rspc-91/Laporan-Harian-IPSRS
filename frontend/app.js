@@ -1625,7 +1625,7 @@
 
     status.innerHTML = isUnit
       ? '<option value="">Pilih jenis UNIT...</option><option value="BARU">UNIT BARU</option><option value="KANIBAL">UNIT KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">UNIT DARI UNIT / RUANGAN LAIN</option><option value="LAINNYA">UNIT LAINNYA</option>'
-      : '<option value="">Pilih kondisi / sumber...</option><option value="BARU">SPARE PART / MATERIAL BARU</option><option value="KANIBAL">SPARE PART / MATERIAL KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN</option><option value="STOK IPSRS">SPARE PART / MATERIAL STOK IPSRS</option>';
+      : '<option value="">Pilih kondisi / sumber...</option><option value="BARU">SPARE PART / MATERIAL BARU</option><option value="KANIBAL">SPARE PART / MATERIAL KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN</option><option value="STOK IPSRS">SPARE PART / MATERIAL LAINNYA</option>';
 
     if(nameLabel) nameLabel.textContent = 'NAMA ' + prefix;
     if(nameInput) nameInput.placeholder = 'Nama ' + prefix;
