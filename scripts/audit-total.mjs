@@ -268,7 +268,10 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
     'id="spmuUnitChoice"','id="spmuSpareChoice"',
     'id="spmuUnitTitle"','id="spmuUnitSummary"',
     'id="spmuSpareTitle"','id="spmuSpareSummary"',
+    'id="spmuActionMenuWrap"','id="spmuActionMenuTrigger"','id="spmuActionMenu"',
     'function updateSparePartToggleStatus(){',
+    'function toggleSpmuActionMenu(',
+    'function chooseSpmuAction(',
     'el.removeAttribute(\'role\')',
     'el.onclick=null',
     'el.onkeydown=null'
@@ -280,7 +283,9 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
   else if(!/spmu-choice-group\.has-value/.test(page) || !/has-value.*is-empty-option/.test(page)) fail('SPMU full-field UI contract','Filled SPMU state does not collapse to one full-width field and hide the empty selector');
   else if(!/if\(unitHas && spareHas\)\{/.test(app) || !/unitTitle\.textContent=unit\.name\+' • '\+spare\.name/.test(app)) fail('SPMU dual-filled UI contract','When both sides are filled, one full field is not used to display the combined data');
   else if(!/if\(hasValue\)\{[\s\S]*?removeAttribute\('role'\)[\s\S]*?onclick=null[\s\S]*?onkeydown=null/.test(app)) fail('SPMU filled-field UI contract','Filled SPMU field still behaves as a button');
-  else pass('SPMU same-box UI contract','EMPTY state shows two selectors; once any data is saved, the UI shows one full-width data field only, with no UNIT/SPARE button behavior');
+  else if(!/spmuActionMenuWrap.*hidden/.test(page) || !/spmuActionMenu.*role="menu"/.test(page)) fail('SPMU action dropdown contract','Filled SPMU state does not expose the required right-side dropdown menu');
+  else if(!/chooseSpmuAction\('SPARE PART \/ MATERIAL',event\)/.test(page) || !/chooseSpmuAction\('UNIT',event\)/.test(page)) fail('SPMU action dropdown contract','Right-side dropdown does not contain exactly SPARE PART / MATERIAL and UNIT actions');
+  else pass('SPMU same-box UI contract','EMPTY state shows two selectors; once any data is saved, one full-width data field remains with a right-side dropdown for SPARE PART / MATERIAL or UNIT');
 
   const inlineHandlers=[...page.matchAll(/onclick=["']([^"']+)["']/gi)]
     .map(m=>m[1].split(/\s*[;(]/)[0])
