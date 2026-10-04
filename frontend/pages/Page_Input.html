@@ -93,22 +93,25 @@
     background:#fff;
   }
   #page-input .spmu-choice .spmu-choice-chevron{display:none !important;}
-  /* SPMU: compact until a spare-part replacement category is selected. */
-  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice{
+  /* SPMU: compact and consistent in EVERY category/state. */
+  #page-input .spmu-choice{
     min-height:58px;
-    padding:8px 12px;
+    padding:8px 34px 8px 12px;
   }
-  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice-title{
+  #page-input .spmu-choice-title{
     font-size:12px;
     line-height:1.15;
   }
-  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice-summary{
+  #page-input .spmu-choice-summary{
     font-size:10px;
     line-height:1.15;
     margin-top:2px;
   }
+  /* Category/state classes must never enlarge the Unit/Material controls. */
+  #page-input .spmu-choice-group.spmu-category-compact .spmu-choice,
   #page-input .spmu-choice-group.spmu-category-spare .spmu-choice{
-    min-height:82px;
+    min-height:58px;
+    padding:8px 34px 8px 12px;
   }
   #page-input .spmu-action-menu-wrap.spmu-action-compact .spmu-action-menu-trigger{
     width:30px;
