@@ -883,3 +883,15 @@
 </div>
 
       </section>
+
+
+<style>
+<!-- SPMU-DATA-ONLY-FINAL-GUARD-20261004 -->
+/* Final UI guard: when the selected SPMU field already contains data,
+   the title UNIT / SPARE PART / MATERIAL must never be rendered inside it.
+   This is intentionally based on actual summary content, so it remains
+   correct even if an older JS bundle leaves the title text behind. */
+#page-input .spmu-choice:has(.spmu-choice-summary:not(:empty)) .spmu-choice-title{
+  display:none !important;
+}
+</style>
