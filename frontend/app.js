@@ -2029,7 +2029,11 @@
       const summary=document.getElementById(summaryId);
       // FILLED: show DATA ONLY. Do not repeat UNIT or SPARE PART / MATERIAL
       // inside the selected field; the section label already identifies the field.
-      if(title) title.textContent=hasValue ? '' : titleText;
+      if(title){
+        title.textContent=hasValue ? '' : titleText;
+        // Hard runtime contract: filled field must never display UNIT/SPARE title.
+        title.style.display=hasValue ? 'none' : '';
+      }
       if(summary) summary.textContent=hasValue
         ? side.name+' • '+side.status+' • '+side.type+' • Jumlah: '+side.qty
         : summaryText;
