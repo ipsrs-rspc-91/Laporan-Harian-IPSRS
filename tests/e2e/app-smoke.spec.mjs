@@ -102,5 +102,18 @@ test('dashboard-mobile', async ({ page }) => {
   const overflow = await dashboard.evaluate(el => el.scrollWidth > el.clientWidth);
   expect(overflow, 'Dashboard must not overflow horizontally on mobile').toBeFalsy();
   const tableWraps = page.locator('.dashboard-new-item-table-wrap');
-  expect(await tableWraps.count()).toBeGreaterThanOrEqual(2);
+  await expect(tableWraps).toHaveCount(2, { timeout: 10000 });
+});
+
+
+test('SPMU empty selectors have no placeholder helper text', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#spmuUnitChoice')).toBeAttached({timeout:10000});
+  await expect(page.locator('#spmuSpareChoice')).toBeAttached({timeout:10000});
+  await expect(page.locator('#spmuUnitTitle')).toHaveText('UNIT');
+  await expect(page.locator('#spmuSpareTitle')).toHaveText('SPARE PART / MATERIAL');
+  await expect(page.locator('#spmuUnitSummary')).toHaveText('');
+  await expect(page.locator('#spmuSpareSummary')).toHaveText('');
+  await expect(page.locator('#spmuUnitChoice')).not.toContainText('Pilih UNIT');
+  await expect(page.locator('#spmuSpareChoice')).not.toContainText('Pilih SPARE PART / MATERIAL');
 });
