@@ -1581,6 +1581,28 @@
     return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
   }
 
+  function configureSparePartUnitModal_(kind){
+    const normalized = String(kind || '').trim().toUpperCase();
+    const status = document.getElementById('SparePartUnitStatus');
+    const nameLabel = document.querySelector('label[for="SparePartUnit"]');
+    const nameInput = document.getElementById('SparePartUnit');
+    const typeLabel = document.querySelector('label[for="Type"]');
+    const typeInput = document.getElementById('Type');
+    if(!status) return;
+
+    const isUnit = normalized === 'UNIT';
+    const prefix = isUnit ? 'UNIT' : 'SPARE PART / MATERIAL';
+
+    status.innerHTML = isUnit
+      ? '<option value="">Pilih kondisi / sumber...</option><option value="BARU">UNIT BARU</option><option value="KANIBAL">UNIT KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">UNIT DARI UNIT / RUANGAN LAIN</option><option value="STOK IPSRS">UNIT STOK IPSRS</option>'
+      : '<option value="">Pilih kondisi / sumber...</option><option value="BARU">SPARE PART / MATERIAL BARU</option><option value="KANIBAL">SPARE PART / MATERIAL KANIBAL</option><option value="DARI UNIT / RUANGAN LAIN">SPARE PART / MATERIAL DARI UNIT / RUANGAN LAIN</option><option value="STOK IPSRS">SPARE PART / MATERIAL STOK IPSRS</option>';
+
+    if(nameLabel) nameLabel.innerHTML = 'NAMA ' + prefix + ' <span class="required-mark">*</span>';
+    if(nameInput) nameInput.placeholder = 'Nama ' + prefix;
+    if(typeLabel) typeLabel.innerHTML = 'TYPE ' + (isUnit ? 'UNIT' : 'SPARE PART / MATERIAL') + ' <span class="required-mark">*</span>';
+    if(typeInput) typeInput.placeholder = 'Type / spesifikasi ' + (isUnit ? 'unit' : 'spare part / material');
+  }
+
   function openSparePartUnitModal(kind){
     const normalized = String(kind || '').trim().toUpperCase();
     if(normalized !== 'UNIT' && normalized !== 'SPARE PART / MATERIAL') return;
@@ -1592,6 +1614,7 @@
     const title = document.getElementById('spmuModalTitle');
     const prefix = normalized === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
     if(title) title.textContent = prefix;
+    configureSparePartUnitModal_(normalized);
 
     document.getElementById('spmuUnitChoice')?.classList.toggle('is-selected', normalized === 'UNIT');
     document.getElementById('spmuSpareChoice')?.classList.toggle('is-selected', normalized === 'SPARE PART / MATERIAL');
