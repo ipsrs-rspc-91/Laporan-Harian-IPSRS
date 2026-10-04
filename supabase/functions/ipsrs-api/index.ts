@@ -13,7 +13,14 @@ function materialUnitKind(p:any){
 }
 function materialUnitStatus(p:any){
  const s=normalizeCategory(p?.SparePartUnitStatus);
- return s==="BARU"?"BARU":s==="KANIBAL"?"KANIBAL":s==="LAINNYA"?"LAINNYA":"";
+ const allowed=new Set([
+   "BARU",
+   "KANIBAL",
+   "DARI UNIT / RUANGAN LAIN",
+   "LAINNYA",
+   "STOK IPSRS"
+ ]);
+ return allowed.has(s) ? s : "";
 }
 const MATERIAL_UNIT_REQUIRED_CATEGORIES=new Set([
  "PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL",
