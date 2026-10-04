@@ -1573,109 +1573,97 @@
     return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
   }
 
-  function handleSparePartUnitKindChange(){
-    const kind=getSparePartUnitKind_();
-    const host=document.getElementById('sparePartUnitModalHost');
-    if(!host) return;
-    if(!kind){ host.innerHTML=''; updateSparePartToggleStatus(); return; }
-    const prefix=kind==='UNIT'?'UNIT':'SPARE PART / MATERIAL';
-    host.innerHTML=`
-      <div class="spare-part-field">
-        <label for="SparePartUnitStatus">${prefix} — kondisi</label>
-        <select id="SparePartUnitStatus">
-          <option value="">Pilih kondisi...</option>
-          <option value="BARU">${prefix} BARU</option>
-          <option value="KANIBAL">${prefix} KANIBAL</option>
-          <option value="LAINNYA">${prefix} .....</option>
-        </select>
-      </div>
-      <div class="spare-part-field">
-        <label for="SparePartUnit">Nama ${prefix}</label>
-        <input id="SparePartUnit" placeholder="Nama ${prefix}">
-      </div>
-      <div class="spare-part-field">
-        <label for="Type">Type</label>
-        <input id="Type" placeholder="Type">
-      </div>
-      <div class="spare-part-field">
-        <label for="Jumlah">Jumlah</label>
-        <input id="Jumlah" type="number" min="0" step="any" placeholder="Jumlah">
-      </div>`;
-    ['SparePartUnit','Type','Jumlah'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.addEventListener('input',updateSparePartToggleStatus);
+  function getSparePartUnitKind_(){
+    return String(document.getElementById('SparePartUnitKind')?.value || '').trim().toUpperCase();
+  }
+
+  function getSparePartUnitStatus_(){
+    return String(document.getElementById('SparePartUnitStatus')?.value || '').trim().toUpperCase();
+  }
+
+  function openSparePartUnitModal(kind){
+    const normalized = String(kind || '').trim().toUpperCase();
+    if(normalized !== 'UNIT' && normalized !== 'SPARE PART / MATERIAL') return;
+
+    const kindEl = document.getElementById('SparePartUnitKind');
+    if(kindEl) kindEl.value = normalized;
+
+    const modal = document.getElementById('sparePartUnitModal');
+    const title = document.getElementById('spmuModalTitle');
+    const prefix = normalized === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
+    if(title) title.textContent = prefix;
+
+    document.getElementById('spmuUnitChoice')?.classList.toggle('is-selected', normalized === 'UNIT');
+    document.getElementById('spmuSpareChoice')?.classList.toggle('is-selected', normalized === 'SPARE PART / MATERIAL');
+
+    if(modal) modal.hidden = false;
+    updateSparePartToggleStatus();
+    requestAnimationFrame(()=>{
+      const first = document.getElementById('SparePartUnitStatus');
+      if(first) first.focus({preventScroll:true});
     });
+  }
+
+  function closeSparePartUnitModal(){
+    const modal = document.getElementById('sparePartUnitModal');
+    if(modal) modal.hidden = true;
     updateSparePartToggleStatus();
   }
 
-  function setSparePartSection(open){
-    const section = document.getElementById('sparePartSection');
-    const fields = document.getElementById('sparePartFields');
-    const toggle = document.getElementById('sparePartToggle');
-    const icon = document.getElementById('sparePartToggleIcon');
-    if(!section || !fields || !toggle) return;
-    const shouldOpen = !!open;
-    fields.hidden = !shouldOpen;
-    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-    if(icon) icon.textContent = shouldOpen ? '−' : '＋';
+  function saveSparePartUnitModal(){
+    const kind = getSparePartUnitKind_();
+    if(!kind){
+      openSparePartUnitModal('UNIT');
+      return;
+    }
+
+    const ids = ['SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
+    const missing = ids.filter(id => !String(document.getElementById(id)?.value || '').trim());
+    if(missing.length){
+      const first = document.getElementById(missing[0]);
+      if(first){
+        first.reportValidity ? first.reportValidity() : first.focus();
+        first.focus();
+      }
+      return;
+    }
+
+    updateSparePartToggleStatus();
+    closeSparePartUnitModal();
   }
 
-  function toggleSparePartSection(){
-    const fields = document.getElementById('sparePartFields');
-    setSparePartSection(!fields || fields.hidden);
-  }
-
-  function setPelaporLkSection(open){
-    const fields = document.getElementById('pelaporLkFields');
-    const toggle = document.getElementById('pelaporLkToggle');
-    const icon = document.getElementById('pelaporLkToggleIcon');
-    if(!fields || !toggle) return;
-    const shouldOpen = !!open;
-    fields.hidden = !shouldOpen;
-    toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-    if(icon) icon.textContent = shouldOpen ? '−' : '＋';
-  }
-
-  function togglePelaporLkSection(){
-    const fields = document.getElementById('pelaporLkFields');
-    setPelaporLkSection(!fields || fields.hidden);
-  }
-
-  function updatePelaporLkStatus_(){
-    const pelapor = String(document.getElementById('Pelapor')?.value || '').trim();
-    const nolk = String(document.getElementById('NoLK')?.value || '').trim();
-    const status = document.getElementById('pelaporLkToggleStatus');
-    if(status){
-      status.textContent = (pelapor || nolk) ? 'Sudah diisi' : 'Belum diisi';
+  function handleSparePartUnitKindChange(){
+    const kind = getSparePartUnitKind_();
+    if(kind === 'UNIT' || kind === 'SPARE PART / MATERIAL'){
+      openSparePartUnitModal(kind);
     }
   }
 
   function syncSparePartSection(){
-    const sel = document.getElementById('Kategori');
-    const required = isSparePartRequiredCategory(sel ? sel.value : '');
-    const kind = getSparePartUnitKind_();
-    const hasValue = ['SparePartUnit','Type','Jumlah','SparePartUnitStatus'].some(id =>
-      String(document.getElementById(id)?.value || '').trim()
-    );
-    if(required || kind || hasValue) setSparePartSection(true);
     updateSparePartToggleStatus();
   }
 
   function updateSparePartToggleStatus(){
-    const status = document.getElementById('sparePartToggleStatus');
-    if(!status) return;
     const part = String(document.getElementById('SparePartUnit')?.value || '').trim();
     const type = String(document.getElementById('Type')?.value || '').trim();
     const qty = String(document.getElementById('Jumlah')?.value || '').trim();
-    if(part || type || qty){
-      const parts = [];
-      if(part) parts.push(part);
-      if(type) parts.push(type);
-      if(qty) parts.push('Jumlah: ' + qty);
-      status.textContent = parts.join(' • ');
-    }else{
-      status.textContent = 'Belum diisi';
-    }
+    const kind = getSparePartUnitKind_();
+    const status = getSparePartUnitStatus_();
+
+    const summary = [];
+    if(status) summary.push(status);
+    if(part) summary.push(part);
+    if(type) summary.push(type);
+    if(qty) summary.push('Jumlah: ' + qty);
+
+    const unitSummary = document.getElementById('spmuUnitSummary');
+    const spareSummary = document.getElementById('spmuSpareSummary');
+    const text = summary.length ? summary.join(' • ') : 'Belum diisi';
+    if(unitSummary) unitSummary.textContent = kind === 'UNIT' ? text : 'Belum diisi';
+    if(spareSummary) spareSummary.textContent = kind === 'SPARE PART / MATERIAL' ? text : 'Belum diisi';
+
+    document.getElementById('spmuUnitChoice')?.classList.toggle('is-selected', kind === 'UNIT');
+    document.getElementById('spmuSpareChoice')?.classList.toggle('is-selected', kind === 'SPARE PART / MATERIAL');
   }
 
   // ============================================================
@@ -3076,10 +3064,7 @@
     document.getElementById('MasalahKegiatan').value = editData.MasalahKegiatan || '';
     document.getElementById('Tindakan').value = editData.Tindakan || '';
     const kindEl=document.getElementById('SparePartUnitKind');
-    if(kindEl){
-      kindEl.value=editData.SparePartUnitKind || '';
-      handleSparePartUnitKindChange();
-    }
+    if(kindEl) kindEl.value=editData.SparePartUnitKind || '';
     const statusEl=document.getElementById('SparePartUnitStatus');
     if(statusEl) statusEl.value=editData.SparePartUnitStatus || '';
     const spEl=document.getElementById('SparePartUnit'); if(spEl) spEl.value=editData.SparePartUnit || '';
