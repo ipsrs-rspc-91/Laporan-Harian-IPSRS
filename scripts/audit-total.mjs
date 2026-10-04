@@ -230,8 +230,8 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
     'function captureSpmuModalState_(',
     'function getSpmuPayload_(',
     'function resetSpmuState_(',
-    'if(unitHas)',
-    'if(spareHas)',
+    "renderSide('spmuUnitChoice','UNIT',unit,unitHas)",
+    "renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas)",
     'UnitStatus','UnitName','UnitType','UnitJumlah',
     'SparePartMaterialStatus','SparePartMaterial','SparePartMaterialType','SparePartMaterialJumlah'
   ];
