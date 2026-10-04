@@ -268,14 +268,17 @@ if(fs.existsSync(inputContractPath) && fs.existsSync(inputAppPath) && fs.existsS
     'id="spmuUnitChoice"','id="spmuSpareChoice"',
     'id="spmuUnitTitle"','id="spmuUnitSummary"',
     'id="spmuSpareTitle"','id="spmuSpareSummary"',
-    "openSparePartUnitModal('UNIT')",
-    "openSparePartUnitModal('SPARE PART / MATERIAL')"
+    'function updateSparePartToggleStatus(){',
+    'el.removeAttribute(\'role\')',
+    'el.onclick=null',
+    'el.onkeydown=null'
   ];
-  const missingSameBox = sameBoxContract.filter(x=>!page.includes(x));
+  const missingSameBox = sameBoxContract.filter(x=>!page.includes(x) && !app.includes(x));
   if(missingSameBox.length) fail('SPMU same-box UI contract','Missing: '+missingSameBox.join(', '));
-  else if(page.includes('id="spmuSelectedDetail"') || app.includes('function openSelectedSparePartUnitModal_(')) fail('SPMU same-box UI contract','Separate SPMU detail card/helper is still present; selected data must replace the data inside the same left/right field box');
-  else if(!/unitTitle\.textContent\s*=\s*unit\.name/.test(app) || !/spareTitle\.textContent\s*=\s*spare\.name/.test(app)) fail('SPMU same-box UI contract','Selected UNIT/SPARE data is not rendered into the same choice boxes');
-  else pass('SPMU same-box UI contract','Before input: LEFT UNIT / RIGHT SPARE PART-MATERIAL; after OK: entered data replaces the selected half inside the same box');
+  else if(page.includes('id="spmuSelectedDetail"') || app.includes('function openSelectedSparePartUnitModal_(')) fail('SPMU same-box UI contract','Separate SPMU detail card/helper is still present; selected data must remain inside the same left/right field box');
+  else if(!/title\.textContent=hasValue\?side\.name:titleText/.test(app) || !/summary\.textContent=hasValue/.test(app)) fail('SPMU same-box UI contract','Selected UNIT/SPARE data is not rendered into the same choice boxes');
+  else if(!/if\(hasValue\)\{[\s\S]*?removeAttribute\('role'\)[\s\S]*?onclick=null[\s\S]*?onkeydown=null/.test(app)) fail('SPMU filled-field UI contract','Filled SPMU field still behaves as a button');
+  else pass('SPMU same-box UI contract','EMPTY side shows the UNIT/SPARE selector; after OK the same field contains only entered data and has no button behavior');
 
   const inlineHandlers=[...page.matchAll(/onclick=["']([^"']+)["']/gi)]
     .map(m=>m[1].split(/\s*[;(]/)[0])
