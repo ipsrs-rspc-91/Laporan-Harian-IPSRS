@@ -272,10 +272,10 @@
     padding:5px 62px 5px 12px !important;
     overflow:visible !important;
   }
+  /* Filled SPMU field must contain DATA ONLY. The UNIT/SPARE title is hidden
+     by CSS as a hard UI contract, independent of JavaScript render timing. */
   #page-input .spmu-choice-group .spmu-choice.has-value .spmu-choice-title{
-    white-space:nowrap !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
+    display:none !important;
   }
   #page-input .spmu-choice-group .spmu-choice.has-value .spmu-choice-summary{
     white-space:normal !important;
