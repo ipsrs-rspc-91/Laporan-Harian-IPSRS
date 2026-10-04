@@ -1913,7 +1913,10 @@
   }
 
   function updateSparePartToggleStatus(){
-    // Pastikan state sisi aktif selalu mencerminkan modal sebelum rendering.
+    // Render each side independently.
+    // EMPTY: selectable field showing UNIT / SPARE PART-MATERIAL.
+    // FILLED: the same field becomes plain data text only — no button,
+    // no chevron, and no click action.
     const activeKind=getSparePartUnitKind_();
     if(activeKind==='UNIT' || activeKind==='SPARE PART / MATERIAL') captureSpmuModalState_();
 
@@ -1922,35 +1925,52 @@
     const unitHas=isSpmuSideComplete_(unit);
     const spareHas=isSpmuSideComplete_(spare);
 
-    const unitTitle = document.getElementById('spmuUnitTitle');
-    const unitSummary = document.getElementById('spmuUnitSummary');
-    const spareTitle = document.getElementById('spmuSpareTitle');
-    const spareSummary = document.getElementById('spmuSpareSummary');
-    const unitChoice = document.getElementById('spmuUnitChoice');
-    const spareChoice = document.getElementById('spmuSpareChoice');
+    const renderSide=(id,kind,side,hasValue)=>{
+      const el=document.getElementById(id);
+      if(!el) return;
 
-    if(unitHas){
-      if(unitTitle) unitTitle.textContent = unit.name;
-      if(unitSummary) unitSummary.textContent = unit.status + ' • ' + unit.type + ' • Jumlah: ' + unit.qty;
-    }else{
-      if(unitTitle) unitTitle.textContent = 'UNIT';
-      if(unitSummary) unitSummary.textContent = 'Pilih UNIT';
-    }
+      const titleId=kind==='UNIT'?'spmuUnitTitle':'spmuSpareTitle';
+      const summaryId=kind==='UNIT'?'spmuUnitSummary':'spmuSpareSummary';
+      const titleText=kind==='UNIT'?'UNIT':'SPARE PART / MATERIAL';
+      const summaryText=kind==='UNIT'?'Pilih UNIT':'Pilih SPARE PART / MATERIAL';
 
-    if(spareHas){
-      if(spareTitle) spareTitle.textContent = spare.name;
-      if(spareSummary) spareSummary.textContent = spare.status + ' • ' + spare.type + ' • Jumlah: ' + spare.qty;
-    }else{
-      if(spareTitle) spareTitle.textContent = 'SPARE PART / MATERIAL';
-      if(spareSummary) spareSummary.textContent = 'Pilih SPARE PART / MATERIAL';
-    }
+      el.classList.toggle('has-value',hasValue);
+      el.classList.toggle('is-empty-option',!hasValue);
+      el.classList.toggle('is-selected',false);
 
-    unitChoice?.classList.toggle('is-selected', unitHas);
-    spareChoice?.classList.toggle('is-selected', spareHas);
-    unitChoice?.classList.toggle('has-value', unitHas);
-    spareChoice?.classList.toggle('has-value', spareHas);
-    unitChoice?.classList.toggle('is-empty-option', !unitHas);
-    spareChoice?.classList.toggle('is-empty-option', !spareHas);
+      const title=document.getElementById(titleId);
+      const summary=document.getElementById(summaryId);
+      if(title) title.textContent=hasValue?side.name:titleText;
+      if(summary) summary.textContent=hasValue
+        ? side.status+' • '+side.type+' • Jumlah: '+side.qty
+        : summaryText;
+
+      // Filled side is plain text data only: no button role, no keyboard
+      // action, no click handler, no chevron affordance.
+      if(hasValue){
+        el.removeAttribute('role');
+        el.removeAttribute('tabindex');
+        el.removeAttribute('aria-haspopup');
+        el.onclick=null;
+        el.onkeydown=null;
+        return;
+      }
+
+      // Empty side remains the only selectable state.
+      el.setAttribute('role','button');
+      el.setAttribute('tabindex','0');
+      el.setAttribute('aria-haspopup','dialog');
+      el.onclick=()=>openSparePartUnitModal(kind);
+      el.onkeydown=(event)=>{
+        if(event.key==='Enter' || event.key===' '){
+          event.preventDefault();
+          openSparePartUnitModal(kind);
+        }
+      };
+    };
+
+    renderSide('spmuUnitChoice','UNIT',unit,unitHas);
+    renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
   }
 
   function getKeyboardContent(){
