@@ -2015,9 +2015,12 @@
 
       const title=document.getElementById(titleId);
       const summary=document.getElementById(summaryId);
-      if(title) title.textContent=hasValue?side.name:titleText;
+      // Filled state must remain explicit about WHICH side is filled.
+      // Keep the type label as the title and show the complete four-field data
+      // in the same box so UNIT cannot be confused with SPARE PART / MATERIAL.
+      if(title) title.textContent=titleText;
       if(summary) summary.textContent=hasValue
-        ? side.status+' • '+side.type+' • Jumlah: '+side.qty
+        ? side.name+' • '+side.status+' • '+side.type+' • Jumlah: '+side.qty
         : summaryText;
 
       // FILLED: this same field remains data-only. The only interaction is
@@ -2058,10 +2061,10 @@
     if(unitHas && spareHas){
       const unitTitle=document.getElementById('spmuUnitTitle');
       const unitSummary=document.getElementById('spmuUnitSummary');
-      if(unitTitle) unitTitle.textContent=unit.name+' • '+spare.name;
+      if(unitTitle) unitTitle.textContent='UNIT + SPARE PART / MATERIAL';
       if(unitSummary) unitSummary.textContent=
-        'UNIT: '+unit.status+' • '+unit.type+' • Jumlah: '+unit.qty+
-        ' | SPARE PART / MATERIAL: '+spare.status+' • '+spare.type+' • Jumlah: '+spare.qty;
+        'UNIT: '+unit.name+' • '+unit.status+' • '+unit.type+' • Jumlah: '+unit.qty+
+        ' | SPARE PART / MATERIAL: '+spare.name+' • '+spare.status+' • '+spare.type+' • Jumlah: '+spare.qty;
     }
   }
 
