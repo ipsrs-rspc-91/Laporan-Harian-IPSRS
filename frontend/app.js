@@ -221,8 +221,10 @@
       try{ if(document.activeElement) document.activeElement.blur(); }catch(e){}
       return true;
     };
-    setTimeout(focusFormTop, 120);
-    setTimeout(focusFormTop, 350);
+    // Satu kali positioning setelah layout form selesai dirender.
+    // Sebelumnya ada dua scroll terjadwal (120ms dan 350ms) yang
+    // menyebabkan form terlihat bergoyang/kedip dua kali di perangkat mobile.
+    setTimeout(focusFormTop, 180);
   }
 
   // ============================================================
