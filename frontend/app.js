@@ -1975,9 +1975,34 @@
     }
   }
 
+  function clearSpmuData_(){
+    const unit=getSpmuSide_('UNIT');
+    const spare=getSpmuSide_('SPARE PART / MATERIAL');
+    unit.status=''; unit.name=''; unit.type=''; unit.qty='';
+    spare.status=''; spare.name=''; spare.type=''; spare.qty='';
+    const ids=['SparePartUnitKind','SparePartUnitStatus','SparePartUnit','Type','Jumlah'];
+    ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    updateSparePartToggleStatus();
+  }
+
+  function deleteSpmuData_(event){
+    if(event) event.stopPropagation();
+    closeSpmuActionMenu_();
+    const hasData=isSpmuSideComplete_(getSpmuSide_('UNIT')) ||
+      isSpmuSideComplete_(getSpmuSide_('SPARE PART / MATERIAL'));
+    if(!hasData) return;
+    const ok=window.confirm('Hapus data SPARE PART / MATERIAL / UNIT dari laporan ini?');
+    if(!ok) return;
+    clearSpmuData_();
+  }
+
   function chooseSpmuAction(kind,event){
     if(event) event.stopPropagation();
     closeSpmuActionMenu_();
+    if(kind==='HAPUS'){
+      deleteSpmuData_(event);
+      return;
+    }
     if(kind==='UNIT' || kind==='SPARE PART / MATERIAL') openSparePartUnitModal(kind);
   }
 
