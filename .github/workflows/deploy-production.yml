@@ -59,12 +59,19 @@ jobs:
           # caused the actual frontend change to remain undeployed.
           frontend=true
 
-          # Deploy all production surfaces from the exact audited commit.
-          # This intentionally avoids component-detection drift: if an audited
-          # commit follows a backend change, Supabase must not remain on an older
-          # Edge Function/schema version while GitHub Pages advances.
-          supabase=true
+          # Frontend/Cloudflare are deployed from the exact audited commit so
+          # an audit-only follow-up commit cannot leave the approved UI change behind.
+          frontend=true
           cloudflare=true
+
+          # Supabase is deployed only when the audited commit actually changes
+          # backend code or migrations. This prevents a frontend/audit-only commit
+          # from being blocked by an unrelated missing Supabase deployment secret.
+          if printf '%s\\n' "$files" | grep -Eq '^(supabase/|\.github/workflows/deploy-production\\.yml$)'; then
+            supabase=true
+          else
+            supabase=false
+          fi
 
           echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
           echo "supabase=$supabase" >> "$GITHUB_OUTPUT"
