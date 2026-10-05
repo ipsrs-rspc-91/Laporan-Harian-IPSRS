@@ -59,12 +59,12 @@ jobs:
           # caused the actual frontend change to remain undeployed.
           frontend=true
 
-          supabase=false
+          # Deploy all production surfaces from the exact audited commit.
+          # This intentionally avoids component-detection drift: if an audited
+          # commit follows a backend change, Supabase must not remain on an older
+          # Edge Function/schema version while GitHub Pages advances.
+          supabase=true
           cloudflare=true
-
-          if printf '%s\n' "$files" | grep -q '^supabase/'; then
-            supabase=true
-          fi
 
           echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
           echo "supabase=$supabase" >> "$GITHUB_OUTPUT"
@@ -208,7 +208,7 @@ jobs:
           echo "Frontend/GitHub Pages: ${{ needs.detect-changes.outputs.frontend }}"
           echo "Supabase: ${{ needs.detect-changes.outputs.supabase }}"
           echo "Cloudflare Worker: ${{ needs.detect-changes.outputs.cloudflare }}"
-          echo "Frontend/Cloudflare deploy after every successful full audit; Supabase deploy only when supabase files changed."
+          echo "All production surfaces deploy from the exact audited commit after the full regression gate."
 
       - name: Production deployment passed
         run: echo "✅ IPSRS SELECTIVE PRODUCTION DEPLOYMENT PASSED"
