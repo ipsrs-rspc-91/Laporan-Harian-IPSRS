@@ -67,7 +67,7 @@ jobs:
           # Supabase is deployed only when the audited commit actually changes
           # backend code or migrations. This prevents a frontend/audit-only commit
           # from being blocked by an unrelated missing Supabase deployment secret.
-          if printf '%s\\n' "$files" | grep -Eq '^(supabase/|\.github/workflows/deploy-production\\.yml$)'; then
+          if printf '%s\\n' "$files" | grep -Eq '^supabase/'; then
             supabase=true
           else
             supabase=false
