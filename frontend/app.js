@@ -2118,17 +2118,22 @@
     renderSide('spmuUnitChoice','UNIT',unit,unitHas);
     renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
 
-    // Satu pilihan tetap ditampilkan sebagai data, sementara pilihan
-    // lainnya tetap tersedia untuk mengganti data melalui konfirmasi.
-    // Jangan menyembunyikan tombol sisi yang kosong.
-    [
-      ['spmuUnitChoice',unitHas],
-      ['spmuSpareChoice',spareHas]
-    ].forEach(([id,hasValue])=>{
-      const choice=document.getElementById(id);
-      if(!choice) return;
-      choice.style.setProperty('display','flex','important');
-    });
+    // Jika satu sisi sudah terisi, field yang tampil HANYA field tersebut.
+    // Sisi yang kosong disembunyikan agar pengguna tidak melihat label
+    // UNIT/SPARE PART yang berlawanan. Perpindahan jenis dilakukan melalui
+    // menu aksi dan tetap melewati konfirmasi penggantian.
+    const unitChoice=document.getElementById('spmuUnitChoice');
+    const spareChoice=document.getElementById('spmuSpareChoice');
+    if(unitChoice) unitChoice.style.setProperty(
+      'display',
+      (unitHas || !spareHas) ? 'flex' : 'none',
+      'important'
+    );
+    if(spareChoice) spareChoice.style.setProperty(
+      'display',
+      (spareHas || !unitHas) ? 'flex' : 'none',
+      'important'
+    );
 
     const actionWrap=document.getElementById('spmuActionMenuWrap');
     if(actionWrap){
@@ -2136,21 +2141,9 @@
       actionWrap.classList.toggle('spmu-action-compact',!spareCategory);
     }
 
-    // If both sides have data, show both datasets without type labels.
-    // The section label already identifies the field; UNIT/SPARE labels are
-    // deliberately omitted from the selected content.
-    if(unitHas && spareHas){
-      const unitTitle=document.getElementById('spmuUnitTitle');
-      const spareTitle=document.getElementById('spmuSpareTitle');
-      const unitSummary=document.getElementById('spmuUnitSummary');
-      const spareSummary=document.getElementById('spmuSpareSummary');
-      if(unitTitle) unitTitle.textContent='';
-      if(spareTitle) spareTitle.textContent='';
-      if(unitSummary) unitSummary.textContent=
-        unit.name+' • '+unit.status+' • '+unit.type+' • Jumlah: '+unit.qty;
-      if(spareSummary) spareSummary.textContent=
-        spare.name+' • '+spare.status+' • '+spare.type+' • Jumlah: '+spare.qty;
-    }
+    // Kontrak UI: satu laporan baru hanya menampilkan satu field SPMU.
+    // Data historis yang kebetulan memiliki dua sisi tetap tidak diubah di sini;
+    // tetapi field aktif tidak diberi label UNIT/SPARE PART tambahan.
   }
 
   // MOBILE KEYBOARD SMART SCROLL STATE — restored from 2026-10-03 checkpoint.
