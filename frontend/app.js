@@ -1852,9 +1852,29 @@
     const normalized = String(kind || '').trim().toUpperCase();
     if(normalized !== 'UNIT' && normalized !== 'SPARE PART / MATERIAL') return;
 
+    // Satu laporan hanya menampilkan satu pilihan SPMU.
+    // Jika sisi lain sudah lengkap, minta konfirmasi sebelum menggantinya.
+    const currentKind = normalized === 'UNIT' ? 'SPARE PART / MATERIAL' : 'UNIT';
+    const currentSide = getSpmuSide_(currentKind);
+    if(isSpmuSideComplete_(currentSide)){
+      const currentLabel = currentKind === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
+      const targetLabel = normalized === 'UNIT' ? 'UNIT' : 'SPARE PART / MATERIAL';
+      const replace = window.confirm(
+        'Field ' + currentLabel + ' sudah berisi data.\n\n' +
+        'Apakah Anda ingin menghapus data ' + currentLabel +
+        ' dan menggantinya dengan ' + targetLabel + '?'
+      );
+      if(!replace) return;
+
+      currentSide.status='';
+      currentSide.name='';
+      currentSide.type='';
+      currentSide.qty='';
+    }
+
     scrollSparePartSectionIntoView_();
 
-    // Simpan dulu sisi yang sedang aktif; jangan pernah menghapus sisi lain.
+    // Simpan dulu sisi yang sedang aktif; data sisi lain sudah dipastikan kosong.
     captureSpmuModalState_();
 
     const kindEl = document.getElementById('SparePartUnitKind');
@@ -2073,21 +2093,16 @@
     renderSide('spmuUnitChoice','UNIT',unit,unitHas);
     renderSide('spmuSpareChoice','SPARE PART / MATERIAL',spare,spareHas);
 
-    // FINAL RUNTIME CONTRACT:
-    // If either side has complete data, the other empty choice is not a
-    // second field. It must disappear, including against legacy !important CSS.
-    const anySpmuValue=unitHas || spareHas;
+    // Satu pilihan tetap ditampilkan sebagai data, sementara pilihan
+    // lainnya tetap tersedia untuk mengganti data melalui konfirmasi.
+    // Jangan menyembunyikan tombol sisi yang kosong.
     [
       ['spmuUnitChoice',unitHas],
       ['spmuSpareChoice',spareHas]
     ].forEach(([id,hasValue])=>{
       const choice=document.getElementById(id);
       if(!choice) return;
-      if(anySpmuValue && !hasValue){
-        choice.style.setProperty('display','none','important');
-      }else{
-        choice.style.removeProperty('display');
-      }
+      choice.style.setProperty('display','flex','important');
     });
 
     const actionWrap=document.getElementById('spmuActionMenuWrap');
