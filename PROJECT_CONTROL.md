@@ -4,16 +4,16 @@
 >
 > **Prinsip utama:** Buku Induk yang lengkap tidak berarti seluruh sistem otomatis berstatus PASS. Bab harus terdokumentasi lengkap, sedangkan status teknis tetap mengikuti bukti audit nyata.
 
-**Control Book Version:** 2.1.0  
-**Tanggal penyelesaian struktur:** 2026-10-04  
+**Control Book Version:** 2.1.1  
+**Tanggal revisi kontrol:** 2026-10-06  
 **Repository:** ipsrs-rspc-91/Laporan-Harian-IPSRS  
 **Branch utama:** main  
-**HEAD yang diaudit saat penyusunan:** 3c5a86103cb945178ebc68f841cc4909b79fcae4  
+**HEAD yang direkonsiliasi:** `b944323bad73432c56066657d0087c67fe741c43`  
 **Target produksi:** Cloudflare  
 **Backend aktif yang terdokumentasi:** Supabase Edge Function `ipsrs-api`  
 **Database aktif yang terdokumentasi:** Supabase/Postgres  
 **GitHub:** tetap dipertahankan sebagai source, backup, recovery dan CI/CD selama migrasi  
-**Status Buku Induk:** **SELESAI — 40 bab terisi dan memiliki status kontrol**  
+**Status Buku Induk:** **SELESAI — 41 bab terisi dan memiliki status kontrol**  
 **Status proyek:** **BELUM BOLEH DIANGGAP MIGRASI TOTAL KE CLOUDFLARE/D1** sebelum bukti parity, database, security, backup dan production smoke lengkap.
 
 ---
@@ -52,7 +52,7 @@
 - GitHub Pages sebagai source/backup/deployment selama transisi
 
 **Status kontrol:** DOCUMENTED.  
-**Bukti:** struktur repository dan file kontrol tersedia di HEAD 3c5a86103cb945178ebc68f841cc4909b79fcae4.
+**Bukti:** struktur repository dan file kontrol direkonsiliasi terhadap HEAD `b944323bad73432c56066657d0087c67fe741c43`.
 
 ---
 
@@ -359,7 +359,7 @@ Untuk penggantian, modal wajib menjaga field:
 
 **Current live Supabase function evidence:** `ipsrs-api` ACTIVE, version 73. Source parity verified 2026-10-06: GitHub `supabase/functions/ipsrs-api/index.ts` blob `46638166d936db7262e75a802a1d832f6d29fd7d` is byte-for-byte identical to the live Edge Function source returned by Supabase v73.
 
-**Status:** DOCUMENTED; source/live parity = OPEN.
+**Status:** DOCUMENTED; source/live parity = CERTIFIED untuk `ipsrs-api` v73. DB/RLS live certification tetap OPEN.
 
 ---
 
@@ -380,7 +380,9 @@ Untuk penggantian, modal wajib menjaga field:
 **Field laporan yang dipetakan backend antara lain:**
 report_id, staff_id, nama_snapshot, bidang_snapshot, role_snapshot, tanggal, pelapor, pukul, nolk, ruang, masalah_kegiatan, tindakan, status, keterangan, kategori, area_kerja, item, spare_part_unit_kind, spare_part_unit_status, spare_part_unit, type, jumlah, created_at, updated_at, created_by_*, updated_by_*, version, deleted_at.
 
-**Konsep SPARE PART / MATERIAL / UNIT:** laporan baru menyimpan klasifikasi `SPARE PART / MATERIAL` atau `UNIT`, status `BARU/KANIBAL/LAINNYA`, nama, type dan jumlah. Rekap BARU tidak lagi bergantung pada nama kategori; kategori lama tetap didukung sebagai fallback kompatibilitas.\n\n**Status:** DOCUMENTED; full schema/RLS live certification = OPEN.
+**Konsep SPARE PART / MATERIAL / UNIT:** laporan baru menyimpan klasifikasi `SPARE PART / MATERIAL` atau `UNIT`, status `BARU/KANIBAL/LAINNYA`, nama, type dan jumlah. Rekap BARU tidak lagi bergantung pada nama kategori; kategori lama tetap didukung sebagai fallback kompatibilitas.
+
+**Status:** DOCUMENTED; full schema/RLS live certification = OPEN.
 
 ---
 
@@ -502,7 +504,7 @@ Migration yang ada di repository mencakup:
 - dashboard-spare-part-table
 - dashboard-mobile
 
-**Matrix lain masih harus mengikuti status IMPLEMENTED/PLANNED di `REGRESSION_MATRIX.yaml`.
+**Matrix lain masih harus mengikuti status IMPLEMENTED/PLANNED di `REGRESSION_MATRIX.yaml`.**
 
 **Gate:** static audit + browser regression + deployment verification.
 
@@ -514,7 +516,7 @@ Migration yang ada di repository mencakup:
 
 **Repository:** ipsrs-rspc-91/Laporan-Harian-IPSRS  
 **Branch:** main  
-**Current HEAD saat Buku Induk diselesaikan:** 3c5a86103cb945178ebc68f841cc4909b79fcae4.
+**Current HEAD yang direkonsiliasi pada 2026-10-06:** `b944323bad73432c56066657d0087c67fe741c43`.
 
 **Peran:**
 - source control
@@ -563,11 +565,11 @@ Migration yang ada di repository mencakup:
 
 **Repository source:** `supabase/functions/ipsrs-api/index.ts`.
 
-**Migrations:** repository contains the security/privacy/RLS/soft-delete migration chain dated 2026-09-24 through 2026-09-28.
+**Live migration inventory yang telah diverifikasi:** `20260924021155`, `20260924035728`, `20260924035824`, `20260924040217`, `20260926112505`, `20260926152613`, `20260926235410`, `20260928092227`, `20261002231924`, dan `20261004233054`. Dokumentasi tidak boleh berhenti pada chain 2026-09-28.
 
 **Rule:** source commit ≠ proof live function equals source. Live version/hash must be compared when certification is required.
 
-**Status:** DOCUMENTED; source/live parity = OPEN.
+**Status:** DOCUMENTED; source/live parity = CERTIFIED untuk `ipsrs-api` v73. DB/RLS live certification tetap OPEN.
 
 ---
 
@@ -732,20 +734,20 @@ After every production deployment:
 
 A release may be declared **PRODUCTION VERIFIED** only if all applicable gates are PASS:
 
-| Gate | Required |
-|---|---|
-| Source | PASS |
-| Lock gate | PASS |
-| Static audit | PASS |
-| Regression | PASS |
-| Cache/version | PASS |
-| Supabase/backend | PASS |
-| Database/RLS | PASS |
-| Cloudflare deployment | PASS |
-| Production smoke | PASS |
-| GitHub recovery checkpoint | PASS |
-| Data integrity | PASS |
-| Security | PASS |
+| Gate | Requirement | Current evidence status |
+|---|---|---|
+| Source | PASS required | **PASS** — current main HEAD reconciled |
+| Lock gate | PASS required | **OPEN / NOT CERTIFIED** |
+| Static audit | PASS required | **OPEN / NOT CERTIFIED** |
+| Regression | PASS required | **OPEN / NOT CERTIFIED** |
+| Cache/version | PASS required | **OPEN / NOT CERTIFIED** |
+| Supabase/backend | PASS required | **PARTIAL** — `ipsrs-api` v73 source/live parity certified |
+| Database/RLS | PASS required | **OPEN / NOT CERTIFIED** |
+| Cloudflare deployment | PASS required | **OPEN / NOT CERTIFIED** |
+| Production smoke | PASS required | **OPEN / NOT CERTIFIED** |
+| GitHub recovery checkpoint | PASS required | **PASS** — GitHub HEAD exists; full DR drill remains open |
+| Data integrity | PASS required | **OPEN / NOT CERTIFIED** |
+| Security | PASS required | **OPEN / NOT CERTIFIED** |
 
 If any item is missing evidence: **NOT CERTIFIED**.
 
@@ -764,7 +766,7 @@ Control-system history retained from prior revisions:
 - `a354fd45d4f0a7c888cea1ced5981fe5af43dc67` — expanded protected files/modules.
 - `3c5a86103cb945178ebc68f841cc4909b79fcae4` — removed stray baseline entry.
 - **2026-10-06 — parity correction:** `PROJECT_CONTROL.md` corrected from `ipsrs-api` v70 to live v73 after byte-for-byte source parity verification; production Edge Function was not changed.
-- **This revision:** completes all 40 chapters and converts the book from a skeleton into an operational control specification.
+- **2026-10-06 — control reconciliation:** synchronized current HEAD, resolved stale `ipsrs-api` parity wording, reconciled live migration inventory through `20261004233054`, clarified production-audit evidence statuses, and corrected chapter count to 41.
 
 Future entries must contain:
 **date → user request → impacted modules → files → old baseline → new baseline → tests → deployment → production evidence → lock status**.
@@ -951,7 +953,7 @@ Perintah standar:
 ## Buku Induk
 **STATUS: SELESAI**
 
-Semua 40 bab 001–040 sekarang mempunyai isi, aturan, scope, dependency, atau prosedur yang jelas.
+Semua 41 bab 001–041 sekarang mempunyai isi, aturan, scope, dependency, atau prosedur yang jelas.
 
 ## Lock system
 **STATUS: AKTIF**
@@ -974,13 +976,13 @@ File/alat:
 **STATUS: BELUM FULLY CERTIFIED**
 
 Alasannya bukan karena Buku Induk belum jadi, tetapi karena bukti teknis yang memang belum lengkap:
-- Cloudflare parity
-- Supabase source/live parity
+- Cloudflare source/deployment parity
 - DB/RLS live verification
 - full backup/restore drill
 - numeric performance baseline
 - full regression coverage
 - production smoke terbaru
+- security certification menyeluruh
 
 **Artinya: Buku Induk sudah selesai sebagai sistem kontrol; audit proyek tetap berjalan mengikuti gate di dalam Buku Induk.**
 
