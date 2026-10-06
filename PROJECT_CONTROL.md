@@ -10,7 +10,7 @@
 **Branch utama:** main  
 **HEAD yang direkonsiliasi:** `b944323bad73432c56066657d0087c67fe741c43`  
 **Target produksi:** Cloudflare  
-**Backend aktif yang terdokumentasi:** Supabase Edge Function `ipsrs-api`  
+**Backend aktif yang terdokumentasi:** Supabase Edge Functions `ipsrs-api`, `ipsrs-link-account`, `ipsrs-auth-bridge`, `ipsrs-bulk-provision-once`  
 **Database aktif yang terdokumentasi:** Supabase/Postgres  
 **GitHub:** tetap dipertahankan sebagai source, backup, recovery dan CI/CD selama migrasi  
 **Status Buku Induk:** **SELESAI — 41 bab terisi dan memiliki status kontrol**  
@@ -359,7 +359,7 @@ Untuk penggantian, modal wajib menjaga field:
 
 **Current live Supabase function evidence:** `ipsrs-api` ACTIVE, version 73. Source parity verified 2026-10-06: GitHub `supabase/functions/ipsrs-api/index.ts` blob `46638166d936db7262e75a802a1d832f6d29fd7d` is byte-for-byte identical to the live Edge Function source returned by Supabase v73.
 
-**Status:** DOCUMENTED; source/live parity = CERTIFIED untuk `ipsrs-api` v73. DB/RLS live certification tetap OPEN.
+**Status:** DOCUMENTED; source/live parity = CERTIFIED untuk seluruh 4 Edge Function aktif (ipsrs-api v73, link-account v2, auth-bridge v2, bulk-provision-once v2). DB/RLS live certification tetap OPEN.
 
 ---
 
@@ -563,13 +563,13 @@ Migration yang ada di repository mencakup:
 
 **Current evidence:** Edge Function `ipsrs-api` ACTIVE version 73. Source/live parity verified 2026-10-06; no production downgrade or Edge Function code change was performed.
 
-**Repository source:** `supabase/functions/ipsrs-api/index.ts`.
+**Repository source:** `supabase/functions/ipsrs-api/index.ts` + `supabase/functions/ipsrs-link-account/` + `supabase/functions/ipsrs-auth-bridge/` + `supabase/functions/ipsrs-bulk-provision-once/`.
 
 **Live migration inventory yang telah diverifikasi:** `20260924021155`, `20260924035728`, `20260924035824`, `20260924040217`, `20260926112505`, `20260926152613`, `20260926235410`, `20260928092227`, `20261002231924`, dan `20261004233054`. Dokumentasi tidak boleh berhenti pada chain 2026-09-28.
 
 **Rule:** source commit ≠ proof live function equals source. Live version/hash must be compared when certification is required.
 
-**Status:** DOCUMENTED; source/live parity = CERTIFIED untuk `ipsrs-api` v73. DB/RLS live certification tetap OPEN.
+**Status:** DOCUMENTED; source/live parity = CERTIFIED untuk seluruh 4 Edge Function aktif (ipsrs-api v73, link-account v2, auth-bridge v2, bulk-provision-once v2). DB/RLS live certification tetap OPEN.
 
 ---
 
@@ -1056,3 +1056,21 @@ Prompt ini adalah SOP operasional wajib setiap kali pengguna meminta audit/perba
 - Jika production belum diverifikasi, status wajib **BELUM BISA MEMASTIKAN / NOT CERTIFIED**.
 
 **Status:** ACTIVE — SOP WAJIB.
+
+
+## 2026-10-06 — Supabase/GitHub synchronization checkpoint
+
+- GitHub checkpoint branch: `checkpoint/pre-sync-2026-10-06`
+- PR merged: #12
+- Main after sync: `4ee8cc4e65a6d3b59c72466b7c8d861f2a3c4ffc`
+- All 4 currently active Supabase Edge Functions now have source + runtime config in GitHub.
+- Live/source verification for `ipsrs-link-account`, `ipsrs-auth-bridge`, and `ipsrs-bulk-provision-once`: **BYTE-EXACT MATCH**.
+- `ipsrs-api` v73 parity was already certified before this checkpoint.
+- Supabase production schema/data/RLS/function deployments were **not changed** by this source synchronization.
+
+### Migration-history reconciliation status
+
+Supabase production currently reports 28 applied migrations. GitHub's `supabase/migrations/` currently contains 11 migration files. The missing historical migration source cannot be reconstructed safely from migration-name metadata alone. Therefore **migration parity remains OPEN / NOT CERTIFIED**.
+
+**Rule:** do not run the 17 missing historical migrations against production and do not create empty placeholder migrations merely to make the counts match. The next safe step is to recover the authoritative historical SQL (repository history, backup/dump, or original migration source), then reconcile it before any migration-history repair.
+
