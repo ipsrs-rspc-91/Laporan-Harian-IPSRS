@@ -357,7 +357,7 @@ Untuk penggantian, modal wajib menjaga field:
 - `apiGetStaffPerformance`
 - serta action lain yang harus dianggap resmi hanya setelah ditemukan di source aktif.
 
-**Current live Supabase function evidence:** `ipsrs-api` ACTIVE, version 70 pada saat audit.
+**Current live Supabase function evidence:** `ipsrs-api` ACTIVE, version 73. Source parity verified 2026-10-06: GitHub `supabase/functions/ipsrs-api/index.ts` blob `46638166d936db7262e75a802a1d832f6d29fd7d` is byte-for-byte identical to the live Edge Function source returned by Supabase v73.
 
 **Status:** DOCUMENTED; source/live parity = OPEN.
 
@@ -559,7 +559,7 @@ Migration yang ada di repository mencakup:
 
 # 025 — SUPABASE DEPLOYMENT
 
-**Current evidence:** Edge Function `ipsrs-api` ACTIVE version 70.
+**Current evidence:** Edge Function `ipsrs-api` ACTIVE version 73. Source/live parity verified 2026-10-06; no production downgrade or Edge Function code change was performed.
 
 **Repository source:** `supabase/functions/ipsrs-api/index.ts`.
 
@@ -763,6 +763,7 @@ Control-system history retained from prior revisions:
 - `c35f7b83b33d3c80abe070e07ee03544693ec070` — repaired LOCK gate parser and synthetic self-test.
 - `a354fd45d4f0a7c888cea1ced5981fe5af43dc67` — expanded protected files/modules.
 - `3c5a86103cb945178ebc68f841cc4909b79fcae4` — removed stray baseline entry.
+- **2026-10-06 — parity correction:** `PROJECT_CONTROL.md` corrected from `ipsrs-api` v70 to live v73 after byte-for-byte source parity verification; production Edge Function was not changed.
 - **This revision:** completes all 40 chapters and converts the book from a skeleton into an operational control specification.
 
 Future entries must contain:
@@ -776,7 +777,7 @@ Current known gates:
 1. DASH is LOCKED, but a fresh successful browser regression run after the control revisions must be evidenced before calling the latest control state fully verified.
 2. KAT, KESLING, AUTH, REPORT, MASTER, PWA, PERFORMANCE, SECURITY remain STABLE_CANDIDATE.
 3. Cloudflare source/deployment parity is not certified.
-4. Supabase live function/source parity is not certified.
+4. Supabase live function/source parity is certified for `ipsrs-api` v73 against the current GitHub source; broader DB/RLS certification remains open.
 5. Live DB/RLS reconciliation is not certified.
 6. Full backup/restore drill is not certified.
 7. Numeric performance baselines are not certified.
