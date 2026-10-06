@@ -3,3 +3,12 @@ project_id = "tcrmlhfsroyhaxdfwyll"
 
 [functions.ipsrs-api]
 verify_jwt = true
+
+[functions.ipsrs-link-account]
+verify_jwt = true
+
+[functions.ipsrs-auth-bridge]
+verify_jwt = false
+
+[functions.ipsrs-bulk-provision-once]
+verify_jwt = true
