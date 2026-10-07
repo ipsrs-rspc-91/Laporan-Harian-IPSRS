@@ -146,7 +146,82 @@ async function reportPolicyBatch(db:any,s:any,rows:any[]){
  return{visible,editable};
 }
 function dbp(p:any){const n=(v:any)=>v===""||v==null?null:Number(v);const unitComplete=!!(p.UnitStatus&&p.UnitName&&p.UnitType&&String(p.UnitJumlah??"").trim());const spareComplete=!!(p.SparePartMaterialStatus&&p.SparePartMaterial&&p.SparePartMaterialType&&String(p.SparePartMaterialJumlah??"").trim());const legacyKind=unitComplete&&!spareComplete?"UNIT":spareComplete&&!unitComplete?"SPARE PART / MATERIAL":"";const legacy=legacyKind==="UNIT"?{status:p.UnitStatus,name:p.UnitName,type:p.UnitType,qty:p.UnitJumlah}:legacyKind==="SPARE PART / MATERIAL"?{status:p.SparePartMaterialStatus,name:p.SparePartMaterial,type:p.SparePartMaterialType,qty:p.SparePartMaterialJumlah}:null;return{tanggal:p.Tanggal||null,pelapor:p.Pelapor||null,pukul:p.Pukul||null,nolk:p.NoLK||null,ruang:p.Ruang||null,masalah_kegiatan:p.MasalahKegiatan||null,tindakan:p.Tindakan||null,status:p.Status||null,keterangan:p.Keterangan||null,kategori:p.Kategori||null,area_kerja:p.AreaKerja||null,item:p.Item||null,spare_part_unit_kind:legacyKind||null,spare_part_unit_status:legacy?.status||null,spare_part_unit:legacy?.name||null,type:legacy?.type||null,jumlah:n(legacy?.qty),unit_status:unitComplete?p.UnitStatus:null,unit_name:unitComplete?p.UnitName:null,unit_type:unitComplete?p.UnitType:null,unit_jumlah:n(unitComplete?p.UnitJumlah:null),spare_part_material_status:spareComplete?p.SparePartMaterialStatus:null,spare_part_material:spareComplete?p.SparePartMaterial:null,spare_part_material_type:spareComplete?p.SparePartMaterialType:null,spare_part_material_jumlah:n(spareComplete?p.SparePartMaterialJumlah:null),jadwal_kerja:p.JadwalKerja||null,rencana_kegiatan:p.RencanaKegiatan||null,target_pekerjaan:p.TargetPekerjaan||null,realisasi_pekerjaan:p.RealisasiPekerjaan||null,hasil_pencapaian:p.HasilPencapaian||null,status_pencapaian:p.StatusPencapaian||null,kendala:p.Kendala||null,tindak_lanjut:p.TindakLanjut||null,waktu_mulai:p.WaktuMulai||null,waktu_selesai:p.WaktuSelesai||null}}
-async function staff(ctx:any,req?:Request){let uid=ctx.userClaims?.sub;let email=String(ctx.userClaims?.email||"").toLowerCase();if(!uid&&req){const h=req.headers.get("authorization")||"";const m=h.match(/^Bearer\s+(.+)$/i);if(m){const g=await ctx.supabaseAdmin.auth.getUser(m[1]);if(!g.error&&g.data?.user){uid=g.data.user.id;email=String(g.data.user.email||"").toLowerCase();}}}if(!uid)throw Error("Sesi tidak valid.");let {data,error}=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("auth_user_id",uid).maybeSingle();if(error)throw error;if(!data){const email=String(ctx.userClaims?.email||"").toLowerCase();const local=email.split("@")[0];const staffId=local==="kaipsrs"?"KAIPSRS":local;const r=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("staff_id",staffId).maybeSingle();if(r.error)throw r.error;data=r.data;if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);}if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");return data}
+async function staff(ctx:any,req?:Request){
+ let uid=ctx.userClaims?.sub;
+ let email=String(ctx.userClaims?.email||"").toLowerCase();
+ if(!uid&&req){
+   const h=req.headers.get("authorization")||"";
+   const m=h.match(/^Bearer\s+(.+)$/i);
+   if(m){
+     const g=await ctx.supabaseAdmin.auth.getUser(m[1]);
+     if(!g.error&&g.data?.user){uid=g.data.user.id;email=String(g.data.user.email||"").toLowerCase();}
+   }
+ }
+ if(!uid)throw Error("Sesi tidak valid.");
+ let {data,error}=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("auth_user_id",uid).maybeSingle();
+ if(error)throw error;
+ if(!data){
+   const email=String(ctx.userClaims?.email||"").toLowerCase();
+   const local=email.split("@")[0];
+   const staffId=local==="kaipsrs"?"KAIPSRS":local;
+   const r=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("staff_id",staffId).maybeSingle();
+   if(r.error)throw r.error;
+   data=r.data;
+   if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);
+ }
+ if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");
+
+ // LHI DISCIPLINE GATE:
+ // Setiap petugas aktif yang tidak mempunyai satu pun LHI pada masing-masing
+ // dari 7 hari kalender terakhir akan otomatis diblokir. Perhitungan memakai
+ // tanggal Asia/Jakarta dan laporan yang belum dihapus.
+ if(String(data.status).toLowerCase()==="aktif"){
+   const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
+   const today=new Date(todayStr+"T00:00:00Z");
+   const dates:string[]=[];
+   for(let i=1;i<=7;i++){
+     const d=new Date(today);
+     d.setUTCDate(d.getUTCDate()-i);
+     dates.push(d.toISOString().slice(0,10));
+   }
+   const start=dates[dates.length-1], end=dates[0];
+   const {data:lhis,error:lhiError}=await ctx.supabaseAdmin
+     .from("reports")
+     .select("tanggal")
+     .eq("staff_id",data.staff_id)
+     .is("deleted_at",null)
+     .gte("tanggal",start)
+     .lte("tanggal",end);
+   if(lhiError)throw lhiError;
+   const filled=new Set((lhis||[]).map((r:any)=>String(r.tanggal||"").slice(0,10)));
+   const missed=dates.filter(x=>!filled.has(x));
+   if(missed.length===7){
+     const previousStatus=data.status;
+     const {error:blockError}=await ctx.supabaseAdmin
+       .from("staff")
+       .update({status:"DIBLOKIR_LHI_7_HARI"})
+       .eq("staff_id",data.staff_id)
+       .eq("status","Aktif");
+     if(blockError)throw blockError;
+     await ctx.supabaseAdmin.from("audit_log").insert({
+       username:"SYSTEM",
+       staff_id:data.staff_id,
+       action:"BLOCK_LOGIN_LHI_7_HARI",
+       report_id:null,
+       keterangan:"Akun diblokir otomatis karena tidak mengisi LHI selama 7 hari kalender terakhir.",
+       field_changed:"status",
+       old_value:previousStatus,
+       new_value:"DIBLOKIR_LHI_7_HARI"
+     });
+     data.status="DIBLOKIR_LHI_7_HARI";
+   }
+ }
+ if(String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI"){
+   throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
+ }
+ if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
+ return data
+}
 async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){
  const row={username:s.staff_id,staff_id:s.staff_id,action:a,report_id:id,keterangan:k,field_changed:v.field_changed||null,old_value:v.old_value??null,new_value:v.new_value??null,version_before:v.version_before??null,version_after:v.version_after??null};
  for(let attempt=1;attempt<=2;attempt++){
