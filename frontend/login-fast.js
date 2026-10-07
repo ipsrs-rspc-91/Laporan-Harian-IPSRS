@@ -164,15 +164,25 @@
   // Hanya mengisi field; TIDAK memanggil doLogin/performLogin.
   setTimeout(function(){ restoreRememberedPassword_(); },0);
 
-  function showServerDisciplineWarning_(){
+  async function showServerDisciplineWarning_(){
     if(document.getElementById('ipsrsServerDisciplineWarning')) return;
+    let names=[];
+    try{
+      if(typeof window.apiCall==='function'){
+        const data=await window.apiCall('staff',{method:'GET'});
+        const rows=Array.isArray(data)?data:(Array.isArray(data?.data)?data.data:(Array.isArray(data?.staff)?data.staff:[]));
+        names=rows.filter(x=>String(x?.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI').map(x=>String(x?.nama||'').trim()).filter(Boolean);
+      }
+    }catch(_e){}
+    if(!names.length) return;
     const style=document.createElement('style');
     style.id='ipsrsServerDisciplineWarningStyle';
     style.textContent='#ipsrsServerDisciplineWarning{position:fixed;inset:0;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99999}#ipsrsServerDisciplineWarning .sdw-box{width:min(360px,100%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.22);font-family:inherit}#ipsrsServerDisciplineWarning .sdw-title{font-weight:800;font-size:16px;margin-bottom:12px}#ipsrsServerDisciplineWarning .sdw-body{font-size:14px;line-height:1.55}#ipsrsServerDisciplineWarning .sdw-btn{margin-top:16px;width:100%;height:40px;border:0;border-radius:9px;font-weight:700;cursor:pointer}';
     document.head.appendChild(style);
     const bg=document.createElement('div');
     bg.id='ipsrsServerDisciplineWarning';
-    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ SERVER WARNING</div><div class="sdw-body">2 staf telah diblokir karena tidak mengisi LHI selama 7 hari:<br><br>🔴 Heri Septiawan<br>🔴 Suryadih</div><button class="sdw-btn" type="button">OK</button></div>';
+    const list=names.map(n=>'🔴 '+n).join('<br>');
+    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ SERVER WARNING</div><div class="sdw-body">'+names.length+' staf telah diblokir karena tidak mengisi LHI selama 7 hari:<br><br>'+list+'</div><button class="sdw-btn" type="button">OK</button></div>';
     document.body.appendChild(bg);
     bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
   }
@@ -185,7 +195,7 @@
     try{
       // Penyimpanan kredensial dilakukan di app.js setelah autentikasi berhasil.
       const ok=await originalPerformLogin(username,password,remember,msgEl,autoMode);
-      if(ok) setTimeout(showServerDisciplineWarning_,250);
+      if(ok) setTimeout(()=>{showServerDisciplineWarning_();},250);
       return ok;
     }finally{clearProgress(msgEl);if(b){b.disabled=disabled;b.innerHTML=old;b.removeAttribute('aria-busy');}}
   };
