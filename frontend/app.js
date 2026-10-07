@@ -607,17 +607,9 @@
       // yang tidak valid. Jangan tampilkan pesan teknis "Invalid login credentials"
       // kepada pengguna; gunakan pesan yang jelas dan tidak membocorkan apakah akun ada.
       if(msgEl){
-        // Akun yang diblokir khusus karena tidak mengisi LHI 7 hari harus
-        // mendapat pesan yang jelas, bukan pesan generik "Petugas tidak aktif".
-        const loginKey=String(username||'').trim().toLowerCase();
-        const lhi7BlockedUsers=new Set([
-          'heri','heri septiawan','staf-workshop-02',
-          'yadi','suryadih','staf-sipil-01'
-        ]);
-        const isLhi7Blocked =
-          lhi7BlockedUsers.has(loginKey) &&
-          /petugas tidak aktif/i.test(rawMsg);
-        msgEl.innerText=isLhi7Blocked
+        // Pesan blokir LHI 7 hari dikirim backend berdasarkan status/hasil
+        // pengecekan LHI. Tidak ada daftar nama yang ditanam di frontend.
+        msgEl.innerText=/tidak disiplin mengisi laporan selama 7 hari/i.test(rawMsg)
           ? 'Anda tidak disiplin mengisi laporan selama 7 hari.'
           : (/invalid login credentials/i.test(rawMsg)
               ? 'Username atau password salah.'
