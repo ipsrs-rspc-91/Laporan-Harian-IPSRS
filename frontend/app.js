@@ -1383,12 +1383,12 @@
     const kategoriInduk = [
       'PEMELIHARAAN',
       'PERBAIKAN',
-      'PEMASANGAN / INSTALASI',
-      'PEMERIKSAAN / INSPEKSI',
-      'PENGUJIAN / ANALISA',
       'PERMINTAAN LAYANAN',
+      'PEMERIKSAAN / INSPEKSI',
       'PROYEK / RENOVASI',
+      'PERTEMUAN / KOORDINASI',
       'ADMINISTRASI / MANAJEMEN',
+      'PENGUJIAN / ANALISA',
       'LAINNYA'
     ];
     const kategoriSel = document.getElementById('Kategori');
