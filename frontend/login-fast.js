@@ -187,6 +187,8 @@
     bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
   }
 
+  window.showServerDisciplineWarning_=showServerDisciplineWarning_;
+
   window.performLogin=async function(username,password,remember,msgEl,autoMode){
     if(!username||!password){clearProgress(msgEl);if(msgEl)msgEl.innerText='Username dan password wajib diisi.';return false;}
     const b=button(),old=b?b.innerHTML:'',disabled=b?b.disabled:false;
