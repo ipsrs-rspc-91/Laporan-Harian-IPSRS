@@ -1358,13 +1358,19 @@
       trigger.setAttribute('aria-expanded',next?'true':'false');
       document.body.classList.toggle('area-picker-open',next);
     });
-    document.addEventListener('click',e=>{
-      if(!picker.contains(e.target)){
-        panel.hidden=true;
-        trigger.setAttribute('aria-expanded','false');
-        document.body.classList.remove('area-picker-open');
-      }
-    },{once:false});
+    if(!window.__IPSRS_AREA_PICKER_OUTSIDE_BOUND){
+      document.addEventListener('click',e=>{
+        const active=document.getElementById('areaKerjaPicker');
+        if(active && !active.contains(e.target)){
+          const p=active.querySelector('.area-picker-panel');
+          const t=active.querySelector('.area-picker-trigger');
+          if(p) p.hidden=true;
+          if(t) t.setAttribute('aria-expanded','false');
+          document.body.classList.remove('area-picker-open');
+        }
+      });
+      window.__IPSRS_AREA_PICKER_OUTSIDE_BOUND=true;
+    }
 
     picker.appendChild(panel);
     syncAreaKerjaPicker_();
@@ -1520,6 +1526,7 @@
       rebuildKategoriSelects_(currentKategori, currentFilterKategori);
       setInputSelectValue('AreaKerja', currentArea);
       setInputSelectValue('FilterArea', currentFilterArea);
+      syncAreaKerjaPicker_();
 
       const currentItem = document.getElementById('Item')?.value || '';
       refreshItemOptions();
