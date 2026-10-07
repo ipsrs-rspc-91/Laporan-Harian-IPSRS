@@ -997,7 +997,8 @@
     }
     if(name === 'dashboard'){
       // Setiap kembali ke Dashboard, filter petugas Dashboard selalu kembali
-      // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.      const dashStaff = document.getElementById('DashStaff');
+      // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.
+      const dashStaff = document.getElementById('DashStaff');
       if(dashStaff) dashStaff.value = '';
 
       // Filter dari seluruh halaman Laporan juga dibersihkan saat user pindah
