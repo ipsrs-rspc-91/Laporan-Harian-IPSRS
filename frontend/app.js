@@ -997,8 +997,7 @@
     }
     if(name === 'dashboard'){
       // Setiap kembali ke Dashboard, filter petugas Dashboard selalu kembali
-      // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.
-      const dashStaff = document.getElementById('DashStaff');
+      // ke "Semua Petugas". Bulan Dashboard tetap dipertahankan.      const dashStaff = document.getElementById('DashStaff');
       if(dashStaff) dashStaff.value = '';
 
       // Filter dari seluruh halaman Laporan juga dibersihkan saat user pindah
@@ -1376,6 +1375,151 @@
     syncAreaKerjaPicker_();
   }
 
+  function syncKategoriPicker_(){
+    const sel=document.getElementById('Kategori');
+    const picker=document.getElementById('kategoriPicker');
+    if(!sel || !picker) return;
+    const label=picker.querySelector('.kategori-picker-value');
+    const value=String(sel.value||'').trim();
+    if(label) label.textContent=value || 'Pilih kategori…';
+    picker.querySelectorAll('.kategori-picker-option').forEach(btn=>{
+      const selected=btn.dataset.value===value;
+      btn.classList.toggle('is-selected',selected);
+      btn.setAttribute('aria-selected',selected?'true':'false');
+    });
+  }
+
+  function buildKategoriPicker_(){
+    const sel=document.getElementById('Kategori');
+    const picker=document.getElementById('kategoriPicker');
+    if(!sel || !picker) return;
+
+    const previous=String(sel.value||'');
+    const direct=[
+      'PEMERIKSAAN / INSPEKSI',
+      'PERMINTAAN LAYANAN',
+      'PERTEMUAN / KOORDINASI',
+      'ADMINISTRASI / MANAJEMEN',
+      'PROYEK / RENOVASI',
+      'PENGUJIAN / ANALISA',
+      'LAINNYA'
+    ];
+    const maintenance=[
+      ['PEMELIHARAAN RUTIN SESUAI JADWAL','PEMELIHARAAN RUTIN SESUAI JADWAL'],
+      ['PEMELIHARAAN RUTIN DENGAN PENGGANTIAN','PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'],
+      ['PEMELIHARAAN DI LUAR JADWAL','PEMELIHARAAN DILUAR JADWAL RUTIN'],
+      ['PEMELIHARAAN DI LUAR JADWAL DENGAN PENGGANTIAN','PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT']
+    ];
+    const repair=[
+      ['PERBAIKAN SAJA','PERBAIKAN SAJA'],
+      ['PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT','PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT']
+    ];
+
+    picker.innerHTML='';
+    const trigger=document.createElement('button');
+    trigger.type='button';
+    trigger.className='kategori-picker-trigger';
+    trigger.setAttribute('aria-haspopup','true');
+    trigger.setAttribute('aria-expanded','false');
+    trigger.innerHTML='<span class="kategori-picker-value">Pilih kategori…</span><span class="kategori-picker-chevron">⌄</span>';
+
+    const panel=document.createElement('div');
+    panel.className='kategori-picker-panel';
+    panel.hidden=true;
+
+    const choose=(value)=>{
+      sel.value=value;
+      sel.dispatchEvent(new Event('change',{bubbles:true}));
+      syncKategoriPicker_();
+      panel.hidden=true;
+      trigger.setAttribute('aria-expanded','false');
+      document.body.classList.remove('kategori-picker-open');
+    };
+
+    const makeOption=(label,value)=>{
+      const item=document.createElement('button');
+      item.type='button';
+      item.className='kategori-picker-option';
+      item.dataset.value=value;
+      item.textContent=label;
+      item.setAttribute('aria-selected',value===previous?'true':'false');
+      item.addEventListener('click',()=>choose(value));
+      return item;
+    };
+
+    const addGroup=(title,values,openInitially)=>{
+      const group=document.createElement('div');
+      group.className='kategori-picker-group';
+      const head=document.createElement('button');
+      head.type='button';
+      head.className='kategori-picker-group-head';
+      head.setAttribute('aria-expanded',openInitially?'true':'false');
+      head.innerHTML='<span>'+escapeHtml(title)+'</span><span class="kategori-picker-plus">'+(openInitially?'−':'+')+'</span>';
+      const body=document.createElement('div');
+      body.className='kategori-picker-group-body';
+      body.hidden=!openInitially;
+      values.forEach(([label,value])=>body.appendChild(makeOption(label,value)));
+      head.addEventListener('click',()=>{
+        const next=head.getAttribute('aria-expanded')!=='true';
+        head.setAttribute('aria-expanded',next?'true':'false');
+        head.querySelector('.kategori-picker-plus').textContent=next?'−':'+';
+        body.hidden=!next;
+      });
+      group.appendChild(head);
+      group.appendChild(body);
+      panel.appendChild(group);
+    };
+
+    addGroup('PEMELIHARAAN',maintenance,maintenance.some(x=>x[1]===previous)||previous==='PEMELIHARAAN');
+    addGroup('PERBAIKAN',repair,repair.some(x=>x[1]===previous)||previous==='PERBAIKAN');
+
+    direct.forEach(value=>{
+      panel.appendChild(makeOption(value,value));
+    });
+
+    const addNew=Array.from(sel.options).find(o=>o.value===ADD_NEW_VALUE);
+    if(addNew){
+      const add=document.createElement('button');
+      add.type='button';
+      add.className='kategori-picker-add';
+      add.textContent=addNew.textContent || '+ Tambah Kategori Baru';
+      add.addEventListener('click',()=>{
+        sel.value=ADD_NEW_VALUE;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        syncKategoriPicker_();
+        panel.hidden=true;
+        trigger.setAttribute('aria-expanded','false');
+        document.body.classList.remove('kategori-picker-open');
+      });
+      panel.appendChild(add);
+    }
+
+    trigger.addEventListener('click',()=>{
+      const next=panel.hidden;
+      panel.hidden=!next;
+      trigger.setAttribute('aria-expanded',next?'true':'false');
+      document.body.classList.toggle('kategori-picker-open',next);
+    });
+
+    if(!window.__IPSRS_KATEGORI_PICKER_OUTSIDE_BOUND){
+      document.addEventListener('click',e=>{
+        const active=document.getElementById('kategoriPicker');
+        if(active && !active.contains(e.target)){
+          const p=active.querySelector('.kategori-picker-panel');
+          const t=active.querySelector('.kategori-picker-trigger');
+          if(p) p.hidden=true;
+          if(t) t.setAttribute('aria-expanded','false');
+          document.body.classList.remove('kategori-picker-open');
+        }
+      });
+      window.__IPSRS_KATEGORI_PICKER_OUTSIDE_BOUND=true;
+    }
+
+    picker.appendChild(trigger);
+    picker.appendChild(panel);
+    syncKategoriPicker_();
+  }
+
   function rebuildKategoriSelects_(keepKategori, keepFilterKategori){
     // FORM INPUT: hanya kategori induk. Rincian PEMELIHARAAN/PERBAIKAN
     // dipilih melalui modal bertahap. Jangan memasukkan MASTER_KATEGORI
@@ -1403,6 +1547,7 @@
       });
       if(addNew) kategoriSel.appendChild(addNew);
       if(keepKategori) setInputSelectValue('Kategori', keepKategori);
+      buildKategoriPicker_();
     }
 
     // FILTER LAPORAN: tetap memakai kategori detail/master agar laporan lama
@@ -1998,7 +2143,6 @@
       });
     }
   }
-
   function openSparePartUnitModal(kind){
     const normalized = String(kind || '').trim().toUpperCase();
     if(normalized !== 'UNIT' && normalized !== 'SPARE PART / MATERIAL') return;
@@ -2997,7 +3141,6 @@
       const year=Number(get('year'));
       const month=Number(get('month'));
       const day=Number(get('day'));
-
       const d =
         new Date(
           year,
@@ -3997,7 +4140,6 @@
         wrap.scrollLeft=bar.scrollLeft;
         syncing=false;
       },{passive:true});
-
       window.addEventListener('resize',function(){
         syncReportHorizontalScrollbar_();
       },{passive:true});
@@ -4997,8 +5139,7 @@
       options: {
         maintainAspectRatio: false,
         cutout: '68%',
-        plugins: { legend: { display: false } }
-      }
+        plugins: { legend: { display: false } }      }
     });
 
     legendEl.innerHTML = '';
