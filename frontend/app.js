@@ -1519,6 +1519,68 @@
     syncKategoriPicker_();
   }
 
+  // Rebuild select Kategori + picker dari kontrak kategori form input.
+  // Native #Kategori tetap menjadi sumber nilai/validasi; picker hanya UI.
+  function rebuildKategoriSelects_(selectedKategori='', selectedFilterKategori=''){
+    const sel=document.getElementById('Kategori');
+    const filter=document.getElementById('FilterKategori');
+
+    const formValues=[
+      'PEMELIHARAAN RUTIN SESUAI JADWAL',
+      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN',
+      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PERBAIKAN SAJA',
+      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+      'PEMERIKSAAN / INSPEKSI',
+      'PERMINTAAN LAYANAN',
+      'PERTEMUAN / KOORDINASI',
+      'ADMINISTRASI / MANAJEMEN',
+      'PROYEK / RENOVASI',
+      'PENGUJIAN / ANALISA',
+      'LAINNYA'
+    ];
+
+    if(sel){
+      sel.innerHTML='';
+      const placeholder=document.createElement('option');
+      placeholder.value='';
+      placeholder.textContent='Pilih kategori...';
+      sel.appendChild(placeholder);
+      formValues.forEach(value=>{
+        const opt=document.createElement('option');
+        opt.value=value;
+        opt.textContent=value;
+        sel.appendChild(opt);
+      });
+      if(selectedKategori && Array.from(sel.options).some(o=>o.value===selectedKategori)){
+        sel.value=selectedKategori;
+      }
+      // Picker harus dibangun setelah option final tersedia.
+      buildKategoriPicker_();
+    }
+
+    if(filter){
+      filter.innerHTML='';
+      const placeholder=document.createElement('option');
+      placeholder.value='';
+      placeholder.textContent='Semua Kategori';
+      filter.appendChild(placeholder);
+      const values=Array.isArray(MASTER_KATEGORI) ? MASTER_KATEGORI : [];
+      values.forEach(value=>{
+        const name=String(value||'').trim();
+        if(!name || Array.from(filter.options).some(o=>o.value===name)) return;
+        const opt=document.createElement('option');
+        opt.value=name;
+        opt.textContent=name;
+        filter.appendChild(opt);
+      });
+      if(selectedFilterKategori && Array.from(filter.options).some(o=>o.value===selectedFilterKategori)){
+        filter.value=selectedFilterKategori;
+      }
+    }
+  }
+
   function populateStaticSelects(){
     // Master Area, Item, dan Kategori memakai Supabase setelah berhasil
     // dimuat. STATIC_* hanya fallback awal bila API master belum tersedia.
