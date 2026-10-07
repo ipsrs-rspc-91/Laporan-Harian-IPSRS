@@ -1383,11 +1383,11 @@
     const kategoriInduk = [
       'PEMELIHARAAN',
       'PERBAIKAN',
-      'PERMINTAAN LAYANAN',
       'PEMERIKSAAN / INSPEKSI',
-      'PROYEK / RENOVASI',
+      'PERMINTAAN LAYANAN',
       'PERTEMUAN / KOORDINASI',
       'ADMINISTRASI / MANAJEMEN',
+      'PROYEK / RENOVASI',
       'PENGUJIAN / ANALISA',
       'LAINNYA'
     ];
