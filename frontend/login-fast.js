@@ -169,7 +169,7 @@
     let names=[];
     try{
       if(typeof window.gsRun==='function'){
-        const data=await window.gsRun('apiListStaff');
+        const data=await window.gsRun('apiGetDisciplineWarning');
         const rows=Array.isArray(data)?data:(Array.isArray(data?.data)?data.data:(Array.isArray(data?.staff)?data.staff:[]));
         names=rows.filter(x=>String(x?.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI').map(x=>String(x?.nama||'').trim()).filter(Boolean);
       }
