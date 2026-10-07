@@ -203,3 +203,5 @@
   };
 
 })();
+
+// DEPLOY-VERIFY: 20261008 warning endpoint production check
