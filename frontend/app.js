@@ -1230,6 +1230,146 @@
     return list.filter(isMine).concat(list.filter(a=>!isMine(a)));
   }
 
+  // ============================================================
+  // AREA KERJA — grouped accordion picker
+  // Native #AreaKerja tetap dipertahankan sebagai sumber nilai/validasi.
+  // UI pilihan menggunakan group collapse agar daftar panjang tidak memenuhi HP.
+  // ============================================================
+  function getAreaKerjaGroup_(name){
+    const n=String(name||'').trim();
+    if(/^m\.e\b/i.test(n)) return 'M.E.';
+    if(/^sipil\b/i.test(n)) return 'SIPIL';
+    if(/^elektromedik\b/i.test(n)) return 'ELEKTROMEDIK';
+    if(/^kesling\b/i.test(n)) return 'KESLING';
+    if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
+    if(/^umum\b/i.test(n)) return 'UMUM / LAINNYA';
+    return 'LAINNYA';
+  }
+
+  function getAreaKerjaGroupOrder_(){
+    const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
+    const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
+    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','KITCHEN / DAPUR','UMUM / LAINNYA','LAINNYA'];
+    return mine ? [mine,...base.filter(x=>x!==mine)] : base;
+  }
+
+  function syncAreaKerjaPicker_(){
+    const sel=document.getElementById('AreaKerja');
+    const picker=document.getElementById('areaKerjaPicker');
+    if(!sel || !picker) return;
+    const label=picker.querySelector('.area-picker-value');
+    const value=String(sel.value||'').trim();
+    if(label) label.textContent=value || 'Pilih area kerja…';
+    picker.querySelectorAll('.area-picker-option').forEach(btn=>{
+      btn.classList.toggle('is-selected',btn.dataset.value===value);
+      btn.setAttribute('aria-selected',btn.dataset.value===value?'true':'false');
+    });
+  }
+
+  function buildAreaKerjaPicker_(){
+    const sel=document.getElementById('AreaKerja');
+    const picker=document.getElementById('areaKerjaPicker');
+    if(!sel || !picker) return;
+    const previous=String(sel.value||'');
+    const groups=new Map();
+    Array.from(sel.options).forEach(opt=>{
+      if(!opt.value || opt.value===ADD_NEW_VALUE) return;
+      const g=getAreaKerjaGroup_(opt.value);
+      if(!groups.has(g)) groups.set(g,[]);
+      groups.get(g).push(opt.value);
+    });
+
+    picker.innerHTML='';
+    const trigger=document.createElement('button');
+    trigger.type='button';
+    trigger.className='area-picker-trigger';
+    trigger.setAttribute('aria-haspopup','true');
+    trigger.setAttribute('aria-expanded','false');
+    trigger.innerHTML='<span class="area-picker-value">Pilih area kerja…</span><span class="area-picker-chevron">⌄</span>';
+    picker.appendChild(trigger);
+
+    const panel=document.createElement('div');
+    panel.className='area-picker-panel';
+    panel.hidden=true;
+
+    const currentGroup=getAreaKerjaGroup_(previous);
+    getAreaKerjaGroupOrder_().forEach(groupName=>{
+      const values=groups.get(groupName);
+      if(!values || !values.length) return;
+      const group=document.createElement('div');
+      group.className='area-picker-group';
+      const head=document.createElement('button');
+      head.type='button';
+      head.className='area-picker-group-head';
+      const open=groupName===currentGroup;
+      head.setAttribute('aria-expanded',open?'true':'false');
+      head.innerHTML='<span>'+escapeHtml(groupName)+'</span><span class="area-picker-plus">'+(open?'−':'+')+'</span>';
+      const body=document.createElement('div');
+      body.className='area-picker-group-body';
+      body.hidden=!open;
+      values.forEach(value=>{
+        const item=document.createElement('button');
+        item.type='button';
+        item.className='area-picker-option';
+        item.dataset.value=value;
+        item.textContent=value;
+        item.setAttribute('aria-selected',value===previous?'true':'false');
+        item.addEventListener('click',()=>{
+          sel.value=value;
+          sel.dispatchEvent(new Event('change',{bubbles:true}));
+          syncAreaKerjaPicker_();
+          panel.hidden=true;
+          trigger.setAttribute('aria-expanded','false');
+          document.body.classList.remove('area-picker-open');
+        });
+        body.appendChild(item);
+      });
+      head.addEventListener('click',()=>{
+        const next=head.getAttribute('aria-expanded')!=='true';
+        head.setAttribute('aria-expanded',next?'true':'false');
+        head.querySelector('.area-picker-plus').textContent=next?'−':'+';
+        body.hidden=!next;
+      });
+      group.appendChild(head);
+      group.appendChild(body);
+      panel.appendChild(group);
+    });
+
+    const addNew=Array.from(sel.options).find(o=>o.value===ADD_NEW_VALUE);
+    if(addNew){
+      const add=document.createElement('button');
+      add.type='button';
+      add.className='area-picker-add';
+      add.textContent=addNew.textContent || '+ Tambah Area Kerja Baru';
+      add.addEventListener('click',()=>{
+        sel.value=ADD_NEW_VALUE;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        syncAreaKerjaPicker_();
+        panel.hidden=true;
+        trigger.setAttribute('aria-expanded','false');
+        document.body.classList.remove('area-picker-open');
+      });
+      panel.appendChild(add);
+    }
+
+    trigger.addEventListener('click',()=>{
+      const next=panel.hidden;
+      panel.hidden=!next;
+      trigger.setAttribute('aria-expanded',next?'true':'false');
+      document.body.classList.toggle('area-picker-open',next);
+    });
+    document.addEventListener('click',e=>{
+      if(!picker.contains(e.target)){
+        panel.hidden=true;
+        trigger.setAttribute('aria-expanded','false');
+        document.body.classList.remove('area-picker-open');
+      }
+    },{once:false});
+
+    picker.appendChild(panel);
+    syncAreaKerjaPicker_();
+  }
+
   function rebuildKategoriSelects_(keepKategori, keepFilterKategori){
     // FORM INPUT: hanya kategori induk. Rincian PEMELIHARAAN/PERBAIKAN
     // dipilih melalui modal bertahap. Jangan memasukkan MASTER_KATEGORI
@@ -1292,6 +1432,7 @@
         opt.value = a; opt.innerText = a;
         sel.appendChild(opt);
       });
+      if(id==='AreaKerja') buildAreaKerjaPicker_();
     });
 
     const bidangSel = document.getElementById('FilterBidang');
@@ -1374,6 +1515,7 @@
           sel.appendChild(opt);
         });
         if(addNew) sel.appendChild(addNew);
+        if(id==='AreaKerja') buildAreaKerjaPicker_();
       });
       rebuildKategoriSelects_(currentKategori, currentFilterKategori);
       setInputSelectValue('AreaKerja', currentArea);
