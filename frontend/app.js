@@ -600,6 +600,12 @@
       await afterAuthReady();
       hideLoginScreen();
       goPage('input');
+      // Tampilkan warning server secara dinamis setelah login berhasil.
+      // Fungsi login utama bersifat lexical, sehingga warning dipanggil eksplisit
+      // di sini dan tidak bergantung pada wrapper window.performLogin.
+      if(typeof window.showServerDisciplineWarning_==='function'){
+        await window.showServerDisciplineWarning_();
+      }
       return true;
     }catch(err){
       const rawMsg=String(err&&err.message?err.message:err);
