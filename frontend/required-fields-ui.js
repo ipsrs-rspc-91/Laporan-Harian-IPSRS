@@ -28,6 +28,11 @@
     el.classList.toggle('ipsrs-required-field', !!required);
     el.setAttribute('aria-required', required ? 'true' : 'false');
 
+    if(id === 'AreaKerja'){
+      const picker = document.getElementById('areaKerjaPicker');
+      if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
+    }
+
     const label = document.querySelector('label[for="' + id + '"]');
     if(label) label.classList.toggle('ipsrs-required-label', !!required);
   }
