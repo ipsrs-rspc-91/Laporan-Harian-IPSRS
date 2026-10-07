@@ -93,3 +93,4 @@ jobs:
 # Month display fix release trigger: 20261001-MONTHPICKER4.
 # Month card markup regression fix: 20261001-2.
 # Report layout + visible month fix: 20261001-3.
+# 20261008 deploy refresh: re-trigger audit after login-warning fix.
