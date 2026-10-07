@@ -32,6 +32,10 @@
       const picker = document.getElementById('areaKerjaPicker');
       if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
     }
+    if(id === 'Kategori'){
+      const picker = document.getElementById('kategoriPicker');
+      if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
+    }
 
     const label = document.querySelector('label[for="' + id + '"]');
     if(label) label.classList.toggle('ipsrs-required-label', !!required);
