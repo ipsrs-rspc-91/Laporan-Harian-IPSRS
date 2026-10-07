@@ -37,6 +37,28 @@
   /* STATUS HEIGHT CONTRACT: target visual height on the Android screenshot is ~80 physical px.
      The browser viewport is density-scaled, so 46 CSS px renders at about 80 physical px
      on the supplied device. Do not use 80 CSS px here; that is the source of the oversized box. */
+  /* KATEGORI — custom dropdown picker, konsisten dengan Area Kerja */
+  #page-input .kategori-picker-wrap{position:relative;width:100%;z-index:45;}
+  #page-input .kategori-picker-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;}
+  #page-input .kategori-picker-trigger{box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font:inherit;font-size:14px;text-align:left;cursor:pointer;}
+  #page-input .kategori-picker-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  #page-input .kategori-picker-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #page-input .kategori-picker-chevron{font-size:18px;line-height:1;color:#64748b;flex:0 0 auto;}
+  #page-input .kategori-picker-panel{position:absolute;left:0;right:0;top:calc(100% + 6px);max-height:min(58vh,430px);overflow:auto;background:#fff;border:1px solid #d7dee3;border-radius:12px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:5px;z-index:100;}
+  #page-input .kategori-picker-panel[hidden]{display:none;}
+  #page-input .kategori-picker-group{border-bottom:1px solid #eef2f5;}
+  #page-input .kategori-picker-group:last-of-type{border-bottom:0;}
+  #page-input .kategori-picker-group-head{width:100%;min-height:40px;border:0;background:#fff;color:#334155;padding:8px 9px;display:flex;align-items:center;justify-content:space-between;font:inherit;font-size:13px;font-weight:800;text-align:left;cursor:pointer;}
+  #page-input .kategori-picker-group-head:hover{background:#f8fafc;border-radius:8px;}
+  #page-input .kategori-picker-plus{width:24px;height:24px;border:1px solid #cbd5e1;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:#475569;flex:0 0 24px;}
+  #page-input .kategori-picker-group-body{padding:0 4px 5px;}
+  #page-input .kategori-picker-group-body[hidden]{display:none;}
+  #page-input .kategori-picker-option,#page-input .kategori-picker-add{width:100%;min-height:38px;border:0;border-radius:8px;background:#fff;color:#334155;padding:7px 10px;font:inherit;font-size:13px;text-align:left;cursor:pointer;}
+  #page-input .kategori-picker-option:hover,#page-input .kategori-picker-add:hover{background:#f1f5f9;}
+  #page-input .kategori-picker-option.is-selected{font-weight:750;background:#eff6ff;color:#1d4ed8;}
+  #page-input .kategori-picker-add{margin-top:5px;border-top:1px solid #eef2f5;color:#1d4ed8;font-weight:750;}
+  #page-input .kategori-picker-native.ipsrs-required-field + *{border-color:#df9490!important;}
+
   /* AREA KERJA — professional grouped accordion picker */
   #page-input .area-picker-wrap{position:relative;width:100%;z-index:40;}
   #page-input .area-picker-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;}
@@ -854,7 +876,8 @@
       </div>
 
       <label for="Kategori">Kategori</label>
-      <select id="Kategori" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
+      <div id="kategoriPicker" class="kategori-picker-wrap" aria-label="Pilihan Kategori"></div>
+      <select id="Kategori" class="kategori-picker-native" onchange="handleKategoriChange()"><option value="">Pilih kategori&hellip;</option></select>
 
       <label for="AreaKerja">Area Kerja</label>
       <div id="areaKerjaPicker" class="area-picker-wrap" aria-label="Pilihan Area Kerja"></div>
@@ -958,4 +981,3 @@
   grid-column:1 / -1 !important;
 }
 </style>
-
