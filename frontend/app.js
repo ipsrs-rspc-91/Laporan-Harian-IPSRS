@@ -1395,24 +1395,24 @@
     if(!sel || !picker) return;
 
     const previous=String(sel.value||'');
-    const direct=[
-      'PEMERIKSAAN / INSPEKSI',
-      'PERMINTAAN LAYANAN',
-      'PERTEMUAN / KOORDINASI',
-      'ADMINISTRASI / MANAJEMEN',
-      'PROYEK / RENOVASI',
-      'PENGUJIAN / ANALISA',
-      'LAINNYA'
-    ];
-    const maintenance=[
-      ['PEMELIHARAAN RUTIN SESUAI JADWAL','PEMELIHARAAN RUTIN SESUAI JADWAL'],
-      ['PEMELIHARAAN RUTIN DENGAN PENGGANTIAN','PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'],
-      ['PEMELIHARAAN DI LUAR JADWAL','PEMELIHARAAN DILUAR JADWAL RUTIN'],
-      ['PEMELIHARAAN DI LUAR JADWAL DENGAN PENGGANTIAN','PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT']
-    ];
-    const repair=[
-      ['PERBAIKAN SAJA','PERBAIKAN SAJA'],
-      ['PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT','PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT']
+    const groups=[
+      {title:'PEMELIHARAAN',values:[
+        ['PEMELIHARAAN RUTIN SESUAI JADWAL','PEMELIHARAAN RUTIN SESUAI JADWAL'],
+        ['PEMELIHARAAN RUTIN DENGAN PENGGANTIAN','PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'],
+        ['PEMELIHARAAN DI LUAR JADWAL','PEMELIHARAAN DILUAR JADWAL RUTIN'],
+        ['PEMELIHARAAN DI LUAR JADWAL DENGAN PENGGANTIAN','PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT']
+      ]},
+      {title:'PERBAIKAN',values:[
+        ['PERBAIKAN SAJA','PERBAIKAN SAJA'],
+        ['PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT','PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT']
+      ]},
+      {title:'PEMERIKSAAN / INSPEKSI',values:[['PEMERIKSAAN / INSPEKSI','PEMERIKSAAN / INSPEKSI']]},
+      {title:'PERMINTAAN LAYANAN',values:[['PERMINTAAN LAYANAN','PERMINTAAN LAYANAN']]},
+      {title:'PERTEMUAN / KOORDINASI',values:[['PERTEMUAN / KOORDINASI','PERTEMUAN / KOORDINASI']]},
+      {title:'ADMINISTRASI / MANAJEMEN',values:[['ADMINISTRASI / MANAJEMEN','ADMINISTRASI / MANAJEMEN']]},
+      {title:'PROYEK / RENOVASI',values:[['PROYEK / RENOVASI','PROYEK / RENOVASI']]},
+      {title:'PENGUJIAN / ANALISA',values:[['PENGUJIAN / ANALISA','PENGUJIAN / ANALISA']]},
+      {title:'LAINNYA',values:[['LAINNYA','LAINNYA']]}
     ];
 
     picker.innerHTML='';
@@ -1428,6 +1428,7 @@
     panel.hidden=true;
 
     const choose=(value)=>{
+      if(!Array.from(sel.options).some(o=>o.value===value)) return;
       sel.value=value;
       sel.dispatchEvent(new Event('change',{bubbles:true}));
       syncKategoriPicker_();
@@ -1470,11 +1471,9 @@
       panel.appendChild(group);
     };
 
-    addGroup('PEMELIHARAAN',maintenance,maintenance.some(x=>x[1]===previous)||previous==='PEMELIHARAAN');
-    addGroup('PERBAIKAN',repair,repair.some(x=>x[1]===previous)||previous==='PERBAIKAN');
-
-    direct.forEach(value=>{
-      panel.appendChild(makeOption(value,value));
+    groups.forEach(group=>{
+      const values=group.values.filter(([,value])=>Array.from(sel.options).some(o=>o.value===value));
+      if(values.length) addGroup(group.title,values,values.some(([,value])=>value===previous));
     });
 
     const addNew=Array.from(sel.options).find(o=>o.value===ADD_NEW_VALUE);
@@ -1518,54 +1517,6 @@
     picker.appendChild(trigger);
     picker.appendChild(panel);
     syncKategoriPicker_();
-  }
-
-  function rebuildKategoriSelects_(keepKategori, keepFilterKategori){
-    // FORM INPUT: hanya kategori induk. Rincian PEMELIHARAAN/PERBAIKAN
-    // dipilih melalui modal bertahap. Jangan memasukkan MASTER_KATEGORI
-    // (kategori rincian dari Supabase) langsung ke #Kategori.
-    const kategoriInduk = [
-      'PEMELIHARAAN',
-      'PERBAIKAN',
-      'PEMERIKSAAN / INSPEKSI',
-      'PERMINTAAN LAYANAN',
-      'PERTEMUAN / KOORDINASI',
-      'ADMINISTRASI / MANAJEMEN',
-      'PROYEK / RENOVASI',
-      'PENGUJIAN / ANALISA',
-      'LAINNYA'
-    ];
-    const kategoriSel = document.getElementById('Kategori');
-    if(kategoriSel){
-      const addNew = Array.from(kategoriSel.options).find(o => o.value === ADD_NEW_VALUE);
-      kategoriSel.innerHTML = '<option value="">Pilih kategori&hellip;</option>';
-      kategoriInduk.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k;
-        opt.innerText = k;
-        kategoriSel.appendChild(opt);
-      });
-      if(addNew) kategoriSel.appendChild(addNew);
-      if(keepKategori) setInputSelectValue('Kategori', keepKategori);
-      buildKategoriPicker_();
-    }
-
-    // FILTER LAPORAN: tetap memakai kategori detail/master agar laporan lama
-    // dapat difilter tanpa mengubah alur Form Input.
-    const filterSel = document.getElementById('FilterKategori');
-    if(filterSel){
-      const addNew = Array.from(filterSel.options).find(o => o.value === ADD_NEW_VALUE);
-      filterSel.innerHTML = '<option value="">Pilih kategori&hellip;</option>';
-      const filterKategori = Array.isArray(STATIC_KATEGORI) ? STATIC_KATEGORI : [];
-      filterKategori.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k;
-        opt.innerText = k;
-        filterSel.appendChild(opt);
-      });
-      if(addNew) filterSel.appendChild(addNew);
-      if(keepFilterKategori) setInputSelectValue('FilterKategori', keepFilterKategori);
-    }
   }
 
   function populateStaticSelects(){
