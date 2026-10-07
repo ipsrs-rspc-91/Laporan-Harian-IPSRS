@@ -419,6 +419,7 @@
       case 'apiHeartbeat':
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
+      case 'apiGetDisciplineWarning':
       case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
