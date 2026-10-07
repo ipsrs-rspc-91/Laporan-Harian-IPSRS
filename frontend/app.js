@@ -5354,7 +5354,9 @@
         // Terapkan filter petugas yang sama dengan yang dipakai statsJson, supaya
         // KPI "Kepatuhan Hari Ini" tidak menyesatkan saat user memilih 1 petugas.
         // Juga hanya hitung staf berstatus Aktif (Calon/Nonaktif tidak wajib lapor).
-        const monData = monJson.data.filter(s => s.status === 'Aktif' && (!staffFilter || s.staff_id === staffFilter));
+        const monData = Array.isArray(monJson.data)
+          ? monJson.data.filter(s => s.status === 'Aktif' && (!staffFilter || s.staff_id === staffFilter))
+          : [];
         const total = monData.length;
         const sudah = monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
         const belum = monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
@@ -5368,7 +5370,13 @@
           : (total > 0 ? 'Semua petugas aktif sudah mengisi laporan hari ini.' : 'Master staf belum tersedia.');
       }
 
-      if(!statsJson || !statsJson.ok) return;
+      if(!statsJson || !statsJson.ok){
+        const msg = (statsJson && statsJson.msg) ? String(statsJson.msg) : 'Dashboard gagal mengambil data dari server.';
+        console.error('Dashboard API gagal:', msg, statsJson);
+        const note = document.getElementById('dashComplianceNote');
+        if(note) note.innerText = 'Gagal memuat data Dashboard: ' + msg + '. Silakan klik Muat Ulang / buka kembali Dashboard.';
+        throw new Error('Dashboard API gagal: ' + msg);
+      }
       const d = statsJson.data;
       document.getElementById('statTotal').innerText = d.total;
       document.getElementById('statSelesai').innerText = d.selesai;
@@ -5397,6 +5405,8 @@
       dashboardLoadOk = true;
     }catch(e){
       console.error('Dashboard data error:', e);
+      const note = document.getElementById('dashComplianceNote');
+      if(note) note.innerText = 'Dashboard belum dapat memuat data. ' + String(e?.message || e);
     }finally{
       if(typeof window.__ipsrsDashboardLoadingDone === 'function'){
         window.__ipsrsDashboardLoadingDone(dashboardLoadSeq, dashboardLoadOk);
