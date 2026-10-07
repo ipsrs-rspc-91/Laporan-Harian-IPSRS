@@ -280,8 +280,15 @@ if(a==="apiDashboardStats"){
  let rr:any[]=[];
  let dashboardPolicy:any={visible:new Set<string>(),editable:new Set<string>()};
  if(recentCandidates.length){
-   dashboardPolicy=await reportPolicyBatch(db,s,recentCandidates);
-   rr=recentCandidates.filter((r:any)=>dashboardPolicy.visible.has(String(r.report_id)));
+   // Detail "Laporan Terbaru" bersifat tambahan. Kegagalan policy/detail
+   // tidak boleh menggagalkan KPI utama Dashboard yang berasal dari aggregateReports.
+   try{
+     dashboardPolicy=await reportPolicyBatch(db,s,recentCandidates);
+     rr=recentCandidates.filter((r:any)=>dashboardPolicy.visible.has(String(r.report_id)));
+   }catch(policyErr){
+     console.error("[DASHBOARD_RECENT_POLICY_FAILED]",String(policyErr?.message||policyErr));
+     rr=[];
+   }
  }
  // KA IPSRS remains included in KPI/aggregate statistics. Its report details
  // are still excluded from the recent payload for non-KA users below.
