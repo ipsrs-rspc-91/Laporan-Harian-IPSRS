@@ -2839,9 +2839,20 @@
       }
 
       keyboardFocusedField = field;
-      // Field normal selalu menargetkan SATU FIELD DI BAWAHNYA.
-      // Contoh: Ruang -> Masalah/Kegiatan -> Tindakan.
-      keyboardScrollTarget = getNextKeyboardField(field);
+
+      // TINDAKAN adalah field terakhir dari rangkaian input utama.
+      // Jangan meneruskan target ke Keterangan: pada Android native
+      // auto-scroll dapat sudah memindahkan viewport, lalu koreksi terhadap
+      // Keterangan menghasilkan delta negatif dan content.scrollTo() dapat
+      // ter-clamp ke scrollTop 0 (form meloncat ke paling atas).
+      // Karena itu saat Tindakan difokuskan, target tetap Tindakan sendiri.
+      if(field.id === 'Tindakan'){
+        keyboardScrollTarget = field;
+      }else{
+        // Field normal selalu menargetkan SATU FIELD DI BAWAHNYA.
+        // Contoh: Ruang -> Masalah/Kegiatan -> Tindakan.
+        keyboardScrollTarget = getNextKeyboardField(field);
+      }
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
