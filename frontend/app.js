@@ -2629,7 +2629,7 @@
       // batas keyboard), sehingga tetap ada ruang untuk mengetik.
       const tindakanTargetBottom =
         field.id === 'Tindakan'
-          ? viewportBottom - 60
+          ? viewportBottom - 10
           : viewportBottom - GAP;
       const targetBottom = tindakanTargetBottom;
       const safeTop = viewportTop + 20;
