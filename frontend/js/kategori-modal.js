@@ -483,7 +483,7 @@
     }, 100);
   }
 
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kategoriModalBoot, {once:true});
   else kategoriModalBoot();
 
   window.__ipsrsKategoriModalBuild = BUILD;
