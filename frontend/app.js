@@ -2919,11 +2919,11 @@
         keyboardViewportResize,
         {passive:true}
       );
-      window.visualViewport.addEventListener(
-        'scroll',
-        keyboardViewportResize,
-        {passive:true}
-      );
+      // JANGAN memasang handler pada visualViewport.scroll.
+      // Android memicu event ini setiap kali .content.scrollTo() berjalan.
+      // Jika handler ikut memanggil moveActiveFieldAboveKeyboard(), scroll
+      // menjadi berulang saat user baru mengetik pada field (Ruang/Tindakan).
+      // Auto-scroll cukup dipicu oleh focusin + visualViewport.resize.
     }
 
     window.addEventListener('resize', keyboardViewportResize, {passive:true});
