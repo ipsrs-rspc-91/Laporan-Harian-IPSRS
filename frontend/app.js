@@ -3736,6 +3736,11 @@
     const area = document.getElementById('AreaKerja');
     if(kategori) kategori.value = '';
     if(area) area.value = '';
+    // Kategori memakai picker custom; reset nilai <select> saja tidak
+    // otomatis mengubah label picker yang terlihat. Sinkronkan UI agar
+    // setelah Simpan + OK semua field benar-benar kembali kosong.
+    syncKategoriPicker_();
+    syncAreaKerjaPicker_();
     refreshItemOptions();
     setStatusValue('');
     syncDateTimeDisplay_();
