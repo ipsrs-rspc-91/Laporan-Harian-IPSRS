@@ -2630,6 +2630,22 @@
       // langsung diisi.
       let delta = rect.bottom - targetBottom;
 
+      // TINDAKAN: Android Chrome sudah melakukan native auto-scroll saat
+      // keyboard terbuka. Jika Tindakan sudah berada di area aman, JANGAN
+      // melakukan koreksi balik. Koreksi negatif di sini sebelumnya dapat
+      // menurunkan scrollTop sampai 0 sehingga form meloncat ke paling atas.
+      // Kita hanya membantu jika Tindakan masih berada DI BAWAH keyboard.
+      if(field.id === 'Tindakan'){
+        const tindakanVisible =
+          rect.top >= safeTop &&
+          rect.bottom <= targetBottom;
+        if(tindakanVisible) return;
+
+        // Jika native auto-scroll sudah menempatkan Tindakan terlalu tinggi,
+        // jangan pernah menarik content kembali ke atas.
+        if(rect.top < safeTop && delta < 0) return;
+      }
+
       // Jangan menarik field ke bawah melewati batas aman atas viewport.
       if(rect.top - delta < safeTop){
         delta = rect.top - safeTop;
