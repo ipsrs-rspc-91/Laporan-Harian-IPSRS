@@ -2565,7 +2565,7 @@
       ? window.visualViewport.height
       : window.innerHeight;
 
-    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.455));
+    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.35));
     if(currentPadding < bottomSpace){
       content.style.paddingBottom = bottomSpace + 'px';
     }
@@ -2642,7 +2642,7 @@
       // Screenshot pengguna diukur dalam pixel fisik, sedangkan getBoundingClientRect()
       // memakai CSS pixel. Gunakan ~46.992% tinggi visual viewport agar target tetap
       // setara secara visual di perangkat DPR tinggi; batasi maksimum 450 CSS px.
-      const TINDAKAN_TARGET_TOP = viewportTop + Math.min(450, Math.round(viewportHeight * 0.3));
+      const TINDAKAN_TARGET_TOP = viewportTop + Math.min(450, Math.round(viewportHeight * 0.45));
 
       let delta;
       if(tindakanIsActive){
