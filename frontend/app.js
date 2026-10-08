@@ -2628,24 +2628,6 @@
 
       if(!keyboardOpen) return;
 
-      const rect = field.getBoundingClientRect();
-      const targetBottom = viewportBottom - GAP;
-      const safeTop = viewportTop + 20;
-
-      // Jika target berikutnya sudah terlihat di atas keyboard, jangan bergerak.
-      let delta = rect.bottom - targetBottom;
-      if(delta <= 2) return;
-
-      // Jangan menggeser field yang sedang diketik melewati bagian atas layar.
-      const activeRect = activeField && activeField.getBoundingClientRect
-        ? activeField.getBoundingClientRect()
-        : rect;
-      if(activeRect.top - delta < safeTop){
-        delta = activeRect.top - safeTop;
-      }
-
-      if(delta <= 2) return;
-
       // Setelah koreksi posisi, pastikan field tidak tertutup keyboard.
       const rect = field.getBoundingClientRect();
       const targetBottom = viewportBottom - GAP;
