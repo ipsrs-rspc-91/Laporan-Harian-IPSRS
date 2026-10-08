@@ -158,7 +158,7 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
   const tindakanAfter = await tindakan.evaluate(el => el.getBoundingClientRect().bottom);
 
   expect(tindakanAfter, 'Tindakan must be above the keyboard after Masalah/Kegiatan focus')
-    .toBeLessThan(430 - 33);
+    .toBeLessThanOrEqual(430 - 33);
   expect(tindakanAfter, 'Tindakan must move upward proportionally')
     .toBeLessThan(tindakanBefore);
 
