@@ -2622,25 +2622,58 @@
       const rectBefore = field.getBoundingClientRect();
       const targetBottomBefore = viewportBottom - GAP;
 
-      if(rectBefore.bottom > targetBottomBefore){
-        try{
-          field.scrollIntoView({
-            behavior: behavior || 'auto',
-            block: 'nearest',
-            inline: 'nearest'
-          });
-        }catch(_e){}
+      // Pada form IPSRS, field yang sedang diisi harus dinaikkan ke area
+      // nyaman ketika keyboard terbuka. Jangan menunggu sampai field benar-
+      // benar tertutup keyboard, karena pada Android field sering masih
+      // "terlihat" tetapi posisinya terlalu rendah.
+      //
+      // Penting: fungsi ini hanya dipanggil dari focus/resize, BUKAN dari
+      // event input/scroll, sehingga mengetik tidak membuat layar bergerak
+      // berulang-ulang.
+      const keyboardOpen = keyboardHeight > 80 ||
+        (vv && vv.height < Math.max(0, window.innerHeight - 80));
+
+      if(keyboardOpen){
+        const comfortableTop = viewportTop + Math.min(
+          180,
+          Math.max(110, Math.round(viewportHeight * 0.28))
+        );
+        const rectInitial = field.getBoundingClientRect();
+
+        if(rectInitial.top > comfortableTop){
+          try{
+            field.scrollIntoView({
+              behavior: 'auto',
+              block: 'center',
+              inline: 'nearest'
+            });
+          }catch(_e){}
+
+          // scrollIntoView pada .content kadang hanya mendekatkan posisi.
+          // Koreksi ke posisi nyaman tanpa pernah menggeser form ke bawah.
+          const after = field.getBoundingClientRect();
+          const upwardDelta = Math.max(0, after.top - comfortableTop);
+          if(upwardDelta > 2){
+            const maxScroll = Math.max(
+              0,
+              content.scrollHeight - content.clientHeight
+            );
+            const nextTop = Math.max(
+              0,
+              Math.min(content.scrollTop + upwardDelta, maxScroll)
+            );
+            if(Math.abs(nextTop - content.scrollTop) > 2){
+              content.scrollTo({top: nextTop, behavior: behavior || 'auto'});
+            }
+          }
+        }
       }
 
-      // Setelah scrollIntoView, hitung ulang posisi dan koreksi presisi.
+      // Setelah koreksi posisi, pastikan field tidak tertutup keyboard.
       const rect = field.getBoundingClientRect();
       const targetBottom = viewportBottom - GAP;
       const safeTop = viewportTop + 20;
 
-      // Target berikutnya harus benar-benar berada 33px di atas keyboard,
-      // bukan sekadar "masih terlihat". Ini penting pada Android: field
-      // berikutnya kadang sudah terlihat, tetapi masih terlalu rendah untuk
-      // langsung diisi.
       let delta = rect.bottom - targetBottom;
 
       // Jangan menarik field ke bawah melewati batas aman atas viewport.
