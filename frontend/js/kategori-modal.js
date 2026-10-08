@@ -499,17 +499,6 @@
     }
 
     if(!sel.__ipsrsKategoriModalCapture){
-
-    const sel = document.getElementById('Kategori');
-    if(!sel) return false;
-
-    buildModals();
-    ensureBaseOption();
-
-    // Tangkap event CHANGE pada fase CAPTURE, sebelum onchange inline milik
-    // app.js. Dengan cara ini PERBAIKAN/PEMELIHARAAN pasti masuk ke modal,
-    // sementara kategori lain tetap memakai handler bawaan app.js.
-    if(!sel.__ipsrsKategoriModalCapture){
       const modalChangeHandler = function(event){
         const currentSel = document.getElementById('Kategori');
         if(!currentSel) return;
