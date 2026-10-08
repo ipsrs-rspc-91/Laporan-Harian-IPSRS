@@ -2577,8 +2577,21 @@
     // - keyboardFocusedField = field yang sedang diketik
     // - scroll hanya dilakukan bila target berikutnya tertutup/terlalu dekat keyboard
     // - tidak ada event input/visualViewport.scroll yang memicu loop
-    const target = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
     const active = keyboardFocusedField || document.activeElement;
+    let target = keyboardScrollTarget || active;
+
+    // Form input flow MUST follow the visual form, not DOM order across the
+    // two-column grid. In particular:
+    // Masalah/Kegiatan -> Tindakan.
+    // Tindakan itself -> Tindakan (keep the active field writable).
+    // Ruang -> Masalah/Kegiatan.
+    if(active && active.id === 'MasalahKegiatan'){
+      target = document.getElementById('Tindakan') || active;
+    }else if(active && active.id === 'Ruang'){
+      target = document.getElementById('MasalahKegiatan') || active;
+    }else if(active && (active.id === 'Tindakan' || active.tagName === 'TEXTAREA')){
+      target = active;
+    }
 
     const isFormField = target && target.matches &&
       target.matches('#page-input input, #page-input textarea, #page-input select');
@@ -2601,10 +2614,38 @@
       const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
       const GAP = 33;
 
+      // Support Android keyboard-overlay mode as well as viewport-resize mode.
+      // VirtualKeyboard.boundingRect is authoritative when available.
+      const vk = navigator && navigator.virtualKeyboard;
+      const vkRect = vk && vk.boundingRect ? vk.boundingRect : null;
+      const vkHeight = vkRect ? Number(vkRect.height || 0) : 0;
+      const vkTop = vkRect ? Number(vkRect.top || 0) : viewportBottom;
+      const keyboardDetected = keyboardHeight > 80 || vkHeight > 80;
+
+      // Some Android/browser combinations expose neither a resized visual
+      // viewport nor VirtualKeyboard geometry. A focused text field on a
+      // touch device is then treated as keyboard-occluded by a conservative
+      // 35% lower zone. This is only used while the field is focused.
+      const touchFocusFallback = !!(
+        active &&
+        document.activeElement === active &&
+        /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName || '') &&
+        navigator &&
+        Number(navigator.maxTouchPoints || 0) > 0 &&
+        !keyboardDetected
+      );
+      const keyboardBottom = vkHeight > 80
+        ? Math.min(viewportBottom, vkTop)
+        : (keyboardDetected
+          ? viewportBottom
+          : (touchFocusFallback
+            ? viewportBottom - Math.max(280, Math.round(viewportHeight * 0.35))
+            : viewportBottom));
+
       // Saat keyboard terbuka, beri ruang secukupnya agar target bawah
       // benar-benar bisa dinaikkan. Jangan memakai tinggi keyboard sebagai
       // padding karena itu membuat area kosong besar.
-      if(keyboardHeight > 80){
+      if(keyboardDetected || touchFocusFallback){
         if(keyboardOriginalPadding === null){
           keyboardOriginalPadding = content.style.paddingBottom || '';
         }
@@ -2626,13 +2667,10 @@
         ? active.getBoundingClientRect()
         : targetRect;
 
-      // Android Chrome pada sebagian perangkat memakai mode keyboard overlay:
-      // visualViewport TIDAK mengecil saat keyboard muncul. Karena itu jangan
-      // menggantungkan auto-scroll pada keyboardHeight/keyboardOpen.
-      // Kontrak utama: field berikutnya harus berada di atas batas bawah
-      // visual viewport. Ini juga tetap aman saat viewport memang mengecil.
-      // Untuk Masalah -> Tindakan, target = Tindakan.
-      let delta = targetRect.bottom - (viewportBottom - GAP);
+      // Target dianggap aman bila seluruh bagian bawahnya berada GAP px
+      // di atas area yang masih dapat dipakai. Untuk Masalah -> Tindakan,
+      // target = Tindakan; untuk Tindakan sendiri, target = Tindakan.
+      let delta = targetRect.bottom - (keyboardBottom - GAP);
       if(delta <= 2) return;
 
       // Jangan menggeser sampai field yang sedang diketik hilang ke atas.
@@ -2820,11 +2858,10 @@
 
       keyboardFocusedField = field;
 
-      // Target adalah field berikutnya, tetapi hanya digeser jika belum
-      // terlihat di atas keyboard. Dengan demikian:
-      // Ruang -> Masalah/Kegiatan tetap terlihat tanpa loncatan,
-      // Masalah/Kegiatan -> Tindakan langsung terlihat dan bisa diklik.
-      keyboardScrollTarget = getNextKeyboardField(field);
+      // Jangan memakai urutan DOM untuk menentukan target karena form
+      // memakai dua kolom. moveActiveFieldAboveKeyboard() menerapkan alur
+      // visual yang eksplisit: Masalah/Kegiatan -> Tindakan.
+      keyboardScrollTarget = field;
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){

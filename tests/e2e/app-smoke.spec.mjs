@@ -120,10 +120,8 @@ test('SPMU empty selectors have no placeholder helper text', async ({ page }) =>
 
 
 test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async ({ page }) => {
-  // Test both Android keyboard modes:
-  // 1) resized visual viewport, and
-  // 2) keyboard overlay where visualViewport keeps the layout height.
-  // The second mode is the case that previously escaped the regression test.
+  // Simulate the Android overlay mode using the VirtualKeyboard geometry
+  // contract. This is the mode that previously escaped the regression test.
   await page.addInitScript(() => {
     const mockVisualViewport = {
       offsetTop: 0,
@@ -131,10 +129,20 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
       addEventListener() {},
       removeEventListener() {}
     };
+    const mockVirtualKeyboard = {
+      boundingRect: { x: 0, y: 430, width: 390, height: 414 },
+      overlaysContent: true,
+      addEventListener() {},
+      removeEventListener() {}
+    };
     try {
       Object.defineProperty(window, 'visualViewport', {
         configurable: true,
         get: () => mockVisualViewport
+      });
+      Object.defineProperty(navigator, 'virtualKeyboard', {
+        configurable: true,
+        get: () => mockVirtualKeyboard
       });
     } catch (_) {}
   });
@@ -156,25 +164,43 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
   await expect(masalah).toBeAttached();
   await expect(tindakan).toBeAttached();
 
+  // Masalah/Kegiatan -> Tindakan must become writable above the keyboard.
   await content.evaluate(el => { el.scrollTop = 0; });
   await masalah.focus();
   await page.waitForTimeout(700);
 
-  const result = await page.evaluate(() => {
+  let result = await page.evaluate(() => {
     const content = document.querySelector('main.content');
     const target = document.getElementById('Tindakan');
-    const vv = window.visualViewport;
-    const keyboardTop = (vv?.offsetTop || 0) + (vv?.height || window.innerHeight);
-    const gap = keyboardTop - target.getBoundingClientRect().bottom;
+    const kb = navigator.virtualKeyboard.boundingRect;
     return {
       scrollTop: content ? content.scrollTop : 0,
       targetBottom: target.getBoundingClientRect().bottom,
-      keyboardTop,
-      gap
+      keyboardTop: kb.top,
+      gap: kb.top - target.getBoundingClientRect().bottom
     };
   });
 
-  expect(result.scrollTop, 'Form must scroll upward when Masalah/Kegiatan is focused').toBeGreaterThan(0);
-  expect(result.gap, 'Tindakan must be visible above the simulated keyboard').toBeGreaterThanOrEqual(20);
+  expect(result.scrollTop, 'Form must scroll upward from Masalah/Kegiatan').toBeGreaterThan(0);
+  expect(result.gap, 'Tindakan must be above the simulated keyboard').toBeGreaterThanOrEqual(20);
+
+  // Tindakan itself must remain usable; it must NOT target Item/Keterangan
+  // in the other grid column.
+  await tindakan.focus();
+  await page.waitForTimeout(700);
+
+  result = await page.evaluate(() => {
+    const content = document.querySelector('main.content');
+    const active = document.getElementById('Tindakan');
+    const kb = navigator.virtualKeyboard.boundingRect;
+    return {
+      scrollTop: content ? content.scrollTop : 0,
+      activeBottom: active.getBoundingClientRect().bottom,
+      keyboardTop: kb.top,
+      gap: kb.top - active.getBoundingClientRect().bottom
+    };
+  });
+
+  expect(result.gap, 'Tindakan must remain writable above the simulated keyboard').toBeGreaterThanOrEqual(20);
   expect(runtimeErrors, 'No runtime error may abort keyboard scroll').toEqual([]);
 });
