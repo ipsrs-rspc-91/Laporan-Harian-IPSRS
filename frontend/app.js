@@ -2572,38 +2572,17 @@
   }
 
   function moveActiveFieldAboveKeyboard(behavior){
-    // Satu sumber kebenaran untuk scroll form mobile:
-    // - keyboardScrollTarget = field BERIKUTNYA yang harus terlihat
-    // - keyboardFocusedField = field yang sedang diketik
-    // - scroll hanya dilakukan bila target berikutnya tertutup/terlalu dekat keyboard
-    // - tidak ada event input/visualViewport.scroll yang memicu loop
+    // MOBILE SMART SCROLL: field yang DIKLIK selalu menjadi target.
     const active = keyboardFocusedField || document.activeElement;
-    let target = keyboardScrollTarget || active;
-
-    // Form input flow MUST follow the visual form, not DOM order across the
-    // two-column grid. In particular:
-    // Masalah/Kegiatan -> Tindakan.
-    // Tindakan itself -> Tindakan (keep the active field writable).
-    // Ruang -> Masalah/Kegiatan.
-    if(active && active.id === 'MasalahKegiatan'){
-      target = document.getElementById('Tindakan') || active;
-    }else if(active && active.id === 'Ruang'){
-      target = document.getElementById('MasalahKegiatan') || active;
-    }else if(active && (active.id === 'Tindakan' || active.tagName === 'TEXTAREA')){
-      target = active;
-    }
-
-    const isFormField = target && target.matches &&
-      target.matches('#page-input input, #page-input textarea, #page-input select');
-    const isSaveButton = target && target.id === 'btnSaveInput';
-    if(!target || (!isFormField && !isSaveButton)) return;
+    if(!active) return;
+    const isFormField = active.matches &&
+      active.matches('#page-input input, #page-input textarea, #page-input select');
+    if(!isFormField) return;
 
     const content = getKeyboardContent();
     if(!content) return;
-
     const mobile = window.matchMedia
-      ? window.matchMedia('(max-width: 768px)').matches
-      : true;
+      ? window.matchMedia('(max-width: 768px)').matches : true;
     if(!mobile) return;
 
     try{
@@ -2614,8 +2593,6 @@
       const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
       const GAP = 33;
 
-      // Support Android keyboard-overlay mode as well as viewport-resize mode.
-      // VirtualKeyboard.boundingRect is authoritative when available.
       const testVk = window.__IPSRS_TEST_VK || null;
       const vk = testVk || (navigator && navigator.virtualKeyboard);
       const vkRect = vk && vk.boundingRect ? vk.boundingRect : null;
@@ -2623,74 +2600,52 @@
       const vkTop = vkRect ? Number(vkRect.top || 0) : viewportBottom;
       const keyboardDetected = keyboardHeight > 80 || vkHeight > 80;
 
-      // Some Android/browser combinations expose neither a resized visual
-      // viewport nor VirtualKeyboard geometry. A focused text field on a
-      // touch device is then treated as keyboard-occluded by a conservative
-      // 35% lower zone. This is only used while the field is focused.
       const touchFocusFallback = !!(
-        active &&
         document.activeElement === active &&
         /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName || '') &&
         navigator &&
         Number(navigator.maxTouchPoints || 0) > 0 &&
         !keyboardDetected
       );
+
       const keyboardBottom = vkHeight > 80
         ? Math.min(viewportBottom, vkTop)
-        : (keyboardDetected
-          ? viewportBottom
-          : (touchFocusFallback
+        : (keyboardDetected ? viewportBottom :
+          (touchFocusFallback
             ? viewportBottom - Math.max(280, Math.round(viewportHeight * 0.35))
             : viewportBottom));
 
-      // Saat keyboard terbuka, beri ruang secukupnya agar target bawah
-      // benar-benar bisa dinaikkan. Jangan memakai tinggi keyboard sebagai
-      // padding karena itu membuat area kosong besar.
       if(keyboardDetected || touchFocusFallback){
-        if(keyboardOriginalPadding === null){
+        if(keyboardOriginalPadding === null)
           keyboardOriginalPadding = content.style.paddingBottom || '';
-        }
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
         ) || 0;
         const requiredPadding = Math.max(
-          currentPadding,
-          220,
-          Math.round(viewportHeight * 0.30)
+          currentPadding, 220, Math.round(viewportHeight * 0.30)
         );
-        if(currentPadding < requiredPadding){
+        if(currentPadding < requiredPadding)
           content.style.paddingBottom = requiredPadding + 'px';
-        }
       }
 
-      const targetRect = target.getBoundingClientRect();
-      const activeRect = active && active.getBoundingClientRect
-        ? active.getBoundingClientRect()
-        : targetRect;
+      // FIELD AKTIF SENDIRI yang dinaikkan.
+      // Bergerak proporsional: hanya sebesar jarak yang dibutuhkan agar
+      // bagian bawah field berada 33px di atas keyboard.
+      const activeRect = active.getBoundingClientRect();
+      let delta = activeRect.bottom - (keyboardBottom - GAP);
 
-      // Target dianggap aman bila seluruh bagian bawahnya berada GAP px
-      // di atas area yang masih dapat dipakai. Untuk Masalah -> Tindakan,
-      // target = Tindakan; untuk Tindakan sendiri, target = Tindakan.
-      let delta = targetRect.bottom - (keyboardBottom - GAP);
-      if(delta <= 2) return;
-
-      // Jangan menggeser sampai field yang sedang diketik hilang ke atas.
-      const maxUpwardDelta = activeRect.top - (viewportTop + 20);
-      if(maxUpwardDelta > 0){
-        delta = Math.min(delta, maxUpwardDelta);
+      // Jangan mendorong field melewati batas atas layar.
+      if(delta > 0){
+        const maxUpwardDelta = activeRect.top - (viewportTop + 20);
+        if(maxUpwardDelta > 0) delta = Math.min(delta, maxUpwardDelta);
       }
 
       if(delta <= 2) return;
 
-      const maxScroll = Math.max(
-        0,
-        content.scrollHeight - content.clientHeight
-      );
+      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
       const nextTop = Math.max(
-        0,
-        Math.min(content.scrollTop + delta, maxScroll)
+        0, Math.min(content.scrollTop + delta, maxScroll)
       );
-
       if(Math.abs(nextTop - content.scrollTop) < 2) return;
 
       content.scrollTo({
