@@ -140,10 +140,13 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
         configurable: true,
         get: () => mockVisualViewport
       });
-      Object.defineProperty(navigator, 'virtualKeyboard', {
-        configurable: true,
-        get: () => mockVirtualKeyboard
-      });
+      window.__IPSRS_TEST_VK = mockVirtualKeyboard;
+      try {
+        Object.defineProperty(Navigator.prototype, 'virtualKeyboard', {
+          configurable: true,
+          get: () => mockVirtualKeyboard
+        });
+      } catch (_) {}
     } catch (_) {}
   });
 
