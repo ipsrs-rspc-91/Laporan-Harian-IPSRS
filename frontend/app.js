@@ -1538,6 +1538,8 @@
     const filter=document.getElementById('FilterKategori');
 
     const formValues=[
+      'PEMELIHARAAN',
+      'PERBAIKAN',
       'PEMELIHARAAN RUTIN SESUAI JADWAL',
       'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
       'PEMELIHARAAN DILUAR JADWAL RUTIN',
