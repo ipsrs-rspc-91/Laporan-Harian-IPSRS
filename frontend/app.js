@@ -2827,7 +2827,13 @@
       }
 
       keyboardFocusedField = field;
-      keyboardScrollTarget = getNextKeyboardField(field);
+
+      // Untuk field biasa (Ruang, Masalah/Kegiatan, Tindakan), jangan
+      // menjadikan field BERIKUTNYA sebagai target. Itu menyebabkan layar
+      // langsung meloncat ke bawah begitu pengguna baru mengetik di Ruang.
+      // Target tetap field aktif; fungsi scroll hanya bergerak jika field
+      // aktif memang tertutup/terlalu dekat dengan keyboard.
+      keyboardScrollTarget = field;
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
