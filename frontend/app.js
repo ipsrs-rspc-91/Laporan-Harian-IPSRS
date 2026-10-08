@@ -2483,9 +2483,20 @@
     if(!field || !field.matches) return false;
     if(!field.matches('#page-input input, #page-input textarea, #page-input select')) return false;
     if(field.disabled || field.hidden) return false;
+
     const style = getComputedStyle(field);
     if(style.display === 'none' || style.visibility === 'hidden') return false;
-    return field.getClientRects().length > 0;
+    if(parseFloat(style.opacity || '1') === 0) return false;
+    if(style.pointerEvents === 'none') return false;
+
+    const rect = field.getBoundingClientRect();
+    // Jangan pernah menjadikan elemen placeholder/hidden picker sebagai
+    // target scroll. Kategori dan Area Kerja memiliki native control
+    // 1x1px yang sengaja disembunyikan dan dikendalikan oleh tombol picker.
+    if(rect.width <= 2 || rect.height <= 2) return false;
+    if(field.getClientRects().length === 0) return false;
+
+    return true;
   }
 
   function getNextKeyboardField(field){
