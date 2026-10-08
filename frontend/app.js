@@ -2489,30 +2489,15 @@
   }
 
   function getNextKeyboardField(field){
-    // Setelah ITEM dipilih, pengguna masuk ke bagian paling bawah form.
-    // Target harus langsung ke tombol Simpan Laporan supaya Keterangan
-    // dan tombol Simpan ikut terlihat, bukan berhenti di Keterangan saja.
-    if(field && field.id === 'Item'){
-      return document.getElementById('btnSaveInput') || field;
-    }
-
-    const fields = Array.from(
-      document.querySelectorAll(
-        '#page-input input:not([type="hidden"]), #page-input textarea, #page-input select'
-      )
-    ).filter(isKeyboardFieldVisible);
-
-    const index = fields.indexOf(field);
-
-    // Jika field berikutnya tersedia, jadikan itu target.
-    // Ini membuat pengguna langsung melihat field yang akan diisi.
-    if(index >= 0 && index < fields.length - 1){
-      return fields[index + 1];
-    }
-
-    // Field terakhir: tidak ada field berikutnya, jadi tetap jaga
-    // field aktif agar terlihat nyaman di atas keyboard.
-    return field;
+    // Field yang sedang diisi harus tetap menjadi target scroll.
+    // Jangan mencari field berikutnya: Form Input sekarang memiliki
+    // beberapa kontrol native yang sengaja disembunyikan (Kategori/Area Kerja)
+    // sebagai sumber nilai untuk custom picker. Jika kontrol tersebut ikut
+    // dianggap sebagai target, Android dapat menggulir form ke posisi yang
+    // salah dan meninggalkan field aktif di bawah keyboard.
+    // Area Kerja/Item tetap memiliki aturan khusus di handler focus/change
+    // untuk mengarahkan bagian bawah form ke tombol Simpan.
+    return field || document.activeElement;
   }
 
   function clearKeyboardMoveTimers(){
