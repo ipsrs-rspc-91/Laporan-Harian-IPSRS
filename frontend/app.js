@@ -1352,8 +1352,10 @@
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
       bg.querySelector('.area-item-picker-add').addEventListener('click',()=>{
         closeAreaItemPicker_();
-        sel.value=ADD_NEW_VALUE;
-        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        const currentSelect=document.getElementById('AreaKerja');
+        if(!currentSelect) return;
+        currentSelect.value=ADD_NEW_VALUE;
+        currentSelect.dispatchEvent(new Event('change',{bubbles:true}));
       });
     }
 
