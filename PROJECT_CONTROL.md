@@ -38,6 +38,36 @@
 
 ---
 
+# SOP WAJIB — SETIAP UPDATE HARUS SAMPAI PRODUCTION
+
+**Status:** WAJIB / PERMANEN
+
+Setiap perubahan kode, UI, konfigurasi frontend, Edge Function, migration, workflow, atau komponen produksi yang dilakukan atas permintaan pengguna **tidak dianggap selesai pada saat commit dibuat**. Proses wajib diteruskan sampai seluruh gate lulus dan deployment production terverifikasi.
+
+## Urutan wajib
+
+1. **Pre-flight** — baca PROJECT_CONTROL, LOCK_REGISTER, BASELINE_REGISTER dan REGRESSION_MATRIX yang relevan.
+2. **Checkpoint / rollback point** — catat commit/versi sebelum perubahan dan pastikan jalur rollback tersedia. Rollback database/data hanya dengan perintah eksplisit pengguna.
+3. **Implementasi perubahan** — ubah hanya scope yang diminta dan jangan mengubah hak akses, data, atau modul lain tanpa alasan teruji.
+4. **Audit Total** — syntax, asset/reference, overlap/conflict, security/permission impact, data/API impact, cache/version dan dampak modul bersama.
+5. **Browser / Regression Test** — jalankan test yang relevan, termasuk modul LOCKED dan alur utama yang terdampak.
+6. **Gate keputusan** — bila ada FAIL/BLOCKED, **STOP DEPLOY**; perbaiki akar masalah lalu ulangi gate. Jangan meminta pengguna mengingatkan deploy.
+7. **Automatic Production Deploy** — bila semua gate PASS, deployment production **wajib diteruskan otomatis** tanpa menunggu instruksi tambahan dari pengguna.
+8. **Deployment Verification** — verifikasi GitHub Actions/deployment run benar-benar completed + success, SHA production sesuai SHA yang diaudit, dan asset/version yang benar sudah aktif.
+9. **Post-deployment Smoke Test** — cek runtime production pada alur yang berubah dan fungsi kritis terkait.
+10. **Stable Checkpoint** — setelah smoke test PASS, catat commit/deployment sebagai checkpoint stabil terbaru dan perbarui dokumen kontrol bila diperlukan.
+11. **Laporan akhir** — hanya setelah langkah 1–10 selesai boleh menyatakan **SELESAI / DEPLOY SUCCESS**. Laporan wajib mencantumkan commit, audit, regression, deployment dan smoke-test evidence.
+
+## Aturan komunikasi
+
+- Pengguna cukup mengatakan **“perbaiki”**; pengguna **tidak wajib mengingatkan “deploy”**.
+- Jangan pernah menyatakan “sudah deploy” hanya karena commit sudah dibuat atau audit baru queued/in_progress.
+- Jika audit masih berjalan, proses harus diteruskan sampai hasil final selama tool/workflow tersedia.
+- Jika deployment gagal, laporkan FAIL dan perbaiki; jangan menyatakan selesai.
+- Perubahan frontend wajib memeriksa cache/service-worker/version agar pengguna tidak menerima asset lama.
+
+---
+
 # 001 — IDENTITAS PROYEK DAN STATUS
 
 **Nama:** Laporan-Harian-IPSRS  
