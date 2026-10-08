@@ -2627,24 +2627,30 @@
       // sudah membuat Tindakan terlihat tetapi terlalu dekat dengan keyboard.
       // Karena itu Tindakan diarahkan ke posisi yang lebih nyaman (120px dari
       // batas keyboard), sehingga tetap ada ruang untuk mengetik.
-      const tindakanTargetBottom =
-        field.id === 'Tindakan'
-          ? viewportBottom - 10
-          : viewportBottom - GAP;
-      const targetBottom = tindakanTargetBottom;
       const safeTop = viewportTop + 20;
 
-      let delta = rect.bottom - targetBottom;
+      // TINDAKAN harus berada lebih tinggi seperti posisi yang nyaman
+      // pada desain form: sekitar 290px dari bagian atas viewport.
+      // Jangan menggunakan jarak 10/60/120px dari keyboard, karena itu
+      // membuat Tindakan tetap terlalu rendah ketika keyboard terbuka.
+      const TINDAKAN_TARGET_TOP = viewportTop + 290;
 
+      let delta;
       if(field.id === 'Tindakan'){
-        // Jangan pernah membuat viewport bergerak ke arah form bagian atas.
-        // Kita hanya melakukan koreksi bila Tindakan masih terlalu rendah.
+        // Hanya naik. Jika Tindakan sudah berada pada/di atas posisi target,
+        // jangan menggeser form kembali ke bawah.
+        delta = rect.top - TINDAKAN_TARGET_TOP;
         if(delta <= 2) return;
 
-        // Batas atas mencegah Tindakan didorong melewati area aman.
+        // Jangan pernah menarik viewport melewati batas aman atas.
         if(rect.top - delta < safeTop){
           delta = rect.top - safeTop;
         }
+      }else{
+        // Field lain tetap memakai aturan lama: bagian bawah target
+        // diposisikan 33px di atas keyboard.
+        const targetBottom = viewportBottom - GAP;
+        delta = rect.bottom - targetBottom;
       }
 
       // Jangan menarik field ke bawah melewati batas aman atas viewport.
