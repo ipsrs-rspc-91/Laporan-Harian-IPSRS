@@ -544,5 +544,10 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kategoriModalBoot, {once:true});
   else kategoriModalBoot();
 
+  // Expose the opener globally so the Form Input trigger remains clickable
+  // even if the deferred installer is delayed by another startup script.
+  window.__ipsrsOpenKategoriModal = function(){
+    openKategoriRootModal();
+  };
   window.__ipsrsKategoriModalBuild = BUILD;
 })();
