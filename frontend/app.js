@@ -2600,22 +2600,24 @@
       const vkTop = vkRect ? Number(vkRect.top || 0) : viewportBottom;
       const keyboardDetected = keyboardHeight > 80 || vkHeight > 80;
 
-      const touchFocusFallback = !!(
-        document.activeElement === active &&
-        /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName || '') &&
-        navigator &&
-        Number(navigator.maxTouchPoints || 0) > 0 &&
-        !keyboardDetected
-      );
-
+      // Android + interactive-widget=resizes-content dapat mengecilkan
+      // window.innerHeight bersamaan dengan visualViewport. Jangan memakai
+      // tebakan keyboard 280px/35% pada kondisi ini: itu menghitung keyboard
+      // dua kali dan membuat form meloncat terlalu jauh ke atas.
+      //
+      // Keyboard dianggap benar-benar terbuka hanya jika:
+      // 1) VirtualKeyboard memberi boundingRect, atau
+      // 2) visualViewport menyusut terhadap layout viewport.
+      // Sebelum keyboard terbuka, JANGAN melakukan smart-scroll.
       const keyboardBottom = vkHeight > 80
         ? Math.min(viewportBottom, vkTop)
-        : (keyboardDetected ? viewportBottom :
-          (touchFocusFallback
-            ? viewportBottom - Math.max(280, Math.round(viewportHeight * 0.35))
-            : viewportBottom));
+        : viewportBottom;
 
-      if(keyboardDetected || touchFocusFallback){
+      if(!keyboardDetected){
+        return;
+      }
+
+      if(keyboardDetected){
         if(keyboardOriginalPadding === null)
           keyboardOriginalPadding = content.style.paddingBottom || '';
         const currentPadding = parseFloat(
