@@ -1104,3 +1104,6 @@ Supabase production currently reports 28 applied migrations. GitHub's `supabase/
 
 **Rule:** do not run the 17 missing historical migrations against production and do not create empty placeholder migrations merely to make the counts match. The next safe step is to recover the authoritative historical SQL (repository history, backup/dump, or original migration source), then reconcile it before any migration-history repair.
 
+
+
+<!-- Production deployment authorization: explicit user request to deploy current main commit on 2026-10-08. -->
