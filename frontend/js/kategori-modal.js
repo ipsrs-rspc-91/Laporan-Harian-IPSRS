@@ -30,13 +30,13 @@
     const style = document.createElement('style');
     style.id = 'ipsrs-kategori-modal-style';
     style.textContent = `
-      #ipsrsKategoriModal1, #ipsrsKategoriModal2, #ipsrsKategoriModal3{
+      #ipsrsKategoriModalRoot, #ipsrsKategoriModal1, #ipsrsKategoriModal2, #ipsrsKategoriModal3{
         position:fixed; inset:0; z-index:10120; display:none;
         align-items:center; justify-content:center; padding:18px;
         background:rgba(15,23,42,.48);
         backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
       }
-      #ipsrsKategoriModal1.show, #ipsrsKategoriModal2.show, #ipsrsKategoriModal3.show{display:flex;}
+      #ipsrsKategoriModalRoot.show, #ipsrsKategoriModal1.show, #ipsrsKategoriModal2.show, #ipsrsKategoriModal3.show{display:flex;}
       .ipsrs-kat-modal{
         width:min(430px,100%); background:#fff; border:1px solid #e2e8f0;
         border-radius:20px; overflow:hidden;
