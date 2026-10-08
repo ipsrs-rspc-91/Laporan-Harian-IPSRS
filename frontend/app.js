@@ -2646,21 +2646,6 @@
 
       if(delta <= 2) return;
 
-      const maxScroll = Math.max(
-              0,
-              content.scrollHeight - content.clientHeight
-            );
-            const nextTop = Math.max(
-              0,
-              Math.min(content.scrollTop + upwardDelta, maxScroll)
-            );
-            if(Math.abs(nextTop - content.scrollTop) > 2){
-              content.scrollTo({top: nextTop, behavior: behavior || 'auto'});
-            }
-          }
-        }
-      }
-
       // Setelah koreksi posisi, pastikan field tidak tertutup keyboard.
       const rect = field.getBoundingClientRect();
       const targetBottom = viewportBottom - GAP;
@@ -2669,8 +2654,8 @@
       let delta = rect.bottom - targetBottom;
 
       // Jangan menarik field ke bawah melewati batas aman atas viewport.
-      if(rect.top - delta < safeTop){
-        delta = rect.top - safeTop;
+      if(activeRect.top - delta < safeTop){
+        delta = activeRect.top - safeTop;
       }
 
       if(Math.abs(delta) < 2) return;
