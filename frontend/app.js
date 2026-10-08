@@ -2705,7 +2705,11 @@
   // cukup koreksi seperlunya dengan jarak atas yang aman.
   function positionKategoriField(){
     const content = getKeyboardContent();
-    const field = document.getElementById('Kategori');
+    const field = document.getElementById('KategoriModalTrigger');
+
+    // KATEGORI memakai tombol picker yang terlihat; #Kategori adalah
+    // <select> native yang sengaja disembunyikan 1x1px. Jangan pernah
+    // menghitung posisi scroll dari select tersembunyi tersebut.
     if(!content || !field) return;
 
     const mobile = window.matchMedia
@@ -2716,20 +2720,34 @@
     try{
       const vv = window.visualViewport;
       const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+      const GAP = 33;
 
-      // KATEGORI HARUS NAIK OTOMATIS setelah dipilih.
-      // Tetapi jangan ditempelkan ke bagian atas layar.
-      // Target posisi field dibuat 220px dari atas viewport sehingga
-      // label "KATEGORI" tetap berada di area layar dan tidak hilang.
-      const TARGET_TOP = viewportTop + 220;
       const rect = field.getBoundingClientRect();
 
-      // Hanya naik. Jika Kategori sudah berada di atas target,
-      // jangan diturunkan lagi.
-      if(rect.top <= TARGET_TOP) return;
+      // Jika Kategori sudah terlihat utuh di area viewport, PERTAHANKAN
+      // posisi sekarang. Ini penting setelah Tindakan: Kategori sudah
+      // terlihat seperti screenshot pengguna dan tidak boleh meloncat.
+      const visibleTop = viewportTop + 20;
+      const visibleBottom = viewportBottom - GAP;
+      if(rect.top >= visibleTop && rect.bottom <= visibleBottom) return;
 
-      const delta = rect.top - TARGET_TOP;
-      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+      // Hanya koreksi seperlunya jika Kategori benar-benar keluar viewport.
+      let delta = 0;
+      if(rect.bottom > visibleBottom){
+        delta = rect.bottom - visibleBottom;
+      }else if(rect.top < visibleTop){
+        delta = rect.top - visibleTop;
+      }
+
+      if(Math.abs(delta) < 2) return;
+
+      const maxScroll = Math.max(
+        0,
+        content.scrollHeight - content.clientHeight
+      );
+
       const nextTop = Math.max(
         0,
         Math.min(content.scrollTop + delta, maxScroll)
