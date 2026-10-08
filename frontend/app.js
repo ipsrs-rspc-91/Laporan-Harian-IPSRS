@@ -2640,9 +2640,9 @@
       // tidak berubah.
       const tindakanIsActive = keyboardFocusedField && keyboardFocusedField.id === 'Tindakan';
       // Screenshot pengguna diukur dalam pixel fisik, sedangkan getBoundingClientRect()
-      // memakai CSS pixel. Gunakan ~44.5% tinggi visual viewport agar target tetap
+      // memakai CSS pixel. Gunakan ~46.992% tinggi visual viewport agar target tetap
       // setara secara visual di perangkat DPR tinggi; batasi maksimum 450 CSS px.
-      const TINDAKAN_TARGET_TOP = viewportTop + Math.min(450, Math.round(viewportHeight * 0.4895));
+      const TINDAKAN_TARGET_TOP = viewportTop + Math.min(450, Math.round(viewportHeight * 0.46992));
 
       let delta;
       if(tindakanIsActive){
