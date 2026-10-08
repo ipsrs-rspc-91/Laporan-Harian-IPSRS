@@ -2634,10 +2634,18 @@
       // Dari pengujian perangkat, posisi ini menghasilkan tampilan seperti
       // Gambar 2: Tindakan berada di area tengah-atas dan field setelahnya
       // ikut terlihat. Ini sengaja hanya berlaku untuk Tindakan.
-      const TINDAKAN_TARGET_TOP = viewportTop + 450;
+      // Posisi khusus hanya berlaku saat TINDAKAN benar-benar sedang difokuskan.
+      // Saat Masalah/Kegiatan fokus, Tindakan tetap diperlakukan sebagai
+      // next-field biasa agar perilaku checkpoint Ruang -> Masalah -> Tindakan
+      // tidak berubah.
+      const tindakanIsActive = keyboardFocusedField && keyboardFocusedField.id === 'Tindakan';
+      // Screenshot pengguna diukur dalam pixel fisik, sedangkan getBoundingClientRect()
+      // memakai CSS pixel. Gunakan ~44.5% tinggi visual viewport agar target tetap
+      // setara secara visual di perangkat DPR tinggi; batasi maksimum 450 CSS px.
+      const TINDAKAN_TARGET_TOP = viewportTop + Math.min(450, Math.round(viewportHeight * 0.445));
 
       let delta;
-      if(field.id === 'Tindakan'){
+      if(tindakanIsActive){
         // Hanya naik. Jika Tindakan sudah berada pada/di atas posisi target,
         // jangan menggeser form kembali ke bawah.
         delta = rect.top - TINDAKAN_TARGET_TOP;
@@ -2675,9 +2683,9 @@
 
       content.scrollTo({
         top: nextTop,
-        // Tindakan harus berpindah deterministik setelah keyboard terbuka;
-        // hindari animasi yang dapat beradu dengan native Android auto-scroll.
-        behavior: field.id === 'Tindakan' ? 'auto' : (behavior || 'smooth')
+        // Tindakan aktif harus berpindah deterministik setelah keyboard terbuka;
+        // field berikutnya dari Masalah/Kegiatan tetap memakai perilaku normal.
+        behavior: tindakanIsActive ? 'auto' : (behavior || 'smooth')
       });
     }catch(err){
       console.warn('Keyboard smart scroll:', err);
