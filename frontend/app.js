@@ -2616,7 +2616,8 @@
 
       // Support Android keyboard-overlay mode as well as viewport-resize mode.
       // VirtualKeyboard.boundingRect is authoritative when available.
-      const vk = navigator && navigator.virtualKeyboard;
+      const testVk = window.__IPSRS_TEST_VK || null;
+      const vk = testVk || (navigator && navigator.virtualKeyboard);
       const vkRect = vk && vk.boundingRect ? vk.boundingRect : null;
       const vkHeight = vkRect ? Number(vkRect.height || 0) : 0;
       const vkTop = vkRect ? Number(vkRect.top || 0) : viewportBottom;
