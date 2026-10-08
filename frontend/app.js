@@ -2621,29 +2621,30 @@
       // Kita hanya membaca posisi AKHIR target lalu melakukan satu koreksi
       // pada .content.
       const rect = field.getBoundingClientRect();
-      const targetBottom = viewportBottom - GAP;
+
+      // Untuk field biasa gunakan jarak 33px dari keyboard seperti sebelumnya.
+      // TINDAKAN sedikit berbeda: setelah keyboard terbuka, Android sering
+      // sudah membuat Tindakan terlihat tetapi terlalu dekat dengan keyboard.
+      // Karena itu Tindakan diarahkan ke posisi yang lebih nyaman (120px dari
+      // batas keyboard), sehingga tetap ada ruang untuk mengetik.
+      const tindakanTargetBottom =
+        field.id === 'Tindakan'
+          ? viewportBottom - 120
+          : viewportBottom - GAP;
+      const targetBottom = tindakanTargetBottom;
       const safeTop = viewportTop + 20;
 
-      // Target berikutnya harus benar-benar berada 33px di atas keyboard,
-      // bukan sekadar "masih terlihat". Ini penting pada Android: field
-      // berikutnya kadang sudah terlihat, tetapi masih terlalu rendah untuk
-      // langsung diisi.
       let delta = rect.bottom - targetBottom;
 
-      // TINDAKAN: Android Chrome sudah melakukan native auto-scroll saat
-      // keyboard terbuka. Jika Tindakan sudah berada di area aman, JANGAN
-      // melakukan koreksi balik. Koreksi negatif di sini sebelumnya dapat
-      // menurunkan scrollTop sampai 0 sehingga form meloncat ke paling atas.
-      // Kita hanya membantu jika Tindakan masih berada DI BAWAH keyboard.
       if(field.id === 'Tindakan'){
-        const tindakanVisible =
-          rect.top >= safeTop &&
-          rect.bottom <= targetBottom;
-        if(tindakanVisible) return;
+        // Jangan pernah membuat viewport bergerak ke arah form bagian atas.
+        // Kita hanya melakukan koreksi bila Tindakan masih terlalu rendah.
+        if(delta <= 2) return;
 
-        // Jika native auto-scroll sudah menempatkan Tindakan terlalu tinggi,
-        // jangan pernah menarik content kembali ke atas.
-        if(rect.top < safeTop && delta < 0) return;
+        // Batas atas mencegah Tindakan didorong melewati area aman.
+        if(rect.top - delta < safeTop){
+          delta = rect.top - safeTop;
+        }
       }
 
       // Jangan menarik field ke bawah melewati batas aman atas viewport.
