@@ -2572,115 +2572,96 @@
   }
 
   function moveActiveFieldAboveKeyboard(behavior){
-    // MOBILE SMART SCROLL: field yang DIKLIK selalu menjadi target.
-    const active = keyboardFocusedField || document.activeElement;
-    if(!active) return;
-    const isFormField = active.matches &&
-      active.matches('#page-input input, #page-input textarea, #page-input select');
-    if(!isFormField) return;
+    const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
+    const isFormField = field && field.matches &&
+      field.matches('#page-input input, #page-input textarea, #page-input select');
+    const isSaveButton = field && field.id === 'btnSaveInput';
+    if(!field || (!isFormField && !isSaveButton)) return;
 
     const content = getKeyboardContent();
     if(!content) return;
+
     const mobile = window.matchMedia
-      ? window.matchMedia('(max-width: 768px)').matches : true;
+      ? window.matchMedia('(max-width: 768px)').matches
+      : true;
     if(!mobile) return;
 
     try{
       const vv = window.visualViewport;
-      const viewportTop = vv ? Number(vv.offsetTop || 0) : 0;
-      const viewportHeight = vv ? Number(vv.height || window.innerHeight) : window.innerHeight;
+      const viewportTop = vv ? vv.offsetTop : 0;
+      const viewportHeight = vv ? vv.height : window.innerHeight;
       const viewportBottom = viewportTop + viewportHeight;
-      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
+
+      // Jarak target: 33px antara field tujuan dan bagian atas keyboard.
       const GAP = 33;
 
-      const testVk = window.__IPSRS_TEST_VK || null;
-      const vk = testVk || (navigator && navigator.virtualKeyboard);
-      const vkRect = vk && vk.boundingRect ? vk.boundingRect : null;
-      const vkHeight = vkRect ? Number(vkRect.height || 0) : 0;
-      const vkTop = vkRect ? Number(vkRect.top || 0) : viewportBottom;
-      const keyboardDetected = keyboardHeight > 80 || vkHeight > 80;
+      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
 
-      // Android + interactive-widget=resizes-content dapat mengecilkan
-      // window.innerHeight bersamaan dengan visualViewport. Jangan memakai
-      // tebakan keyboard 280px/35% pada kondisi ini: itu menghitung keyboard
-      // dua kali dan membuat form meloncat terlalu jauh ke atas.
-      //
-      // Keyboard dianggap benar-benar terbuka hanya jika:
-      // 1) VirtualKeyboard memberi boundingRect, atau
-      // 2) visualViewport menyusut terhadap layout viewport.
-      // Sebelum keyboard terbuka, JANGAN melakukan smart-scroll.
-      const keyboardBottom = vkHeight > 80
-        ? Math.min(viewportBottom, vkTop)
-        : viewportBottom;
-
-      if(!keyboardDetected){
-        return;
+      if(keyboardHeight > 80 && keyboardOriginalPadding === null){
+        keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      if(keyboardDetected){
-        if(keyboardOriginalPadding === null)
-          keyboardOriginalPadding = content.style.paddingBottom || '';
+      // Ruang tambahan agar field tujuan yang berada di bawah
+      // tetap dapat digeser sampai 33px di atas keyboard.
+      if(keyboardHeight > 80){
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
         ) || 0;
         const requiredPadding = Math.max(
-          currentPadding, 220, Math.round(viewportHeight * 0.30)
+          currentPadding,
+          keyboardHeight + GAP + 80
         );
-        if(currentPadding < requiredPadding)
-          content.style.paddingBottom = requiredPadding + 'px';
+        content.style.paddingBottom = requiredPadding + 'px';
       }
 
-      // TARGET = field berikutnya, bukan field yang sedang diklik.
-      // Contoh alur: Ruang -> Masalah/Kegiatan -> Tindakan.
-      // User dapat mengisi field aktif lalu langsung mengetuk field berikutnya
-      // tanpa menutup keyboard.
-      const target = keyboardScrollTarget || active;
-      if(!isKeyboardFieldVisible(target)) return;
+      // Android Chrome kadang tidak langsung menggeser scroll container
+      // non-body. scrollIntoView membantu menemukan posisi target dahulu.
+      const rectBefore = field.getBoundingClientRect();
+      const targetBottomBefore = viewportBottom - GAP;
 
-      // TARGET harus berada di zona aman:
-      // - bagian bawah 33px di atas keyboard;
-      // - tetapi tidak boleh terdorong melewati bagian atas .content.
-      //
-      // Delta boleh POSITIF maupun NEGATIF. Ini penting karena Android dapat
-      // lebih dulu melakukan native auto-scroll pada field aktif. Jika native
-      // scroll sudah membuat target terlalu tinggi, kita koreksi kembali ke
-      // posisi proporsional, bukan terus menambah scroll ke atas.
-      const targetRect = target.getBoundingClientRect();
-      const contentRect = content.getBoundingClientRect();
-      const desiredBottom = keyboardBottom - GAP;
-      const minTargetTop = contentRect.top + 12;
-
-      let delta = 0;
-
-      if(targetRect.bottom > desiredBottom){
-        delta = targetRect.bottom - desiredBottom;
-
-        // Batasi scroll ke atas agar target tidak pernah melewati
-        // batas atas .content. Ini mencegah kombinasi native Android
-        // scroll + smart-scroll mengangkat target sampai di bawah header.
-        const maxUpwardDelta = targetRect.top - minTargetTop;
-        if(maxUpwardDelta <= 0){
-          delta = 0;
-        }else{
-          delta = Math.min(delta, maxUpwardDelta);
-        }
-      }else if(targetRect.top < minTargetTop){
-        // Jika Android sudah terlalu jauh menggeser form ke atas,
-        // koreksi turun sampai target kembali ke zona aman.
-        delta = targetRect.top - minTargetTop;
+      if(rectBefore.bottom > targetBottomBefore){
+        try{
+          field.scrollIntoView({
+            behavior: behavior || 'auto',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }catch(_e){}
       }
 
-      if(Math.abs(delta) <= 2) return;
+      // Setelah scrollIntoView, hitung ulang posisi dan koreksi presisi.
+      const rect = field.getBoundingClientRect();
+      const targetBottom = viewportBottom - GAP;
+      const safeTop = viewportTop + 20;
 
-      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-      const nextTop = Math.max(
-        0, Math.min(content.scrollTop + delta, maxScroll)
+      // Target berikutnya harus benar-benar berada 33px di atas keyboard,
+      // bukan sekadar "masih terlihat". Ini penting pada Android: field
+      // berikutnya kadang sudah terlihat, tetapi masih terlalu rendah untuk
+      // langsung diisi.
+      let delta = rect.bottom - targetBottom;
+
+      // Jangan menarik field ke bawah melewati batas aman atas viewport.
+      if(rect.top - delta < safeTop){
+        delta = rect.top - safeTop;
+      }
+
+      if(Math.abs(delta) < 2) return;
+
+      const maxScroll = Math.max(
+        0,
+        content.scrollHeight - content.clientHeight
       );
+
+      const nextTop = Math.max(
+        0,
+        Math.min(content.scrollTop + delta, maxScroll)
+      );
+
       if(Math.abs(nextTop - content.scrollTop) < 2) return;
 
       content.scrollTo({
         top: nextTop,
-        behavior: behavior || 'auto'
+        behavior: behavior || 'smooth'
       });
     }catch(err){
       console.warn('Keyboard smart scroll:', err);
@@ -2837,8 +2818,6 @@
       const field = event.target;
       if(!isKeyboardFieldVisible(field)) return;
 
-      // Saat pindah dari Ruangan ke Masalah/Kegiatan, tandai Ruangan
-      // sebagai sudah terisi dengan hijau muda.
       if(field.id === 'MasalahKegiatan'){
         syncRuanganCompletedState_();
       }
@@ -2870,10 +2849,8 @@
       }
 
       keyboardFocusedField = field;
-
       // Field normal selalu menargetkan SATU FIELD DI BAWAHNYA.
-      // Urutan DOM Page_Input mengikuti urutan visual:
-      // Pelapor -> No LK -> Ruang -> Masalah/Kegiatan -> Tindakan.
+      // Contoh: Ruang -> Masalah/Kegiatan -> Tindakan.
       keyboardScrollTarget = getNextKeyboardField(field);
 
       const content = getKeyboardContent();
@@ -2966,11 +2943,11 @@
         keyboardViewportResize,
         {passive:true}
       );
-      // JANGAN memasang handler pada visualViewport.scroll.
-      // Android memicu event ini setiap kali .content.scrollTo() berjalan.
-      // Jika handler ikut memanggil moveActiveFieldAboveKeyboard(), scroll
-      // menjadi berulang saat user baru mengetik pada field (Ruang/Tindakan).
-      // Auto-scroll cukup dipicu oleh focusin + visualViewport.resize.
+      window.visualViewport.addEventListener(
+        'scroll',
+        keyboardViewportResize,
+        {passive:true}
+      );
     }
 
     window.addEventListener('resize', keyboardViewportResize, {passive:true});
