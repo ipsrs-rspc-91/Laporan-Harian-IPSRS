@@ -2778,6 +2778,27 @@
     });
   }
 
+  // VISUAL COMPLETION FIELD: setelah Ruangan terisi dan user berpindah
+  // ke field berikutnya, kotak Ruangan diberi tanda hijau muda.
+  // Hanya visual; tidak mengubah nilai, validasi, atau payload laporan.
+  function syncRuanganCompletedState_(){
+    const el = document.getElementById('Ruang');
+    if(!el) return;
+
+    const filled = String(el.value || '').trim().length > 0;
+    el.classList.toggle('ipsrs-field-complete', filled);
+
+    // Inline style memastikan indikator tetap konsisten walaupun ada
+    // style form/focus lain yang berubah. Saat kosong, kembali ke style normal.
+    if(filled){
+      el.style.backgroundColor = '#e8f5e9';
+      el.style.borderColor = '#81c784';
+    }else{
+      el.style.backgroundColor = '';
+      el.style.borderColor = '';
+    }
+  }
+
   function initMasalahKegiatanAutoScroll(){
     if(document.documentElement.dataset.keyboardSmartScrollBound === '1') return;
     document.documentElement.dataset.keyboardSmartScrollBound = '1';
@@ -2785,6 +2806,12 @@
     document.addEventListener('focusin', function(event){
       const field = event.target;
       if(!isKeyboardFieldVisible(field)) return;
+
+      // Saat pindah dari Ruangan ke Masalah/Kegiatan, tandai Ruangan
+      // sebagai sudah terisi dengan hijau muda.
+      if(field.id === 'MasalahKegiatan'){
+        syncRuanganCompletedState_();
+      }
 
       clearKeyboardMoveTimers();
 
@@ -2920,6 +2947,14 @@
   }
 
   function initSparePartSection(){
+    const ruang = document.getElementById('Ruang');
+    if(ruang){
+      ruang.addEventListener('input', syncRuanganCompletedState_);
+      ruang.addEventListener('change', syncRuanganCompletedState_);
+      ruang.addEventListener('blur', syncRuanganCompletedState_);
+      syncRuanganCompletedState_();
+    }
+
     const fields = ['SparePartUnit','Type','Jumlah'];
     fields.forEach(id => {
       const el = document.getElementById(id);
