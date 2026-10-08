@@ -2654,7 +2654,19 @@
 
       if(targetRect.bottom > desiredBottom){
         delta = targetRect.bottom - desiredBottom;
+
+        // Batasi scroll ke atas agar target tidak pernah melewati
+        // batas atas .content. Ini mencegah kombinasi native Android
+        // scroll + smart-scroll mengangkat target sampai di bawah header.
+        const maxUpwardDelta = targetRect.top - minTargetTop;
+        if(maxUpwardDelta <= 0){
+          delta = 0;
+        }else{
+          delta = Math.min(delta, maxUpwardDelta);
+        }
       }else if(targetRect.top < minTargetTop){
+        // Jika Android sudah terlalu jauh menggeser form ke atas,
+        // koreksi turun sampai target kembali ke zona aman.
         delta = targetRect.top - minTargetTop;
       }
 
