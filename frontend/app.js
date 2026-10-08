@@ -2497,25 +2497,11 @@
   }
 
   function getNextKeyboardField(field){
-    const fields = Array.from(
-      document.querySelectorAll(
-        '#page-input input:not([type="hidden"]), #page-input textarea, #page-input select'
-      )
-    ).filter(isKeyboardFieldVisible);
-
-    const index = fields.indexOf(field);
-
-    // Jika field berikutnya tersedia, jadikan itu target.
-    // Ini membuat pengguna langsung melihat field yang akan diisi.
-    if(index >= 0 && index < fields.length - 1){
-      return fields[index + 1];
-    }
-
-    // Field terakhir: tidak ada field berikutnya, jadi tetap jaga
-    // field aktif agar terlihat nyaman di atas keyboard.
-    return field;
+    // Jangan memindahkan layar ke field BERIKUTNYA.
+    // Target harus field yang sedang diisi agar Android tidak
+    // menarik field aktif ke atas lalu menutupinya.
+    return field || document.activeElement;
   }
-
   function clearKeyboardMoveTimers(){
     keyboardMoveTimers.forEach(function(timer){ clearTimeout(timer); });
     keyboardMoveTimers = [];
@@ -2637,28 +2623,19 @@
       clearKeyboardMoveTimers();
 
       keyboardFocusedField = field;
-      keyboardScrollTarget = getNextKeyboardField(field);
+      keyboardScrollTarget = field;
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      // Tunggu keyboard Android selesai membuka dan visualViewport
-      // berubah, lalu posisikan field berikutnya.
+      // Beri Android Chrome waktu untuk menyelesaikan resize keyboard.
+      // Hanya satu koreksi posisi agar form tidak meloncat 2-3 kali.
       keyboardMoveTimers.push(setTimeout(function(){
         moveActiveFieldAboveKeyboard('auto');
-      }, 120));
-
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 320));
-
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 600));
+      }, 280));
     });
-
     document.addEventListener('focusout', function(event){
       if(event.target !== keyboardFocusedField) return;
 
