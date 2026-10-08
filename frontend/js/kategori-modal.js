@@ -285,6 +285,25 @@
   function buildModals(){
     injectStyles();
     injectModal(
+      'ipsrsKategoriModalRoot',
+      'KATEGORI',
+      'Pilih kategori pekerjaan',
+      `
+        <div class="ipsrs-kat-layout">
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMELIHARAAN"><span class="ipsrs-kat-choice-title">PEMELIHARAAN</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PERBAIKAN"><span class="ipsrs-kat-choice-title">PERBAIKAN</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMERIKSAAN / INSPEKSI"><span class="ipsrs-kat-choice-title">PEMERIKSAAN / INSPEKSI</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PERMINTAAN LAYANAN"><span class="ipsrs-kat-choice-title">PERMINTAAN LAYANAN</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PERTEMUAN / KOORDINASI"><span class="ipsrs-kat-choice-title">PERTEMUAN / KOORDINASI</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="ADMINISTRASI / MANAJEMEN"><span class="ipsrs-kat-choice-title">ADMINISTRASI / MANAJEMEN</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PROYEK / RENOVASI"><span class="ipsrs-kat-choice-title">PROYEK / RENOVASI</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PENGUJIAN / ANALISA"><span class="ipsrs-kat-choice-title">PENGUJIAN / ANALISA</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="LAINNYA"><span class="ipsrs-kat-choice-title">LAINNYA</span></button>
+        </div>`,
+      ''
+    );
+
+    injectModal(
       'ipsrsKategoriModal1',
       'PEMELIHARAAN',
       'Pilih jenis pemeliharaan',
@@ -342,6 +361,21 @@
       ''
     );
 
+    document.querySelectorAll('[data-kat-root]').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const value = this.dataset.katRoot || '';
+        const root = document.getElementById('ipsrsKategoriModalRoot');
+        if(root) root.classList.remove('show');
+        if(value === BASE){ openScheduleModal(); return; }
+        if(value === REPAIR){
+          const repair = document.getElementById('ipsrsKategoriModal3');
+          if(repair) repair.classList.add('show');
+          return;
+        }
+        finishKategori(value);
+      });
+    });
+
     document.querySelectorAll('[data-kat-direct]').forEach(btn => {
       btn.addEventListener('click', function(){
         const map = {
@@ -392,7 +426,7 @@
   }
 
   function cancelKategoriFlow(){
-    ['ipsrsKategoriModal1','ipsrsKategoriModal2','ipsrsKategoriModal3'].forEach(id => {
+    ['ipsrsKategoriModalRoot','ipsrsKategoriModal1','ipsrsKategoriModal2','ipsrsKategoriModal3'].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.classList.remove('show');
     });
@@ -420,6 +454,7 @@
     if(typeof window.syncSparePartSection === 'function') window.syncSparePartSection();
     sel.dispatchEvent(new Event('input',{bubbles:true}));
     sel.dispatchEvent(new Event('change',{bubbles:true}));
+    syncKategoriModalTrigger();
   }
 
   // Kategori induk PEMELIHARAAN sudah dibuat oleh app.js.
@@ -430,7 +465,41 @@
     return !!sel;
   }
 
+  function syncKategoriModalTrigger(){
+    const sel = document.getElementById('Kategori');
+    const btn = document.getElementById('KategoriModalTrigger');
+    const txt = document.getElementById('KategoriModalTriggerText');
+    if(!sel || !btn || !txt) return;
+    const value = String(sel.value || '').trim();
+    txt.textContent = value || 'Pilih kategori…';
+    btn.setAttribute('aria-expanded','false');
+    btn.classList.toggle('ipsrs-required-field', !value && sel.classList.contains('ipsrs-required-field'));
+  }
+
+  function openKategoriRootModal(){
+    buildModals();
+    const root = document.getElementById('ipsrsKategoriModalRoot');
+    if(root) root.classList.add('show');
+  }
+
   function kategoriModalInstall(){
+    const sel = document.getElementById('Kategori');
+    const btn = document.getElementById('KategoriModalTrigger');
+    if(!sel || !btn) return false;
+
+    buildModals();
+    ensureBaseOption();
+    syncKategoriModalTrigger();
+
+    if(!btn.__ipsrsKategoriModalClick){
+      btn.addEventListener('click', function(){
+        openKategoriRootModal();
+      });
+      btn.__ipsrsKategoriModalClick = true;
+    }
+
+    if(!sel.__ipsrsKategoriModalCapture){
+
     const sel = document.getElementById('Kategori');
     if(!sel) return false;
 
