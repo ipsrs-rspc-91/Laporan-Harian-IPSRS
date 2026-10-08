@@ -2572,12 +2572,18 @@
   }
 
   function moveActiveFieldAboveKeyboard(behavior){
-    const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
-    const activeField = keyboardFocusedField || document.activeElement;
-    const isFormField = field && field.matches &&
-      field.matches('#page-input input, #page-input textarea, #page-input select');
-    const isSaveButton = field && field.id === 'btnSaveInput';
-    if(!field || (!isFormField && !isSaveButton)) return;
+    // Satu sumber kebenaran untuk scroll form mobile:
+    // - keyboardScrollTarget = field BERIKUTNYA yang harus terlihat
+    // - keyboardFocusedField = field yang sedang diketik
+    // - scroll hanya dilakukan bila target berikutnya tertutup/terlalu dekat keyboard
+    // - tidak ada event input/visualViewport.scroll yang memicu loop
+    const target = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
+    const active = keyboardFocusedField || document.activeElement;
+
+    const isFormField = target && target.matches &&
+      target.matches('#page-input input, #page-input textarea, #page-input select');
+    const isSaveButton = target && target.id === 'btnSaveInput';
+    if(!target || (!isFormField && !isSaveButton)) return;
 
     const content = getKeyboardContent();
     if(!content) return;
@@ -2589,64 +2595,59 @@
 
     try{
       const vv = window.visualViewport;
-      const viewportTop = vv ? vv.offsetTop : 0;
-      const viewportHeight = vv ? vv.height : window.innerHeight;
+      const viewportTop = vv ? Number(vv.offsetTop || 0) : 0;
+      const viewportHeight = vv ? Number(vv.height || window.innerHeight) : window.innerHeight;
       const viewportBottom = viewportTop + viewportHeight;
-
-      // Jarak target: 33px antara field tujuan dan bagian atas keyboard.
+      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
       const GAP = 33;
 
-      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
-
-      if(keyboardHeight > 80 && keyboardOriginalPadding === null){
-        keyboardOriginalPadding = content.style.paddingBottom || '';
-      }
-
-      // Gunakan spacer yang terbatas. Jangan memakai seluruh tinggi
-      // keyboard sebagai padding karena pada Android hal itu menciptakan
-      // area kosong ratusan piksel di bawah form saat scroll mencapai batas.
+      // Saat keyboard terbuka, beri ruang secukupnya agar target bawah
+      // benar-benar bisa dinaikkan. Jangan memakai tinggi keyboard sebagai
+      // padding karena itu membuat area kosong besar.
       if(keyboardHeight > 80){
+        if(keyboardOriginalPadding === null){
+          keyboardOriginalPadding = content.style.paddingBottom || '';
+        }
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
         ) || 0;
-        const viewportBasedSpace = Math.round(viewportHeight * 0.35);
         const requiredPadding = Math.max(
           currentPadding,
-          280,
-          viewportBasedSpace
+          220,
+          Math.round(viewportHeight * 0.30)
         );
-        content.style.paddingBottom = requiredPadding + 'px';
+        if(currentPadding < requiredPadding){
+          content.style.paddingBottom = requiredPadding + 'px';
+        }
       }
 
-      // Saat keyboard terbuka, scroll hanya sebesar yang diperlukan agar
-      // TARGET berikutnya langsung terlihat di atas keyboard.
-      // Ruang -> Masalah/Kegiatan tidak membuat loncatan jika sudah terlihat.
-      // Masalah/Kegiatan -> Tindakan akan otomatis naik agar langsung dapat diklik.
-      // Fungsi ini hanya dipanggil dari focus/resize, bukan event input/scroll.
+      const targetRect = target.getBoundingClientRect();
+      const activeRect = active && active.getBoundingClientRect
+        ? active.getBoundingClientRect()
+        : targetRect;
+
       const keyboardOpen = keyboardHeight > 80 ||
-        (vv && vv.height < Math.max(0, window.innerHeight - 80));
+        (vv && viewportHeight < Math.max(0, window.innerHeight - 80));
 
       if(!keyboardOpen) return;
 
-      // Setelah koreksi posisi, pastikan field tidak tertutup keyboard.
-      const rect = field.getBoundingClientRect();
-      const targetBottom = viewportBottom - GAP;
-      const safeTop = viewportTop + 20;
+      // Target dianggap aman bila seluruh bagian bawahnya berada GAP px
+      // di atas keyboard. Untuk Masalah -> Tindakan, target = Tindakan.
+      let delta = targetRect.bottom - (viewportBottom - GAP);
+      if(delta <= 2) return;
 
-      let delta = rect.bottom - targetBottom;
-
-      // Jangan menarik field ke bawah melewati batas aman atas viewport.
-      if(activeRect.top - delta < safeTop){
-        delta = activeRect.top - safeTop;
+      // Jangan menggeser sampai field yang sedang diketik hilang ke atas.
+      const maxUpwardDelta = activeRect.top - (viewportTop + 20);
+      if(maxUpwardDelta > 0){
+        delta = Math.min(delta, maxUpwardDelta);
       }
 
-      if(Math.abs(delta) < 2) return;
+      if(delta <= 2) return;
 
       const maxScroll = Math.max(
         0,
         content.scrollHeight - content.clientHeight
       );
-
       const nextTop = Math.max(
         0,
         Math.min(content.scrollTop + delta, maxScroll)
@@ -2656,7 +2657,7 @@
 
       content.scrollTo({
         top: nextTop,
-        behavior: behavior || 'smooth'
+        behavior: behavior || 'auto'
       });
     }catch(err){
       console.warn('Keyboard smart scroll:', err);
