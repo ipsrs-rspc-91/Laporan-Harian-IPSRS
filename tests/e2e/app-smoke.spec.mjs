@@ -101,24 +101,20 @@ test('SPMU empty selectors have no placeholder helper text', async ({ page }) =>
   await expect(page.locator('#spmuSpareChoice')).not.toContainText('Pilih SPARE PART / MATERIAL');
 });
 
-test('mobile-input-keyboard-scroll-keeps-active-field-visible-overlay-mode', async ({ page }) => {
+test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async ({ page }) => {
   await page.addInitScript(() => {
     const mockVisualViewport = {
-      offsetTop: 0,
-      height: 844,
-      addEventListener() {},
-      removeEventListener() {}
+      offsetTop: 0, height: 844,
+      addEventListener() {}, removeEventListener() {}
     };
     const mockVirtualKeyboard = {
       boundingRect: { x: 0, y: 430, width: 390, height: 414 },
       overlaysContent: true,
-      addEventListener() {},
-      removeEventListener() {}
+      addEventListener() {}, removeEventListener() {}
     };
     try {
       Object.defineProperty(window, 'visualViewport', {
-        configurable: true,
-        get: () => mockVisualViewport
+        configurable: true, get: () => mockVisualViewport
       });
       window.__IPSRS_TEST_VK = mockVirtualKeyboard;
     } catch (_) {}
@@ -135,39 +131,37 @@ test('mobile-input-keyboard-scroll-keeps-active-field-visible-overlay-mode', asy
   await appShell.evaluate(el => el.classList.remove('hidden'));
 
   const content = page.locator('main.content');
+  const ruang = page.locator('#Ruang');
   const masalah = page.locator('#MasalahKegiatan');
   const tindakan = page.locator('#Tindakan');
 
+  await expect(ruang).toBeAttached();
   await expect(masalah).toBeAttached();
   await expect(tindakan).toBeAttached();
 
+  // RUANG -> MASALAH/Kegiatan
   await content.evaluate(el => { el.scrollTop = 0; });
-
-  const before = await masalah.evaluate(el => ({
-    bottom: el.getBoundingClientRect().bottom
-  }));
-
-  await masalah.focus();
+  const masalahBefore = await masalah.evaluate(el => el.getBoundingClientRect().bottom);
+  await ruang.focus();
   await page.waitForTimeout(700);
+  const masalahAfter = await masalah.evaluate(el => el.getBoundingClientRect().bottom);
 
-  let result = await masalah.evaluate(el => ({
-    bottom: el.getBoundingClientRect().bottom
-  }));
-  const scrollTop = await content.evaluate(el => el.scrollTop);
+  expect(masalahAfter, 'Masalah/Kegiatan must be above the keyboard after Ruang focus')
+    .toBeLessThan(430 - 33);
+  expect(masalahAfter, 'Masalah/Kegiatan must move upward proportionally')
+    .toBeLessThan(masalahBefore);
 
-  expect(scrollTop, 'Form must scroll upward from active Masalah/Kegiatan field').toBeGreaterThan(0);
-  expect(result.bottom, 'Active Masalah/Kegiatan must move upward after keyboard focus').toBeLessThan(before.bottom);
-
+  // MASALAH/Kegiatan -> TINDAKAN
   await content.evaluate(el => { el.scrollTop = 0; });
   const tindakanBefore = await tindakan.evaluate(el => el.getBoundingClientRect().bottom);
-  await tindakan.focus();
+  await masalah.focus();
   await page.waitForTimeout(700);
+  const tindakanAfter = await tindakan.evaluate(el => el.getBoundingClientRect().bottom);
 
-  result = await tindakan.evaluate(el => ({
-    bottom: el.getBoundingClientRect().bottom
-  }));
+  expect(tindakanAfter, 'Tindakan must be above the keyboard after Masalah/Kegiatan focus')
+    .toBeLessThan(430 - 33);
+  expect(tindakanAfter, 'Tindakan must move upward proportionally')
+    .toBeLessThan(tindakanBefore);
 
-  expect(Number.isFinite(result.bottom), 'Active Tindakan geometry must remain valid').toBeTruthy();
-  expect(result.bottom, 'Active Tindakan must move upward after keyboard focus').toBeLessThan(tindakanBefore);
-  expect(runtimeErrors, 'No runtime error may abort keyboard scroll').toEqual([]);
+  expect(runtimeErrors, 'No runtime error may abort keyboard next-field scroll').toEqual([]);
 });
