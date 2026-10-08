@@ -117,3 +117,63 @@ test('SPMU empty selectors have no placeholder helper text', async ({ page }) =>
   await expect(page.locator('#spmuUnitChoice')).not.toContainText('Pilih UNIT');
   await expect(page.locator('#spmuSpareChoice')).not.toContainText('Pilih SPARE PART / MATERIAL');
 });
+
+
+test('mobile-input-keyboard-scroll-keeps-next-field-visible', async ({ page }) => {
+  // Deterministic keyboard simulation: Android Chrome reduces the visual
+  // viewport when the keyboard opens. Mock that geometry so CI can verify
+  // the same scroll contract without requiring a physical Android keyboard.
+  await page.addInitScript(() => {
+    const mockVisualViewport = {
+      offsetTop: 0,
+      height: 430,
+      addEventListener() {},
+      removeEventListener() {}
+    };
+    try {
+      Object.defineProperty(window, 'visualViewport', {
+        configurable: true,
+        get: () => mockVisualViewport
+      });
+    } catch (_) {}
+  });
+
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  const appShell = page.locator('#appShell');
+  await expect(appShell).toBeAttached();
+  await appShell.evaluate(el => el.classList.remove('hidden'));
+
+  const content = page.locator('main.content');
+  const masalah = page.locator('#MasalahKegiatan');
+  const tindakan = page.locator('#Tindakan');
+
+  await expect(masalah).toBeAttached();
+  await expect(tindakan).toBeAttached();
+
+  await content.evaluate(el => { el.scrollTop = 0; });
+  await masalah.focus();
+  await page.waitForTimeout(700);
+
+  const result = await page.evaluate(() => {
+    const content = document.querySelector('main.content');
+    const target = document.getElementById('Tindakan');
+    const vv = window.visualViewport;
+    const keyboardTop = (vv?.offsetTop || 0) + (vv?.height || window.innerHeight);
+    const gap = keyboardTop - target.getBoundingClientRect().bottom;
+    return {
+      scrollTop: content ? content.scrollTop : 0,
+      targetBottom: target.getBoundingClientRect().bottom,
+      keyboardTop,
+      gap
+    };
+  });
+
+  expect(result.scrollTop, 'Form must scroll upward when Masalah/Kegiatan is focused').toBeGreaterThan(0);
+  expect(result.gap, 'Tindakan must be visible above the simulated keyboard').toBeGreaterThanOrEqual(20);
+  expect(runtimeErrors, 'No runtime error may abort keyboard scroll').toEqual([]);
+});
