@@ -3736,11 +3736,26 @@
     const area = document.getElementById('AreaKerja');
     if(kategori) kategori.value = '';
     if(area) area.value = '';
-    // Kategori memakai picker custom; reset nilai <select> saja tidak
-    // otomatis mengubah label picker yang terlihat. Sinkronkan UI agar
-    // setelah Simpan + OK semua field benar-benar kembali kosong.
+    // Kategori memakai trigger custom terpisah dari <select> native.
+    // Reset nilai <select> saja tidak menghapus teks yang terlihat.
+    // Sinkronkan kedua picker dan lakukan fallback langsung ke elemen UI
+    // yang benar agar setelah Simpan + OK tidak ada nilai lama tersisa.
     syncKategoriPicker_();
     syncAreaKerjaPicker_();
+
+    const kategoriTriggerText = document.getElementById('KategoriModalTriggerText');
+    if(kategoriTriggerText) kategoriTriggerText.textContent = 'Pilih kategori…';
+
+    const kategoriTrigger = document.getElementById('KategoriModalTrigger');
+    if(kategoriTrigger){
+      kategoriTrigger.setAttribute('aria-expanded','false');
+    }
+
+    const areaPicker = document.getElementById('areaKerjaPicker');
+    const areaPickerValue = areaPicker
+      ? areaPicker.querySelector('.area-picker-value')
+      : null;
+    if(areaPickerValue) areaPickerValue.textContent = 'Pilih area kerja…';
     refreshItemOptions();
     setStatusValue('');
     syncDateTimeDisplay_();
