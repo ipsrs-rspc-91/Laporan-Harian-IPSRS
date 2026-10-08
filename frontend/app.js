@@ -2614,22 +2614,12 @@
         content.style.paddingBottom = requiredPadding + 'px';
       }
 
-      // Android Chrome kadang tidak langsung menggeser scroll container
-      // non-body. scrollIntoView membantu menemukan posisi target dahulu.
-      const rectBefore = field.getBoundingClientRect();
-      const targetBottomBefore = viewportBottom - GAP;
-
-      if(rectBefore.bottom > targetBottomBefore){
-        try{
-          field.scrollIntoView({
-            behavior: behavior || 'auto',
-            block: 'nearest',
-            inline: 'nearest'
-          });
-        }catch(_e){}
-      }
-
-      // Setelah scrollIntoView, hitung ulang posisi dan koreksi presisi.
+      // JANGAN memanggil scrollIntoView().
+      // Android Chrome sendiri sudah melakukan native auto-scroll saat
+      // keyboard/focus berubah. scrollIntoView() di sini akan menjadi scroll
+      // kedua sebelum content.scrollTo() dan menyebabkan form meloncat.
+      // Kita hanya membaca posisi AKHIR target lalu melakukan satu koreksi
+      // pada .content.
       const rect = field.getBoundingClientRect();
       const targetBottom = viewportBottom - GAP;
       const safeTop = viewportTop + 20;
@@ -2858,19 +2848,11 @@
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      // Tunggu layout Android stabil. Untuk ITEM targetnya adalah
-      // tombol Simpan Laporan, sehingga bagian bawah form ikut naik.
+      // Beri Android waktu menyelesaikan native auto-scroll + resize
+      // keyboard. Setelah itu hanya SATU koreksi proporsional.
       keyboardMoveTimers.push(setTimeout(function(){
         moveActiveFieldAboveKeyboard('auto');
-      }, 120));
-
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 320));
-
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 600));
+      }, 220));
     });
 
     document.addEventListener('change', function(event){
@@ -2938,13 +2920,12 @@
     }
 
     if(window.visualViewport){
+      // Hanya resize yang digunakan untuk mendeteksi perubahan ukuran akibat
+      // keyboard. JANGAN re-trigger scroll pada setiap visualViewport.scroll:
+      // content.scrollTo() e Android native scroll sama-sama dapat disparar
+      // event tersebut dan menciptakan loop/double-scroll.
       window.visualViewport.addEventListener(
         'resize',
-        keyboardViewportResize,
-        {passive:true}
-      );
-      window.visualViewport.addEventListener(
-        'scroll',
         keyboardViewportResize,
         {passive:true}
       );
