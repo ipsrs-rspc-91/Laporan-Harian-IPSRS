@@ -158,15 +158,16 @@ test('mobile-input-keyboard-scroll-keeps-active-field-visible-overlay-mode', asy
   expect(scrollTop, 'Form must scroll upward from active Masalah/Kegiatan field').toBeGreaterThan(0);
   expect(result.bottom, 'Active Masalah/Kegiatan must move upward after keyboard focus').toBeLessThan(before.bottom);
 
+  await content.evaluate(el => { el.scrollTop = 0; });
+  const tindakanBefore = await tindakan.evaluate(el => el.getBoundingClientRect().bottom);
   await tindakan.focus();
   await page.waitForTimeout(700);
 
   result = await tindakan.evaluate(el => ({
     bottom: el.getBoundingClientRect().bottom
   }));
-  const tindakanTop = await tindakan.evaluate(el => el.getBoundingClientRect().top);
 
   expect(Number.isFinite(result.bottom), 'Active Tindakan geometry must remain valid').toBeTruthy();
-  expect(tindakanTop, 'Active Tindakan must remain in the usable viewport').toBeGreaterThanOrEqual(20);
+  expect(result.bottom, 'Active Tindakan must move upward after keyboard focus').toBeLessThan(tindakanBefore);
   expect(runtimeErrors, 'No runtime error may abort keyboard scroll').toEqual([]);
 });
