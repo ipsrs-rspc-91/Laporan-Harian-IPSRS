@@ -33,7 +33,9 @@
       if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
     }
     if(id === 'Kategori'){
-      const picker = document.getElementById('kategoriPicker');
+      // #Kategori adalah select native tersembunyi; border merah wajib
+      // dipasang pada tombol picker yang benar-benar terlihat.
+      const picker = document.getElementById('KategoriModalTrigger');
       if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
     }
 
