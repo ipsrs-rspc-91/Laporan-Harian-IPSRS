@@ -139,8 +139,15 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
   await expect(masalah).toBeAttached();
   await expect(tindakan).toBeAttached();
 
-  // RUANG -> MASALAH/Kegiatan
-  await content.evaluate(el => { el.scrollTop = 0; });
+  // Contract: production uses overlay keyboard viewport so JS owns the
+  // keyboard positioning instead of the browser resizing the content twice.
+  const viewportMode = await page.locator('meta[name="viewport"]').getAttribute('content');
+  expect(viewportMode).toContain('interactive-widget=overlays-content');
+
+  // RUANG -> MASALAH/Kegiatan.
+  // Start intentionally over-scrolled to prove the algorithm can correct
+  // Android's native scroll instead of only adding more upward movement.
+  await content.evaluate(el => { el.scrollTop = 700; });
   const masalahBefore = await masalah.evaluate(el => el.getBoundingClientRect().bottom);
   await ruang.focus();
   await page.waitForTimeout(700);
@@ -150,6 +157,11 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
     .toBeLessThan(430 - 33);
   expect(masalahAfter, 'Masalah/Kegiatan must move upward proportionally')
     .toBeLessThan(masalahBefore);
+
+  const contentTopAfterRuang = await content.evaluate(el => el.getBoundingClientRect().top);
+  const masalahTopAfterRuang = await masalah.evaluate(el => el.getBoundingClientRect().top);
+  expect(masalahTopAfterRuang, 'Next field must not be pushed above the content viewport')
+    .toBeGreaterThanOrEqual(contentTopAfterRuang + 8);
 
   // MASALAH/Kegiatan -> TINDAKAN
   await content.evaluate(el => { el.scrollTop = 0; });
