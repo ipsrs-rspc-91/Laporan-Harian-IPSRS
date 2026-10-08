@@ -6,18 +6,14 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });
   page.on('pageerror', error => consoleErrors.push(error.message));
-
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#authLoading')).toBeAttached();
   await expect(page.locator('#loginScreen')).toBeAttached();
   await expect(page.locator('#appShell')).toBeAttached();
-
   await expect(page.locator('#page-dashboard')).toBeAttached({timeout:10000});
   await expect(page.locator('#page-laporan')).toBeAttached({timeout:10000});
   await expect(page.locator('#page-online')).toBeAttached({timeout:10000});
-
   await page.waitForTimeout(4000);
-
   const criticalErrors = consoleErrors.filter(msg =>
     !/favicon|Failed to load resource: the server responded with a status of 404/i.test(msg)
   );
@@ -28,7 +24,6 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   const indexResponse = await request.get('/index.html');
   expect(indexResponse.ok(), '/index.html').toBeTruthy();
   const indexHtml = await indexResponse.text();
-
   const scriptAssets = [...indexHtml.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=[\"']([^\"']+)[\"']/gi)]
     .map(m => m[1])
     .filter(src => {
@@ -40,9 +35,7 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
         'laporan-loading-state.js','js/kategori-modal.js'
       ].includes(clean);
     });
-
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
-
   const assets = ['/index.html', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
@@ -109,9 +102,6 @@ test('SPMU empty selectors have no placeholder helper text', async ({ page }) =>
 });
 
 test('mobile-input-keyboard-scroll-keeps-active-field-visible-overlay-mode', async ({ page }) => {
-  // Simulate Android overlay mode using the VirtualKeyboard geometry contract.
-  // The current product requirement is universal: the FIELD THAT IS ACTIVE
-  // is the field that must move upward proportionally, not the next field.
   await page.addInitScript(() => {
     const mockVisualViewport = {
       offsetTop: 0,
