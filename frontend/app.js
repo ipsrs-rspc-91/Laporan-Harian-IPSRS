@@ -2466,12 +2466,12 @@
     // tetapi field aktif tidak diberi label UNIT/SPARE PART tambahan.
   }
 
-  // MOBILE KEYBOARD SMART SCROLL STATE — restored from 2026-10-03 checkpoint.
-  // These state variables are required by the focusin/change/viewport handlers.
-  // Without them, clearKeyboardMoveTimers() throws before any scroll can run.
+  // MOBILE KEYBOARD SMART SCROLL
+  // Target selalu FIELD YANG SEDANG AKTIF.
+  // Jangan memindahkan layar ke field berikutnya karena pada Android
+  // Chrome hal tersebut dapat membuat field Tindakan tertutup.
   let keyboardFocusedField = null;
-  let keyboardScrollTarget = null;
-  let keyboardMoveTimers = [];
+  let keyboardMoveTimer = null;
   let keyboardResizeTimer = null;
   let keyboardOriginalPadding = null;
 
@@ -2483,56 +2483,23 @@
     if(!field || !field.matches) return false;
     if(!field.matches('#page-input input, #page-input textarea, #page-input select')) return false;
     if(field.disabled || field.hidden) return false;
+
     const style = getComputedStyle(field);
     if(style.display === 'none' || style.visibility === 'hidden') return false;
-
-    // Native select yang menjadi "source" untuk custom picker tidak boleh
-    // dianggap sebagai field tujuan scroll. Secara visual elemen ini hanya
-    // 1px/opacity 0, tetapi getClientRects() masih menganggapnya ada.
-    if(
-      field.id === 'Kategori' ||
-      field.id === 'AreaKerja' ||
-      field.classList.contains('kategori-picker-native') ||
-      field.classList.contains('area-picker-native')
-    ) return false;
-
     if(parseFloat(style.opacity || '1') === 0) return false;
+
+    // Native select sumber custom picker bukan target visual.
+    if(field.id === 'Kategori' || field.id === 'AreaKerja') return false;
+
     const rect = field.getBoundingClientRect();
-    if(rect.width <= 2 || rect.height <= 2) return false;
-
-    return field.getClientRects().length > 0;
-  }
-
-  function getNextKeyboardField(field){
-    // Setelah ITEM dipilih, pengguna masuk ke bagian paling bawah form.
-    // Target harus langsung ke tombol Simpan Laporan supaya Keterangan
-    // dan tombol Simpan ikut terlihat, bukan berhenti di Keterangan saja.
-    if(field && field.id === 'Item'){
-      return document.getElementById('btnSaveInput') || field;
-    }
-
-    const fields = Array.from(
-      document.querySelectorAll(
-        '#page-input input:not([type="hidden"]), #page-input textarea, #page-input select'
-      )
-    ).filter(isKeyboardFieldVisible);
-
-    const index = fields.indexOf(field);
-
-    // Jika field berikutnya tersedia, jadikan itu target.
-    // Ini membuat pengguna langsung melihat field yang akan diisi.
-    if(index >= 0 && index < fields.length - 1){
-      return fields[index + 1];
-    }
-
-    // Field terakhir: tidak ada field berikutnya, jadi tetap jaga
-    // field aktif agar terlihat nyaman di atas keyboard.
-    return field;
+    return rect.width > 2 && rect.height > 2 && field.getClientRects().length > 0;
   }
 
   function clearKeyboardMoveTimers(){
-    keyboardMoveTimers.forEach(function(timer){ clearTimeout(timer); });
-    keyboardMoveTimers = [];
+    if(keyboardMoveTimer){
+      clearTimeout(keyboardMoveTimer);
+      keyboardMoveTimer = null;
+    }
     if(keyboardResizeTimer){
       clearTimeout(keyboardResizeTimer);
       keyboardResizeTimer = null;
@@ -2542,45 +2509,15 @@
   function restoreKeyboardSpacer(){
     const content = getKeyboardContent();
     if(!content) return;
-
     if(keyboardOriginalPadding !== null){
       content.style.paddingBottom = keyboardOriginalPadding;
       keyboardOriginalPadding = null;
     }
   }
 
-  function extendKeyboardBottomSpace(){
-    const content = getKeyboardContent();
-    if(!content) return;
-
-    if(keyboardOriginalPadding === null){
-      keyboardOriginalPadding = content.style.paddingBottom || '';
-    }
-
-    const currentPadding = parseFloat(
-      getComputedStyle(content).paddingBottom || '0'
-    ) || 0;
-
-    // ITEM berada dekat bagian bawah form. Android dapat berhenti pada
-    // batas maxScroll sehingga tombol Simpan masih berada di bawah layar.
-    // Tambahkan ruang nyata ke scroll container agar bagian paling bawah
-    // benar-benar dapat dinaikkan ke area yang terlihat.
-    const viewportHeight = window.visualViewport
-      ? window.visualViewport.height
-      : window.innerHeight;
-
-    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.35));
-    if(currentPadding < bottomSpace){
-      content.style.paddingBottom = bottomSpace + 'px';
-    }
-  }
-
-  function moveActiveFieldAboveKeyboard(behavior){
-    const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
-    const isFormField = field && field.matches &&
-      field.matches('#page-input input, #page-input textarea, #page-input select');
-    const isSaveButton = field && field.id === 'btnSaveInput';
-    if(!field || (!isFormField && !isSaveButton)) return;
+  function moveActiveFieldAboveKeyboard(){
+    const field = keyboardFocusedField;
+    if(!isKeyboardFieldVisible(field)) return;
 
     const content = getKeyboardContent();
     if(!content) return;
@@ -2590,201 +2527,53 @@
       : true;
     if(!mobile) return;
 
-    try{
-      const vv = window.visualViewport;
-      const viewportTop = vv ? vv.offsetTop : 0;
-      const viewportHeight = vv ? vv.height : window.innerHeight;
-      const viewportBottom = viewportTop + viewportHeight;
+    const vv = window.visualViewport;
+    const viewportTop = vv ? vv.offsetTop : 0;
+    const viewportHeight = vv ? vv.height : window.innerHeight;
+    const viewportBottom = viewportTop + viewportHeight;
+    const GAP = 33;
+    const safeTop = viewportTop + 20;
 
-      // Jarak target: 33px antara field tujuan dan bagian atas keyboard.
-      const GAP = 33;
-
-      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
-
-      if(keyboardHeight > 80 && keyboardOriginalPadding === null){
+    // Tambahkan ruang bawah hanya saat keyboard benar-benar terbuka,
+    // supaya field di bagian bawah form dapat diposisikan penuh.
+    const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
+    if(keyboardHeight > 80){
+      if(keyboardOriginalPadding === null){
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
-
-      // Ruang tambahan agar field tujuan yang berada di bawah
-      // tetap dapat digeser sampai 33px di atas keyboard.
-      if(keyboardHeight > 80){
-        const currentPadding = parseFloat(
-          getComputedStyle(content).paddingBottom || '0'
-        ) || 0;
-        const requiredPadding = Math.max(
-          currentPadding,
-          keyboardHeight + GAP + 80
-        );
-        content.style.paddingBottom = requiredPadding + 'px';
-      }
-
-      // Android Chrome kadang tidak langsung menggeser scroll container
-      // non-body. scrollIntoView membantu menemukan posisi target dahulu.
-      const rectBefore = field.getBoundingClientRect();
-      const targetBottomBefore = viewportBottom - GAP;
-
-      if(rectBefore.bottom > targetBottomBefore){
-        try{
-          field.scrollIntoView({
-            behavior: behavior || 'auto',
-            block: 'nearest',
-            inline: 'nearest'
-          });
-        }catch(_e){}
-      }
-
-      // Setelah scrollIntoView, hitung ulang posisi dan koreksi presisi.
-      const rect = field.getBoundingClientRect();
-      const targetBottom = viewportBottom - GAP;
-      const safeTop = viewportTop + 20;
-
-      // Target berikutnya harus benar-benar berada 33px di atas keyboard,
-      // bukan sekadar "masih terlihat". Ini penting pada Android: field
-      // berikutnya kadang sudah terlihat, tetapi masih terlalu rendah untuk
-      // langsung diisi.
-      let delta = rect.bottom - targetBottom;
-
-      // Jangan menarik field ke bawah melewati batas aman atas viewport.
-      if(rect.top - delta < safeTop){
-        delta = rect.top - safeTop;
-      }
-
-      if(Math.abs(delta) < 2) return;
-
-      const maxScroll = Math.max(
-        0,
-        content.scrollHeight - content.clientHeight
-      );
-
-      const nextTop = Math.max(
-        0,
-        Math.min(content.scrollTop + delta, maxScroll)
-      );
-
-      if(Math.abs(nextTop - content.scrollTop) < 2) return;
-
-      content.scrollTo({
-        top: nextTop,
-        behavior: behavior || 'smooth'
-      });
-    }catch(err){
-      console.warn('Keyboard smart scroll:', err);
+      const currentPadding = parseFloat(
+        getComputedStyle(content).paddingBottom || '0'
+      ) || 0;
+      const requiredPadding = Math.max(currentPadding, keyboardHeight + GAP + 40);
+      content.style.paddingBottom = requiredPadding + 'px';
     }
-  }
 
-  // ============================================================
-  // POSISI SELECT BAWAH FORM
-  // Area Kerja + Item tetap memakai target tombol Simpan.
-  // KATEGORI sengaja DIPISAH: setelah dipilih, posisi Kategori harus tetap
-  // dekat posisi semula agar label "KATEGORI" tetap terlihat di HP.
-  // ============================================================
+    const rect = field.getBoundingClientRect();
+    const targetBottom = viewportBottom - GAP;
 
-  // Khusus Kategori: jangan memaksa scroll ke tombol Simpan.
-  // Jika Kategori sudah terlihat, tidak ada scroll tambahan.
-  // Jika browser Android menaruhnya terlalu dekat/di bawah batas viewport,
-  // cukup koreksi seperlunya dengan jarak atas yang aman.
-  function positionKategoriField(){
-    const content = getKeyboardContent();
-    const field = document.getElementById('Kategori');
-    if(!content || !field) return;
-
-    const mobile = window.matchMedia
-      ? window.matchMedia('(max-width: 768px)').matches
-      : true;
-    if(!mobile) return;
-
-    try{
-      const vv = window.visualViewport;
-      const viewportTop = vv ? vv.offsetTop : 0;
-
-      // KATEGORI HARUS NAIK OTOMATIS setelah dipilih.
-      // Tetapi jangan ditempelkan ke bagian atas layar.
-      // Target posisi field dibuat 220px dari atas viewport sehingga
-      // label "KATEGORI" tetap berada di area layar dan tidak hilang.
-      const TARGET_TOP = viewportTop + 220;
-      const rect = field.getBoundingClientRect();
-
-      // Hanya naik. Jika Kategori sudah berada di atas target,
-      // jangan diturunkan lagi.
-      if(rect.top <= TARGET_TOP) return;
-
-      const delta = rect.top - TARGET_TOP;
-      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-      const nextTop = Math.max(
-        0,
-        Math.min(content.scrollTop + delta, maxScroll)
-      );
-
-      if(Math.abs(nextTop - content.scrollTop) < 2) return;
-
-      content.scrollTo({top:nextTop, behavior:'auto'});
-    }catch(err){
-      console.warn('Kategori smart scroll:', err);
+    // Hitung koreksi dari POSISI FIELD AKTIF.
+    // Jika field tertutup keyboard -> naik.
+    // Jika field terdorong terlalu jauh ke atas -> turun kembali.
+    let delta = 0;
+    if(rect.bottom > targetBottom){
+      delta = rect.bottom - targetBottom;
+    }else if(rect.top < safeTop){
+      delta = rect.top - safeTop;
+    }else{
+      return;
     }
-  }
-  // Setelah Area Kerja / Item dipilih, tombol Simpan Laporan
-  // tetap menjadi target agar bagian bawah form dapat langsung digunakan.
-  // .content adalah scroll container utama, jadi posisi dihitung terhadap
-  // visual viewport Android (termasuk saat keyboard masih terbuka).
-  function positionInputSaveButton(){
-    const content = getKeyboardContent();
-    const button = document.getElementById('btnSaveInput');
-    if(!content || !button) return;
 
-    const mobile = window.matchMedia
-      ? window.matchMedia('(max-width: 768px)').matches
-      : true;
-    if(!mobile) return;
+    const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
+    const nextTop = Math.max(
+      0,
+      Math.min(content.scrollTop + delta, maxScroll)
+    );
 
-    try{
-      const vv = window.visualViewport;
-      const viewportTop = vv ? vv.offsetTop : 0;
-      const viewportHeight = vv ? vv.height : window.innerHeight;
-      const viewportBottom = viewportTop + viewportHeight;
-      const GAP = 16;
-      const keyboardHeight = Math.max(0, window.innerHeight - viewportHeight);
+    if(Math.abs(nextTop - content.scrollTop) < 1) return;
 
-      // Saat keyboard masih terbuka, beri ruang agar tombol benar-benar dapat
-      // dinaikkan sampai di atas keyboard, bukan berhenti di maxScroll lama.
-      if(keyboardHeight > 80){
-        if(keyboardOriginalPadding === null){
-          keyboardOriginalPadding = content.style.paddingBottom || '';
-        }
-        const currentPadding = parseFloat(
-          getComputedStyle(content).paddingBottom || '0'
-        ) || 0;
-        const requiredPadding = Math.max(
-          currentPadding,
-          keyboardHeight + GAP + 80
-        );
-        if(currentPadding < requiredPadding){
-          content.style.paddingBottom = requiredPadding + 'px';
-        }
-      }
-
-      const rect = button.getBoundingClientRect();
-      const desiredBottom = viewportBottom - GAP;
-      const delta = rect.bottom - desiredBottom;
-
-      // Jika tombol sudah terlihat di atas keyboard/viewport, jangan geser.
-      if(delta <= 2 && rect.top >= viewportTop + 8) return;
-
-      let nextTop = content.scrollTop + delta;
-      const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
-      nextTop = Math.max(0, Math.min(nextTop, maxScroll));
-
-      content.scrollTo({top: nextTop, behavior:'auto'});
-    }catch(err){
-      console.warn('Save button positioning:', err);
-    }
-  }
-
-  function scheduleInputSaveButtonPosition(){
-    if(!window.matchMedia || !window.matchMedia('(max-width: 768px)').matches) return;
-    [60, 180, 360, 600].forEach(function(delay){
-      keyboardMoveTimers.push(setTimeout(function(){
-        positionInputSaveButton();
-      }, delay));
+    content.scrollTo({
+      top: nextTop,
+      behavior: 'auto'
     });
   }
 
@@ -2797,94 +2586,26 @@
       if(!isKeyboardFieldVisible(field)) return;
 
       clearKeyboardMoveTimers();
-
-      // Kategori sengaja tidak memakai target tombol Simpan.
-      // Tujuannya agar setelah memilih kategori, label KATEGORI tetap terlihat.
-      if(field.id === 'Kategori'){
-        keyboardFocusedField = field;
-        keyboardScrollTarget = field;
-        [60, 180, 360].forEach(function(delay){
-          keyboardMoveTimers.push(setTimeout(function(){
-            positionKategoriField();
-          }, delay));
-        });
-        return;
-      }
-
-      // Area Kerja dan Item tetap memakai target tombol Simpan.
-      if(field.id === 'AreaKerja' || field.id === 'Item'){
-        keyboardFocusedField = field;
-        keyboardScrollTarget = document.getElementById('btnSaveInput') || field;
-
-        // Pastikan tersedia ruang scroll tambahan saat keyboard Android terbuka.
-        extendKeyboardBottomSpace();
-        scheduleInputSaveButtonPosition();
-        return;
-      }
-
       keyboardFocusedField = field;
-      keyboardScrollTarget = getNextKeyboardField(field);
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      // Tunggu layout Android stabil. Untuk ITEM targetnya adalah
-      // tombol Simpan Laporan, sehingga bagian bawah form ikut naik.
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('auto');
-      }, 120));
-
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 320));
-
-      keyboardMoveTimers.push(setTimeout(function(){
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 600));
-    });
-
-    document.addEventListener('change', function(event){
-      // Android dapat mengubah nilai <select> tanpa memindahkan fokus secara
-      // konsisten. Kategori diperlakukan khusus agar tidak melompat terlalu
-      // jauh ke atas setelah pilihan dibuat.
-      if(event.target && event.target.id === 'Kategori'){
-        keyboardFocusedField = event.target;
-        keyboardScrollTarget = event.target;
-        clearKeyboardMoveTimers();
-        [60, 180, 360].forEach(function(delay){
-          keyboardMoveTimers.push(setTimeout(function(){
-            positionKategoriField();
-          }, delay));
-        });
-        return;
-      }
-
-      // Area Kerja dan Item tetap menggunakan target tombol Simpan.
-      if(event.target && (
-        event.target.id === 'AreaKerja' ||
-        event.target.id === 'Item'
-      )){
-        keyboardFocusedField = event.target;
-        keyboardScrollTarget = document.getElementById('btnSaveInput') || event.target;
-        clearKeyboardMoveTimers();
-
-        // Tambahkan ruang bawah sebelum menghitung posisi. Ini penting saat
-        // keyboard Android masih terbuka sehingga tombol tidak berhenti
-        // sebagian di bawah batas viewport.
-        extendKeyboardBottomSpace();
-        scheduleInputSaveButtonPosition();
-      }
+      // Tunggu Android selesai membuka keyboard/resize viewport.
+      // Hanya SATU koreksi posisi untuk mencegah loncat berulang.
+      keyboardMoveTimer = setTimeout(function(){
+        keyboardMoveTimer = null;
+        moveActiveFieldAboveKeyboard();
+      }, 300);
     });
 
     document.addEventListener('focusout', function(event){
       if(event.target !== keyboardFocusedField) return;
 
       clearKeyboardMoveTimers();
-
       keyboardFocusedField = null;
-      keyboardScrollTarget = null;
 
       setTimeout(function(){
         if(!keyboardFocusedField) restoreKeyboardSpacer();
@@ -2896,27 +2617,14 @@
 
       clearTimeout(keyboardResizeTimer);
       keyboardResizeTimer = setTimeout(function(){
-        // KATEGORI HARUS mengikuti aturan khususnya sendiri.
-        // Jangan pernah menjalankan moveActiveFieldAboveKeyboard() untuk
-        // Kategori karena fungsi tersebut dapat menarik form terlalu jauh
-        // ke atas dan membuat label KATEGORI hilang.
-        if(keyboardFocusedField.id === 'Kategori'){
-          positionKategoriField();
-          return;
-        }
-
-        moveActiveFieldAboveKeyboard('smooth');
-      }, 50);
+        keyboardResizeTimer = null;
+        moveActiveFieldAboveKeyboard();
+      }, 120);
     }
 
     if(window.visualViewport){
       window.visualViewport.addEventListener(
         'resize',
-        keyboardViewportResize,
-        {passive:true}
-      );
-      window.visualViewport.addEventListener(
-        'scroll',
         keyboardViewportResize,
         {passive:true}
       );
