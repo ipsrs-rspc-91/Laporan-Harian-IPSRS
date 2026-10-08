@@ -1298,114 +1298,168 @@
     });
   }
 
+  function injectAreaItemPickerStyles_(){
+    if(document.getElementById('ipsrsAreaItemPickerStyles')) return;
+    const style=document.createElement('style');
+    style.id='ipsrsAreaItemPickerStyles';
+    style.textContent=`
+      .area-item-picker-bg{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+      .area-item-picker-bg.show{display:flex}
+      .area-item-picker-modal{width:min(760px,100%);max-height:min(82vh,760px);display:flex;flex-direction:column;background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.28);overflow:hidden;color:#0f172a}
+      .area-item-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid #e2e8f0}
+      .area-item-picker-title{font-size:17px;font-weight:750;line-height:1.25}
+      .area-item-picker-subtitle{font-size:12px;color:#64748b;margin-top:4px}
+      .area-item-picker-close{width:36px;height:36px;flex:0 0 36px;border:0;border-radius:10px;background:#f1f5f9;color:#334155;font-size:24px;line-height:1;cursor:pointer}
+      .area-item-picker-columns{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr);min-height:260px;overflow:hidden;flex:1}
+      .area-item-picker-side{min-width:0;overflow:auto;padding:12px}
+      .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
+      .area-item-picker-label{font-size:11px;font-weight:800;letter-spacing:.07em;color:#64748b;padding:4px 8px 9px}
+      .area-item-picker-area,.area-item-picker-item,.area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
+      .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
+      .area-item-picker-area.is-active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
+      .area-item-picker-area .area-item-picker-count{margin-left:auto;flex:0 0 auto;color:#64748b;font-size:11px;font-weight:600}
+      .area-item-picker-item{border-color:#e2e8f0;background:#fff;justify-content:space-between}
+      .area-item-picker-item:hover{border-color:#93c5fd}
+      .area-item-picker-empty{padding:18px 10px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
+      .area-item-picker-add{margin-top:8px;border:1px dashed #cbd5e1;color:#475569;background:#fff}
+      @media(max-width:560px){.area-item-picker-bg{padding:8px}.area-item-picker-modal{max-height:86vh;border-radius:14px}.area-item-picker-head{padding:13px 14px}.area-item-picker-columns{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);min-height:300px}.area-item-picker-side{padding:8px}.area-item-picker-area,.area-item-picker-item,.area-item-picker-add{padding:10px 8px;font-size:12px}.area-item-picker-title{font-size:16px}}
+    `;
+    document.head.appendChild(style);
+  }
+
   function buildAreaKerjaPicker_(){
     const sel=document.getElementById('AreaKerja');
     const picker=document.getElementById('areaKerjaPicker');
     if(!sel || !picker) return;
-    const previous=String(sel.value||'');
-    const groups=new Map();
-    Array.from(sel.options).forEach(opt=>{
-      if(!opt.value || opt.value===ADD_NEW_VALUE) return;
-      const g=getAreaKerjaGroup_(opt.value);
-      if(!groups.has(g)) groups.set(g,[]);
-      groups.get(g).push(opt.value);
-    });
-
+    injectAreaItemPickerStyles_();
     picker.innerHTML='';
     const trigger=document.createElement('button');
     trigger.type='button';
     trigger.className='area-picker-trigger';
-    trigger.setAttribute('aria-haspopup','true');
+    trigger.setAttribute('aria-haspopup','dialog');
     trigger.setAttribute('aria-expanded','false');
     trigger.innerHTML='<span class="area-picker-value">Pilih area kerja…</span><span class="area-picker-chevron">⌄</span>';
     picker.appendChild(trigger);
 
-    const panel=document.createElement('div');
-    panel.className='area-picker-panel';
-    panel.hidden=true;
-
-    const currentGroup=getAreaKerjaGroup_(previous);
-    getAreaKerjaGroupOrder_().forEach(groupName=>{
-      const values=groups.get(groupName);
-      if(!values || !values.length) return;
-      const group=document.createElement('div');
-      group.className='area-picker-group';
-      const head=document.createElement('button');
-      head.type='button';
-      head.className='area-picker-group-head';
-      const open=groupName===currentGroup;
-      head.setAttribute('aria-expanded',open?'true':'false');
-      head.innerHTML='<span>'+escapeHtml(groupName)+'</span><span class="area-picker-plus">'+(open?'−':'+')+'</span>';
-      const body=document.createElement('div');
-      body.className='area-picker-group-body';
-      body.hidden=!open;
-      values.forEach(value=>{
-        const item=document.createElement('button');
-        item.type='button';
-        item.className='area-picker-option';
-        item.dataset.value=value;
-        item.textContent=value;
-        item.setAttribute('aria-selected',value===previous?'true':'false');
-        item.addEventListener('click',()=>{
-          sel.value=value;
-          sel.dispatchEvent(new Event('change',{bubbles:true}));
-          syncAreaKerjaPicker_();
-          panel.hidden=true;
-          trigger.setAttribute('aria-expanded','false');
-          document.body.classList.remove('area-picker-open');
-        });
-        body.appendChild(item);
-      });
-      head.addEventListener('click',()=>{
-        const next=head.getAttribute('aria-expanded')!=='true';
-        head.setAttribute('aria-expanded',next?'true':'false');
-        head.querySelector('.area-picker-plus').textContent=next?'−':'+';
-        body.hidden=!next;
-      });
-      group.appendChild(head);
-      group.appendChild(body);
-      panel.appendChild(group);
-    });
-
-    const addNew=Array.from(sel.options).find(o=>o.value===ADD_NEW_VALUE);
-    if(addNew){
-      const add=document.createElement('button');
-      add.type='button';
-      add.className='area-picker-add';
-      add.textContent=addNew.textContent || '+ Tambah Area Kerja Baru';
-      add.addEventListener('click',()=>{
+    let bg=document.getElementById('areaItemPickerModalBg');
+    if(!bg){
+      bg=document.createElement('div');
+      bg.id='areaItemPickerModalBg';
+      bg.className='area-item-picker-bg';
+      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div><div id="areaItemPickerTitle" class="area-item-picker-title">Pilih Area Kerja &amp; Item</div><div class="area-item-picker-subtitle">Pilih area di kiri, lalu pilih item di kanan.</div></div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-label">AREA KERJA</div><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋ Tambah Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-label">ITEM TERSEDIA</div><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div></div></div></section>';
+      document.body.appendChild(bg);
+      bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
+      bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
+      bg.querySelector('.area-item-picker-add').addEventListener('click',()=>{
+        closeAreaItemPicker_();
         sel.value=ADD_NEW_VALUE;
         sel.dispatchEvent(new Event('change',{bubbles:true}));
-        syncAreaKerjaPicker_();
-        panel.hidden=true;
-        trigger.setAttribute('aria-expanded','false');
-        document.body.classList.remove('area-picker-open');
       });
-      panel.appendChild(add);
     }
 
-    trigger.addEventListener('click',()=>{
-      const next=panel.hidden;
-      panel.hidden=!next;
-      trigger.setAttribute('aria-expanded',next?'true':'false');
-      document.body.classList.toggle('area-picker-open',next);
-    });
-    if(!window.__IPSRS_AREA_PICKER_OUTSIDE_BOUND){
-      document.addEventListener('click',e=>{
-        const active=document.getElementById('areaKerjaPicker');
-        if(active && !active.contains(e.target)){
-          const p=active.querySelector('.area-picker-panel');
-          const t=active.querySelector('.area-picker-trigger');
-          if(p) p.hidden=true;
-          if(t) t.setAttribute('aria-expanded','false');
-          document.body.classList.remove('area-picker-open');
-        }
-      });
-      window.__IPSRS_AREA_PICKER_OUTSIDE_BOUND=true;
+    function getItemsForArea_(area){
+      const master=MASTER_ITEMS_BY_AREA[area]||[];
+      const custom=CUSTOM_ITEMS_BY_AREA[area]||[];
+      return Array.from(new Set(master.concat(custom).map(x=>String(x||'').trim()).filter(Boolean)));
     }
 
-    picker.appendChild(panel);
+    function renderItems_(area){
+      const list=bg.querySelector('.area-item-picker-item-list');
+      if(!list) return;
+      list.innerHTML='';
+      const items=getItemsForArea_(area);
+      if(!items.length){
+        const empty=document.createElement('div');
+        empty.className='area-item-picker-empty';
+        empty.textContent='Belum ada item untuk area ini. Pilih area lain atau tambahkan item melalui form.';
+        list.appendChild(empty);
+        return;
+      }
+      items.forEach(itemName=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='area-item-picker-item';
+        const label=document.createElement('span');
+        label.textContent=itemName;
+        const arrow=document.createElement('span');
+        arrow.textContent='›';
+        arrow.setAttribute('aria-hidden','true');
+        btn.append(label,arrow);
+        btn.addEventListener('click',()=>{
+          sel.value=area;
+          sel.dispatchEvent(new Event('change',{bubbles:true}));
+          const itemSel=document.getElementById('Item');
+          if(itemSel && Array.from(itemSel.options).some(o=>o.value===itemName)){
+            itemSel.value=itemName;
+          }else if(itemSel){
+            const opt=document.createElement('option');
+            opt.value=itemName;
+            opt.textContent=itemName;
+            itemSel.insertBefore(opt,itemSel.options.length?itemSel.options[itemSel.options.length-1]:null);
+            itemSel.value=itemName;
+          }
+          if(itemSel){
+            itemSel.dispatchEvent(new Event('input',{bubbles:true}));
+            itemSel.dispatchEvent(new Event('change',{bubbles:true}));
+          }
+          syncAreaKerjaPicker_();
+          closeAreaItemPicker_();
+        });
+        list.appendChild(btn);
+      });
+    }
+
+    function renderAreas_(){
+      const list=bg.querySelector('.area-item-picker-area-list');
+      if(!list) return;
+      list.innerHTML='';
+      const areas=Array.from(sel.options).filter(o=>o.value && o.value!==ADD_NEW_VALUE && !o.disabled).map(o=>o.value);
+      const current=String(sel.value||'');
+      areas.forEach(area=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='area-item-picker-area'+(area===current?' is-active':'');
+        btn.setAttribute('aria-pressed',area===current?'true':'false');
+        const name=document.createElement('span');
+        name.textContent=area;
+        const count=document.createElement('span');
+        count.className='area-item-picker-count';
+        count.textContent=String(getItemsForArea_(area).length);
+        btn.append(name,count);
+        btn.addEventListener('click',()=>{
+          list.querySelectorAll('.area-item-picker-area').forEach(x=>{
+            const active=x===btn;
+            x.classList.toggle('is-active',active);
+            x.setAttribute('aria-pressed',active?'true':'false');
+          });
+          renderItems_(area);
+        });
+        list.appendChild(btn);
+      });
+      const initial=areas.includes(current)?current:areas[0];
+      if(initial) renderItems_(initial);
+      else{
+        const itemList=bg.querySelector('.area-item-picker-item-list');
+        itemList.innerHTML='<div class="area-item-picker-empty">Belum ada Area Kerja yang tersedia.</div>';
+      }
+    }
+
+    function open_(){
+      renderAreas_();
+      bg.classList.add('show');
+      trigger.setAttribute('aria-expanded','true');
+      document.body.classList.add('area-picker-open');
+    }
+    trigger.addEventListener('click',open_);
     syncAreaKerjaPicker_();
+  }
+
+  function closeAreaItemPicker_(){
+    const bg=document.getElementById('areaItemPickerModalBg');
+    if(bg) bg.classList.remove('show');
+    const trigger=document.querySelector('#areaKerjaPicker .area-picker-trigger');
+    if(trigger) trigger.setAttribute('aria-expanded','false');
+    document.body.classList.remove('area-picker-open');
   }
 
   function syncKategoriPicker_(){
