@@ -2637,18 +2637,28 @@
       const target = keyboardScrollTarget || active;
       if(!isKeyboardFieldVisible(target)) return;
 
-      // Hanya geser sebesar jarak yang dibutuhkan agar bagian bawah
-      // field berikutnya berada 33px di atas keyboard.
+      // TARGET harus berada di zona aman:
+      // - bagian bawah 33px di atas keyboard;
+      // - tetapi tidak boleh terdorong melewati bagian atas .content.
+      //
+      // Delta boleh POSITIF maupun NEGATIF. Ini penting karena Android dapat
+      // lebih dulu melakukan native auto-scroll pada field aktif. Jika native
+      // scroll sudah membuat target terlalu tinggi, kita koreksi kembali ke
+      // posisi proporsional, bukan terus menambah scroll ke atas.
       const targetRect = target.getBoundingClientRect();
-      let delta = targetRect.bottom - (keyboardBottom - GAP);
+      const contentRect = content.getBoundingClientRect();
+      const desiredBottom = keyboardBottom - GAP;
+      const minTargetTop = contentRect.top + 12;
 
-      // Jangan mendorong target melewati batas atas layar.
-      if(delta > 0){
-        const maxUpwardDelta = targetRect.top - (viewportTop + 20);
-        if(maxUpwardDelta > 0) delta = Math.min(delta, maxUpwardDelta);
+      let delta = 0;
+
+      if(targetRect.bottom > desiredBottom){
+        delta = targetRect.bottom - desiredBottom;
+      }else if(targetRect.top < minTargetTop){
+        delta = targetRect.top - minTargetTop;
       }
 
-      if(delta <= 2) return;
+      if(Math.abs(delta) <= 2) return;
 
       const maxScroll = Math.max(0, content.scrollHeight - content.clientHeight);
       const nextTop = Math.max(
