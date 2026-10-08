@@ -12,14 +12,10 @@ test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   await expect(page.locator('#loginScreen')).toBeAttached();
   await expect(page.locator('#appShell')).toBeAttached();
 
-  // All deferred SPA pages must eventually mount before a user can navigate to them.
-  // This catches the blank-screen race independently of authentication state.
   await expect(page.locator('#page-dashboard')).toBeAttached({timeout:10000});
   await expect(page.locator('#page-laporan')).toBeAttached({timeout:10000});
   await expect(page.locator('#page-online')).toBeAttached({timeout:10000});
 
-  // Auth bootstrap can take a few seconds; the expected unauthenticated state is
-  // the login screen, while authenticated sessions may legitimately show the app shell.
   await page.waitForTimeout(4000);
 
   const criticalErrors = consoleErrors.filter(msg =>
@@ -33,10 +29,7 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   expect(indexResponse.ok(), '/index.html').toBeTruthy();
   const indexHtml = await indexResponse.text();
 
-  // Derive the asset URLs from the same index.html that production serves.
-  // This prevents the smoke test from silently testing obsolete hard-coded
-  // cache versions after a frontend JS update.
-  const scriptAssets = [...indexHtml.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']([^"']+)["']/gi)]
+  const scriptAssets = [...indexHtml.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=[\"']([^\"']+)[\"']/gi)]
     .map(m => m[1])
     .filter(src => {
       const clean = src.split('?')[0].split('#')[0].replace(/^\.\//, '').replace(/^\//, '');
@@ -57,14 +50,12 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
   }
 });
 
-
 test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   const deleteButton = page.locator('#btnDeleteReport');
   await expect(deleteButton).toBeAttached();
   await expect(deleteButton).toBeHidden();
 });
-
 
 test('dashboard-load', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -105,7 +96,6 @@ test('dashboard-mobile', async ({ page }) => {
   await expect(tableWraps).toHaveCount(2, { timeout: 10000 });
 });
 
-
 test('SPMU empty selectors have no placeholder helper text', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#spmuUnitChoice')).toBeAttached({timeout:10000});
@@ -118,10 +108,10 @@ test('SPMU empty selectors have no placeholder helper text', async ({ page }) =>
   await expect(page.locator('#spmuSpareChoice')).not.toContainText('Pilih SPARE PART / MATERIAL');
 });
 
-
-test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async ({ page }) => {
-  // Simulate the Android overlay mode using the VirtualKeyboard geometry
-  // contract. This is the mode that previously escaped the regression test.
+test('mobile-input-keyboard-scroll-keeps-active-field-visible-overlay-mode', async ({ page }) => {
+  // Simulate Android overlay mode using the VirtualKeyboard geometry contract.
+  // The current product requirement is universal: the FIELD THAT IS ACTIVE
+  // is the field that must move upward proportionally, not the next field.
   await page.addInitScript(() => {
     const mockVisualViewport = {
       offsetTop: 0,
@@ -161,35 +151,14 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
   await expect(masalah).toBeAttached();
   await expect(tindakan).toBeAttached();
 
-  // Masalah/Kegiatan -> Tindakan must become writable above the keyboard.
   await content.evaluate(el => { el.scrollTop = 0; });
   await masalah.focus();
   await page.waitForTimeout(700);
 
   let result = await page.evaluate(() => {
     const content = document.querySelector('main.content');
-    const target = document.getElementById('Tindakan');
-    const kb = navigator.virtualKeyboard.boundingRect;
-    return {
-      scrollTop: content ? content.scrollTop : 0,
-      targetBottom: target.getBoundingClientRect().bottom,
-      keyboardTop: kb.top,
-      gap: kb.top - target.getBoundingClientRect().bottom
-    };
-  });
-
-  expect(result.scrollTop, 'Form must scroll upward from Masalah/Kegiatan').toBeGreaterThan(0);
-  expect(result.gap, 'Tindakan must be above the simulated keyboard').toBeGreaterThanOrEqual(20);
-
-  // Tindakan itself must remain usable; it must NOT target Item/Keterangan
-  // in the other grid column.
-  await tindakan.focus();
-  await page.waitForTimeout(700);
-
-  result = await page.evaluate(() => {
-    const content = document.querySelector('main.content');
-    const active = document.getElementById('Tindakan');
-    const kb = navigator.virtualKeyboard.boundingRect;
+    const active = document.getElementById('MasalahKegiatan');
+    const kb = window.__IPSRS_TEST_VK.boundingRect;
     return {
       scrollTop: content ? content.scrollTop : 0,
       activeBottom: active.getBoundingClientRect().bottom,
@@ -198,6 +167,24 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async
     };
   });
 
-  expect(result.gap, 'Tindakan must remain writable above the simulated keyboard').toBeGreaterThanOrEqual(20);
+  expect(result.scrollTop, 'Form must scroll upward from active Masalah/Kegiatan field').toBeGreaterThan(0);
+  expect(result.gap, 'Active Masalah/Kegiatan must be above the simulated keyboard').toBeGreaterThanOrEqual(20);
+
+  await tindakan.focus();
+  await page.waitForTimeout(700);
+
+  result = await page.evaluate(() => {
+    const content = document.querySelector('main.content');
+    const active = document.getElementById('Tindakan');
+    const kb = window.__IPSRS_TEST_VK.boundingRect;
+    return {
+      scrollTop: content ? content.scrollTop : 0,
+      activeBottom: active.getBoundingClientRect().bottom,
+      keyboardTop: kb.top,
+      gap: kb.top - active.getBoundingClientRect().bottom
+    };
+  });
+
+  expect(result.gap, 'Active Tindakan must remain writable above the simulated keyboard').toBeGreaterThanOrEqual(20);
   expect(runtimeErrors, 'No runtime error may abort keyboard scroll').toEqual([]);
 });
