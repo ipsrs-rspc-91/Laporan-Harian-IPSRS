@@ -196,14 +196,28 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Define unique Pages artifact
+        id: pages-artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A workflow rerun keeps the same run_id but increments run_attempt.
+          # Use both values so reruns never leave duplicate "github-pages" artifacts.
+          artifact_name="github-pages-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "name=$artifact_name" >> "$GITHUB_OUTPUT"
+          echo "Using Pages artifact: $artifact_name"
+
       - name: Upload frontend
         uses: actions/upload-pages-artifact@v4
         with:
           path: './frontend'
+          name: ${{ steps.pages-artifact.outputs.name }}
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ steps.pages-artifact.outputs.name }}
 
       - name: Post-deployment smoke check
         env:
