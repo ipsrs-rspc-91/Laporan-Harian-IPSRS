@@ -2626,13 +2626,12 @@
         ? active.getBoundingClientRect()
         : targetRect;
 
-      const keyboardOpen = keyboardHeight > 80 ||
-        (vv && viewportHeight < Math.max(0, window.innerHeight - 80));
-
-      if(!keyboardOpen) return;
-
-      // Target dianggap aman bila seluruh bagian bawahnya berada GAP px
-      // di atas keyboard. Untuk Masalah -> Tindakan, target = Tindakan.
+      // Android Chrome pada sebagian perangkat memakai mode keyboard overlay:
+      // visualViewport TIDAK mengecil saat keyboard muncul. Karena itu jangan
+      // menggantungkan auto-scroll pada keyboardHeight/keyboardOpen.
+      // Kontrak utama: field berikutnya harus berada di atas batas bawah
+      // visual viewport. Ini juga tetap aman saat viewport memang mengecil.
+      // Untuk Masalah -> Tindakan, target = Tindakan.
       let delta = targetRect.bottom - (viewportBottom - GAP);
       if(delta <= 2) return;
 

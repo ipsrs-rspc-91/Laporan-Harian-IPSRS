@@ -119,14 +119,15 @@ test('SPMU empty selectors have no placeholder helper text', async ({ page }) =>
 });
 
 
-test('mobile-input-keyboard-scroll-keeps-next-field-visible', async ({ page }) => {
-  // Deterministic keyboard simulation: Android Chrome reduces the visual
-  // viewport when the keyboard opens. Mock that geometry so CI can verify
-  // the same scroll contract without requiring a physical Android keyboard.
+test('mobile-input-keyboard-scroll-keeps-next-field-visible-overlay-mode', async ({ page }) => {
+  // Test both Android keyboard modes:
+  // 1) resized visual viewport, and
+  // 2) keyboard overlay where visualViewport keeps the layout height.
+  // The second mode is the case that previously escaped the regression test.
   await page.addInitScript(() => {
     const mockVisualViewport = {
       offsetTop: 0,
-      height: 430,
+      height: 844,
       addEventListener() {},
       removeEventListener() {}
     };
