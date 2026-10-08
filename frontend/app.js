@@ -1537,15 +1537,13 @@
     const sel=document.getElementById('Kategori');
     const filter=document.getElementById('FilterKategori');
 
+    // Form Input hanya menampilkan kategori induk.
+    // Detail PEMELIHARAAN/PERBAIKAN dipilih melalui Modal Picker,
+    // bukan sebagai option native <select> agar tidak muncul sebagai
+    // daftar ganda pada native picker Android.
     const formValues=[
       'PEMELIHARAAN',
       'PERBAIKAN',
-      'PEMELIHARAAN RUTIN SESUAI JADWAL',
-      'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
-      'PEMELIHARAAN DILUAR JADWAL RUTIN',
-      'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
-      'PERBAIKAN SAJA',
-      'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
       'PEMERIKSAAN / INSPEKSI',
       'PERMINTAAN LAYANAN',
       'PERTEMUAN / KOORDINASI',
