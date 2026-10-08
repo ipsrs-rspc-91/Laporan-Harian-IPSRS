@@ -952,9 +952,30 @@
     if(name === 'input' && !preserveInputMode){
       startCreateReportForm(true);
 
+      // Kategori memakai select tersembunyi + trigger teks terpisah.
+      // Setiap kembali ke Form Input dalam mode CREATE, reset nilai internal
+      // DAN label picker yang terlihat. Ini mencakup navigasi dari menu lain,
+      // bukan hanya reset setelah laporan berhasil disimpan.
+      const kategori = document.getElementById('Kategori');
+      if(kategori) kategori.value = '';
+      const kategoriText = document.getElementById('KategoriModalTriggerText');
+      if(kategoriText) kategoriText.textContent = 'Pilih kategori…';
+      const kategoriTrigger = document.getElementById('KategoriModalTrigger');
+      if(kategoriTrigger) kategoriTrigger.setAttribute('aria-expanded','false');
+
+      const area = document.getElementById('AreaKerja');
+      if(area) area.value = '';
+      const areaPicker = document.getElementById('areaKerjaPicker');
+      const areaPickerValue = areaPicker ? areaPicker.querySelector('.area-picker-value') : null;
+      if(areaPickerValue) areaPickerValue.textContent = 'Pilih area kerja…';
+
+      // Pastikan opsi Item ikut di-reset setelah Area Kerja dikosongkan.
+      if(typeof refreshItemOptions === 'function') refreshItemOptions();
+      if(typeof syncKategoriPicker_ === 'function') syncKategoriPicker_();
+      if(typeof syncAreaKerjaPicker_ === 'function') syncAreaKerjaPicker_();
+
       // Setiap membuka Form Input dari menu utama selalu kembali ke
-      // BAGIAN AWAL/HEADER FORM, bukan posisi scroll terakhir (misalnya
-      // langsung berada di Kategori). .content adalah scroll container utama.
+      // BAGIAN AWAL/HEADER FORM, bukan posisi scroll terakhir.
       const resetInputScrollTop = function(){
         const content = document.querySelector('.content');
         if(!content) return;
