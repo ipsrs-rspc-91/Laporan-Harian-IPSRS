@@ -2485,6 +2485,21 @@
     if(field.disabled || field.hidden) return false;
     const style = getComputedStyle(field);
     if(style.display === 'none' || style.visibility === 'hidden') return false;
+
+    // Native select yang menjadi "source" untuk custom picker tidak boleh
+    // dianggap sebagai field tujuan scroll. Secara visual elemen ini hanya
+    // 1px/opacity 0, tetapi getClientRects() masih menganggapnya ada.
+    if(
+      field.id === 'Kategori' ||
+      field.id === 'AreaKerja' ||
+      field.classList.contains('kategori-picker-native') ||
+      field.classList.contains('area-picker-native')
+    ) return false;
+
+    if(parseFloat(style.opacity || '1') === 0) return false;
+    const rect = field.getBoundingClientRect();
+    if(rect.width <= 2 || rect.height <= 2) return false;
+
     return field.getClientRects().length > 0;
   }
 
