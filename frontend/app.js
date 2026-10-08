@@ -2628,15 +2628,21 @@
           content.style.paddingBottom = requiredPadding + 'px';
       }
 
-      // FIELD AKTIF SENDIRI yang dinaikkan.
-      // Bergerak proporsional: hanya sebesar jarak yang dibutuhkan agar
-      // bagian bawah field berada 33px di atas keyboard.
-      const activeRect = active.getBoundingClientRect();
-      let delta = activeRect.bottom - (keyboardBottom - GAP);
+      // TARGET = field berikutnya, bukan field yang sedang diklik.
+      // Contoh alur: Ruang -> Masalah/Kegiatan -> Tindakan.
+      // User dapat mengisi field aktif lalu langsung mengetuk field berikutnya
+      // tanpa menutup keyboard.
+      const target = keyboardScrollTarget || active;
+      if(!isKeyboardFieldVisible(target)) return;
 
-      // Jangan mendorong field melewati batas atas layar.
+      // Hanya geser sebesar jarak yang dibutuhkan agar bagian bawah
+      // field berikutnya berada 33px di atas keyboard.
+      const targetRect = target.getBoundingClientRect();
+      let delta = targetRect.bottom - (keyboardBottom - GAP);
+
+      // Jangan mendorong target melewati batas atas layar.
       if(delta > 0){
-        const maxUpwardDelta = activeRect.top - (viewportTop + 20);
+        const maxUpwardDelta = targetRect.top - (viewportTop + 20);
         if(maxUpwardDelta > 0) delta = Math.min(delta, maxUpwardDelta);
       }
 
@@ -2841,10 +2847,10 @@
 
       keyboardFocusedField = field;
 
-      // Jangan memakai urutan DOM untuk menentukan target karena form
-      // memakai dua kolom. moveActiveFieldAboveKeyboard() menerapkan alur
-      // visual yang eksplisit: Masalah/Kegiatan -> Tindakan.
-      keyboardScrollTarget = field;
+      // Field normal selalu menargetkan SATU FIELD DI BAWAHNYA.
+      // Urutan DOM Page_Input mengikuti urutan visual:
+      // Pelapor -> No LK -> Ruang -> Masalah/Kegiatan -> Tindakan.
+      keyboardScrollTarget = getNextKeyboardField(field);
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
