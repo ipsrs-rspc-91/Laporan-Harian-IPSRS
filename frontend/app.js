@@ -2601,15 +2601,18 @@
         keyboardOriginalPadding = content.style.paddingBottom || '';
       }
 
-      // Ruang tambahan agar field tujuan yang berada di bawah
-      // tetap dapat digeser sampai 33px di atas keyboard.
+      // Gunakan spacer yang terbatas. Jangan memakai seluruh tinggi
+      // keyboard sebagai padding karena pada Android hal itu menciptakan
+      // area kosong ratusan piksel di bawah form saat scroll mencapai batas.
       if(keyboardHeight > 80){
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
         ) || 0;
+        const viewportBasedSpace = Math.round(viewportHeight * 0.35);
         const requiredPadding = Math.max(
           currentPadding,
-          keyboardHeight + GAP + 80
+          280,
+          viewportBasedSpace
         );
         content.style.paddingBottom = requiredPadding + 'px';
       }
@@ -2749,9 +2752,14 @@
         const currentPadding = parseFloat(
           getComputedStyle(content).paddingBottom || '0'
         ) || 0;
+        // Batasi spacer agar tidak membuat area kosong besar di bawah form.
+        // Spacer hanya memberi tambahan ruang scroll, bukan menggantikan
+        // tinggi keyboard.
+        const viewportBasedSpace = Math.round(viewportHeight * 0.35);
         const requiredPadding = Math.max(
           currentPadding,
-          keyboardHeight + GAP + 80
+          280,
+          viewportBasedSpace
         );
         if(currentPadding < requiredPadding){
           content.style.paddingBottom = requiredPadding + 'px';
