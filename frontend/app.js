@@ -2629,11 +2629,12 @@
       // batas keyboard), sehingga tetap ada ruang untuk mengetik.
       const safeTop = viewportTop + 20;
 
-      // TINDAKAN harus berada lebih tinggi seperti posisi yang nyaman
-      // pada desain form: sekitar 290px dari bagian atas viewport.
-      // Jangan menggunakan jarak 10/60/120px dari keyboard, karena itu
-      // membuat Tindakan tetap terlalu rendah ketika keyboard terbuka.
-      const TINDAKAN_TARGET_TOP = viewportTop + 290;
+      // TINDAKAN mengikuti posisi visual seperti desain yang diinginkan:
+      // bagian atas textarea berada sekitar 450px dari atas viewport.
+      // Dari pengujian perangkat, posisi ini menghasilkan tampilan seperti
+      // Gambar 2: Tindakan berada di area tengah-atas dan field setelahnya
+      // ikut terlihat. Ini sengaja hanya berlaku untuk Tindakan.
+      const TINDAKAN_TARGET_TOP = viewportTop + 450;
 
       let delta;
       if(field.id === 'Tindakan'){
@@ -2674,7 +2675,9 @@
 
       content.scrollTo({
         top: nextTop,
-        behavior: behavior || 'smooth'
+        // Tindakan harus berpindah deterministik setelah keyboard terbuka;
+        // hindari animasi yang dapat beradu dengan native Android auto-scroll.
+        behavior: field.id === 'Tindakan' ? 'auto' : (behavior || 'smooth')
       });
     }catch(err){
       console.warn('Keyboard smart scroll:', err);
