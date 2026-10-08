@@ -2573,6 +2573,7 @@
 
   function moveActiveFieldAboveKeyboard(behavior){
     const field = keyboardScrollTarget || keyboardFocusedField || document.activeElement;
+    const activeField = keyboardFocusedField || document.activeElement;
     const isFormField = field && field.matches &&
       field.matches('#page-input input, #page-input textarea, #page-input select');
     const isSaveButton = field && field.id === 'btnSaveInput';
@@ -2617,44 +2618,35 @@
         content.style.paddingBottom = requiredPadding + 'px';
       }
 
-      // Android Chrome kadang tidak langsung menggeser scroll container
-      // non-body. scrollIntoView membantu menemukan posisi target dahulu.
-      const rectBefore = field.getBoundingClientRect();
-      const targetBottomBefore = viewportBottom - GAP;
-
-      // Pada form IPSRS, field yang sedang diisi harus dinaikkan ke area
-      // nyaman ketika keyboard terbuka. Jangan menunggu sampai field benar-
-      // benar tertutup keyboard, karena pada Android field sering masih
-      // "terlihat" tetapi posisinya terlalu rendah.
-      //
-      // Penting: fungsi ini hanya dipanggil dari focus/resize, BUKAN dari
-      // event input/scroll, sehingga mengetik tidak membuat layar bergerak
-      // berulang-ulang.
+      // Saat keyboard terbuka, scroll hanya sebesar yang diperlukan agar
+      // TARGET berikutnya langsung terlihat di atas keyboard.
+      // Ruang -> Masalah/Kegiatan tidak membuat loncatan jika sudah terlihat.
+      // Masalah/Kegiatan -> Tindakan akan otomatis naik agar langsung dapat diklik.
+      // Fungsi ini hanya dipanggil dari focus/resize, bukan event input/scroll.
       const keyboardOpen = keyboardHeight > 80 ||
         (vv && vv.height < Math.max(0, window.innerHeight - 80));
 
-      if(keyboardOpen){
-        const comfortableTop = viewportTop + Math.min(
-          180,
-          Math.max(110, Math.round(viewportHeight * 0.28))
-        );
-        const rectInitial = field.getBoundingClientRect();
+      if(!keyboardOpen) return;
 
-        if(rectInitial.top > comfortableTop){
-          try{
-            field.scrollIntoView({
-              behavior: 'auto',
-              block: 'center',
-              inline: 'nearest'
-            });
-          }catch(_e){}
+      const rect = field.getBoundingClientRect();
+      const targetBottom = viewportBottom - GAP;
+      const safeTop = viewportTop + 20;
 
-          // scrollIntoView pada .content kadang hanya mendekatkan posisi.
-          // Koreksi ke posisi nyaman tanpa pernah menggeser form ke bawah.
-          const after = field.getBoundingClientRect();
-          const upwardDelta = Math.max(0, after.top - comfortableTop);
-          if(upwardDelta > 2){
-            const maxScroll = Math.max(
+      // Jika target berikutnya sudah terlihat di atas keyboard, jangan bergerak.
+      let delta = rect.bottom - targetBottom;
+      if(delta <= 2) return;
+
+      // Jangan menggeser field yang sedang diketik melewati bagian atas layar.
+      const activeRect = activeField && activeField.getBoundingClientRect
+        ? activeField.getBoundingClientRect()
+        : rect;
+      if(activeRect.top - delta < safeTop){
+        delta = activeRect.top - safeTop;
+      }
+
+      if(delta <= 2) return;
+
+      const maxScroll = Math.max(
               0,
               content.scrollHeight - content.clientHeight
             );
@@ -2861,12 +2853,11 @@
 
       keyboardFocusedField = field;
 
-      // Untuk field biasa (Ruang, Masalah/Kegiatan, Tindakan), jangan
-      // menjadikan field BERIKUTNYA sebagai target. Itu menyebabkan layar
-      // langsung meloncat ke bawah begitu pengguna baru mengetik di Ruang.
-      // Target tetap field aktif; fungsi scroll hanya bergerak jika field
-      // aktif memang tertutup/terlalu dekat dengan keyboard.
-      keyboardScrollTarget = field;
+      // Target adalah field berikutnya, tetapi hanya digeser jika belum
+      // terlihat di atas keyboard. Dengan demikian:
+      // Ruang -> Masalah/Kegiatan tetap terlihat tanpa loncatan,
+      // Masalah/Kegiatan -> Tindakan langsung terlihat dan bisa diklik.
+      keyboardScrollTarget = getNextKeyboardField(field);
 
       const content = getKeyboardContent();
       if(content && keyboardOriginalPadding === null){
