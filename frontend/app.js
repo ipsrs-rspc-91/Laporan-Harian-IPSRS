@@ -2565,7 +2565,7 @@
       ? window.visualViewport.height
       : window.innerHeight;
 
-    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.35));
+    const bottomSpace = Math.max(280, Math.round(viewportHeight * 0.455));
     if(currentPadding < bottomSpace){
       content.style.paddingBottom = bottomSpace + 'px';
     }
