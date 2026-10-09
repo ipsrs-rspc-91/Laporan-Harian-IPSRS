@@ -1317,6 +1317,10 @@
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
       .area-item-picker-area,.area-item-picker-item{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
+      .area-item-picker-area{border-color:#e2e8f0;background:#fff;justify-content:space-between}
+      .area-item-picker-area-name{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+      .area-item-picker-area-detail{font-weight:500}
+      .area-item-picker-area.is-active .area-item-picker-area-detail{color:inherit}
       .area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid #93c5fd;border-radius:10px;padding:11px 10px;margin:8px 0 0;background:#dbeafe;color:#1d4ed8;font-size:13px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.06)}
       .area-item-picker-add:hover{background:#DBEAFE;border-color:#2563EB;color:#1D4ED8;box-shadow:0 0 0 2px rgba(37,99,235,.16)}
       .area-item-picker-add-item{border-color:#93c5fd;color:#1d4ed8;background:#dbeafe}
@@ -1451,7 +1455,20 @@
         btn.className='area-item-picker-area'+(area===current?' is-active':'');
         btn.setAttribute('aria-pressed',area===current?'true':'false');
         const name=document.createElement('span');
-        name.textContent=area;
+        name.className='area-item-picker-area-name';
+        // Pisahkan keterangan akhir dalam tanda kurung agar nama utama dan
+        // keterangannya tampil pada baris terpisah tanpa mengubah lebar kolom.
+        const areaParts=String(area).trim().match(/^(.+?)\s+(\([^()]*\))$/);
+        if(areaParts){
+          const mainName=document.createElement('span');
+          mainName.textContent=areaParts[1];
+          const detail=document.createElement('span');
+          detail.className='area-item-picker-area-detail';
+          detail.textContent=areaParts[2];
+          name.append(mainName,detail);
+        }else{
+          name.textContent=area;
+        }
         const count=document.createElement('span');
         count.className='area-item-picker-count';
         count.textContent=String(getItemsForArea_(area).length);
