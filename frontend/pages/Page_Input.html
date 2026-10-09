@@ -959,6 +959,45 @@
   display:none !important;
 }
 </style>
+
+<style id="ipsrs-field-state-colors">
+  /* Field aktif: kuning mint sebagai tanda sedang diisi. */
+  #page-input input:not([type="hidden"]):focus,
+  #page-input textarea:focus,
+  #page-input select:focus,
+  #page-input .ipsrs-field-focused,
+  #page-input .kategori-modal-trigger.ipsrs-field-focused,
+  #page-input .area-picker-trigger.ipsrs-field-focused,
+  #page-input .datetime-combined-input.ipsrs-field-focused,
+  #page-input .status-choice-group.ipsrs-field-focused,
+  #page-input .spmu-choice-group.ipsrs-field-focused{
+    background-color:#FFF9C4!important;
+    transition:background-color .16s ease,border-color .16s ease;
+  }
+  /* Field sudah diisi dan fokus berpindah: hijau mint. */
+  #page-input input.ipsrs-field-filled:not(:focus),
+  #page-input textarea.ipsrs-field-filled:not(:focus),
+  #page-input select.ipsrs-field-filled:not(:focus),
+  #page-input .ipsrs-field-filled:not(:focus),
+  #page-input .kategori-modal-trigger.ipsrs-field-filled,
+  #page-input .area-picker-trigger.ipsrs-field-filled,
+  #page-input .datetime-combined-input.ipsrs-field-filled,
+  #page-input .status-choice-group.ipsrs-field-filled,
+  #page-input .spmu-choice-group.ipsrs-field-filled{
+    background-color:#ECFDF3!important;
+    transition:background-color .16s ease,border-color .16s ease;
+  }
+  #page-input .kategori-modal-trigger.ipsrs-field-focused,
+  #page-input .area-picker-trigger.ipsrs-field-focused,
+  #page-input .datetime-combined-input.ipsrs-field-focused{
+    background-color:#FFF9C4!important;
+  }
+  #page-input .kategori-modal-trigger.ipsrs-field-filled,
+  #page-input .area-picker-trigger.ipsrs-field-filled,
+  #page-input .datetime-combined-input.ipsrs-field-filled{
+    background-color:#ECFDF3!important;
+  }
+</style>
 </section>
 
 
