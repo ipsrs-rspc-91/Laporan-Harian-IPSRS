@@ -77,9 +77,10 @@
   .btn{ padding:10px 16px; border:1.5px solid var(--border); background:#fff; color:var(--text); border-radius:var(--radius-sm); font-weight:700; font-size:var(--fs-base); transition:all .15s; white-space:nowrap; }
   .btn:hover{ border-color:var(--accent); color:var(--accent-dark); }
   .btn.primary{ background:var(--primary); border-color:var(--primary); color:#fff; }
-  .btn.primary:hover{ background:var(--primary-dark); }
+  .btn.primary:hover{ background:var(--primary-dark); }  
   .btn.accent{ background:var(--accent); border-color:var(--accent); color:#fff; }
-  .btn.accent:hover{ background:var(--accent-dark); }
+  .btn.accent:hover{ background:var(--accent-dark); border-color:var(--accent-dark); }
+  .btn.accent:focus,.btn.accent:active{ background:var(--accent); border-color:var(--accent); color:#fff; }
   .btn.ghost-light{ background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.25); color:#fff; }
   .btn.ghost-light:hover{ background:rgba(255,255,255,0.2); }
   .btn.danger{ background:var(--danger-bg); border-color:var(--danger-bg); color:var(--danger); }
