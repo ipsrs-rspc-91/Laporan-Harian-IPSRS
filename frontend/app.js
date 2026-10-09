@@ -4127,6 +4127,9 @@
 
     setInputSelectValue('Kategori', editData.Kategori || '');
     setInputSelectValue('AreaKerja', editData.AreaKerja || '');
+    // Sinkronkan label kontrol kustom setelah nilai form edit diisi programatis.
+    if(typeof window.__ipsrsSyncKategoriModalTrigger === 'function') window.__ipsrsSyncKategoriModalTrigger();
+    if(typeof syncAreaKerjaPicker_ === 'function') syncAreaKerjaPicker_();
     refreshItemOptions();
     setInputSelectValue('Item', editData.Item || '');
     document.getElementById('Keterangan').value = editData.Keterangan || '';
