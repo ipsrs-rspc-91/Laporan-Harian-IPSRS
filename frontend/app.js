@@ -3850,6 +3850,15 @@
     }
 
     const isEdit = isEditMode;
+    if(isEdit){
+      const confirmed = window.confirm(
+        'KONFIRMASI EDIT LAPORAN\\n\\n' +
+        'Anda akan MENGUBAH laporan yang sudah tersimpan (ID: ' + editingReportId + ').\\n\\n' +
+        'Pastikan seluruh data—terutama tanggal, ruang, masalah, tindakan, SPMU, kategori, area kerja, item, keterangan, dan status—sudah benar.\\n\\n' +
+        'Pilih OK untuk menyimpan perubahan, atau Batal untuk kembali memeriksa form.'
+      );
+      if(!confirmed) return;
+    }
     setMsg('msgInput', isEdit ? 'Menyimpan perubahan...' : 'Menyimpan...');
     try{
       const json = isEdit
@@ -3932,6 +3941,8 @@
     }
     _editTransitionToken = null;
     _reportFormMode = 'CREATE';
+    const editCaution = document.getElementById('editCautionBanner');
+    if(editCaution) editCaution.classList.add('hidden');
     const inputPage = document.getElementById('page-input');
     if(inputPage) inputPage.classList.remove('edit-mode');
     _editingReportId = null;
@@ -4041,7 +4052,9 @@
     const history = document.getElementById('inputHistoryPanel');
 
     if(title) title.innerText = 'Edit Laporan';
-    if(desc) desc.innerText = 'Mengambil data laporan terbaru...';
+    const editCaution = document.getElementById('editCautionBanner');
+    if(editCaution) editCaution.classList.remove('hidden');
+    if(desc) desc.innerText = 'Perubahan pada laporan tersimpan — periksa data sebelum menyimpan.';
     if(btn){ btn.innerText = 'Memuat...'; btn.classList.add('hidden'); }
     if(note){ note.classList.add('hidden'); note.innerText = ''; }
 
