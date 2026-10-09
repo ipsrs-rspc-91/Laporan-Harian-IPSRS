@@ -1317,10 +1317,10 @@
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
       .area-item-picker-area,.area-item-picker-item{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
-      .area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1.5px solid #93c5fd;border-radius:10px;padding:11px 10px;margin:8px 0 0;background:#fff;color:#1d4ed8;font-size:13px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.06)}
-      .area-item-picker-add:hover{background:#eff6ff;border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12)}
-      .area-item-picker-add-item{border-color:#86efac;color:#166534}
-      .area-item-picker-add-item:hover{background:#f0fdf4;border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.12)}
+      .area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1.5px solid #2563eb;border-radius:10px;padding:11px 10px;margin:8px 0 0;background:#dff7f3;color:#1d4ed8;font-size:13px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+      .area-item-picker-add:hover{background:#c8f1eb;border-color:#1d4ed8;box-shadow:0 0 0 2px rgba(37,99,235,.16)}
+      .area-item-picker-add-item{border-color:#2563eb;color:#1d4ed8}
+      .area-item-picker-add-item:hover{background:#c8f1eb;border-color:#1d4ed8;box-shadow:0 0 0 2px rgba(37,99,235,.16)}
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
       .area-item-picker-area.is-active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
       .area-item-picker-area .area-item-picker-count{margin-left:auto;flex:0 0 auto;color:#64748b;font-size:11px;font-weight:600}
