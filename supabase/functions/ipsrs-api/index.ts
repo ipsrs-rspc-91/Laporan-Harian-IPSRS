@@ -408,12 +408,14 @@ if(a==="apiDashboardStats"){
    }
    if(unitIsNew){
      unit++;
-     const q=qtyValue(r.unit_jumlah ?? (kind==="UNIT" ? r.jumlah : legacy.unit ? r.jumlah : null));
+     // Unit adalah barang utuh; kuantitas unit harus berupa bilangan bulat.
+     // Data lama yang tersimpan sebagai pecahan dinormalisasi saat agregasi dashboard.
+     const q=Math.round(qtyValue(r.unit_jumlah ?? (kind==="UNIT" ? r.jumlah : legacy.unit ? r.jumlah : null)));
      unitQty+=q;
      addNewGroup(newUnitGroups,
        r.unit_name || (kind==="UNIT" ? r.spare_part_unit : legacy.unit ? r.spare_part_unit : r.item),
        r.unit_type || (kind==="UNIT" ? r.type : legacy.unit ? r.type : ""),
-       r.unit_jumlah ?? (kind==="UNIT" ? r.jumlah : legacy.unit ? r.jumlah : null)
+       q
      );
    }
    if(r.area_kerja)ar[r.area_kerja]=(ar[r.area_kerja]||0)+1;
