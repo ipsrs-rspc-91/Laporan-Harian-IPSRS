@@ -1374,7 +1374,7 @@
       bg.querySelector('.area-item-picker-add-item').addEventListener('click',()=>{
         const currentArea=String(sel.value||'').trim();
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
-        const areaName=activeArea ? activeArea.querySelector('span')?.textContent?.trim() : currentArea;
+        const areaName=activeArea ? String(activeArea.dataset.areaValue||'').trim() : currentArea;
         if(!areaName){
           closeAreaItemPicker_();
           setMsg('msgInput','Pilih Area Kerja terlebih dahulu sebelum menambah item.',true);
@@ -1453,6 +1453,7 @@
         const btn=document.createElement('button');
         btn.type='button';
         btn.className='area-item-picker-area'+(area===current?' is-active':'');
+        btn.dataset.areaValue=area;
         btn.setAttribute('aria-pressed',area===current?'true':'false');
         const name=document.createElement('span');
         name.className='area-item-picker-area-name';
