@@ -4482,6 +4482,7 @@
         <td>${escapeHtml(row.NoLK)}</td>
         <td>${escapeHtml(row.MasalahKegiatan)}</td>
         <td>${escapeHtml(row.Tindakan)}</td>
+        <td style="min-width:180px;max-width:280px;white-space:normal;overflow-wrap:anywhere;">${escapeHtml(row.Keterangan || '-')}</td>
         <td>${escapeHtml(row.Petugas)}</td>
         <td>${escapeHtml(bidang)}</td>
         <td><span class="pill ${row.Status==='Selesai'?'success':'warning'}">${escapeHtml(row.Status)}</span></td>
