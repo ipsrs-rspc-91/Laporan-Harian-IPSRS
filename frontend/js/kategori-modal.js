@@ -198,6 +198,13 @@
         }
         #ipsrsKategoriModal1 .ipsrs-kat-choice-title{font-size:13px}
       }
+      #ipsrsKategoriModalRoot .ipsrs-kat-add{
+        width:100%;min-height:48px;margin-top:2px;padding:11px 14px;
+        border:1px dashed #2563eb;border-radius:12px;background:#eff6ff;
+        color:#1d4ed8;text-align:center;font:inherit;font-weight:800;
+        cursor:pointer;transition:.15s ease;
+      }
+      #ipsrsKategoriModalRoot .ipsrs-kat-add:hover{background:#dbeafe;border-color:#1d4ed8}
       .ipsrs-kat-choice{
         width:100%; min-height:58px; margin:0 0 10px; padding:11px 14px;
         border:1px solid #cbd5e1; border-radius:12px; background:#fff;
@@ -293,12 +300,16 @@
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMELIHARAAN"><span class="ipsrs-kat-choice-title">PEMELIHARAAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PERBAIKAN"><span class="ipsrs-kat-choice-title">PERBAIKAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMERIKSAAN / INSPEKSI"><span class="ipsrs-kat-choice-title">PEMERIKSAAN / INSPEKSI</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="MONITORING"><span class="ipsrs-kat-choice-title">MONITORING</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PERMINTAAN LAYANAN"><span class="ipsrs-kat-choice-title">PERMINTAAN LAYANAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PERTEMUAN / KOORDINASI"><span class="ipsrs-kat-choice-title">PERTEMUAN / KOORDINASI</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="ADMINISTRASI / MANAJEMEN"><span class="ipsrs-kat-choice-title">ADMINISTRASI / MANAJEMEN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PROYEK / RENOVASI"><span class="ipsrs-kat-choice-title">PROYEK / RENOVASI</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="KUNJUNGAN"><span class="ipsrs-kat-choice-title">KUNJUNGAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PENGUJIAN / ANALISA"><span class="ipsrs-kat-choice-title">PENGUJIAN / ANALISA</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PELATIHAN"><span class="ipsrs-kat-choice-title">PELATIHAN</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="PROYEK / RENOVASI"><span class="ipsrs-kat-choice-title">PROYEK / RENOVASI</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="LAINNYA"><span class="ipsrs-kat-choice-title">LAINNYA</span></button>
+          <button type="button" class="ipsrs-kat-add" data-kat-add-new>＋ TAMBAH KATEGORI</button>
         </div>`,
       ''
     );
@@ -360,6 +371,25 @@
         </button>`,
       ''
     );
+
+    const addKategoriBtn = document.querySelector('[data-kat-add-new]');
+    if(addKategoriBtn && !addKategoriBtn.__ipsrsBound){
+      addKategoriBtn.addEventListener('click', function(){
+        const root = document.getElementById('ipsrsKategoriModalRoot');
+        if(root) root.classList.remove('show');
+        const sel = document.getElementById('Kategori');
+        const addNewOption = sel && Array.from(sel.options).find(o => o.value === '__ADD_NEW__' || o.value === '__TAMBAH_KATEGORI_BARU__' || /Tambah Kategori Baru/i.test(o.textContent || ''));
+        if(addNewOption){
+          sel.value = addNewOption.value;
+          sel.dispatchEvent(new Event('change',{bubbles:true}));
+        } else if(typeof window.__ipsrsOpenTambahKategoriModal === 'function'){
+          window.__ipsrsOpenTambahKategoriModal();
+        } else {
+          window.alert('Fitur tambah kategori belum tersedia pada halaman ini.');
+        }
+      });
+      addKategoriBtn.__ipsrsBound = true;
+    }
 
     document.querySelectorAll('[data-kat-root]').forEach(btn => {
       btn.addEventListener('click', function(){
