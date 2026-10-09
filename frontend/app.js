@@ -1317,7 +1317,7 @@
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
       .area-item-picker-area,.area-item-picker-item{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
-      .area-item-picker-area{border-color:#e2e8f0;background:#fff;justify-content:space-between}
+      .area-item-picker-area{border:1.5px solid #cbd5e1;background:#fff;justify-content:space-between;box-shadow:0 1px 2px rgba(15,23,42,.05)}
       .area-item-picker-area-name{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;white-space:normal;overflow-wrap:anywhere;word-break:normal}
       .area-item-picker-area-detail{font-weight:500}
       .area-item-picker-area.is-active .area-item-picker-area-detail{color:inherit}
@@ -1326,9 +1326,9 @@
       .area-item-picker-add-item{border-color:#93c5fd;color:#1d4ed8;background:#dbeafe}
       .area-item-picker-add-item:hover{background:#DBEAFE;border-color:#2563EB;color:#1D4ED8;box-shadow:0 0 0 2px rgba(37,99,235,.16)}
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
-      .area-item-picker-area.is-active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
+      .area-item-picker-area.is-active{background:#dbeafe;border-color:#3b82f6;color:#1d4ed8;font-weight:700;box-shadow:0 0 0 1px rgba(59,130,246,.18)}
       .area-item-picker-area .area-item-picker-count{margin-left:auto;flex:0 0 auto;color:#64748b;font-size:11px;font-weight:600}
-      .area-item-picker-item{border-color:#e2e8f0;background:#fff;justify-content:space-between}
+      .area-item-picker-item{border:1.5px solid #cbd5e1;background:#fff;justify-content:space-between;box-shadow:0 1px 2px rgba(15,23,42,.05)}
       .area-item-picker-item:hover{border-color:#93c5fd}
       .area-item-picker-empty{padding:18px 10px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
       /* Tombol tambah harus sama dengan state area kerja terpilih (M.E. Umum). */
@@ -1481,6 +1481,12 @@
             x.setAttribute('aria-pressed',active?'true':'false');
           });
           renderItems_(area);
+          // Setiap pergantian Area Kerja harus memulai daftar Item dari posisi paling atas.
+          const itemList=bg.querySelector('.area-item-picker-item-list');
+          if(itemList){
+            itemList.scrollTop=0;
+            requestAnimationFrame(()=>{ itemList.scrollTop=0; });
+          }
         });
         list.appendChild(btn);
       });
