@@ -184,8 +184,12 @@
   </script>
 
   <script>
-    <!-- SPMU-DATA-ONLY-RUNTIME-GUARD-20261004 -->
+    <!-- SPMU-DATA-ONLY-RUNTIME-GUARD-20261009-P2 -->
     (function(){
+      const root=document.getElementById('page-input');
+      if(!root) return;
+      let refreshQueued=false;
+
       function enforceSpmuDataOnly(){
         ['spmuUnitChoice','spmuSpareChoice'].forEach(function(choiceId){
           const choice=document.getElementById(choiceId);
@@ -194,17 +198,45 @@
           const title=choice.querySelector('.spmu-choice-title');
           const chevron=choice.querySelector('.spmu-choice-chevron');
           const hasData=!!(summary && summary.textContent.trim());
-          if(hasData){
-            if(title){
-              title.textContent='';
+          if(!hasData) return;
+          if(title){
+            if(title.textContent!=='') title.textContent='';
+            if(title.style.getPropertyValue('display')!=='none' ||
+               title.style.getPropertyPriority('display')!=='important'){
               title.style.setProperty('display','none','important');
             }
-            if(chevron) chevron.style.setProperty('display','none','important');
+          }
+          if(chevron &&
+             (chevron.style.getPropertyValue('display')!=='none' ||
+              chevron.style.getPropertyPriority('display')!=='important')){
+            chevron.style.setProperty('display','none','important');
           }
         });
       }
-      const observer=new MutationObserver(enforceSpmuDataOnly);
-      observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+
+      function isSpmuMutation(mutations){
+        return mutations.some(function(m){
+          const target=m.target && m.target.nodeType===1 ? m.target : m.target && m.target.parentElement;
+          if(target && target.closest && target.closest('#spmuUnitChoice, #spmuSpareChoice')) return true;
+          return Array.from(m.addedNodes || []).some(function(node){
+            if(node.nodeType!==1) return false;
+            return node.matches('#spmuUnitChoice, #spmuSpareChoice') ||
+              !!node.querySelector('#spmuUnitChoice, #spmuSpareChoice');
+          });
+        });
+      }
+
+      const observer=new MutationObserver(function(mutations){
+        if(refreshQueued || !isSpmuMutation(mutations)) return;
+        refreshQueued=true;
+        requestAnimationFrame(function(){
+          refreshQueued=false;
+          enforceSpmuDataOnly();
+        });
+      });
+      // Form input is a stable root. Ignore mutations elsewhere in the app and
+      // characterData-only changes; selected summary updates replace text nodes.
+      observer.observe(root,{subtree:true,childList:true});
       enforceSpmuDataOnly();
     })();
   </script>
