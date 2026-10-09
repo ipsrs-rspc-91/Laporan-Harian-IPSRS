@@ -1312,7 +1312,7 @@
       .area-item-picker-close:hover{background:#fee2e2;border-color:#f87171;color:#b91c1c}
       .area-item-picker-columns{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr);min-height:260px;overflow:hidden;flex:1}
       .area-item-picker-side{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:12px}
-      .area-item-picker-area-list,.area-item-picker-item-list{min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain}
+      .area-item-picker-area-list,.area-item-picker-item-list{min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain;overflow-anchor:none}
       .area-item-picker-add{flex:0 0 auto}
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
@@ -1401,6 +1401,9 @@
       const list=bg.querySelector('.area-item-picker-item-list');
       if(!list) return;
       list.innerHTML='';
+      // Reset scroll di dalam renderer agar setiap render Area Kerja mulai dari atas.
+      list.scrollTop=0;
+      if(typeof list.scrollTo==='function') list.scrollTo({top:0,left:0,behavior:'auto'});
       const items=getItemsForArea_(area);
       if(!items.length){
         const empty=document.createElement('div');
@@ -1481,11 +1484,15 @@
             x.setAttribute('aria-pressed',active?'true':'false');
           });
           renderItems_(area);
-          // Setiap pergantian Area Kerja harus memulai daftar Item dari posisi paling atas.
+          // Pastikan posisi tetap di paling atas setelah DOM selesai diperbarui.
           const itemList=bg.querySelector('.area-item-picker-item-list');
           if(itemList){
             itemList.scrollTop=0;
-            requestAnimationFrame(()=>{ itemList.scrollTop=0; });
+            if(typeof itemList.scrollTo==='function') itemList.scrollTo({top:0,left:0,behavior:'auto'});
+            requestAnimationFrame(()=>{
+              itemList.scrollTop=0;
+              if(typeof itemList.scrollTo==='function') itemList.scrollTo({top:0,left:0,behavior:'auto'});
+            });
           }
         });
         list.appendChild(btn);
