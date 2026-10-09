@@ -229,7 +229,8 @@
         }
       });
     });
-    observer.observe(document.body, {childList:true, subtree:true});
+    const pageInputRoot = document.getElementById('page-input');
+    if(pageInputRoot) observer.observe(pageInputRoot, {childList:true, subtree:true});
   }
 
   if(document.readyState === 'loading'){
