@@ -102,11 +102,30 @@
   }
   #page-input .edit-caution-title{font-size:14px;font-weight:900;letter-spacing:.02em;line-height:1.35;}
   #page-input .edit-caution-text{margin-top:5px;font-size:13px;font-weight:600;line-height:1.5;}
+  /* Seluruh permukaan form EDIT bernuansa kuning muda; field berwarna mint tetap dipertahankan. */
+  #page-input.edit-mode .card{
+    background:#fff8db!important;
+  }
+  #page-input.edit-mode .card input:not([type="hidden"]):not(.ipsrs-field-filled),
+  #page-input.edit-mode .card select:not(.ipsrs-field-filled),
+  #page-input.edit-mode .card textarea:not(.ipsrs-field-filled),
+  #page-input.edit-mode .card .area-picker-trigger:not(.ipsrs-field-filled),
+  #page-input.edit-mode .card .kategori-modal-trigger:not(.ipsrs-field-filled),
+  #page-input.edit-mode .card .spmu-choice:not(.ipsrs-field-filled),
+  #page-input.edit-mode .card .datetime-combined-input:not(.ipsrs-field-filled){
+    background-color:#fffdf0;
+  }
+  /* Simpan Perubahan tetap hijau toska, sama seperti tombol simpan form baru. */
   #page-input.edit-mode #btnSaveInput{
-    background:#c2410c!important;border-color:#9a3412!important;
-    box-shadow:0 3px 0 #9a3412!important;
+    background:#007f73!important;border-color:#00695f!important;
+    color:#fff!important;box-shadow:0 3px 0 #00695f!important;
   }
   #page-input.edit-mode #btnSaveInput:active{transform:translateY(1px);}
+  /* Tombol hapus merah dan hanya ditampilkan oleh logika role KA_IPSRS di app.js. */
+  #page-input.edit-mode #btnDeleteReport:not(.hidden){
+    background:#dc2626!important;border:1px solid #b91c1c!important;
+    color:#fff!important;box-shadow:0 3px 0 #991b1b!important;
+  }
   
   #page-input .status-choice-group{
     display:grid;
