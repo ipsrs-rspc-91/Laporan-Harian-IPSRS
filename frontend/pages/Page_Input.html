@@ -150,22 +150,14 @@
     overflow:hidden;
     background:#fff;
   }
-  /* Kategori penggantian mewajibkan data UNIT atau SPARE PART / MATERIAL. */
-  #page-input .spmu-choice-group.spmu-required-missing{
-    border:2px solid #dc2626;
-    box-shadow:0 0 0 2px rgba(220,38,38,.10);
-  }
-  #page-input .spmu-choice-group.spmu-required-missing .spmu-choice{
-    border-color:#fecaca;
-  }
-  /* Setelah UNIT/SPARE PART tersimpan lengkap, tampilkan border normal.
-     Border merah hanya berlaku selama data wajib belum lengkap. */
-  #page-input .spmu-choice-group.has-value{
-    border:1px solid #cbd3d7 !important;
+  /* Sama dengan field wajib lainnya: kategori penggantian membuat SPMU
+     wajib, sehingga border tetap merah sebelum DAN sesudah data diisi. */
+  #page-input .spmu-choice-group.spmu-category-spare{
+    border:1px solid #df9490 !important;
     box-shadow:none !important;
   }
-  #page-input .spmu-choice-group.has-value.spmu-required-missing{
-    border:1px solid #cbd3d7 !important;
+  #page-input .spmu-choice-group.spmu-category-spare.spmu-required-missing{
+    border:1px solid #df9490 !important;
     box-shadow:none !important;
   }
   #page-input .spmu-choice .spmu-choice-chevron{display:none !important;}
