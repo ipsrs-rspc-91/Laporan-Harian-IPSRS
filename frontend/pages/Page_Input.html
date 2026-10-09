@@ -173,6 +173,10 @@
     position:relative;
     width:100%;
   }
+  /* Dropdown SPMU harus berada di atas field Kategori dan Area Kerja. */
+  #page-input .spmu-choice-wrap:has(#spmuActionMenu:not([hidden])){z-index:500;}
+  #page-input .spmu-choice-group:has(#spmuActionMenu:not([hidden])){z-index:501;}
+  #page-input #spmuActionMenu{z-index:1000;}
   #page-input .spmu-choice-group.has-value{grid-template-columns:1fr;}
   #page-input .spmu-choice-group.has-value .spmu-choice.is-empty-option{display:none;}
   #page-input .spmu-choice-group.has-value .spmu-choice.has-value{
