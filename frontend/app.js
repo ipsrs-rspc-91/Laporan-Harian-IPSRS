@@ -2215,6 +2215,19 @@
       }else if(rect.top < viewportTop + GAP){
         box.scrollTop -= (viewportTop + GAP) - rect.top;
       }
+
+      // Saat nama/type/jumlah diketik, pastikan tombol OK ikut terangkat
+      // di atas keyboard Android, bukan tertutup di bawah viewport.
+      if(field.id === 'SparePartUnit' || field.id === 'Type' || field.id === 'Jumlah'){
+        const footer = modal.querySelector('.spmu-modal-footer');
+        if(footer){
+          const footerRect = footer.getBoundingClientRect();
+          const visibleBottom = (window.visualViewport ? window.visualViewport.offsetTop + window.visualViewport.height : window.innerHeight) - 12;
+          if(footerRect.bottom > visibleBottom){
+            box.scrollTop += footerRect.bottom - visibleBottom;
+          }
+        }
+      }
     }catch(_e){}
   }
 
