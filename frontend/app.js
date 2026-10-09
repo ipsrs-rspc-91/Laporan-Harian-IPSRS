@@ -1327,10 +1327,11 @@
       .area-item-picker-item{border-color:#e2e8f0;background:#fff;justify-content:space-between}
       .area-item-picker-item:hover{border-color:#93c5fd}
       .area-item-picker-empty{padding:18px 10px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
-      .area-item-picker-add{margin-top:8px;border:1.5px solid #2563eb;color:#1d4ed8;background:#dff7f3}
-      .area-item-picker-add:hover{border-color:#1d4ed8;color:#1d4ed8;background:#c8f1eb}
-      .area-item-picker-add-item{border-color:#2563eb;color:#1d4ed8;background:#dff7f3}
-      .area-item-picker-add-item:hover{border-color:#1d4ed8;color:#1d4ed8;background:#c8f1eb}
+      /* Tombol tambah harus sama dengan state area kerja terpilih (M.E. Umum). */
+      .area-item-picker-add{margin-top:8px;border:1px solid #93c5fd;color:#1d4ed8;background:#dbeafe}
+      .area-item-picker-add:hover{border-color:#60a5fa;color:#1d4ed8;background:#bfdbfe}
+      .area-item-picker-add-item{border-color:#93c5fd;color:#1d4ed8;background:#dbeafe}
+      .area-item-picker-add-item:hover{border-color:#60a5fa;color:#1d4ed8;background:#bfdbfe}
       @media(max-width:560px){.area-item-picker-bg{padding:8px}.area-item-picker-modal{max-height:86vh;border-radius:14px}.area-item-picker-head{padding:13px 14px}.area-item-picker-columns{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);min-height:300px}.area-item-picker-side{padding:8px}.area-item-picker-area,.area-item-picker-item,.area-item-picker-add{padding:10px 8px;font-size:12px}.area-item-picker-title{font-size:16px}}
     `;
     document.head.appendChild(style);
