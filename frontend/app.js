@@ -1459,7 +1459,14 @@
         list.appendChild(btn);
       });
       const initial=areas.includes(current)?current:areas[0];
-      if(initial) renderItems_(initial);
+      if(initial){
+        const initialButton=Array.from(list.querySelectorAll('.area-item-picker-area')).find(x=>x.querySelector('span')?.textContent===initial);
+        if(initialButton){
+          initialButton.classList.add('is-active');
+          initialButton.setAttribute('aria-pressed','true');
+        }
+        renderItems_(initial);
+      }
       else{
         const itemList=bg.querySelector('.area-item-picker-item-list');
         itemList.innerHTML='<div class="area-item-picker-empty">Belum ada Area Kerja yang tersedia.</div>';
