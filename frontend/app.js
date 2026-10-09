@@ -1306,17 +1306,21 @@
       .area-item-picker-bg{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
       .area-item-picker-bg.show{display:flex}
       .area-item-picker-modal{width:min(760px,100%);max-height:min(82vh,760px);display:flex;flex-direction:column;background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.28);overflow:hidden;color:#0f172a}
-      .area-item-picker-head{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:10px 18px;border-bottom:1px solid #e2e8f0}
-      .area-item-picker-head-spacer{flex:1;min-height:1px}
-      .area-item-picker-close{width:36px;height:36px;flex:0 0 36px;border:0;border-radius:10px;background:#f1f5f9;color:#334155;font-size:24px;line-height:1;cursor:pointer}
+      .area-item-picker-head{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr) 36px;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid #e2e8f0}
+      .area-item-picker-head-label{text-align:center;font-size:11px;font-weight:800;letter-spacing:.07em;color:#64748b;padding:4px 8px}
+      .area-item-picker-close{width:36px;height:36px;flex:0 0 36px;border:1px solid #fecaca;border-radius:10px;background:#fef2f2;color:#dc2626;font-size:24px;font-weight:800;line-height:1;cursor:pointer}
+      .area-item-picker-close:hover{background:#fee2e2;border-color:#f87171;color:#b91c1c}
       .area-item-picker-columns{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr);min-height:260px;overflow:hidden;flex:1}
       .area-item-picker-side{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:12px}
-      .area-item-picker-label{flex:0 0 auto;text-align:center;font-size:11px;font-weight:800;letter-spacing:.07em;color:#64748b;padding:4px 8px 9px}
       .area-item-picker-area-list,.area-item-picker-item-list{min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain}
       .area-item-picker-add{flex:0 0 auto}
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
-      .area-item-picker-area,.area-item-picker-item,.area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
+      .area-item-picker-area,.area-item-picker-item{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
+      .area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1.5px solid #93c5fd;border-radius:10px;padding:11px 10px;margin:8px 0 0;background:#fff;color:#1d4ed8;font-size:13px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+      .area-item-picker-add:hover{background:#eff6ff;border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12)}
+      .area-item-picker-add-item{border-color:#86efac;color:#166534}
+      .area-item-picker-add-item:hover{background:#f0fdf4;border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.12)}
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
       .area-item-picker-area.is-active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
       .area-item-picker-area .area-item-picker-count{margin-left:auto;flex:0 0 auto;color:#64748b;font-size:11px;font-weight:600}
@@ -1348,7 +1352,7 @@
       bg=document.createElement('div');
       bg.id='areaItemPickerModalBg';
       bg.className='area-item-picker-bg';
-      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-spacer" aria-hidden="true"></div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-label">AREA KERJA</div><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋  Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-label">ITEM</div><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋  Item Baru</button></div></div></section>';
+      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-label area-item-picker-head-area">AREA KERJA</div><div class="area-item-picker-head-label area-item-picker-head-item">ITEM</div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋  Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋  Item Baru</button></div></div></section>';
       document.body.appendChild(bg);
       bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
