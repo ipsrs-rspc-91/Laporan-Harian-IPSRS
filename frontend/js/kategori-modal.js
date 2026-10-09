@@ -595,5 +595,6 @@
   window.__ipsrsOpenKategoriModal = function(){
     openKategoriRootModal();
   };
+  window.__ipsrsSyncKategoriModalTrigger = syncKategoriModalTrigger;
   window.__ipsrsKategoriModalBuild = BUILD;
 })();
