@@ -119,13 +119,13 @@
           ['API Status',x.api_status||'-'],
           ['Database Status',x.database_status||'-'],
           ['Last Deployment',BUILD_INFO.last_deployment],
-          ['Rollback Baseline','BASELINE-20261002-KATEGORI-SCROLL'],
-          ['Rollback Commit','628ca81681620769821fe6491ba2aac32d53310d'],
-          ['Rollback Branch','baseline/20261002-kategori-scroll'],
+          ['Rollback Baseline','BASELINE-20261010-0450'],
+          ['Rollback Commit','5598cd1176fdce8562d1fa260131aac66643d584'],
+          ['Rollback Branch','checkpoint-2026-10-10-0450'],
           ['Latest Checkpoint','2026-10-10 04:50 WIB'],
           ['Checkpoint Commit','5598cd1176fdce8562d1fa260131aac66643d584'],
           ['Checkpoint Branch','checkpoint-2026-10-10-0450'],
-          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke checkpoint-2026-10-10-0450'],
+          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke BASELINE-20261010-0450 (checkpoint-2026-10-10-0450)'],
           ['Data Saat Rollback','DATA LAPORAN SUPABASE TETAP ADA. Rollback aplikasi tidak menghapus data. Rollback database hanya jika diminta secara eksplisit.']
         ];
         content.innerHTML=rows.map(([k,v])=>'<div class="system-info-row"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
