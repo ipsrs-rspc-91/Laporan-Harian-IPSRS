@@ -2460,6 +2460,11 @@
       group.classList.toggle('has-both-value',unitHas && spareHas);
       group.classList.toggle('spmu-category-spare',spareCategory);
       group.classList.toggle('spmu-category-compact',!spareCategory);
+      // Kategori yang mewajibkan penggantian: tandai kotak pilihan merah
+      // sampai data UNIT atau SPARE PART / MATERIAL terisi lengkap.
+      group.classList.toggle('spmu-required-missing',spareCategory && !(unitHas || spareHas));
+      group.setAttribute('aria-required',spareCategory ? 'true' : 'false');
+      group.setAttribute('aria-invalid',spareCategory && !(unitHas || spareHas) ? 'true' : 'false');
     }
 
     const renderSide=(id,kind,side,hasValue)=>{
