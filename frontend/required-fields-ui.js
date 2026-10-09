@@ -88,7 +88,86 @@
 
   }
 
+  function hasFieldValue(el){
+    if(!el) return false;
+    if(el.id === 'TanggalWaktuDisplay'){
+      return !!(String(document.getElementById('Tanggal')?.value||'').trim() &&
+                String(document.getElementById('Pukul')?.value||'').trim());
+    }
+    if(el.id === 'KategoriModalTrigger'){
+      return !!String(document.getElementById('Kategori')?.value||'').trim();
+    }
+    if(el.id === 'areaKerjaPicker' || el.classList.contains('area-picker-trigger')){
+      return !!String(document.getElementById('AreaKerja')?.value||'').trim();
+    }
+    if(el.classList.contains('status-choice-group')){
+      return !!String(document.getElementById('Status')?.value||'').trim();
+    }
+    if(el.classList.contains('spmu-choice-group')){
+      const state=window.__IPSRS_SPMU_STATE||{};
+      return Object.values(state).some(v=>v && (String(v.status||'').trim()||String(v.name||'').trim()||String(v.type||'').trim()||String(v.qty??'').trim()));
+    }
+    if(el.matches('input,textarea,select')){
+      if(el.type==='hidden') return !!String(el.value||'').trim();
+      return !!String(el.value||'').trim();
+    }
+    return false;
+  }
+
+  function syncFieldColor(el){
+    if(!el || !el.classList) return;
+    const isProxy = el.id==='KategoriModalTrigger' || el.id==='areaKerjaPicker' ||
+      el.id==='TanggalWaktuDisplay' || el.classList.contains('status-choice-group') ||
+      el.classList.contains('spmu-choice-group') || el.classList.contains('area-picker-trigger');
+    if(!isProxy && !el.matches('input,textarea,select')) return;
+    el.classList.toggle('ipsrs-field-filled',hasFieldValue(el));
+    if(document.activeElement===el) el.classList.add('ipsrs-field-focused');
+    else el.classList.remove('ipsrs-field-focused');
+  }
+
+  function initFieldColorStates(){
+    const page=document.getElementById('page-input');
+    if(!page || page.dataset.ipsrsFieldColorsBound) return;
+    page.dataset.ipsrsFieldColorsBound='1';
+    const proxies=[
+      document.getElementById('KategoriModalTrigger'),
+      document.getElementById('areaKerjaPicker'),
+      document.getElementById('TanggalWaktuDisplay'),
+      page.querySelector('.status-choice-group'),
+      page.querySelector('.spmu-choice-group')
+    ].filter(Boolean);
+    const refresh=()=>{
+      page.querySelectorAll('input,textarea,select').forEach(syncFieldColor);
+      proxies.forEach(syncFieldColor);
+      const areaTrigger=page.querySelector('.area-picker-trigger');
+      if(areaTrigger) syncFieldColor(areaTrigger);
+    };
+    page.addEventListener('focusin',e=>{
+      const target=e.target;
+      if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
+        target.classList.add('ipsrs-field-focused');
+        target.classList.remove('ipsrs-field-filled');
+      }
+      refresh();
+    });
+    page.addEventListener('focusout',e=>{
+      const target=e.target;
+      if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
+        target.classList.remove('ipsrs-field-focused');
+        syncFieldColor(target);
+      }
+      refresh();
+    });
+    page.addEventListener('input',refresh);
+    page.addEventListener('change',refresh);
+    page.addEventListener('click',()=>requestAnimationFrame(refresh));
+    const observer=new MutationObserver(()=>requestAnimationFrame(refresh));
+    observer.observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:['class','value']});
+    refresh();
+  }
+
   function init(){
+    initFieldColorStates();
     updateRequiredFieldVisuals();
 
     const kategori = document.getElementById('Kategori');
