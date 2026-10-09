@@ -94,8 +94,8 @@
   </style>
   <script>
   (function(){
-    const VERSION='20261002-KATEGORI-SCROLL5';
-    const BUILD_INFO={system_version:'20261002-KATEGORI-SCROLL5',frontend_build:'20261002-KATEGORI-SCROLL5',api_version:'ipsrs-api v64',database_migration:'20260928092227',environment:'PRODUCTION',git_commit:'628ca81681620769821fe6491ba2aac32d53310d',service_worker:'lhi-shell-v20261001-kategori-scroll4',last_deployment:'2026-10-02'};
+    const VERSION='20261010-CHECKPOINT-0450';
+    const BUILD_INFO={system_version:'20261010-CHECKPOINT-0450',frontend_build:'20261010-CHECKPOINT-0450',api_version:'ipsrs-api v64',database_migration:'20260928092227',environment:'PRODUCTION',git_commit:'5598cd1176fdce8562d1fa260131aac66643d584',service_worker:'lhi-shell-v20261001-kategori-scroll4',last_deployment:'2026-10-10'};
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -122,10 +122,10 @@
           ['Rollback Baseline','BASELINE-20261002-KATEGORI-SCROLL'],
           ['Rollback Commit','628ca81681620769821fe6491ba2aac32d53310d'],
           ['Rollback Branch','baseline/20261002-kategori-scroll'],
-          ['Latest Checkpoint','2026-10-05'],
-          ['Checkpoint Commit','2e5eb56956c94030bc9580d093c7f08ef5378bd8'],
-          ['Checkpoint Branch','checkpoint-2026-10-05'],
-          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke BASELINE-20261002-KATEGORI-SCROLL'],
+          ['Latest Checkpoint','2026-10-10 04:50 WIB'],
+          ['Checkpoint Commit','5598cd1176fdce8562d1fa260131aac66643d584'],
+          ['Checkpoint Branch','checkpoint-2026-10-10-0450'],
+          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke checkpoint-2026-10-10-0450'],
           ['Data Saat Rollback','DATA LAPORAN SUPABASE TETAP ADA. Rollback aplikasi tidak menghapus data. Rollback database hanya jika diminta secara eksplisit.']
         ];
         content.innerHTML=rows.map(([k,v])=>'<div class="system-info-row"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
