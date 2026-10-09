@@ -1019,13 +1019,31 @@
   #page-input .datetime-combined-input.ipsrs-field-filled{
     background-color:#D1FAE5!important;
   }
-  /* Status Belum/Selesai: latar wrapper harus transparan; warna hanya pada card terpilih. */
+  /* STATUS FIX: wrapper tidak boleh mewarisi warna field terisi/wajib.
+     Gunakan putih eksplisit agar celah di belakang tombol tidak tampak mint. */
   #page-input .status-choice-group,
   #page-input .status-choice-group.ipsrs-field-filled,
   #page-input .status-choice-group.ipsrs-field-focused,
-  #page-input .status-choice-group.ipsrs-field-filled:not(:focus):not(.status-choice){
-    background:transparent!important;
-    background-color:transparent!important;
+  #page-input .status-choice-group.ipsrs-required-field,
+  #page-input .status-choice-group.ipsrs-field-filled.ipsrs-required-field {
+    background: #fff !important;
+    background-color: #fff !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+  }
+  #page-input .status-choice-group > .status-choice-belum {
+    background-color: #fff !important;
+  }
+  #page-input .status-choice-group > .status-choice-belum.is-selected {
+    background-color: #fff1f2 !important;
+  }
+  #page-input .status-choice-group > .status-choice-selesai {
+    background-color: #fff !important;
+  }
+  #page-input .status-choice-group > .status-choice-selesai.is-selected {
+    background-color: #DDFCE7 !important;
   }
 </style>
 
