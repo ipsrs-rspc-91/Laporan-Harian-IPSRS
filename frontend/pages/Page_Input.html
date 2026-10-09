@@ -65,6 +65,9 @@
 
   /* AREA KERJA — professional grouped accordion picker */
   #page-input .area-picker-wrap{position:relative;width:100%;z-index:40;}
+  /* Indikator wajib harus mengikuti sudut tombol Area Kerja, bukan membingkai wrapper dengan sudut siku. */
+  #page-input .area-picker-wrap.ipsrs-required-field{border:0!important;border-radius:var(--radius-sm);}
+  #page-input .area-picker-wrap.ipsrs-required-field .area-picker-trigger{border-color:#df9490!important;border-radius:var(--radius-sm);}
   #page-input .area-picker-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;}
   #page-input .area-picker-trigger{box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;color:var(--text);padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font:inherit;font-size:14px;text-align:left;cursor:pointer;}
   #page-input .area-picker-trigger:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
