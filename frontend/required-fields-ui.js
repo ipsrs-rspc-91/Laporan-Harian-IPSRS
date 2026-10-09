@@ -22,25 +22,40 @@
     return el;
   }
 
+  // Mutasi DOM hanya dilakukan bila nilai benar-benar berubah.
+  function setClass(el, name, on){
+    if(!el || !el.classList) return;
+    const shouldHave = !!on;
+    if(el.classList.contains(name) !== shouldHave){
+      el.classList.toggle(name, shouldHave);
+    }
+  }
+
+  function setAttr(el, name, value){
+    if(el && el.getAttribute(name) !== String(value)){
+      el.setAttribute(name, String(value));
+    }
+  }
+
   function setRequiredVisual(id, required){
     const el = fieldBox(id);
     if(!el) return;
-    el.classList.toggle('ipsrs-required-field', !!required);
-    el.setAttribute('aria-required', required ? 'true' : 'false');
+    setClass(el, 'ipsrs-required-field', required);
+    setAttr(el, 'aria-required', required ? 'true' : 'false');
 
     if(id === 'AreaKerja'){
       const picker = document.getElementById('areaKerjaPicker');
-      if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
+      if(picker) setClass(picker, 'ipsrs-required-field', required);
     }
     if(id === 'Kategori'){
       // #Kategori adalah select native tersembunyi; border merah wajib
       // dipasang pada tombol picker yang benar-benar terlihat.
       const picker = document.getElementById('KategoriModalTrigger');
-      if(picker) picker.classList.toggle('ipsrs-required-field', !!required);
+      if(picker) setClass(picker, 'ipsrs-required-field', required);
     }
 
     const label = document.querySelector('label[for="' + id + '"]');
-    if(label) label.classList.toggle('ipsrs-required-label', !!required);
+    if(label) setClass(label, 'ipsrs-required-label', required);
   }
 
   function isReplacementCategory(){
@@ -120,9 +135,8 @@
       el.id==='TanggalWaktuDisplay' || el.classList.contains('status-choice-group') ||
       el.classList.contains('spmu-choice-group') || el.classList.contains('area-picker-trigger');
     if(!isProxy && !el.matches('input,textarea,select')) return;
-    el.classList.toggle('ipsrs-field-filled',hasFieldValue(el));
-    if(document.activeElement===el) el.classList.add('ipsrs-field-focused');
-    else el.classList.remove('ipsrs-field-focused');
+    setClass(el, 'ipsrs-field-filled', hasFieldValue(el));
+    setClass(el, 'ipsrs-field-focused', document.activeElement === el);
   }
 
   function initFieldColorStates(){
@@ -145,15 +159,15 @@
     page.addEventListener('focusin',e=>{
       const target=e.target;
       if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
-        target.classList.add('ipsrs-field-focused');
-        target.classList.remove('ipsrs-field-filled');
+        setClass(target, 'ipsrs-field-focused', true);
+        setClass(target, 'ipsrs-field-filled', false);
       }
       refresh();
     });
     page.addEventListener('focusout',e=>{
       const target=e.target;
       if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
-        target.classList.remove('ipsrs-field-focused');
+        setClass(target, 'ipsrs-field-focused', false);
         syncFieldColor(target);
       }
       refresh();
@@ -161,8 +175,16 @@
     page.addEventListener('input',refresh);
     page.addEventListener('change',refresh);
     page.addEventListener('click',()=>requestAnimationFrame(refresh));
-    const observer=new MutationObserver(()=>requestAnimationFrame(refresh));
-    observer.observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:['class','value']});
+    // Pantau penambahan/penghapusan node saja. Perubahan class visual dibuat oleh
+    // refresh() sendiri, sedangkan nilai form diperbarui lewat event input/change.
+    // Ini mencegah observer memicu refresh hanya karena kelas visual berubah.
+    let refreshQueued = false;
+    const observer=new MutationObserver(()=>{
+      if(refreshQueued) return;
+      refreshQueued = true;
+      requestAnimationFrame(()=>{ refreshQueued = false; refresh(); });
+    });
+    observer.observe(page,{childList:true,subtree:true});
     refresh();
   }
 
