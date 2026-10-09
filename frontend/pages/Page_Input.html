@@ -158,6 +158,16 @@
   #page-input .spmu-choice-group.spmu-required-missing .spmu-choice{
     border-color:#fecaca;
   }
+  /* Setelah UNIT/SPARE PART tersimpan lengkap, tampilkan border normal.
+     Border merah hanya berlaku selama data wajib belum lengkap. */
+  #page-input .spmu-choice-group.has-value{
+    border:1px solid #cbd3d7 !important;
+    box-shadow:none !important;
+  }
+  #page-input .spmu-choice-group.has-value.spmu-required-missing{
+    border:1px solid #cbd3d7 !important;
+    box-shadow:none !important;
+  }
   #page-input .spmu-choice .spmu-choice-chevron{display:none !important;}
   /* SPMU sizing is defined once by the FINAL UI CONTRACT below. */
   #page-input .spmu-action-menu-wrap.spmu-action-compact .spmu-action-menu-trigger{
