@@ -87,6 +87,27 @@
   #page-input .area-picker-option.is-selected{font-weight:750;background:#eff6ff;color:#1d4ed8;}
   #page-input .area-picker-add{margin-top:5px;border-top:1px solid #eef2f5;color:#1d4ed8;font-weight:750;}
 
+  /* Mode edit harus tampak berbeda agar pengguna sadar sedang mengubah data lama. */
+  #page-input .edit-caution-banner{
+    display:flex;align-items:flex-start;gap:12px;
+    margin:0 0 16px;padding:14px 15px;
+    border:2px solid #d97706;border-left-width:6px;border-radius:12px;
+    background:#fff7ed;color:#7c2d12;
+  }
+  #page-input .edit-caution-banner.hidden{display:none!important;}
+  #page-input .edit-caution-icon{
+    display:flex;align-items:center;justify-content:center;flex:0 0 28px;
+    width:28px;height:28px;border-radius:50%;
+    background:#c2410c;color:#fff;font-weight:900;font-size:19px;
+  }
+  #page-input .edit-caution-title{font-size:14px;font-weight:900;letter-spacing:.02em;line-height:1.35;}
+  #page-input .edit-caution-text{margin-top:5px;font-size:13px;font-weight:600;line-height:1.5;}
+  #page-input.edit-mode #btnSaveInput{
+    background:#c2410c!important;border-color:#9a3412!important;
+    box-shadow:0 3px 0 #9a3412!important;
+  }
+  #page-input.edit-mode #btnSaveInput:active{transform:translateY(1px);}
+  
   #page-input .status-choice-group{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -769,6 +790,13 @@
 </div>
 
 <div class="card">
+  <div id="editCautionBanner" class="edit-caution-banner hidden" role="alert" aria-live="polite">
+    <div class="edit-caution-icon" aria-hidden="true">!</div>
+    <div>
+      <div class="edit-caution-title">MODE EDIT — PERIKSA SEBELUM MENYIMPAN</div>
+      <div class="edit-caution-text">Anda sedang mengubah laporan yang sudah tersimpan. Periksa kembali tanggal, ruang, masalah, tindakan, SPMU, kategori, area kerja, item, keterangan, dan status. Perubahan akan menggantikan data lama setelah Anda konfirmasi.</div>
+    </div>
+  </div>
   <div id="inputPermissionNote" class="smallnote hidden" style="color:var(--danger); font-weight:700; margin-bottom:var(--sp-3);"></div>
 
   <div id="inputHistoryPanel" class="hidden" style="background:var(--primary-light); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:var(--sp-3);">
