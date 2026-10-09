@@ -1328,7 +1328,7 @@
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
       .area-item-picker-area.is-active{background:#dbeafe;border-color:#3b82f6;color:#1d4ed8;font-weight:700;box-shadow:0 0 0 1px rgba(59,130,246,.18)}
       .area-item-picker-area .area-item-picker-count{margin-left:auto;flex:0 0 auto;color:#64748b;font-size:11px;font-weight:600}
-      .area-item-picker-item{border:1.5px solid #cbd5e1;background:#fff;justify-content:space-between;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+      .area-item-picker-item{border:1.5px solid #cbd5e1;background:#fff;justify-content:space-between;box-shadow:0 1px 2px rgba(15,23,42,.05);font-size:15px}
       .area-item-picker-item:hover{border-color:#93c5fd}
       .area-item-picker-empty{padding:18px 10px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
       /* Tombol tambah harus sama dengan state area kerja terpilih (M.E. Umum). */
