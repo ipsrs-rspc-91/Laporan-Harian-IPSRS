@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: ipsrs-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   SUPABASE_PROJECT_REF: tcrmlhfsroyhaxdfwyll
@@ -29,6 +29,7 @@ jobs:
       frontend: ${{ steps.changes.outputs.frontend }}
       supabase: ${{ steps.changes.outputs.supabase }}
       cloudflare: ${{ steps.changes.outputs.cloudflare }}
+      deploy_allowed: ${{ steps.verify.outputs.deploy_allowed }}
     steps:
       - name: Checkout audited commit
         uses: actions/checkout@v4
@@ -37,6 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Verify audited SHA is current main
+        id: verify
         shell: bash
         run: |
           set -euo pipefail
@@ -44,9 +46,14 @@ jobs:
           main_sha="$(git rev-parse origin/main)"
           echo "Audited SHA: $audited_sha"
           echo "Current main: $main_sha"
-          if [ "$audited_sha" != "$main_sha" ]; then
-            echo "❌ Deployment blocked: audited SHA is not current main."
-            exit 1
+          if [ "$audited_sha" = "$main_sha" ]; then
+            echo "deploy_allowed=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Audited commit matches current main."
+          else
+            # A newer commit is being audited. This is a normal race, not a failed deploy.
+            # The newer audit's workflow_run will deploy the latest SHA once its full gate passes.
+            echo "deploy_allowed=false" >> "$GITHUB_OUTPUT"
+            echo "⏭️ Skipping this older audited SHA; waiting for the newer main commit's audit."
           fi
 
       - name: Detect changed components
@@ -104,7 +111,7 @@ jobs:
   deploy-supabase:
     name: Deploy Supabase Backend
     needs: detect-changes
-    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.supabase == 'true' }}
+    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.supabase == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -151,7 +158,7 @@ jobs:
   deploy-cloudflare:
     name: Deploy Cloudflare Worker
     needs: detect-changes
-    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.cloudflare == 'true' }}
+    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.cloudflare == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -181,7 +188,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: detect-changes
-    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.frontend == 'true' }}
+    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -242,7 +249,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Block failed production deployment
-        if: ${{ needs.detect-changes.result != 'success' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' }}
+        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' }}
         run: |
           echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED"
           echo "A required deployment target failed or was cancelled."
