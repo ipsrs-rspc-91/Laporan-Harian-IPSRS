@@ -1348,7 +1348,7 @@
       bg=document.createElement('div');
       bg.id='areaItemPickerModalBg';
       bg.className='area-item-picker-bg';
-      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-spacer" aria-hidden="true"></div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-label">AREA KERJA</div><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋ Tambah Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-label">ITEM TERSEDIA</div><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div></div></div></section>';
+      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-spacer" aria-hidden="true"></div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-label">AREA KERJA</div><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋ Tambah Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-label">ITEM</div><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋ Tambah Item Baru</button></div></div></section>';
       document.body.appendChild(bg);
       bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
@@ -1358,6 +1358,24 @@
         if(!currentSelect) return;
         currentSelect.value=ADD_NEW_VALUE;
         currentSelect.dispatchEvent(new Event('change',{bubbles:true}));
+      });
+      bg.querySelector('.area-item-picker-add-item').addEventListener('click',()=>{
+        const currentArea=String(sel.value||'').trim();
+        const activeArea=bg.querySelector('.area-item-picker-area.is-active');
+        const areaName=activeArea ? activeArea.querySelector('span')?.textContent?.trim() : currentArea;
+        if(!areaName){
+          closeAreaItemPicker_();
+          setMsg('msgInput','Pilih Area Kerja terlebih dahulu sebelum menambah item.',true);
+          return;
+        }
+        sel.value=areaName;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        closeAreaItemPicker_();
+        const itemSelect=document.getElementById('Item');
+        if(itemSelect){
+          itemSelect.value=ADD_NEW_VALUE;
+          itemSelect.dispatchEvent(new Event('change',{bubbles:true}));
+        }
       });
     }
 
