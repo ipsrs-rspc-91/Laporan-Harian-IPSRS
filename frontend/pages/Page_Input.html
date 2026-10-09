@@ -1001,7 +1001,7 @@
   #page-input input.ipsrs-field-filled:not(:focus),
   #page-input textarea.ipsrs-field-filled:not(:focus),
   #page-input select.ipsrs-field-filled:not(:focus),
-  #page-input .ipsrs-field-filled:not(:focus):not(.status-choice),
+  #page-input .ipsrs-field-filled:not(:focus):not(.status-choice):not(.status-choice-group),
   #page-input .kategori-modal-trigger.ipsrs-field-filled,
   #page-input .area-picker-trigger.ipsrs-field-filled,
   #page-input .datetime-combined-input.ipsrs-field-filled,
@@ -1022,8 +1022,10 @@
   /* Status Belum/Selesai: latar wrapper harus transparan; warna hanya pada card terpilih. */
   #page-input .status-choice-group,
   #page-input .status-choice-group.ipsrs-field-filled,
-  #page-input .status-choice-group.ipsrs-field-focused{
+  #page-input .status-choice-group.ipsrs-field-focused,
+  #page-input .status-choice-group.ipsrs-field-filled:not(:focus):not(.status-choice){
     background:transparent!important;
+    background-color:transparent!important;
   }
 </style>
 
