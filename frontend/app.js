@@ -3852,9 +3852,9 @@
     const isEdit = isEditMode;
     if(isEdit){
       const confirmed = window.confirm(
-        'KONFIRMASI EDIT LAPORAN\\n\\n' +
-        'Anda akan MENGUBAH laporan yang sudah tersimpan (ID: ' + editingReportId + ').\\n\\n' +
-        'Pastikan seluruh data—terutama tanggal, ruang, masalah, tindakan, SPMU, kategori, area kerja, item, keterangan, dan status—sudah benar.\\n\\n' +
+        'KONFIRMASI EDIT LAPORAN\n\n' +
+        'Anda akan MENGUBAH laporan yang sudah tersimpan (ID: ' + editingReportId + ').\n\n' +
+        'Pastikan seluruh data—terutama tanggal, ruang, masalah, tindakan, SPMU, kategori, area kerja, item, keterangan, dan status—sudah benar.\n\n' +
         'Pilih OK untuk menyimpan perubahan, atau Batal untuk kembali memeriksa form.'
       );
       if(!confirmed) return;
@@ -5317,7 +5317,7 @@
       setMsg('adminResetPasswordMsg','Konfirmasi password tidak sama.',true);
       return;
     }
-    const ok=window.confirm('Reset password '+getStaffNameForFilter_(st)+'?\\n\\nPassword baru akan langsung aktif. Petugas tidak diwajibkan menggantinya lagi.');
+    const ok=window.confirm('Reset password '+getStaffNameForFilter_(st)+'?\n\nPassword baru akan langsung aktif. Petugas tidak diwajibkan menggantinya lagi.');
     if(!ok) return;
     setMsg('adminResetPasswordMsg','Memproses reset password...');
     try{
