@@ -1317,9 +1317,9 @@
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
       .area-item-picker-area,.area-item-picker-item{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
-      .area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:2px solid #2563EB;border-radius:10px;padding:11px 10px;margin:8px 0 0;background:#EFF6FF;color:#1D4ED8;font-size:13px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+      .area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid #93c5fd;border-radius:10px;padding:11px 10px;margin:8px 0 0;background:#dbeafe;color:#1d4ed8;font-size:13px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.06)}
       .area-item-picker-add:hover{background:#DBEAFE;border-color:#2563EB;color:#1D4ED8;box-shadow:0 0 0 2px rgba(37,99,235,.16)}
-      .area-item-picker-add-item{border-color:#2563EB;color:#1D4ED8;background:#EFF6FF}
+      .area-item-picker-add-item{border-color:#93c5fd;color:#1d4ed8;background:#dbeafe}
       .area-item-picker-add-item:hover{background:#DBEAFE;border-color:#2563EB;color:#1D4ED8;box-shadow:0 0 0 2px rgba(37,99,235,.16)}
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
       .area-item-picker-area.is-active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
