@@ -43,6 +43,22 @@
         box-shadow:0 24px 70px rgba(15,23,42,.26);
         animation:ipsrsKatIn .18s ease-out;
       }
+      /* Modal kategori utama: batasi tinggi dan gulir daftar secara vertikal. */
+      #ipsrsKategoriModalRoot .ipsrs-kat-modal{
+        display:flex;flex-direction:column;
+        max-height:calc(100vh - 36px);
+        max-height:calc(100dvh - 36px);
+        min-height:0;
+      }
+      #ipsrsKategoriModalRoot .ipsrs-kat-body{
+        min-height:0;overflow-y:auto;overflow-x:hidden;
+        overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+        scrollbar-width:thin;scrollbar-color:#94a3b8 #f1f5f9;
+      }
+      #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar{width:7px}
+      #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px}
+      #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px}
+
       @keyframes ipsrsKatIn{
         from{opacity:0;transform:translateY(8px) scale(.985)}
         to{opacity:1;transform:translateY(0) scale(1)}
