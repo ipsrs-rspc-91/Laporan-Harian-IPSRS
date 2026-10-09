@@ -1306,14 +1306,13 @@
       .area-item-picker-bg{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
       .area-item-picker-bg.show{display:flex}
       .area-item-picker-modal{width:min(760px,100%);max-height:min(82vh,760px);display:flex;flex-direction:column;background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.28);overflow:hidden;color:#0f172a}
-      .area-item-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid #e2e8f0}
-      .area-item-picker-title{font-size:17px;font-weight:750;line-height:1.25}
-      .area-item-picker-subtitle{font-size:12px;color:#64748b;margin-top:4px}
+      .area-item-picker-head{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:10px 18px;border-bottom:1px solid #e2e8f0}
+      .area-item-picker-head-spacer{flex:1;min-height:1px}
       .area-item-picker-close{width:36px;height:36px;flex:0 0 36px;border:0;border-radius:10px;background:#f1f5f9;color:#334155;font-size:24px;line-height:1;cursor:pointer}
       .area-item-picker-columns{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr);min-height:260px;overflow:hidden;flex:1}
       .area-item-picker-side{min-width:0;overflow:auto;padding:12px}
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
-      .area-item-picker-label{font-size:11px;font-weight:800;letter-spacing:.07em;color:#64748b;padding:4px 8px 9px}
+      .area-item-picker-label{text-align:center;font-size:11px;font-weight:800;letter-spacing:.07em;color:#64748b;padding:4px 8px 9px}
       .area-item-picker-area,.area-item-picker-item,.area-item-picker-add{display:flex;width:100%;align-items:center;text-align:left;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 10px;margin:0 0 5px;background:transparent;color:#334155;font-size:13px;line-height:1.35;cursor:pointer}
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
       .area-item-picker-area.is-active{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
@@ -1346,7 +1345,7 @@
       bg=document.createElement('div');
       bg.id='areaItemPickerModalBg';
       bg.className='area-item-picker-bg';
-      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div><div id="areaItemPickerTitle" class="area-item-picker-title">Pilih Area Kerja &amp; Item</div><div class="area-item-picker-subtitle">Pilih area di kiri, lalu pilih item di kanan.</div></div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-label">AREA KERJA</div><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋ Tambah Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-label">ITEM TERSEDIA</div><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div></div></div></section>';
+      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-spacer" aria-hidden="true"></div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-label">AREA KERJA</div><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋ Tambah Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-label">ITEM TERSEDIA</div><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div></div></div></section>';
       document.body.appendChild(bg);
       bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
