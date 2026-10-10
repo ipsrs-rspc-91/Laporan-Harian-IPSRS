@@ -51,7 +51,7 @@ const STATIC_KATEGORI = [
     "KESLING ( Sistem IPAL )",
     "KESLING (Sistem Air Bersih)",
     "KESLING (Sistem Limbah B3)",
-    "KITCHEN /DAPUR",
+    "M.E. (Kitchen)",
     "CEK LIST M.E. / UTILITI",
     "UMUM / Dan Lain - Lain"
   ];
@@ -132,7 +132,7 @@ const STATIC_KATEGORI = [
     "KESLING (Sistem Limbah B3)": [
       "Manifest Jalan Hijau","Desinfektan limbah B3","Limbah Medis B3","Penerimaan Safety Box","Limbah B3"
     ],
-    "KITCHEN /DAPUR": [
+    "M.E. (Kitchen)": [
       "Mesin Chiler","Freezer","Mesin Diswashing","MIXER Duduk","Switch on-off","Pipa air panas","Pipa air dingin",],
     "CEK LIST M.E. / UTILITI": [
       "ALL AREA","Cek List Ruang Anggrek","Cek List Panel Listrik","Cek List LMDV","Cek List Genset","Cek List Boiler","Cek List Chiller","Cek List Pompa Deep Well","Cek List Ground Tank","Cek List Roof Tank","Cek List Motor & Pompa Roof Tank","Cek List Motor & Pompa Jockey Boiler","Cek List Motor & Pompa Hydrant","Cek List Motor & Pompa Jockey Hydrant","Cek List Mesin Diesel Hydrant","Cek List Motor & Pompa Air Panas","Cek List Motor & Pompa Booster",],
