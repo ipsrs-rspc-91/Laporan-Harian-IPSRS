@@ -1347,7 +1347,7 @@
       .area-item-picker-area:hover,.area-item-picker-item:hover{background:#eff6ff}
       .area-item-picker-area.is-active{background:#dbeafe;border-color:#3b82f6;color:#1d4ed8;font-weight:700;box-shadow:0 0 0 1px rgba(59,130,246,.18)}
       .area-item-picker-area .area-item-picker-count{margin-left:auto;flex:0 0 auto;color:#64748b;font-size:11px;font-weight:600}
-      .area-item-picker-item{border:1.5px solid #cbd5e1;background:#fff;justify-content:space-between;box-shadow:0 1px 2px rgba(15,23,42,.05);font-size:15px}
+      .area-item-picker-item{border:1.5px solid #cbd5e1;background:#fff;justify-content:space-between;box-shadow:0 1px 2px rgba(15,23,42,.05);font-size:16px}
       .area-item-picker-item:hover{border-color:#93c5fd}
       .area-item-picker-empty{padding:18px 10px;text-align:center;color:#64748b;font-size:13px;line-height:1.5}
       /* Tombol tambah harus sama dengan state area kerja terpilih (M.E. Umum). */
@@ -1355,7 +1355,7 @@
       .area-item-picker-add:hover{border-color:#60a5fa;color:#1d4ed8;background:#bfdbfe}
       .area-item-picker-add-item{border-color:#93c5fd;color:#1d4ed8;background:#dbeafe}
       .area-item-picker-add-item:hover{border-color:#60a5fa;color:#1d4ed8;background:#bfdbfe}
-      @media(max-width:560px){.area-item-picker-bg{padding:8px}.area-item-picker-modal{max-height:86vh;border-radius:14px}.area-item-picker-head{padding:13px 14px}.area-item-picker-columns{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);min-height:300px}.area-item-picker-side{padding:8px}.area-item-picker-area,.area-item-picker-item,.area-item-picker-add{padding:10px 8px;font-size:12px}.area-item-picker-title{font-size:16px}}
+      @media(max-width:560px){.area-item-picker-bg{padding:8px}.area-item-picker-modal{max-height:86vh;border-radius:14px}.area-item-picker-head{padding:13px 14px}.area-item-picker-columns{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);min-height:300px}.area-item-picker-side{padding:8px}.area-item-picker-area,.area-item-picker-item,.area-item-picker-add{padding:10px 8px;font-size:13px}.area-item-picker-title{font-size:16px}}
     `;
     document.head.appendChild(style);
   }
