@@ -156,13 +156,29 @@
       const areaTrigger=page.querySelector('.area-picker-trigger');
       if(areaTrigger) syncFieldColor(areaTrigger);
     };
+    function syncRelatedProxy(target){
+      if(!target || !target.closest) return;
+      if(target.closest('.spmu-choice-group')){
+        const spmuProxy=page.querySelector('.spmu-choice-group');
+        if(spmuProxy) syncFieldColor(spmuProxy);
+      }
+      if(target.id==='Kategori' || target.closest('.kategori-picker-wrap')){
+        const kategoriProxy=document.getElementById('KategoriModalTrigger');
+        if(kategoriProxy) syncFieldColor(kategoriProxy);
+      }
+      if(target.id==='AreaKerja' || target.closest('.area-picker-wrap')){
+        const areaProxy=document.getElementById('areaKerjaPicker');
+        if(areaProxy) syncFieldColor(areaProxy);
+      }
+    }
     page.addEventListener('focusin',e=>{
       const target=e.target;
       if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
         setClass(target, 'ipsrs-field-focused', true);
         setClass(target, 'ipsrs-field-filled', false);
       }
-      refresh();
+      syncFieldColor(target);
+      syncRelatedProxy(target);
     });
     page.addEventListener('focusout',e=>{
       const target=e.target;
@@ -170,17 +186,45 @@
         setClass(target, 'ipsrs-field-focused', false);
         syncFieldColor(target);
       }
-      refresh();
+      syncRelatedProxy(target);
     });
-    page.addEventListener('input',refresh);
-    page.addEventListener('change',refresh);
-    page.addEventListener('click',()=>requestAnimationFrame(refresh));
+    // Saat mengetik, sinkronkan hanya field yang berubah; hindari scan semua field per karakter.
+    page.addEventListener('input',e=>{
+      const target=e.target;
+      syncFieldColor(target);
+      if(target && target.closest && target.closest('.spmu-choice-group')){
+        const spmuProxy=page.querySelector('.spmu-choice-group');
+        if(spmuProxy) syncFieldColor(spmuProxy);
+      }
+    });
+    page.addEventListener('change',e=>{
+      syncFieldColor(e.target);
+      syncRelatedProxy(e.target);
+      // Native select updates can affect visible custom controls.
+      if(e.target && (e.target.id==='Kategori' || e.target.id==='AreaKerja' || e.target.id==='Status')){
+        proxies.forEach(syncFieldColor);
+      }
+    });
+    page.addEventListener('click',e=>{
+      const target=e.target && e.target.closest
+        ? e.target.closest('button,[role="button"],input,textarea,select')
+        : e.target;
+      if(target) syncFieldColor(target);
+      syncRelatedProxy(target);
+    });
     // Pantau penambahan/penghapusan node saja. Perubahan class visual dibuat oleh
     // refresh() sendiri, sedangkan nilai form diperbarui lewat event input/change.
     // Ini mencegah observer memicu refresh hanya karena kelas visual berubah.
     let refreshQueued = false;
-    const observer=new MutationObserver(()=>{
-      if(refreshQueued) return;
+    const observer=new MutationObserver(mutations=>{
+      // textContent updates (for example, the Pelapor/No LK status on each
+      // keystroke) create text nodes, not form structure. Ignore those so they
+      // cannot trigger a full-form scan while the user is typing.
+      const hasElementStructureChange = mutations.some(m =>
+        Array.from(m.addedNodes || []).some(node => node.nodeType === 1) ||
+        Array.from(m.removedNodes || []).some(node => node.nodeType === 1)
+      );
+      if(!hasElementStructureChange || refreshQueued) return;
       refreshQueued = true;
       requestAnimationFrame(()=>{ refreshQueued = false; refresh(); });
     });
@@ -206,13 +250,17 @@
     // Page Input dapat di-remount. Amati hanya area form agar ringan.
     let visualUpdateQueued = false;
     const observer = new MutationObserver(function(mutations){
-      // Page Input dapat di-remount. Jangan menjalankan update untuk setiap
-      // perubahan DOM global; cukup jadwalkan satu update per frame dan hanya
-      // jika mutasi memang menyentuh area form input.
+      // Perubahan textContent pada status Pelapor/No LK terjadi tiap karakter.
+      // Abaikan text-only mutation; update visual hanya saat struktur elemen
+      // form berubah atau Page Input dipasang ulang.
       const pageInput = document.getElementById('page-input');
       if(!pageInput) return;
       const relevant = mutations.some(function(m){
-        return pageInput.contains(m.target) ||
+        const elementStructureChanged =
+          Array.from(m.addedNodes || []).some(function(n){ return n.nodeType === 1; }) ||
+          Array.from(m.removedNodes || []).some(function(n){ return n.nodeType === 1; });
+        if(!elementStructureChanged) return false;
+        return m.target === pageInput || pageInput.contains(m.target) ||
           Array.from(m.addedNodes || []).some(function(n){
             return n.nodeType === 1 && (n === pageInput || pageInput.contains(n));
           });
