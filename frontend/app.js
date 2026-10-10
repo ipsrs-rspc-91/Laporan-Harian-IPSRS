@@ -1498,7 +1498,7 @@
           btn.setAttribute('aria-pressed','false');
           const name=document.createElement('span');
           name.className='area-item-picker-area-name';
-          const areaParts=String(area).trim().match(/^(.+?)\\s+(\\([^()]*\\))$/);
+          const areaParts=String(area).trim().match(/^(.+?)\s+(\([^()]*\))$/);
           if(areaParts){
             const mainName=document.createElement('span');
             mainName.textContent=areaParts[1];
