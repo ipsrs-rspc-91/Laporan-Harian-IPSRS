@@ -1,5 +1,42 @@
 import { test, expect } from '@playwright/test';
 
+test('Production IPSRS API returns the Stage 1 CORS preflight cache header', async ({ request }) => {
+  const response = await request.fetch('https://tcrmlhfsroyhaxdfwyll.supabase.co/functions/v1/ipsrs-api', {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'http://127.0.0.1:4173',
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'authorization,content-type,apikey'
+    }
+  });
+  expect(response.status()).toBeGreaterThanOrEqual(200);
+  expect(response.status()).toBeLessThan(300);
+  expect(response.headers()['access-control-max-age']).toBe('600');
+});
+
+test('Browser reuses cached preflight for repeated identical production API calls', async ({ page }) => {
+  const apiUrl = 'https://tcrmlhfsroyhaxdfwyll.supabase.co/functions/v1/ipsrs-api';
+  let optionsCount = 0;
+  page.on('request', req => {
+    if (req.url() === apiUrl && req.method() === 'OPTIONS') optionsCount += 1;
+  });
+  await page.goto('/');
+  await page.evaluate(async (url) => {
+    const init = {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer invalid-stage1-smoke-token',
+        apikey: 'invalid-stage1-smoke-key',
+        'content-type': 'application/json'
+      },
+      body: '{}'
+    };
+    await fetch(url, init).catch(() => null);
+    await fetch(url, init).catch(() => null);
+  }, apiUrl);
+  expect(optionsCount, 'two identical calls should need only one OPTIONS preflight while the cache is valid').toBe(1);
+});
+
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', msg => {
