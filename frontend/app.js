@@ -1273,9 +1273,10 @@
     if(/^sipil\b/i.test(n)) return 'SIPIL';
     if(/^elektromedik\b/i.test(n)) return 'ELEKTROMEDIK';
     if(/^kesling\b/i.test(n)) return 'KESLING';
-    // Area cek list utilitas harus menjadi kelompok tersendiri tepat setelah Kesling,
-    // bukan terselip di kelompok generik LAINNYA.
-    if(/^cek\s+list\s+m\.e\.\s*\/\s*utiliti$/i.test(n)) return 'CEK LIST M.E. / UTILITI';
+    // Normalisasi nama agar variasi spasi/tanda baca dari master data tidak
+    // membuat area utilitas jatuh ke kelompok generik LAINNYA.
+    const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(compact.includes('ceklistmeutiliti')) return 'CEK LIST M.E. / UTILITI';
     if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
     if(/^umum\b/i.test(n)) return 'UMUM / LAINNYA';
     return 'LAINNYA';
