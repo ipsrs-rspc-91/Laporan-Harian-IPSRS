@@ -135,7 +135,7 @@ const STATIC_KATEGORI = [
     "M.E. (Kitchen)": [
       "Mesin Chiler","Freezer","Mesin Diswashing","MIXER Duduk","Switch on-off","Pipa air panas","Pipa air dingin",],
     "CEK LIST M.E. / UTILITI": [
-      "Cek List LVMDP + Gardu PLN","Cek List Panel Listrik","Cek List Genset","Cek List Chiller","Cek List Pompa Deep Well","Cek List Ground Tank","Cek List Roof Tank","Cek List Motor & Pompa Roof Tank","Cek List Motor & Pompa Jockey Boiler","Cek List Motor & Pompa Hydrant","Cek List Motor & Pompa Jockey Hydrant","Cek List Mesin Diesel Hydrant","Cek List Motor & Pompa Air Panas","Cek List Motor & Pompa Booster",],
+      "Cek List LVMDP + Gardu PLN","Cek List Chiller","Cek List Pompa Deep Well","Cek List Genset","Cek List Panel Listrik","Cek List Ground Tank","Cek List Roof Tank","Cek List Motor & Pompa Roof Tank","Cek List Motor & Pompa Jockey Boiler","Cek List Motor & Pompa Hydrant","Cek List Motor & Pompa Jockey Hydrant","Cek List Mesin Diesel Hydrant","Cek List Motor & Pompa Air Panas","Cek List Motor & Pompa Booster",],
     "UMUM / Dan Lain - Lain": [
       "Benda Peraga","Rak / Data Try","Thyssenkrupp","Kotak K3RS","Cek List Ruangan","Pihak ke 3","Menurunkan Jenazah","Bau hangus","ASRAMA","pencatatan KWh meter","Foodcourt","Rapat Teknik","Setting sound","OTIS","Selang LPG","Area Dapur","Gantungan Masker","Gordyn","Area Rumah Tangga","Spanduk","Back Drop","Tess Food tender Catring","Rak buku","Lukisan / Gambar","gantungan baju"
     ]
