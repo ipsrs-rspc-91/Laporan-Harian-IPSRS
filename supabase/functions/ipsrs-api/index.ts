@@ -247,7 +247,7 @@ if(a==="apiGetSystemInfo"){
  return{ok:true,data:{
    system_version:"20261001-KATEGORI-SCROLL4",
    frontend_build:"20261001-KATEGORI-SCROLL4",
-   api_version:"ipsrs-api v64",
+   api_version:"ipsrs-api v81",
    database_migration:"20260928092227",
    environment:"PRODUCTION",
    git_commit:"628ca81681620769821fe6491ba2aac32d53310d",
