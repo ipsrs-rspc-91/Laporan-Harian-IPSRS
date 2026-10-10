@@ -1298,7 +1298,10 @@
     if(!sel || !picker) return;
     const label=picker.querySelector('.area-picker-value');
     const value=String(sel.value||'').trim();
-    if(label) label.textContent=value || 'Pilih area kerja…';
+    // Nama master tetap dipakai sebagai value untuk kompatibilitas data/API,
+    // tetapi label field harus konsisten dengan nama yang terlihat di modal.
+    const displayValue = value === 'CEK LIST M.E. / UTILITI' ? 'Cek List Utilitas' : value;
+    if(label) label.textContent=displayValue || 'Pilih area kerja…';
     picker.querySelectorAll('.area-picker-option').forEach(btn=>{
       btn.classList.toggle('is-selected',btn.dataset.value===value);
       btn.setAttribute('aria-selected',btn.dataset.value===value?'true':'false');
