@@ -5817,8 +5817,12 @@
     populateStaticSelects();
     // Inisialisasi login HARUS ringan. Data tambahan dimuat di background/lazy
     // supaya user tidak tertahan di splash screen dan tidak ada navigasi tertunda.
-    appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
-    appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
+    if(CURRENT_SESSION && CURRENT_SESSION.role === 'KA_IPSRS'){
+      if(CURRENT_SESSION && CURRENT_SESSION.role === 'KA_IPSRS'){
+        appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
+        appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
+      }
+    }
     refreshItemOptions();
     setStatusValue('');
 
