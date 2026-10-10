@@ -61,13 +61,17 @@
 
       /* Modal kategori utama: gunakan flex column agar jarak antartombol benar-benar diterapkan. */
       #ipsrsKategoriModalRoot .ipsrs-kat-layout{
-        display:flex;
-        flex-direction:column;
-        row-gap:16px;
+        display:flex !important;
+        flex-direction:column !important;
+        row-gap:24px !important;
       }
       #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{
         flex:0 0 auto;
-        margin:0;
+        margin:0 !important;
+      }
+      /* Beri ruang ekstra di atas dan bawah PERMINTAAN LAYANAN agar tidak tampak menyatu. */
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice[data-kat-root="PERMINTAAN LAYANAN"]{
+        margin-block:8px !important;
       }
 
       @keyframes ipsrsKatIn{
