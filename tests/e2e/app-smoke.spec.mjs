@@ -1,5 +1,22 @@
 import { test, expect } from '@playwright/test';
 
+test('Production IPSRS API advertises the Stage 1 CORS preflight cache', async ({ request }) => {
+  const response = await request.fetch('https://tcrmlhfsroyhaxdfwyll.supabase.co/functions/v1/ipsrs-api', {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'https://laporan-harian-ipsrs.pages.dev',
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'authorization,content-type,apikey'
+    }
+  });
+  expect(response.status(), 'CORS preflight must return a successful status').toBeGreaterThanOrEqual(200);
+  expect(response.status(), 'CORS preflight must not return an error').toBeLessThan(300);
+  const headers = response.headers();
+  expect(headers['access-control-max-age'], 'Stage 1 cache TTL must be visible at runtime').toBe('600');
+  expect(headers['access-control-allow-origin']).toBe('*');
+  expect(headers['access-control-allow-methods']).toContain('POST');
+});
+
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', msg => {
