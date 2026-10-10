@@ -1,7 +1,7 @@
 // BUILD-METADATA: 20261001-KATEGORI-SCROLL4 | rollback baseline 20261002-KATEGORI-SCROLL
 import { withSupabase } from "npm:@supabase/server@1.8.0";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
-const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
+const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Access-Control-Max-Age":"600"};
 function out(b:any,s=200){return new Response(JSON.stringify(b),{status:s,headers:{...cors,"Content-Type":"application/json"}})}
 function range(month:string){const m=/^\d{4}-\d{2}$/.test(String(month||""))?month:new Date().toISOString().slice(0,7);const [y,mo]=m.split("-").map(Number);return{month:m,start:m+"-01",end:new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)}}
 function label(r:string){return({KA_IPSRS:"KA IPSRS",ADMINISTRASI:"Administrasi IPSRS",KASIE:"Kasie",STAF:"Staf",PETUGAS_SHIFT:"Petugas Shift"} as any)[r]||r}
