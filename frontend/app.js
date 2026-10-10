@@ -1493,7 +1493,7 @@
         head.className='area-item-picker-group-head';
         head.setAttribute('aria-expanded','false');
         const title=document.createElement('span');
-        title.textContent=groupName==='CEK LIST UTILITAS' ? 'Cek List Utilitas' : groupName;
+        title.textContent=groupName==='CEK LIST UTILITAS' ? 'CEK LIST UTILITAS' : groupName;
         const isChecklistUtility=groupName==='CEK LIST UTILITAS';
         if(!isChecklistUtility){
           const plus=document.createElement('span');
