@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261010-ceklist-utilitas2";
+const CACHE_NAME = "lhi-shell-v20261010-ceklist-utilitas3";
 
 self.addEventListener("install", () => self.skipWaiting());
 
