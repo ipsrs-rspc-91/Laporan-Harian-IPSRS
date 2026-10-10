@@ -156,13 +156,29 @@
       const areaTrigger=page.querySelector('.area-picker-trigger');
       if(areaTrigger) syncFieldColor(areaTrigger);
     };
+    function syncRelatedProxy(target){
+      if(!target || !target.closest) return;
+      if(target.closest('.spmu-choice-group')){
+        const spmuProxy=page.querySelector('.spmu-choice-group');
+        if(spmuProxy) syncFieldColor(spmuProxy);
+      }
+      if(target.id==='Kategori' || target.closest('.kategori-picker-wrap')){
+        const kategoriProxy=document.getElementById('KategoriModalTrigger');
+        if(kategoriProxy) syncFieldColor(kategoriProxy);
+      }
+      if(target.id==='AreaKerja' || target.closest('.area-picker-wrap')){
+        const areaProxy=document.getElementById('areaKerjaPicker');
+        if(areaProxy) syncFieldColor(areaProxy);
+      }
+    }
     page.addEventListener('focusin',e=>{
       const target=e.target;
       if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
         setClass(target, 'ipsrs-field-focused', true);
         setClass(target, 'ipsrs-field-filled', false);
       }
-      refresh();
+      syncFieldColor(target);
+      syncRelatedProxy(target);
     });
     page.addEventListener('focusout',e=>{
       const target=e.target;
@@ -170,7 +186,7 @@
         setClass(target, 'ipsrs-field-focused', false);
         syncFieldColor(target);
       }
-      refresh();
+      syncRelatedProxy(target);
     });
     // Saat mengetik, sinkronkan hanya field yang berubah; hindari scan semua field per karakter.
     page.addEventListener('input',e=>{
@@ -181,8 +197,21 @@
         if(spmuProxy) syncFieldColor(spmuProxy);
       }
     });
-    page.addEventListener('change',refresh);
-    page.addEventListener('click',()=>requestAnimationFrame(refresh));
+    page.addEventListener('change',e=>{
+      syncFieldColor(e.target);
+      syncRelatedProxy(e.target);
+      // Native select updates can affect visible custom controls.
+      if(e.target && (e.target.id==='Kategori' || e.target.id==='AreaKerja' || e.target.id==='Status')){
+        proxies.forEach(syncFieldColor);
+      }
+    });
+    page.addEventListener('click',e=>{
+      const target=e.target && e.target.closest
+        ? e.target.closest('button,[role="button"],input,textarea,select')
+        : e.target;
+      if(target) syncFieldColor(target);
+      syncRelatedProxy(target);
+    });
     // Pantau penambahan/penghapusan node saja. Perubahan class visual dibuat oleh
     // refresh() sendiri, sedangkan nilai form diperbarui lewat event input/change.
     // Ini mencegah observer memicu refresh hanya karena kelas visual berubah.
