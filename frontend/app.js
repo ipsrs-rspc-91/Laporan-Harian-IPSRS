@@ -4147,8 +4147,11 @@
     };
 
     document.getElementById('Tanggal').value = editData.Tanggal || '';
-    document.getElementById('Pelapor').value = editData.Pelapor || '';
+    document.getElementById('Pelapor').value = String(editData.Pelapor || '').trim();
     document.getElementById('Pukul').value = editData.Pukul || '';
+    // Saat mengedit, tampilkan Pelapor/No LK jika salah satu memiliki data.
+    setPelaporLkSection(!!(String(editData.Pelapor || '').trim() || String(editData.NoLK || '').trim()));
+    updatePelaporLkStatus_();
     syncDateTimeDisplay_();
     document.getElementById('NoLK').value = editData.NoLK || '';
     document.getElementById('Ruang').value = editData.Ruang || '';
@@ -4172,6 +4175,10 @@
 
     setInputSelectValue('Kategori', editData.Kategori || '');
     setInputSelectValue('AreaKerja', editData.AreaKerja || '');
+    // Kategori dan kedua sisi SPMU sudah dipulihkan; hitung ulang kelas visual
+    // setelah seluruh nilai edit terpasang agar border merah tidak tertinggal.
+    updateSparePartToggleStatus();
+    if(typeof window.updateRequiredFieldVisuals === 'function') window.updateRequiredFieldVisuals();
     // Sinkronkan label kontrol kustom setelah nilai form edit diisi programatis.
     if(typeof window.__ipsrsSyncKategoriModalTrigger === 'function') window.__ipsrsSyncKategoriModalTrigger();
     if(typeof syncAreaKerjaPicker_ === 'function') syncAreaKerjaPicker_();
