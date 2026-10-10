@@ -1750,6 +1750,23 @@
     syncKategoriPicker_();
   }
 
+  function getKategoriFormValues_(){
+    const source=(Array.isArray(MASTER_KATEGORI)?MASTER_KATEGORI:[])
+      .map(v=>String(v||'').trim()).filter(Boolean);
+    const hasMaintenance=source.some(v=>/^PEMELIHARAAN (RUTIN SESUAI JADWAL|DILUAR JADWAL RUTIN)/i.test(v));
+    const hasRepair=source.some(v=>/^PERBAIKAN (SAJA|DENGAN PENGGANTIAN)/i.test(v));
+    const isMaintenanceLeaf=v=>/^PEMELIHARAAN (RUTIN SESUAI JADWAL|DILUAR JADWAL RUTIN)/i.test(v);
+    const isRepairLeaf=v=>/^PERBAIKAN (SAJA|DENGAN PENGGANTIAN)/i.test(v);
+    const values=[];
+    if(hasMaintenance) values.push('PEMELIHARAAN');
+    if(hasRepair) values.push('PERBAIKAN');
+    source.forEach(v=>{
+      if((hasMaintenance&&isMaintenanceLeaf(v))||(hasRepair&&isRepairLeaf(v))) return;
+      if(!values.some(x=>x.toLocaleLowerCase('id')===v.toLocaleLowerCase('id'))) values.push(v);
+    });
+    return values;
+  }
+
   // Rebuild select Kategori + picker dari kontrak kategori form input.
   // Native #Kategori tetap menjadi sumber nilai/validasi; picker hanya UI.
   function rebuildKategoriSelects_(selectedKategori='', selectedFilterKategori=''){
@@ -1760,19 +1777,7 @@
     // Detail PEMELIHARAAN/PERBAIKAN dipilih melalui Modal Picker,
     // bukan sebagai option native <select> agar tidak muncul sebagai
     // daftar ganda pada native picker Android.
-    const formValues=[
-      'PEMELIHARAAN',
-      'PERBAIKAN',
-      'PEMERIKSAAN / INSPEKSI',
-      'MONITORING',
-      'PERMINTAAN LAYANAN',
-      'PERTEMUAN / KOORDINASI',
-      'ADMINISTRASI / MANAJEMEN',
-      'KUNJUNGAN',
-      'PROYEK / RENOVASI',
-      'PENGUJIAN / ANALISA',
-      'LAINNYA'
-    ];
+    const formValues=getKategoriFormValues_();
 
     if(sel){
       sel.innerHTML='';
@@ -1928,6 +1933,14 @@
       return false;
     }
   }
+
+  // Satu pintu untuk modal kategori: ambil ulang dari Supabase dan jangan
+  // mengembalikan daftar statis jika pemuatan master gagal.
+  window.__ipsrsGetMasterKategori = async function(){
+    const ok = await loadMasterDataFromSupabase();
+    if(!ok) return {ok:false,kategori:[]};
+    return {ok:true,kategori:Array.isArray(MASTER_KATEGORI)?MASTER_KATEGORI.slice():[]};
+  };
 
   /**
    * Kategori kustom (dibuat lewat option "+ Tambah Kategori Baru") disimpan
@@ -3285,7 +3298,8 @@
         if(!MASTER_KATEGORI.some(x => String(x).trim().toLowerCase() === String(json.kategori).trim().toLowerCase())){
           MASTER_KATEGORI.push(json.kategori);
         }
-        appendKategoriOption(json.kategori);
+        const selectedFilter = document.getElementById('FilterKategori')?.value || '';
+        rebuildKategoriSelects_(json.kategori, selectedFilter);
         document.getElementById('Kategori').value = json.kategori;
         closeTambahKategoriModal();
         setMsg('msgInput', 'Kategori "' + json.kategori + '" ditambahkan & dipilih.');
