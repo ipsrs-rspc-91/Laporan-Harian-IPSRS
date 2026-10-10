@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261010-item-font-16-13";
+const CACHE_NAME = "lhi-shell-v20261011-kat-gap2-sysinfo1";
 
 self.addEventListener("install", () => self.skipWaiting());
 
