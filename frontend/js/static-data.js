@@ -68,28 +68,28 @@ const STATIC_KATEGORI = [
 
 
     "SIPIL - Bangunan dan Struktur": [
-      "Tembok/Dinding", "Lantai - Keramik - Granit", "Lantai - Marmer", "Lantai - Vinyl", "Plafon - List", "Akustik", "Partisi Gipsum", "Partisi Kaca / Acrylic", "Partisi Papan / Triplek", "Dak beton", "Pengecatan ulang", "Shap", "Asrama PURI", "Wallguard", "Tembok", "Area ruangan Renovasi"
+      "Akustik", "Area ruangan Renovasi", "Asrama PURI", "Dak beton", "Lantai - Keramik - Granit", "Lantai - Marmer", "Lantai - Vinyl", "Partisi Gipsum", "Partisi Kaca / Acrylic", "Partisi Papan / Triplek", "Pengecatan ulang", "Plafon - List", "Shap", "Tembok", "Tembok/Dinding", "Wallguard"
     ],
     "SIPIL - Atap dan Waterproofing": [
-      "Genteng", "Atap", "Banbanan genteng", "Solartap", "Talang dak", "Alderon"
+      "Alderon", "Atap", "Banbanan genteng", "Genteng", "Solartap", "Talang dak"
     ],
     "SIPIL - Pintu, Jendela, dan Kaca": [
-      "Pintu Kamar Mandi", "Jendela Kamar Mandi", "Pintu kayu / Pintu Besi", "Pintu Kaca", "Pintu Geser", "Handle pintu", "Anak kunci", "Kunci Lemari", "Silinder Kunci", "Engsel Pintu / Lemari", "Selot Pintu", "Door  Closer", "Stoper", "Jendela", "Kaca", "Capit Udang", "Engsel Dorma"
+      "Anak kunci", "Capit Udang", "Door  Closer", "Engsel Dorma", "Engsel Pintu / Lemari", "Handle pintu", "Jendela", "Jendela Kamar Mandi", "Kaca", "Kunci Lemari", "Pintu Geser", "Pintu Kaca", "Pintu Kamar Mandi", "Pintu kayu / Pintu Besi", "Selot Pintu", "Silinder Kunci", "Stoper"
     ],
     "SIPIL - Plumbing dan Drainase": [
-      "Pipa Galvanis", "Pipa PVC", "pompa air", "Drill  Got", "Drill got", "Pipa PPR", "Pipa / Drain", "tutup menhole", "Drainase"
+      "Drainase", "Drill  Got", "Drill got", "Pipa / Drain", "Pipa Galvanis", "Pipa PPR", "Pipa PVC", "pompa air", "tutup menhole"
     ],
     "SIPIL - Sanitair dan Perlengkapan Kamar Mandi": [
-      "Wastafel", "Jet Shower", "Shower", "Bathup", "Closet", "Flush Closet", "Floor Drain", "Stop Kran", "Gantungan Handuk", "Leher Angsa", "Tutup kloset", "Urinoir", "Spoel Hoek", "Slop Zinc", "selang fleksible", "Kran Air", "Gantungan shower", "Selang fleksible wastafel", "kran shower/jet swower", "Kran wastafal", "Gantungan Infus kamar mandi"
+      "Bathup", "Closet", "Floor Drain", "Flush Closet", "Gantungan Handuk", "Gantungan Infus kamar mandi", "Gantungan shower", "Jet Shower", "Kran Air", "kran shower/jet swower", "Kran wastafal", "Leher Angsa", "selang fleksible", "Selang fleksible wastafel", "Shower", "Slop Zinc", "Spoel Hoek", "Stop Kran", "Tutup kloset", "Urinoir", "Wastafel"
     ],
     "SIPIL - Furnitur dan Interior": [
-      "Meja", "Lemari", "Lemari Obat", "Kursi", "Kursi Rendeng", "HPL / Takon / Pelaminto", "ACRYLIC", "Rel Laci Meja", "Engsel Sendok", "Lemari Geser MR", "Loker", "Rel RaK File MR", "Sofa kayu", " Plastik Gordeng", "Tatakan  Viorex", "laci meja", "Meja makan", "sekat triplek", "Jongkok - Dingklik pasien", "Lemari file", "Laci Lemari", "MeJa Konti", "Akrilik", "Meja komputer", "Karpet Lantai"
+      "ACRYLIC", "Akrilik", "Engsel Sendok", "HPL / Takon / Pelaminto", "Jongkok - Dingklik pasien", "Karpet Lantai", "Kursi", "Kursi Rendeng", "Laci Lemari", "laci meja", "Lemari", "Lemari file", "Lemari Geser MR", "Lemari Obat", "Loker", "Meja", "Meja komputer", "MeJa Konti", "Meja makan", " Plastik Gordeng", "Rel Laci Meja", "Rel RaK File MR", "sekat triplek", "Sofa kayu", "Tatakan  Viorex"
     ],
     "SIPIL - Pekerjaan Logam dan Eksterior": [
-      "Gerbang pintu besi", "Portal", "Papan Nama", "HURUF TIMBUL RSPC", "Rolling Door", "Kanopi", "Pagar besi", "Jaring penahan Panas", "Tangga besi"
+      "Gerbang pintu besi", "HURUF TIMBUL RSPC", "Jaring penahan Panas", "Kanopi", "Pagar besi", "Papan Nama", "Portal", "Rolling Door", "Tangga besi"
     ],
     "SIPIL - Lain-lain": [
-      "Khodeng", "Akrilik meja / AC Split", "gantungan Jam"
+      "Akrilik meja / AC Split", "gantungan Jam", "Khodeng"
     ],
     "M.E. ( Kelistrikan )": [
       "Stop kontak","Steker","Kabel Power / Listrik","Kabel Rol","MCB / MCCB","Fuse","Contactor","Genset","Panel SDP","Panel PP","Panel LP","Panel-Panel","Cubical TM","Transformator","Capasitor Bank","ACB PLN","ACB Genset","Change Over Switch","LVMDP","Gardu PLN","Adaptor DC","Tiang lampu","Lampu LED TL 16w","Stop Kontak AC",],
