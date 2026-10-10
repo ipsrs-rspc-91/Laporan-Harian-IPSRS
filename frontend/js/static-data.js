@@ -51,8 +51,8 @@ const STATIC_KATEGORI = [
     "KESLING ( Sistem IPAL )",
     "KESLING (Sistem Air Bersih)",
     "KESLING (Sistem Limbah B3)",
-    "M.E. (Kitchen)",
     "CEK LIST M.E. / UTILITI",
+    "M.E. (Kitchen)",
     "UMUM / Dan Lain - Lain"
   ];
 
