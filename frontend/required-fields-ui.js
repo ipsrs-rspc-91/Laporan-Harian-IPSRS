@@ -172,7 +172,16 @@
       }
       refresh();
     });
-    page.addEventListener('input',refresh);
+    // Saat mengetik, perbarui hanya field yang berubah. Memindai semua field
+    // pada setiap karakter menambah kerja DOM yang tidak diperlukan di Android.
+    page.addEventListener('input',e=>{
+      const target=e.target;
+      syncFieldColor(target);
+      if(target && target.closest && target.closest('.spmu-choice-group')){
+        const spmuProxy=page.querySelector('.spmu-choice-group');
+        if(spmuProxy) syncFieldColor(spmuProxy);
+      }
+    });
     page.addEventListener('change',refresh);
     page.addEventListener('click',()=>requestAnimationFrame(refresh));
     // Pantau penambahan/penghapusan node saja. Perubahan class visual dibuat oleh
