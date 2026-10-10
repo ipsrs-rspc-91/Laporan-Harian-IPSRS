@@ -3298,8 +3298,7 @@
         if(!MASTER_KATEGORI.some(x => String(x).trim().toLowerCase() === String(json.kategori).trim().toLowerCase())){
           MASTER_KATEGORI.push(json.kategori);
         }
-        const selectedFilter = document.getElementById('FilterKategori')?.value || '';
-        rebuildKategoriSelects_(json.kategori, selectedFilter);
+        appendKategoriOption(json.kategori);
         document.getElementById('Kategori').value = json.kategori;
         closeTambahKategoriModal();
         setMsg('msgInput', 'Kategori "' + json.kategori + '" ditambahkan & dipilih.');
