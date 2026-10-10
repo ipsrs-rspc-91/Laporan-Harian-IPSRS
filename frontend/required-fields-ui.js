@@ -216,8 +216,15 @@
     // refresh() sendiri, sedangkan nilai form diperbarui lewat event input/change.
     // Ini mencegah observer memicu refresh hanya karena kelas visual berubah.
     let refreshQueued = false;
-    const observer=new MutationObserver(()=>{
-      if(refreshQueued) return;
+    const observer=new MutationObserver(mutations=>{
+      // textContent updates (for example, the Pelapor/No LK status on each
+      // keystroke) create text nodes, not form structure. Ignore those so they
+      // cannot trigger a full-form scan while the user is typing.
+      const hasElementStructureChange = mutations.some(m =>
+        Array.from(m.addedNodes || []).some(node => node.nodeType === 1) ||
+        Array.from(m.removedNodes || []).some(node => node.nodeType === 1)
+      );
+      if(!hasElementStructureChange || refreshQueued) return;
       refreshQueued = true;
       requestAnimationFrame(()=>{ refreshQueued = false; refresh(); });
     });
@@ -243,13 +250,17 @@
     // Page Input dapat di-remount. Amati hanya area form agar ringan.
     let visualUpdateQueued = false;
     const observer = new MutationObserver(function(mutations){
-      // Page Input dapat di-remount. Jangan menjalankan update untuk setiap
-      // perubahan DOM global; cukup jadwalkan satu update per frame dan hanya
-      // jika mutasi memang menyentuh area form input.
+      // Perubahan textContent pada status Pelapor/No LK terjadi tiap karakter.
+      // Abaikan text-only mutation; update visual hanya saat struktur elemen
+      // form berubah atau Page Input dipasang ulang.
       const pageInput = document.getElementById('page-input');
       if(!pageInput) return;
       const relevant = mutations.some(function(m){
-        return pageInput.contains(m.target) ||
+        const elementStructureChanged =
+          Array.from(m.addedNodes || []).some(function(n){ return n.nodeType === 1; }) ||
+          Array.from(m.removedNodes || []).some(function(n){ return n.nodeType === 1; });
+        if(!elementStructureChanged) return false;
+        return m.target === pageInput || pageInput.contains(m.target) ||
           Array.from(m.addedNodes || []).some(function(n){
             return n.nodeType === 1 && (n === pageInput || pageInput.contains(n));
           });
