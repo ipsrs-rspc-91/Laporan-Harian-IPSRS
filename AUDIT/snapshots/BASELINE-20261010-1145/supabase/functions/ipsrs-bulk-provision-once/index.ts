@@ -1,0 +1,2 @@
+import { withSupabase } from "npm:@supabase/server@1.8.0";
+export default { fetch: withSupabase({auth:"user"}, async (_req,_ctx) => new Response(JSON.stringify({ok:false,msg:"Endpoint provisioning massal sudah dinonaktifkan."}),{status:410,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}})) };
