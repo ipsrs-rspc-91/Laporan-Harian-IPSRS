@@ -1276,7 +1276,7 @@
     // Normalisasi nama agar variasi spasi/tanda baca dari master data tidak
     // membuat area utilitas jatuh ke kelompok generik LAINNYA.
     const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(compact.includes('ceklistmeutiliti')) return 'CEK LIST M.E. / UTILITI';
+    if(compact.includes('ceklistutilitas') || compact.includes('ceklistmeutiliti')) return 'CEK LIST UTILITAS';
     // Area panel LVMDV pada master data adalah kelompok cek list LVMDP.
     // Pisahkan dari LAINNYA agar sesuai pengelompokan operasional.
     if(compact.includes('arearuangpanellvmdvlantai1') || compact.includes('ceklistlvmdp')) return 'CEK LIST LVMDP';
@@ -1288,7 +1288,7 @@
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
-    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST M.E. / UTILITI','CEK LIST LVMDP','KITCHEN / DAPUR','LAINNYA'];
+    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST UTILITAS','CEK LIST LVMDP','KITCHEN / DAPUR','LAINNYA'];
     return mine ? [mine,...base.filter(x=>x!==mine)] : base;
   }
 
@@ -1300,7 +1300,7 @@
     const value=String(sel.value||'').trim();
     // Nama master tetap dipakai sebagai value untuk kompatibilitas data/API,
     // tetapi label field harus konsisten dengan nama yang terlihat di modal.
-    const displayValue = value === 'CEK LIST M.E. / UTILITI' ? 'Cek List Utilitas' : value;
+    const displayValue = value;
     if(label) label.textContent=displayValue || 'Pilih area kerja…';
     picker.querySelectorAll('.area-picker-option').forEach(btn=>{
       btn.classList.toggle('is-selected',btn.dataset.value===value);
@@ -1493,8 +1493,8 @@
         head.className='area-item-picker-group-head';
         head.setAttribute('aria-expanded','false');
         const title=document.createElement('span');
-        title.textContent=groupName==='CEK LIST M.E. / UTILITI' ? 'Cek List Utilitas' : groupName;
-        const isChecklistUtility=groupName==='CEK LIST M.E. / UTILITI';
+        title.textContent=groupName==='CEK LIST UTILITAS' ? 'Cek List Utilitas' : groupName;
+        const isChecklistUtility=groupName==='CEK LIST UTILITAS';
         if(!isChecklistUtility){
           const plus=document.createElement('span');
           plus.className='area-item-picker-plus';
@@ -1551,9 +1551,9 @@
           areaButtons.push(btn);
         });
         head.addEventListener('click',()=>{
-          // CEK LIST M.E. / UTILITI: klik judul langsung memuat item di kanan,
+          // CEK LIST UTILITAS: klik judul langsung memuat item di kanan,
           // tanpa membuka subkelompok dan tanpa ikon tambah.
-          if(groupName==='CEK LIST M.E. / UTILITI'){
+          if(groupName==='CEK LIST UTILITAS'){
             list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
               const otherHead=otherGroup.querySelector('.area-item-picker-group-head');
               const otherBody=otherGroup.querySelector('.area-item-picker-group-body');
