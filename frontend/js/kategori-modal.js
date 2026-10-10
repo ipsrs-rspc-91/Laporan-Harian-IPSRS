@@ -59,9 +59,16 @@
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px}
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px}
 
-      /* Jarak antarkategori dibuat lebih tegas pada modal utama, termasuk di HP. */
-      #ipsrsKategoriModalRoot .ipsrs-kat-layout{gap:20px}
-      #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{margin-bottom:0}
+      /* Modal kategori utama: gunakan flex column agar jarak antartombol benar-benar diterapkan. */
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout{
+        display:flex;
+        flex-direction:column;
+        row-gap:16px;
+      }
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{
+        flex:0 0 auto;
+        margin:0;
+      }
 
       @keyframes ipsrsKatIn{
         from{opacity:0;transform:translateY(8px) scale(.985)}
