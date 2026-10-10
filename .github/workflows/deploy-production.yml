@@ -163,7 +163,13 @@ jobs:
             --header 'Access-Control-Request-Method: POST' \
             --header 'Access-Control-Request-Headers: authorization,content-type,apikey')"
           printf '%s\n' "$headers"
-          if ! printf '%s\n' "$headers" | tr -d '\r' | grep -Eiq '^access-control-max-age:[[:space:]]*600
+          max_age="$(printf '%s\n' "$headers" | awk -F': ' 'tolower($1)=="access-control-max-age" { gsub("\r", "", $2); print $2 }')"
+          if [ "$max_age" != "600" ]; then
+            echo "❌ Production OPTIONS response is missing Access-Control-Max-Age: 600 (received: $max_age)"
+            exit 1
+          fi
+          echo "✅ Production OPTIONS response includes Access-Control-Max-Age: 600"
+
   deploy-cloudflare:
     name: Deploy Cloudflare Worker
     needs: detect-changes
