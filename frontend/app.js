@@ -1751,20 +1751,17 @@
   }
 
   function getKategoriFormValues_(){
-    const source=(Array.isArray(MASTER_KATEGORI)?MASTER_KATEGORI:[])
-      .map(v=>String(v||'').trim()).filter(Boolean);
-    const hasMaintenance=source.some(v=>/^PEMELIHARAAN (RUTIN SESUAI JADWAL|DILUAR JADWAL RUTIN)/i.test(v));
-    const hasRepair=source.some(v=>/^PERBAIKAN (SAJA|DENGAN PENGGANTIAN)/i.test(v));
-    const isMaintenanceLeaf=v=>/^PEMELIHARAAN (RUTIN SESUAI JADWAL|DILUAR JADWAL RUTIN)/i.test(v);
-    const isRepairLeaf=v=>/^PERBAIKAN (SAJA|DENGAN PENGGANTIAN)/i.test(v);
-    const values=[];
-    if(hasMaintenance) values.push('PEMELIHARAAN');
-    if(hasRepair) values.push('PERBAIKAN');
-    source.forEach(v=>{
-      if((hasMaintenance&&isMaintenanceLeaf(v))||(hasRepair&&isRepairLeaf(v))) return;
-      if(!values.some(x=>x.toLocaleLowerCase('id')===v.toLocaleLowerCase('id'))) values.push(v);
-    });
-    return values;
+    // Daftar kategori induk Form Input hanya dari master kategori kanonis
+    // Supabase. Kategori lama tetap tersimpan untuk laporan/filter historis,
+    // tetapi tidak dicampur ke daftar pilihan kategori induk.
+    const allowed = new Set([
+      'PEMELIHARAAN','PERBAIKAN','PEMERIKSAAN / INSPEKSI','MONITORING',
+      'PERMINTAAN LAYANAN','PERTEMUAN / KOORDINASI','ADMINISTRASI / MANAJEMEN',
+      'KUNJUNGAN','PENGUJIAN / ANALISA','PELATIHAN','PROYEK / RENOVASI','LAINNYA'
+    ]);
+    return (Array.isArray(MASTER_KATEGORI)?MASTER_KATEGORI:[])
+      .map(v=>String(v||'').trim())
+      .filter(v=>allowed.has(v.toLocaleUpperCase('id')));
   }
 
   // Rebuild select Kategori + picker dari kontrak kategori form input.
