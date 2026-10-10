@@ -1,12 +1,12 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20261010-KATEGORI-SUPABASE1
+   Build: 20261010-KATEGORI-SUPABASE4
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20261010-KATEGORI-SUPABASE1';
+  const BUILD = '20261010-KATEGORI-SUPABASE4';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
@@ -525,17 +525,17 @@
         layout.innerHTML = '<div class="ipsrs-kat-info">Gagal memuat kategori dari Supabase. Tidak menggunakan daftar cadangan agar data tidak rancu.</div>'+addMarkup;
         return false;
       }
+      // Modal kategori hanya menampilkan 12 kategori induk kanonis.
+      // Master kategori lama dinonaktifkan di Supabase dan tidak boleh
+      // muncul lagi hanya karena pernah tersimpan pada data historis.
+      const allowed = [
+        'PEMELIHARAAN','PERBAIKAN','PEMERIKSAAN / INSPEKSI','MONITORING',
+        'PERMINTAAN LAYANAN','PERTEMUAN / KOORDINASI','ADMINISTRASI / MANAJEMEN',
+        'KUNJUNGAN','PENGUJIAN / ANALISA','PELATIHAN','PROYEK / RENOVASI','LAINNYA'
+      ];
       const source = result.kategori.map(v=>String(v||'').trim()).filter(Boolean);
-      const values = [];
-      const seen = new Set();
-      const push = v => { const key=v.toLocaleLowerCase('id'); if(v && !seen.has(key)){seen.add(key);values.push(v);} };
-      const isMaintenance = v => /^PEMELIHARAAN (RUTIN SESUAI JADWAL|DILUAR JADWAL RUTIN)/i.test(v);
-      const isRepair = v => /^PERBAIKAN (SAJA|DENGAN PENGGANTIAN)/i.test(v);
-      source.forEach(v=>{
-        if(isMaintenance(v)){push(BASE);return;}
-        if(isRepair(v)){push(REPAIR);return;}
-        push(v);
-      });
+      const sourceSet = new Set(source.map(v=>v.toLocaleUpperCase('id')));
+      const values = allowed.filter(v=>sourceSet.has(v.toLocaleUpperCase('id')));
       const buttons = values.map(v=>'<button type="button" class="ipsrs-kat-choice" data-kat-root="'+kategoriModalEsc(v)+'"><span class="ipsrs-kat-choice-title">'+kategoriModalEsc(v)+'</span></button>').join('');
       layout.innerHTML = buttons + addMarkup;
       return true;
