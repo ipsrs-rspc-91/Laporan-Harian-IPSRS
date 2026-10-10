@@ -1313,6 +1313,12 @@
       .area-item-picker-columns{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr);min-height:260px;overflow:hidden;flex:1}
       .area-item-picker-side{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:12px}
       .area-item-picker-area-list,.area-item-picker-item-list{min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain;overflow-anchor:none}
+      .area-item-picker-group{border-bottom:1px solid #e2e8f0;padding:0 0 5px;margin:0 0 5px}
+      .area-item-picker-group-head{display:flex;width:100%;min-height:42px;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;text-align:left;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+      .area-item-picker-group-head:hover{background:#f8fafc}
+      .area-item-picker-plus{display:inline-flex;width:25px;height:25px;flex:0 0 25px;align-items:center;justify-content:center;border:1px solid #cbd5e1;border-radius:7px;color:#475569;font-size:18px;font-weight:600;line-height:1}
+      .area-item-picker-group-body{padding:5px 0 0 8px}
+      .area-item-picker-group-body[hidden]{display:none!important}
       .area-item-picker-add{flex:0 0 auto}
       .area-item-picker-side:first-child{background:#f8fafc;border-right:1px solid #e2e8f0}
       /* Label kolom tetap terlihat dan berada di tengah saat daftar di-scroll. */
