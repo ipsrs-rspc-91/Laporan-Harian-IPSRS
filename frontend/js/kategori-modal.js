@@ -59,7 +59,17 @@
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px}
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px}
 
-      /* Khusus teks PERMINTAAN LAYANAN: perlebar spasi antar-kata, bukan jarak tombol. */
+      /* Pertahankan jarak seragam antartombol kategori. */
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout{
+        display:flex !important;
+        flex-direction:column !important;
+        gap:16px !important;
+      }
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{
+        flex:0 0 auto;
+        margin:0 !important;
+      }
+      /* Spasi antarkata hanya untuk label PERMINTAAN LAYANAN. */
       #ipsrsKategoriModalRoot .ipsrs-kat-choice[data-kat-root="PERMINTAAN LAYANAN"] .ipsrs-kat-choice-title{
         word-spacing:5px;
       }
