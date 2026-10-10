@@ -1278,14 +1278,14 @@
     const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
     if(compact.includes('ceklistmeutiliti')) return 'CEK LIST M.E. / UTILITI';
     if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
-    if(/^umum\b/i.test(n)) return 'UMUM / LAINNYA';
+    // Kelompok UMUM / LAINNYA digabung ke kelompok LAINNYA.
     return 'LAINNYA';
   }
 
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
-    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST M.E. / UTILITI','KITCHEN / DAPUR','UMUM / LAINNYA','LAINNYA'];
+    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST M.E. / UTILITI','KITCHEN / DAPUR','LAINNYA'];
     return mine ? [mine,...base.filter(x=>x!==mine)] : base;
   }
 
