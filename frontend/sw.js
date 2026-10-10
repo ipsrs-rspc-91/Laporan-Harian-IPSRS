@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261010-ceklist-utilitas3";
+const CACHE_NAME = "lhi-shell-v20261010-item-font-16-13";
 
 self.addEventListener("install", () => self.skipWaiting());
 
