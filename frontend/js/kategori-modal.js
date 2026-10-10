@@ -59,6 +59,10 @@
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px}
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px}
 
+      /* Jarak antarkategori dibuat lebih tegas pada modal utama, termasuk di HP. */
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout{gap:20px}
+      #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{margin-bottom:0}
+
       @keyframes ipsrsKatIn{
         from{opacity:0;transform:translateY(8px) scale(.985)}
         to{opacity:1;transform:translateY(0) scale(1)}
