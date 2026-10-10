@@ -1448,68 +1448,91 @@
 
     function renderAreas_(){
       const list=bg.querySelector('.area-item-picker-area-list');
-      if(!list) return;
+      const itemList=bg.querySelector('.area-item-picker-item-list');
+      if(!list || !itemList) return;
       list.innerHTML='';
-      const areas=Array.from(sel.options).filter(o=>o.value && o.value!==ADD_NEW_VALUE && !o.disabled).map(o=>o.value);
-      const current=String(sel.value||'');
+      itemList.innerHTML='<div class="area-item-picker-empty">Pilih kelompok dan area kerja di kolom kiri.</div>';
+      const areas=Array.from(sel.options)
+        .filter(o=>o.value && o.value!==ADD_NEW_VALUE && !o.disabled)
+        .map(o=>o.value);
+      const groups=new Map();
       areas.forEach(area=>{
-        const btn=document.createElement('button');
-        btn.type='button';
-        btn.className='area-item-picker-area'+(area===current?' is-active':'');
-        btn.dataset.areaValue=area;
-        btn.setAttribute('aria-pressed',area===current?'true':'false');
-        const name=document.createElement('span');
-        name.className='area-item-picker-area-name';
-        // Pisahkan keterangan akhir dalam tanda kurung agar nama utama dan
-        // keterangannya tampil pada baris terpisah tanpa mengubah lebar kolom.
-        const areaParts=String(area).trim().match(/^(.+?)\s+(\([^()]*\))$/);
-        if(areaParts){
-          const mainName=document.createElement('span');
-          mainName.textContent=areaParts[1];
-          const detail=document.createElement('span');
-          detail.className='area-item-picker-area-detail';
-          detail.textContent=areaParts[2];
-          name.append(mainName,detail);
-        }else{
-          name.textContent=area;
-        }
-        const count=document.createElement('span');
-        count.className='area-item-picker-count';
-        count.textContent=String(getItemsForArea_(area).length);
-        btn.append(name,count);
-        btn.addEventListener('click',()=>{
-          list.querySelectorAll('.area-item-picker-area').forEach(x=>{
-            const active=x===btn;
-            x.classList.toggle('is-active',active);
-            x.setAttribute('aria-pressed',active?'true':'false');
-          });
-          renderItems_(area);
-          // Pastikan posisi tetap di paling atas setelah DOM selesai diperbarui.
-          const itemList=bg.querySelector('.area-item-picker-item-list');
-          if(itemList){
+        const groupName=getAreaKerjaGroup_(area);
+        if(!groups.has(groupName)) groups.set(groupName,[]);
+        groups.get(groupName).push(area);
+      });
+      const groupOrder=getAreaKerjaGroupOrder_();
+      const orderedGroups=Array.from(groups.keys()).sort((a,b)=>{
+        const ai=groupOrder.indexOf(a), bi=groupOrder.indexOf(b);
+        return (ai<0?999:ai)-(bi<0?999:bi) || a.localeCompare(b,'id');
+      });
+      orderedGroups.forEach(groupName=>{
+        const group=document.createElement('div');
+        group.className='area-item-picker-group';
+        const head=document.createElement('button');
+        head.type='button';
+        head.className='area-item-picker-group-head';
+        head.setAttribute('aria-expanded','false');
+        const title=document.createElement('span');
+        title.textContent=groupName;
+        const plus=document.createElement('span');
+        plus.className='area-item-picker-plus';
+        plus.textContent='+';
+        plus.setAttribute('aria-hidden','true');
+        head.append(title,plus);
+        const body=document.createElement('div');
+        body.className='area-item-picker-group-body';
+        body.hidden=true;
+        const areaButtons=[];
+        groups.get(groupName).forEach(area=>{
+          const btn=document.createElement('button');
+          btn.type='button';
+          btn.className='area-item-picker-area';
+          btn.dataset.areaValue=area;
+          btn.setAttribute('aria-pressed','false');
+          const name=document.createElement('span');
+          name.className='area-item-picker-area-name';
+          const areaParts=String(area).trim().match(/^(.+?)\\s+(\\([^()]*\\))$/);
+          if(areaParts){
+            const mainName=document.createElement('span');
+            mainName.textContent=areaParts[1];
+            const detail=document.createElement('span');
+            detail.className='area-item-picker-area-detail';
+            detail.textContent=areaParts[2];
+            name.append(mainName,detail);
+          }else{
+            name.textContent=area;
+          }
+          const count=document.createElement('span');
+          count.className='area-item-picker-count';
+          count.textContent=String(getItemsForArea_(area).length);
+          btn.append(name,count);
+          btn.addEventListener('click',()=>{
+            list.querySelectorAll('.area-item-picker-area').forEach(x=>{
+              const active=x===btn;
+              x.classList.toggle('is-active',active);
+              x.setAttribute('aria-pressed',active?'true':'false');
+            });
+            renderItems_(area);
             itemList.scrollTop=0;
             if(typeof itemList.scrollTo==='function') itemList.scrollTo({top:0,left:0,behavior:'auto'});
             requestAnimationFrame(()=>{
               itemList.scrollTop=0;
               if(typeof itemList.scrollTo==='function') itemList.scrollTo({top:0,left:0,behavior:'auto'});
             });
-          }
+          });
+          body.appendChild(btn);
+          areaButtons.push(btn);
         });
-        list.appendChild(btn);
+        head.addEventListener('click',()=>{
+          const willOpen=body.hidden;
+          body.hidden=!willOpen;
+          head.setAttribute('aria-expanded',willOpen?'true':'false');
+          plus.textContent=willOpen?'−':'+';
+        });
+        group.append(head,body);
+        list.appendChild(group);
       });
-      const initial=areas.includes(current)?current:areas[0];
-      if(initial){
-        const initialButton=Array.from(list.querySelectorAll('.area-item-picker-area')).find(x=>x.querySelector('span')?.textContent===initial);
-        if(initialButton){
-          initialButton.classList.add('is-active');
-          initialButton.setAttribute('aria-pressed','true');
-        }
-        renderItems_(initial);
-      }
-      else{
-        const itemList=bg.querySelector('.area-item-picker-item-list');
-        itemList.innerHTML='<div class="area-item-picker-empty">Belum ada Area Kerja yang tersedia.</div>';
-      }
     }
 
     function open_(){
