@@ -1320,6 +1320,9 @@
       .area-item-picker-group{border-bottom:1px solid #e2e8f0;padding:0 0 5px;margin:0 0 5px}
       .area-item-picker-group-head{display:flex;width:100%;min-height:42px;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;text-align:left;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
       .area-item-picker-group-head:hover{background:#f8fafc}
+      .area-item-picker-group-head-direct{cursor:pointer}
+      .area-item-picker-group-head-direct::after{content:'›';font-size:20px;font-weight:500;line-height:1;color:#64748b}
+      .area-item-picker-group-head-direct.is-direct-active{background:#dbeafe;border-color:#3b82f6;color:#1d4ed8}
       .area-item-picker-plus{display:inline-flex;width:25px;height:25px;flex:0 0 25px;align-items:center;justify-content:center;border:1px solid #cbd5e1;border-radius:7px;color:#475569;font-size:18px;font-weight:600;line-height:1}
       .area-item-picker-group-body{padding:5px 0 0 8px}
       .area-item-picker-group-body[hidden]{display:none!important}
@@ -1485,11 +1488,18 @@
         head.setAttribute('aria-expanded','false');
         const title=document.createElement('span');
         title.textContent=groupName;
-        const plus=document.createElement('span');
-        plus.className='area-item-picker-plus';
-        plus.textContent='+';
-        plus.setAttribute('aria-hidden','true');
-        head.append(title,plus);
+        const isChecklistUtility=groupName==='CEK LIST M.E. / UTILITI';
+        if(!isChecklistUtility){
+          const plus=document.createElement('span');
+          plus.className='area-item-picker-plus';
+          plus.textContent='+';
+          plus.setAttribute('aria-hidden','true');
+          head.append(title,plus);
+        }else{
+          // Area khusus ini langsung menampilkan item saat judul diklik.
+          head.classList.add('area-item-picker-group-head-direct');
+          head.append(title);
+        }
         const body=document.createElement('div');
         body.className='area-item-picker-group-body';
         body.hidden=true;
@@ -1535,6 +1545,28 @@
           areaButtons.push(btn);
         });
         head.addEventListener('click',()=>{
+          // CEK LIST M.E. / UTILITI: klik judul langsung memuat item di kanan,
+          // tanpa membuka subkelompok dan tanpa ikon tambah.
+          if(groupName==='CEK LIST M.E. / UTILITI'){
+            list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
+              const otherHead=otherGroup.querySelector('.area-item-picker-group-head');
+              const otherBody=otherGroup.querySelector('.area-item-picker-group-body');
+              const otherPlus=otherGroup.querySelector('.area-item-picker-plus');
+              if(otherBody) otherBody.hidden=true;
+              if(otherHead) otherHead.setAttribute('aria-expanded','false');
+              if(otherPlus) otherPlus.textContent='+';
+              if(otherHead) otherHead.classList.remove('is-direct-active');
+            });
+            head.classList.add('is-direct-active');
+            head.setAttribute('aria-expanded','true');
+            const directArea=groups.get(groupName)[0];
+            if(directArea){
+              sel.value=directArea;
+              sel.dispatchEvent(new Event('change',{bubbles:true}));
+              renderItems_(directArea);
+            }
+            return;
+          }
           const willOpen=body.hidden;
           // Accordion tunggal: saat kelompok baru dibuka, tutup semua kelompok lain.
           list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
@@ -1545,6 +1577,7 @@
             const isCurrent=otherGroup===group;
             otherBody.hidden=isCurrent ? !willOpen : true;
             otherHead.setAttribute('aria-expanded',isCurrent && willOpen ? 'true' : 'false');
+            otherHead.classList.remove('is-direct-active');
             if(otherPlus) otherPlus.textContent=isCurrent && willOpen ? '−' : '+';
           });
         });
