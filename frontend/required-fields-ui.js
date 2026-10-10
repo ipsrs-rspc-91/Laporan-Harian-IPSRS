@@ -172,7 +172,15 @@
       }
       refresh();
     });
-    page.addEventListener('input',refresh);
+    // Saat mengetik, sinkronkan hanya field yang berubah; hindari scan semua field per karakter.
+    page.addEventListener('input',e=>{
+      const target=e.target;
+      syncFieldColor(target);
+      if(target && target.closest && target.closest('.spmu-choice-group')){
+        const spmuProxy=page.querySelector('.spmu-choice-group');
+        if(spmuProxy) syncFieldColor(spmuProxy);
+      }
+    });
     page.addEventListener('change',refresh);
     page.addEventListener('click',()=>requestAnimationFrame(refresh));
     // Pantau penambahan/penghapusan node saja. Perubahan class visual dibuat oleh
