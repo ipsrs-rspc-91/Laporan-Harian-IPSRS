@@ -1,19 +1,19 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20261010-KATEGORI-SUPABASE4
+   Build: 20261010-KATEGORI-RESTORE1
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20261010-KATEGORI-SUPABASE4';
+  const BUILD = '20261010-KATEGORI-RESTORE1';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
-    terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
+    terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
     luar_tanpa: 'PEMELIHARAAN DILUAR JADWAL RUTIN',
-    luar_dengan: 'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU'
+    luar_dengan: 'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'
   };
 
   let originalHandleKategoriChange = null;
@@ -426,7 +426,7 @@
     document.querySelectorAll('[data-kat-repair]').forEach(btn => {
       btn.addEventListener('click', function(){
         const value = this.dataset.katRepair === 'dengan'
-          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
+          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'
           : 'PERBAIKAN SAJA';
         finishKategori(value);
       });
