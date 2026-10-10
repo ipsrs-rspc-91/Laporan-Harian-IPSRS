@@ -1587,6 +1587,10 @@
     }
 
     function open_(){
+      // Tombol tambah area hanya untuk KA IPSRS; sinkronkan setiap modal dibuka
+      // agar state role terbaru selalu diterapkan, termasuk modal yang sudah dibuat.
+      const addAreaButton=bg.querySelector('.area-item-picker-add');
+      if(addAreaButton) addAreaButton.hidden=!(CURRENT_SESSION && CURRENT_SESSION.role==='KA_IPSRS');
       renderAreas_();
       bg.classList.add('show');
       trigger.setAttribute('aria-expanded','true');
