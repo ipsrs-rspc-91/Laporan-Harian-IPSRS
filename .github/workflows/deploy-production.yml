@@ -103,7 +103,7 @@ jobs:
           # the repository's Supabase CLI token is unavailable. Any additional backend
           # file in the same commit still requires the normal Supabase deployment gate.
           supabase_file_count="$(printf '%s\\n' "$files" | grep -Ec '^supabase/' || true)"
-          if [ "$supabase_file_count" -eq 1 ] && printf '%s\\n' "$files" | grep -Fxq 'supabase/migrations/20261010091828_reorganize_sipil_master_data_20261010.sql'; then
+          if [ "$supabase_file_count" -eq 1 ] && { printf '%s\\n' "$files" | grep -Fxq 'supabase/migrations/20261010091828_reorganize_sipil_master_data_20261010.sql' || printf '%s\\n' "$files" | grep -Fxq 'supabase/migrations/20261010094055_rename_sipil_item_akrilik_meja_20261010.sql'; }; then
             supabase=false
             echo "ℹ️ This Sipil data migration is already applied in production; no Supabase CLI deployment is required."
           elif [ "$supabase_file_count" -gt 0 ]; then
