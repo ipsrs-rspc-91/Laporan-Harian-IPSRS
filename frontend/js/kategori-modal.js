@@ -1,6 +1,6 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL28
+   Build: 20261011-KAT-GAP8
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
@@ -63,7 +63,7 @@
       #ipsrsKategoriModalRoot .ipsrs-kat-layout{
         display:flex !important;
         flex-direction:column !important;
-        gap:16px !important;
+        gap:8px !important;
       }
       #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{
         flex:0 0 auto;
