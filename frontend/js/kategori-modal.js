@@ -59,19 +59,15 @@
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px}
       #ipsrsKategoriModalRoot .ipsrs-kat-body::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:8px}
 
-      /* Modal kategori utama: gunakan flex column agar jarak antartombol benar-benar diterapkan. */
+      /* Jarak seragam DI ANTARA semua tombol kategori; tidak memberi margin khusus pada tombol tertentu. */
       #ipsrsKategoriModalRoot .ipsrs-kat-layout{
         display:flex !important;
         flex-direction:column !important;
-        row-gap:24px !important;
+        gap:16px !important;
       }
       #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice{
         flex:0 0 auto;
         margin:0 !important;
-      }
-      /* Beri ruang ekstra di atas dan bawah PERMINTAAN LAYANAN agar tidak tampak menyatu. */
-      #ipsrsKategoriModalRoot .ipsrs-kat-layout > .ipsrs-kat-choice[data-kat-root="PERMINTAAN LAYANAN"]{
-        margin-block:8px !important;
       }
 
       @keyframes ipsrsKatIn{
