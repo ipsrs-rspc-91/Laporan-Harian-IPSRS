@@ -6,7 +6,7 @@
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL28';
+  const BUILD = '20261011-KAT-WORDSPACE3';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
