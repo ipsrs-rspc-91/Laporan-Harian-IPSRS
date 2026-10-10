@@ -305,6 +305,13 @@
     document.body.appendChild(bg);
   }
 
+  function canManageMasterData(){
+    try{
+      const session = JSON.parse(sessionStorage.getItem('ipsrs_session_v1') || 'null');
+      return !!session && String(session.role || '') === 'KA_IPSRS';
+    }catch(e){ return false; }
+  }
+
   function buildModals(){
     injectStyles();
     injectModal(
@@ -325,7 +332,7 @@
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PELATIHAN"><span class="ipsrs-kat-choice-title">PELATIHAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PROYEK / RENOVASI"><span class="ipsrs-kat-choice-title">PROYEK / RENOVASI</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="LAINNYA"><span class="ipsrs-kat-choice-title">LAINNYA</span></button>
-          <button type="button" class="ipsrs-kat-add" data-kat-add-new>＋ TAMBAH KATEGORI</button>
+          ${canManageMasterData() ? '<button type="button" class="ipsrs-kat-add" data-kat-add-new>＋ TAMBAH KATEGORI</button>' : ''}
         </div>`,
       ''
     );
