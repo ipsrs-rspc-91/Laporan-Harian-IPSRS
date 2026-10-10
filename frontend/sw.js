@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261011-kat-gap2-sysinfo1";
+const CACHE_NAME = "lhi-shell-v20261011-kat-wordspace3";
 
 self.addEventListener("install", () => self.skipWaiting());
 
