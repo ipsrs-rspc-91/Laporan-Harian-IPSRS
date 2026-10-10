@@ -316,10 +316,10 @@
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMELIHARAAN"><span class="ipsrs-kat-choice-title">PEMELIHARAAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PERBAIKAN"><span class="ipsrs-kat-choice-title">PERBAIKAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMERIKSAAN / INSPEKSI"><span class="ipsrs-kat-choice-title">PEMERIKSAAN / INSPEKSI</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="MONITORING"><span class="ipsrs-kat-choice-title">MONITORING</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PERMINTAAN LAYANAN"><span class="ipsrs-kat-choice-title">PERMINTAAN LAYANAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PERTEMUAN / KOORDINASI"><span class="ipsrs-kat-choice-title">PERTEMUAN / KOORDINASI</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="ADMINISTRASI / MANAJEMEN"><span class="ipsrs-kat-choice-title">ADMINISTRASI / MANAJEMEN</span></button>
+          <button type="button" class="ipsrs-kat-choice" data-kat-root="MONITORING"><span class="ipsrs-kat-choice-title">MONITORING</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="KUNJUNGAN"><span class="ipsrs-kat-choice-title">KUNJUNGAN</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PENGUJIAN / ANALISA"><span class="ipsrs-kat-choice-title">PENGUJIAN / ANALISA</span></button>
           <button type="button" class="ipsrs-kat-choice" data-kat-root="PELATIHAN"><span class="ipsrs-kat-choice-title">PELATIHAN</span></button>
