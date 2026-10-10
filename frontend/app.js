@@ -1536,9 +1536,17 @@
         });
         head.addEventListener('click',()=>{
           const willOpen=body.hidden;
-          body.hidden=!willOpen;
-          head.setAttribute('aria-expanded',willOpen?'true':'false');
-          plus.textContent=willOpen?'−':'+';
+          // Accordion tunggal: saat kelompok baru dibuka, tutup semua kelompok lain.
+          list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
+            const otherHead=otherGroup.querySelector('.area-item-picker-group-head');
+            const otherBody=otherGroup.querySelector('.area-item-picker-group-body');
+            const otherPlus=otherGroup.querySelector('.area-item-picker-plus');
+            if(!otherHead || !otherBody) return;
+            const isCurrent=otherGroup===group;
+            otherBody.hidden=isCurrent ? !willOpen : true;
+            otherHead.setAttribute('aria-expanded',isCurrent && willOpen ? 'true' : 'false');
+            if(otherPlus) otherPlus.textContent=isCurrent && willOpen ? '−' : '+';
+          });
         });
         group.append(head,body);
         list.appendChild(group);
