@@ -94,8 +94,8 @@
   </style>
   <script>
   (function(){
-    const VERSION='20261010-CHECKPOINT-0450';
-    const BUILD_INFO={system_version:'20261010-CHECKPOINT-0450',frontend_build:'20261010-CHECKPOINT-0450',api_version:'ipsrs-api v64',database_migration:'20260928092227',environment:'PRODUCTION',git_commit:'5598cd1176fdce8562d1fa260131aac66643d584',service_worker:'lhi-shell-v20261001-kategori-scroll4',last_deployment:'2026-10-10'};
+    const VERSION='20261010-BASELINE-1145';
+    const BUILD_INFO={system_version:'20261010-BASELINE-1145',frontend_build:'20261010-BASELINE-1145',api_version:'ipsrs-api v79 (terverifikasi saat baseline)',database_migration:'20261008082958',environment:'PRODUCTION',git_commit:'d690f0db52703116727d62c6055df2ab805c90cf (source baseline)',service_worker:'lhi-shell-v20261001-kategori-scroll4',last_deployment:'2026-10-10'};
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -119,13 +119,13 @@
           ['API Status',x.api_status||'-'],
           ['Database Status',x.database_status||'-'],
           ['Last Deployment',BUILD_INFO.last_deployment],
-          ['Rollback Baseline','BASELINE-20261010-0450'],
-          ['Rollback Commit','5598cd1176fdce8562d1fa260131aac66643d584'],
-          ['Rollback Branch','checkpoint-2026-10-10-0450'],
-          ['Latest Checkpoint','2026-10-10 04:50 WIB'],
-          ['Checkpoint Commit','5598cd1176fdce8562d1fa260131aac66643d584'],
-          ['Checkpoint Branch','checkpoint-2026-10-10-0450'],
-          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke BASELINE-20261010-0450 (checkpoint-2026-10-10-0450)'],
+          ['Rollback Baseline','BASELINE-20261010-1145'], 
+          ['Rollback Commit','d690f0db52703116727d62c6055df2ab805c90cf'], 
+          ['Rollback Branch','checkpoint-2026-10-10-1145'], 
+          ['Latest Checkpoint','2026-10-10 11:45 WIB'], 
+          ['Checkpoint Commit','d690f0db52703116727d62c6055df2ab805c90cf'], 
+          ['Checkpoint Branch','checkpoint-2026-10-10-1145'], 
+          ['Rollback Reminder','Jika update berikutnya rusak, minta: rollback ke BASELINE-20261010-1145 (checkpoint-2026-10-10-1145)'], 
           ['Data Saat Rollback','DATA LAPORAN SUPABASE TETAP ADA. Rollback aplikasi tidak menghapus data. Rollback database hanya jika diminta secara eksplisit.']
         ];
         content.innerHTML=rows.map(([k,v])=>'<div class="system-info-row"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join('');
