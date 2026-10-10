@@ -1273,6 +1273,9 @@
     if(/^sipil\b/i.test(n)) return 'SIPIL';
     if(/^elektromedik\b/i.test(n)) return 'ELEKTROMEDIK';
     if(/^kesling\b/i.test(n)) return 'KESLING';
+    // Area cek list utilitas harus menjadi kelompok tersendiri tepat setelah Kesling,
+    // bukan terselip di kelompok generik LAINNYA.
+    if(/^cek\s+list\s+m\.e\.\s*\/\s*utiliti$/i.test(n)) return 'CEK LIST M.E. / UTILITI';
     if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
     if(/^umum\b/i.test(n)) return 'UMUM / LAINNYA';
     return 'LAINNYA';
@@ -1281,7 +1284,7 @@
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
-    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','KITCHEN / DAPUR','UMUM / LAINNYA','LAINNYA'];
+    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST M.E. / UTILITI','KITCHEN / DAPUR','UMUM / LAINNYA','LAINNYA'];
     return mine ? [mine,...base.filter(x=>x!==mine)] : base;
   }
 
