@@ -287,18 +287,6 @@ jobs:
 
       - name: Production deployment passed
         run: echo "✅ IPSRS SELECTIVE PRODUCTION DEPLOYMENT PASSED"
-; then
-            supabase=false
-            echo "ℹ️ This Sipil data migration is already applied in production; no Supabase CLI deployment is required."
-          elif [ "$supabase_file_count" -gt 0 ]; then
-            supabase=true
-          else
-            supabase=false
-          fi
-
-          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
-          echo "supabase=$supabase" >> "$GITHUB_OUTPUT"
-          echo "cloudflare=$cloudflare" >> "$GITHUB_OUTPUT"
 
   deploy-supabase:
     name: Deploy Supabase Backend
@@ -471,18 +459,6 @@ jobs:
 
       - name: Production deployment passed
         run: echo "✅ IPSRS SELECTIVE PRODUCTION DEPLOYMENT PASSED"
-; then
-            supabase=false
-            echo "ℹ️ This Sipil data migration is already applied in production; no Supabase CLI deployment is required."
-          elif [ "$supabase_file_count" -gt 0 ]; then
-            supabase=true
-          else
-            supabase=false
-          fi
-
-          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
-          echo "supabase=$supabase" >> "$GITHUB_OUTPUT"
-          echo "cloudflare=$cloudflare" >> "$GITHUB_OUTPUT"
 
   deploy-supabase:
     name: Deploy Supabase Backend
@@ -655,18 +631,6 @@ jobs:
 
       - name: Production deployment passed
         run: echo "✅ IPSRS SELECTIVE PRODUCTION DEPLOYMENT PASSED"
-; then
-            supabase=false
-            echo "ℹ️ This Sipil data migration is already applied in production; no Supabase CLI deployment is required."
-          elif [ "$supabase_file_count" -gt 0 ]; then
-            supabase=true
-          else
-            supabase=false
-          fi
-
-          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
-          echo "supabase=$supabase" >> "$GITHUB_OUTPUT"
-          echo "cloudflare=$cloudflare" >> "$GITHUB_OUTPUT"
 
   deploy-supabase:
     name: Deploy Supabase Backend
