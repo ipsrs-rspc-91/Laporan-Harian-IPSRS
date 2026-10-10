@@ -1277,6 +1277,9 @@
     // membuat area utilitas jatuh ke kelompok generik LAINNYA.
     const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
     if(compact.includes('ceklistmeutiliti')) return 'CEK LIST M.E. / UTILITI';
+    // Area panel LVMDV pada master data adalah kelompok cek list LVMDP.
+    // Pisahkan dari LAINNYA agar sesuai pengelompokan operasional.
+    if(compact.includes('arearuangpanellvmdvlantai1') || compact.includes('ceklistlvmdp')) return 'CEK LIST LVMDP';
     if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
     // Kelompok UMUM / LAINNYA digabung ke kelompok LAINNYA.
     return 'LAINNYA';
@@ -1285,7 +1288,7 @@
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
-    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST M.E. / UTILITI','KITCHEN / DAPUR','LAINNYA'];
+    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST M.E. / UTILITI','CEK LIST LVMDP','KITCHEN / DAPUR','LAINNYA'];
     return mine ? [mine,...base.filter(x=>x!==mine)] : base;
   }
 
