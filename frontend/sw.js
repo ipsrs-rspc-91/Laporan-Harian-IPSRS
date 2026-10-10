@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261011-kat-gap8";
+const CACHE_NAME = "lhi-shell-v20261011-kat-height90";
 
 self.addEventListener("install", () => self.skipWaiting());
 
