@@ -1,19 +1,19 @@
 /* ============================================================
    KATEGORI PEMELIHARAAN — modal bertahap
-   Build: 20260930-KATEGORI-MODAL28
+   Build: 20261010-KATEGORI-SUPABASE1
    Tidak mengubah data laporan lama.
    ============================================================ */
 (function(){
   'use strict';
 
-  const BUILD = '20260930-KATEGORI-MODAL28';
+  const BUILD = '20261010-KATEGORI-SUPABASE1';
   const BASE = 'PEMELIHARAAN';
   const REPAIR = 'PERBAIKAN';
   const FINAL = {
     terjadwal_tanpa: 'PEMELIHARAAN RUTIN SESUAI JADWAL',
-    terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT',
+    terjadwal_dengan: 'PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU',
     luar_tanpa: 'PEMELIHARAAN DILUAR JADWAL RUTIN',
-    luar_dengan: 'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'
+    luar_dengan: 'PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU'
   };
 
   let originalHandleKategoriChange = null;
@@ -312,19 +312,8 @@
       'KATEGORI',
       'Pilih kategori pekerjaan',
       `
-        <div class="ipsrs-kat-layout">
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMELIHARAAN"><span class="ipsrs-kat-choice-title">PEMELIHARAAN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PERBAIKAN"><span class="ipsrs-kat-choice-title">PERBAIKAN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PEMERIKSAAN / INSPEKSI"><span class="ipsrs-kat-choice-title">PEMERIKSAAN / INSPEKSI</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="MONITORING"><span class="ipsrs-kat-choice-title">MONITORING</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PERMINTAAN LAYANAN"><span class="ipsrs-kat-choice-title">PERMINTAAN LAYANAN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PERTEMUAN / KOORDINASI"><span class="ipsrs-kat-choice-title">PERTEMUAN / KOORDINASI</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="ADMINISTRASI / MANAJEMEN"><span class="ipsrs-kat-choice-title">ADMINISTRASI / MANAJEMEN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="KUNJUNGAN"><span class="ipsrs-kat-choice-title">KUNJUNGAN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PENGUJIAN / ANALISA"><span class="ipsrs-kat-choice-title">PENGUJIAN / ANALISA</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PELATIHAN"><span class="ipsrs-kat-choice-title">PELATIHAN</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="PROYEK / RENOVASI"><span class="ipsrs-kat-choice-title">PROYEK / RENOVASI</span></button>
-          <button type="button" class="ipsrs-kat-choice" data-kat-root="LAINNYA"><span class="ipsrs-kat-choice-title">LAINNYA</span></button>
+        <div class="ipsrs-kat-layout" data-kat-master-list>
+          <div class="ipsrs-kat-info">Memuat kategori dari Supabase…</div>
           <button type="button" class="ipsrs-kat-add" data-kat-add-new>＋ TAMBAH KATEGORI</button>
         </div>`,
       ''
@@ -388,30 +377,28 @@
       ''
     );
 
-    const addKategoriBtn = document.querySelector('[data-kat-add-new]');
-    if(addKategoriBtn && !addKategoriBtn.__ipsrsBound){
-      addKategoriBtn.addEventListener('click', function(){
-        const root = document.getElementById('ipsrsKategoriModalRoot');
-        if(root) root.classList.remove('show');
-        const sel = document.getElementById('Kategori');
-        const addNewOption = sel && Array.from(sel.options).find(o => o.value === '__ADD_NEW__' || o.value === '__TAMBAH_KATEGORI_BARU__' || /Tambah Kategori Baru/i.test(o.textContent || ''));
-        if(addNewOption){
-          sel.value = addNewOption.value;
-          sel.dispatchEvent(new Event('change',{bubbles:true}));
-        } else if(typeof window.__ipsrsOpenTambahKategoriModal === 'function'){
-          window.__ipsrsOpenTambahKategoriModal();
-        } else {
-          window.alert('Fitur tambah kategori belum tersedia pada halaman ini.');
+    const root = document.getElementById('ipsrsKategoriModalRoot');
+    if(root && !root.__ipsrsDelegatedCategoryEvents){
+      root.addEventListener('click', function(event){
+        const addBtn = event.target && event.target.closest ? event.target.closest('[data-kat-add-new]') : null;
+        if(addBtn){
+          root.classList.remove('show');
+          const sel = document.getElementById('Kategori');
+          const addNewOption = sel && Array.from(sel.options).find(o => o.value === '__ADD_NEW__' || o.value === '__TAMBAH_KATEGORI_BARU__' || /Tambah Kategori Baru/i.test(o.textContent || ''));
+          if(addNewOption){
+            sel.value = addNewOption.value;
+            sel.dispatchEvent(new Event('change',{bubbles:true}));
+          } else if(typeof window.__ipsrsOpenTambahKategoriModal === 'function'){
+            window.__ipsrsOpenTambahKategoriModal();
+          } else {
+            window.alert('Fitur tambah kategori belum tersedia pada halaman ini.');
+          }
+          return;
         }
-      });
-      addKategoriBtn.__ipsrsBound = true;
-    }
-
-    document.querySelectorAll('[data-kat-root]').forEach(btn => {
-      btn.addEventListener('click', function(){
-        const value = this.dataset.katRoot || '';
-        const root = document.getElementById('ipsrsKategoriModalRoot');
-        if(root) root.classList.remove('show');
+        const btn = event.target && event.target.closest ? event.target.closest('[data-kat-root]') : null;
+        if(!btn || !root.contains(btn)) return;
+        const value = btn.dataset.katRoot || '';
+        root.classList.remove('show');
         if(value === BASE){ openScheduleModal(); return; }
         if(value === REPAIR){
           const repair = document.getElementById('ipsrsKategoriModal3');
@@ -420,7 +407,8 @@
         }
         finishKategori(value);
       });
-    });
+      root.__ipsrsDelegatedCategoryEvents = true;
+    }
 
     document.querySelectorAll('[data-kat-direct]').forEach(btn => {
       btn.addEventListener('click', function(){
@@ -438,7 +426,7 @@
     document.querySelectorAll('[data-kat-repair]').forEach(btn => {
       btn.addEventListener('click', function(){
         const value = this.dataset.katRepair === 'dengan'
-          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL / UNIT'
+          ? 'PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU'
           : 'PERBAIKAN SAJA';
         finishKategori(value);
       });
@@ -522,10 +510,46 @@
     btn.classList.toggle('ipsrs-required-field', !value && sel.classList.contains('ipsrs-required-field'));
   }
 
+  async function refreshRootCategoriesFromMaster(){
+    const root = document.getElementById('ipsrsKategoriModalRoot');
+    const layout = root && root.querySelector('[data-kat-master-list]');
+    if(!layout) return false;
+    const addMarkup = '<button type="button" class="ipsrs-kat-add" data-kat-add-new>＋ TAMBAH KATEGORI</button>';
+    try{
+      if(typeof window.__ipsrsGetMasterKategori !== 'function'){
+        layout.innerHTML = '<div class="ipsrs-kat-info">Sumber master kategori belum tersedia. Tutup lalu buka kembali setelah aplikasi siap.</div>'+addMarkup;
+        return false;
+      }
+      const result = await window.__ipsrsGetMasterKategori();
+      if(!result || !result.ok || !Array.isArray(result.kategori)){
+        layout.innerHTML = '<div class="ipsrs-kat-info">Gagal memuat kategori dari Supabase. Tidak menggunakan daftar cadangan agar data tidak rancu.</div>'+addMarkup;
+        return false;
+      }
+      const source = result.kategori.map(v=>String(v||'').trim()).filter(Boolean);
+      const values = [];
+      const seen = new Set();
+      const push = v => { const key=v.toLocaleLowerCase('id'); if(v && !seen.has(key)){seen.add(key);values.push(v);} };
+      const isMaintenance = v => /^PEMELIHARAAN (RUTIN SESUAI JADWAL|DILUAR JADWAL RUTIN)/i.test(v);
+      const isRepair = v => /^PERBAIKAN (SAJA|DENGAN PENGGANTIAN)/i.test(v);
+      source.forEach(v=>{
+        if(isMaintenance(v)){push(BASE);return;}
+        if(isRepair(v)){push(REPAIR);return;}
+        push(v);
+      });
+      const buttons = values.map(v=>'<button type="button" class="ipsrs-kat-choice" data-kat-root="'+kategoriModalEsc(v)+'"><span class="ipsrs-kat-choice-title">'+kategoriModalEsc(v)+'</span></button>').join('');
+      layout.innerHTML = buttons + addMarkup;
+      return true;
+    }catch(err){
+      layout.innerHTML = '<div class="ipsrs-kat-info">Gagal memuat kategori dari Supabase. Silakan coba lagi.</div>'+addMarkup;
+      return false;
+    }
+  }
+
   function openKategoriRootModal(){
     buildModals();
     const root = document.getElementById('ipsrsKategoriModalRoot');
     if(root) root.classList.add('show');
+    refreshRootCategoriesFromMaster();
   }
 
   function kategoriModalInstall(){
