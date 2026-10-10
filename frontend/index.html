@@ -9,10 +9,10 @@
   <link rel="apple-touch-icon" href="./logo.png">
   <link rel="stylesheet" href="css/style.css?v=20261002-KATEGORI-SCROLL5">
   <!-- PERF STAGE 1: mulai download script startup secara paralel; urutan eksekusi tetap dikendalikan oleh loader di bawah. -->
-  <link rel="preload" href="js/static-data.js?v=20261010-CEKLIST-UTILITAS-1" as="script">
+  <link rel="preload" href="js/static-data.js?v=20261010-CEKLIST-UTILITAS-3" as="script">
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js" as="script" crossorigin>
   <link rel="preload" href="./config.js?v=20260928-AUDITTOTAL3" as="script">
-  <link rel="preload" href="./app.js?v=20261010-CEKLIST-UTILITAS-1" as="script">
+  <link rel="preload" href="./app.js?v=20261010-CEKLIST-UTILITAS-3" as="script">
   <link rel="preload" href="./js/kategori-modal.js?v=20261010-LVMDP-GROUP1" as="script">
   <link rel="preload" href="./required-fields-ui.js?v=20261009-AWSNAP-P2" as="script">
   <link rel="preload" href="./access-control.js?v=20260929-HAKAKSES-MENU1" as="script">
@@ -94,8 +94,8 @@
   </style>
   <script>
   (function(){
-    const VERSION='20261010-CEKLIST-UTILITAS-2';
-    const BUILD_INFO={system_version:'20261010-CEKLIST-UTILITAS-2',frontend_build:'20261010-CEKLIST-UTILITAS-2',api_version:'ipsrs-api v81',database_migration:'20261008082958',environment:'PRODUCTION',git_commit:'d690f0db52703116727d62c6055df2ab805c90cf (source baseline)',service_worker:'lhi-shell-v20261010-ceklist-utilitas2',last_deployment:'2026-10-10'};
+    const VERSION='20261010-CEKLIST-UTILITAS-3';
+    const BUILD_INFO={system_version:'20261010-CEKLIST-UTILITAS-3',frontend_build:'20261010-CEKLIST-UTILITAS-3',api_version:'ipsrs-api v81',database_migration:'20261008082958',environment:'PRODUCTION',git_commit:'d690f0db52703116727d62c6055df2ab805c90cf (source baseline)',service_worker:'lhi-shell-v20261010-ceklist-utilitas3',last_deployment:'2026-10-10'};
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -160,10 +160,10 @@
     function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Gagal memuat '+src));document.body.appendChild(s);});}
     try{
       await Promise.all(Object.entries(initialMounts).map(([id,url])=>fragment(id,url)));
-      await script('js/static-data.js?v=20261010-CEKLIST-UTILITAS-1');
+      await script('js/static-data.js?v=20261010-CEKLIST-UTILITAS-3');
       await script('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js');
       await script('./config.js?v=20260928-AUDITTOTAL3');
-      await script('./app.js?v=20261010-CEKLIST-UTILITAS-1');
+      await script('./app.js?v=20261010-CEKLIST-UTILITAS-3');
       await script('./js/kategori-modal.js?v=20261010-LVMDP-GROUP1');
       await script('./required-fields-ui.js?v=20261009-AWSNAP-P2');
       await script('./access-control.js?v=20260929-HAKAKSES-MENU1');
@@ -243,7 +243,7 @@
 
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20261010-CEKLIST-UTILITAS-2", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=20261010-CEKLIST-UTILITAS-3", { scope: "./" }).catch(err => console.warn("PWA service worker:", err)));
     }
   </script>
 </body>
