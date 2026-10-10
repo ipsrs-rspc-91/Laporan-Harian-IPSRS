@@ -2,6 +2,7 @@
 import { withSupabase } from "npm:@supabase/server@1.8.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2.116.0/cors";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
+// Stage 1 CORS preflight: pass the same cache header to withSupabase, which answers OPTIONS before this handler.
 const cors={...corsHeaders,"Access-Control-Max-Age":"600"};
 function out(b:any,s=200){return new Response(JSON.stringify(b),{status:s,headers:{...cors,"Content-Type":"application/json"}})}
 function range(month:string){const m=/^\d{4}-\d{2}$/.test(String(month||""))?month:new Date().toISOString().slice(0,7);const [y,mo]=m.split("-").map(Number);return{month:m,start:m+"-01",end:new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)}}
