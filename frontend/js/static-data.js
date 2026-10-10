@@ -24,10 +24,14 @@ const STATIC_KATEGORI = [
 
   const STATIC_AREA = [
     "GENERAL MAINTENANCE",
-    "SIPIL  ( Sanitary)",
-    "SIPIL  ( Umum 1 )",
-    "SIPIl   ( Umum 2 )",
-    "SIPIL  ( Kontruksi Bangunan )",
+    "SIPIL - Bangunan dan Struktur",
+    "SIPIL - Atap dan Waterproofing",
+    "SIPIL - Pintu, Jendela, dan Kaca",
+    "SIPIL - Plumbing dan Drainase",
+    "SIPIL - Sanitair dan Perlengkapan Kamar Mandi",
+    "SIPIL - Furnitur dan Interior",
+    "SIPIL - Pekerjaan Logam dan Eksterior",
+    "SIPIL - Lain-lain",
     "M.E. ( Umum )",
     "M.E. ( Penerangan )",
     "M.E. ( Kelistrikan )",
@@ -59,21 +63,33 @@ const STATIC_KATEGORI = [
       "AC & Telekomunikasi",
       "AC, Listrik & Penerangan",
       "AC, Listrik, Penerangan & Telekomunikasi",],
-    "SIPIL  ( Sanitary)": [
-      "Pintu Kamar Mandi","Jendela Kamar Mandi","Wastafel","Jet Shower","Shower","Bathup","Closet","Flush Closet","Floor Drain","Stop Kran","Gantungan Handuk","Leher Angsa","Pipa Galvanis","Tutup kloset","Pipa PVC","Urinoir","Spoel Hoek","Slop Zinc","selang fleksible","Kran Air","Gantungan shower","Selang fleksible wastafel","kran shower/jet swower","Kran wastafal","pompa air"
+
+
+
+
+    "SIPIL - Bangunan dan Struktur": [
+      "Tembok/Dinding", "Lantai - Keramik - Granit", "Lantai - Marmer", "Lantai - Vinyl", "Plafon - List", "Akustik", "Partisi Gipsum", "Partisi Kaca / Acrylic", "Partisi Papan / Triplek", "Dak beton", "Pengecatan ulang", "Shap", "Asrama PURI", "Wallguard", "Tembok", "Area ruangan Renovasi"
     ],
-    "SIPIL  ( Umum 1 )": [
-      "Pintu kayu / Pintu Besi","Pintu Kaca","Pintu Geser","Handle pintu","Anak kunci","Kunci Lemari","Silinder Kunci","Engsel Pintu / Lemari","Selot Pintu","Door  Closer","Stoper","Jendela","Kaca","Meja","Lemari","Lemari Obat","Capit Udang","Engsel Dorma","Kursi","Kursi Rendeng","HPL / Takon / Pelaminto","ACRYLIC","Rel Laci Meja","Engsel Sendok","Lemari Geser MR"
+    "SIPIL - Atap dan Waterproofing": [
+      "Genteng", "Atap", "Banbanan genteng", "Solartap", "Talang dak", "Alderon"
     ],
-    "SIPIl   ( Umum 2 )": [
-      "Drill  Got","Gerbang pintu besi","Portal","Loker","Papan Nama","Drill got","HURUF TIMBUL RSPC","Rolling Door","Rel RaK File MR","Kanopi","Akrilik meja / AC Split","Sofa kayu"," Plastik Gordeng","Tatakan  Viorex","laci meja","Meja makan","Pagar besi","sekat triplek","Jongkok - Dingklik pasien","Lemari file","Pipa PPR","Laci Lemari","Jaring penahan Panas","Gantungan Infus kamar mandi","MeJa Konti"
+    "SIPIL - Pintu, Jendela, dan Kaca": [
+      "Pintu Kamar Mandi", "Jendela Kamar Mandi", "Pintu kayu / Pintu Besi", "Pintu Kaca", "Pintu Geser", "Handle pintu", "Anak kunci", "Kunci Lemari", "Silinder Kunci", "Engsel Pintu / Lemari", "Selot Pintu", "Door  Closer", "Stoper", "Jendela", "Kaca", "Capit Udang", "Engsel Dorma"
     ],
-    "SIPIL  ( Kontruksi Bangunan )": [
-      "Tembok/Dinding","Lantai - Keramik - Granit","Lantai - Marmer","Lantai - Vinyl","Plafon - List","Akustik","Genteng","Atap","Banbanan genteng","Solartap","Partisi Gipsum","Partisi Kaca / Acrylic","Partisi Papan / Triplek","Dak beton","Pengecatan ulang","Talang dak","Pipa / Drain","Shap","Asrama PURI","Alderon","Wallguard","gantungan Jam","tutup menhole","Karpet Lantai",],
-    "M.E. ( Umum )": [
-      "Microwave","Kompor Listrik","Mesin fhoto copy","Hot Trolly","Stir/putaran File","Mesin TIK","Kode Biru","Mesin FEX","Mesin penghancur kertas","Mesin potong rambut","mesin Cuci piring","Plang petunjuk","TOA mushola","Mesin Absen",],
-    "M.E. ( Penerangan )": [
-      "Saklar Lampu","Lampu LED 18w","Lampu Baca / Bedhead","Lampu LED 14w","Lampu Emergency","Lampu TL LED 14 WATT + 16 WATT","Lampu kulkas","Timer Switch Lampu","Ballast Lampu/ TL 36 Watt","Stater Lampu","Fitting Lampu","Lampu TL 36 w + LED","Lampu HPL / HPIT","Lampu LED DL -Tertutup 7 / 14 watt","TL 18w","Lampu LED 6 WATT + 12 WATT","Lampu PL-C 13 watt","Lampu PL-S 7 watt","Lampu T5 21 watt + 28 watt","Lampu TL36 w","Lampu Pijar 25 watt","Lampu T5 4 watt - 7w - 13 watt","Halopika  20 / 50 watt","Lampu LED 6w","Lampu LED 12w"
+    "SIPIL - Plumbing dan Drainase": [
+      "Pipa Galvanis", "Pipa PVC", "pompa air", "Drill  Got", "Drill got", "Pipa PPR", "Pipa / Drain", "tutup menhole", "Drainase"
+    ],
+    "SIPIL - Sanitair dan Perlengkapan Kamar Mandi": [
+      "Wastafel", "Jet Shower", "Shower", "Bathup", "Closet", "Flush Closet", "Floor Drain", "Stop Kran", "Gantungan Handuk", "Leher Angsa", "Tutup kloset", "Urinoir", "Spoel Hoek", "Slop Zinc", "selang fleksible", "Kran Air", "Gantungan shower", "Selang fleksible wastafel", "kran shower/jet swower", "Kran wastafal", "Gantungan Infus kamar mandi"
+    ],
+    "SIPIL - Furnitur dan Interior": [
+      "Meja", "Lemari", "Lemari Obat", "Kursi", "Kursi Rendeng", "HPL / Takon / Pelaminto", "ACRYLIC", "Rel Laci Meja", "Engsel Sendok", "Lemari Geser MR", "Loker", "Rel RaK File MR", "Sofa kayu", " Plastik Gordeng", "Tatakan  Viorex", "laci meja", "Meja makan", "sekat triplek", "Jongkok - Dingklik pasien", "Lemari file", "Laci Lemari", "MeJa Konti", "Akrilik", "Meja komputer", "Karpet Lantai"
+    ],
+    "SIPIL - Pekerjaan Logam dan Eksterior": [
+      "Gerbang pintu besi", "Portal", "Papan Nama", "HURUF TIMBUL RSPC", "Rolling Door", "Kanopi", "Pagar besi", "Jaring penahan Panas", "Tangga besi"
+    ],
+    "SIPIL - Lain-lain": [
+      "Khodeng", "Akrilik meja / AC Split", "gantungan Jam"
     ],
     "M.E. ( Kelistrikan )": [
       "Stop kontak","Steker","Kabel Power / Listrik","Kabel Rol","MCB / MCCB","Fuse","Contactor","Genset","Panel SDP","Panel PP","Panel LP","Panel-Panel","Cubical TM","Transformator","Capasitor Bank","ACB PLN","ACB Genset","Change Over Switch","LVMDP","Gardu PLN","Adaptor DC","Tiang lampu","Lampu LED TL 16w","Stop Kontak AC",],
