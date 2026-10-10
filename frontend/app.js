@@ -2160,7 +2160,9 @@
     const nolk = String(document.getElementById('NoLK')?.value || '').trim();
     const status = document.getElementById('pelaporLkToggleStatus');
     if(status){
-      status.textContent = (pelapor || nolk) ? 'Sudah diisi' : 'Belum diisi';
+      const nextText = (pelapor || nolk) ? 'Sudah diisi' : 'Belum diisi';
+      // Jangan mengganti text node pada setiap karakter bila statusnya sama.
+      if(status.textContent !== nextText) status.textContent = nextText;
     }
   }
 
