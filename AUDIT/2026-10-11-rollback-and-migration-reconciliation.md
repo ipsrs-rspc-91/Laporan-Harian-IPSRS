@@ -59,3 +59,16 @@ Branch GitHub bukan backup data Supabase. Belum ada dump database eksternal yang
 
 ### Keputusan aman saat ini
 Tidak ada SQL produksi yang dijalankan dalam audit lanjutan ini. Mitigasi privilege untuk dua snapshot publik tetap kandidat dan belum diterapkan. Sebelum memperbaiki keamanan, perlu memastikan tidak ada akses aplikasi yang bergantung pada tabel snapshot, lalu membuat perubahan sempit yang dapat dibalikkan serta menguji grant efektif setelahnya. Jangan aktifkan RLS tanpa memastikan kebutuhan akses pemulihan karena itu dapat mengunci akses ke snapshot.
+
+
+## Verifikasi integritas data terbaru (baca-saja)
+
+Pemeriksaan ulang langsung terhadap produksi:
+- Master aktif: 12 kategori, 46 area, 639 item. Total baris `master_data` 715 (termasuk 7 area nonaktif dan 11 item nonaktif).
+- Snapshot frontend `frontend/js/static-data.js` di `main` bertanda 11 Oktober 2026 dan menyatakan 12 kategori, 46 area, 639 item. Item penting `Manifold Gas N2O` dan `Cek List Meteran Air Deep Well` ada pada master aktif.
+- `reports`: 1.093 total, 1.086 aktif, 7 soft-deleted; tanggal laporan terlama 2026-09-12 dan terbaru 2026-10-11. Tidak ada kategori kosong dan tidak ada kategori laporan yang tidak terdapat di master kategori aktif.
+- Validasi master aktif: 0 item tanpa area aktif, 0 nama area aktif duplikat, 0 item aktif duplikat pada area yang sama.
+- Trigger validasi kategori baku, pencegah item master duplikat, pembatas identitas laporan, dan penetapan timestamp server terlihat aktif.
+- Policy RLS `staff` tidak terdeteksi; Security Advisor juga melaporkannya. Akses aplikasi harus diuji sebelum policy dibuat agar login/fitur yang berjalan melalui service role tidak rusak.
+
+Kesimpulan data: hitungan master aktif di Supabase konsisten dengan snapshot frontend terbaru yang tersimpan di `main`; audit baca-saja tidak menemukan anomali integritas pada tiga pemeriksaan master di atas. Ini bukan alasan untuk menghapus atau menulis ulang data yang sudah ada.
