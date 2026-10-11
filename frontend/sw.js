@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261011-area-add-removed";
+const CACHE_NAME = "lhi-shell-v20261011-area-group-dedup";
 
 self.addEventListener("install", () => self.skipWaiting());
 

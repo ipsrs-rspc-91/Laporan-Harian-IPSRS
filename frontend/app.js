@@ -1504,6 +1504,9 @@
         body.hidden=true;
         const areaButtons=[];
         groups.get(groupName).forEach(area=>{
+          // Area master bernama LAINNYA ditangani oleh judul kelompok LAINNYA,
+          // agar tidak tampil dua kali. Item asli tetap dimuat saat judul diklik.
+          if(groupName==='LAINNYA' && String(area).trim().toUpperCase()==='LAINNYA') return;
           const btn=document.createElement('button');
           btn.type='button';
           btn.className='area-item-picker-area';
@@ -1567,6 +1570,16 @@
             return;
           }
           const willOpen=body.hidden;
+          // Judul LAINNYA juga menjadi akses langsung ke area master LAINNYA.
+          // Area itu tidak ditampilkan lagi sebagai subkelompok duplikat.
+          if(groupName==='LAINNYA' && willOpen){
+            const directArea=groups.get(groupName).find(area=>String(area).trim().toUpperCase()==='LAINNYA');
+            if(directArea){
+              sel.value=directArea;
+              sel.dispatchEvent(new Event('change',{bubbles:true}));
+              renderItems_(directArea);
+            }
+          }
           // Accordion tunggal: saat kelompok baru dibuka, tutup semua kelompok lain.
           list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
             const otherHead=otherGroup.querySelector('.area-item-picker-group-head');
@@ -1586,10 +1599,7 @@
     }
 
     function open_(){
-      // Tombol tambah area hanya untuk KA IPSRS; sinkronkan setiap modal dibuka
-      // agar state role terbaru selalu diterapkan, termasuk modal yang sudah dibuat.
-      const addAreaButton=bg.querySelector('.area-item-picker-add');
-      if(addAreaButton) addAreaButton.style.display=(CURRENT_SESSION && CURRENT_SESSION.role==='KA_IPSRS') ? '' : 'none';
+      // Tombol Item Baru tetap tampil; tombol tambah area kerja sudah dihapus.
       renderAreas_();
       bg.classList.add('show');
       trigger.setAttribute('aria-expanded','true');
