@@ -1432,10 +1432,9 @@
         btn.className='area-item-picker-item';
         const label=document.createElement('span');
         label.textContent=itemName;
-        const arrow=document.createElement('span');
-        arrow.textContent='›';
-        arrow.setAttribute('aria-hidden','true');
-        btn.append(label,arrow);
+        // Seluruh kotak item dapat diklik untuk memilih item; tanpa panah
+        // navigasi karena klik tidak membuka dropdown/modal lanjutan.
+        btn.append(label);
         btn.addEventListener('click',()=>{
           sel.value=area;
           sel.dispatchEvent(new Event('change',{bubbles:true}));
