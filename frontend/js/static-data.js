@@ -140,3 +140,5 @@ const STATIC_KATEGORI = [
       "Benda Peraga","Rak / Data Try","Thyssenkrupp","Kotak K3RS","Cek List Ruangan","Pihak ke 3","Menurunkan Jenazah","Bau hangus","ASRAMA","pencatatan KWh meter","Foodcourt","Rapat Teknik","Setting sound","OTIS","Selang LPG","Area Dapur","Gantungan Masker","Gordyn","Area Rumah Tangga","Spanduk","Back Drop","Tess Food tender Catring","Rak buku","Lukisan / Gambar","gantungan baju"
     ]
   };
+
+// Master-data synchronization audit checked 2026-10-11.
