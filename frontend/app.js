@@ -1379,17 +1379,10 @@
       bg=document.createElement('div');
       bg.id='areaItemPickerModalBg';
       bg.className='area-item-picker-bg';
-      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-label area-item-picker-head-area">AREA KERJA</div><div class="area-item-picker-head-label area-item-picker-head-item">ITEM</div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-area-list"></div><button type="button" class="area-item-picker-add">＋  Area Kerja Baru</button></div><div class="area-item-picker-side"><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋  Item Baru</button></div></div></section>';
+      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-label area-item-picker-head-area">AREA KERJA</div><div class="area-item-picker-head-label area-item-picker-head-item">ITEM</div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-area-list"></div></div><div class="area-item-picker-side"><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋  Item Baru</button></div></div></section>';
       document.body.appendChild(bg);
       bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
-      bg.querySelector('.area-item-picker-add').addEventListener('click',()=>{
-        closeAreaItemPicker_();
-        const currentSelect=document.getElementById('AreaKerja');
-        if(!currentSelect) return;
-        currentSelect.value=ADD_NEW_VALUE;
-        currentSelect.dispatchEvent(new Event('change',{bubbles:true}));
-      });
       bg.querySelector('.area-item-picker-add-item').addEventListener('click',()=>{
         const currentArea=String(sel.value||'').trim();
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
