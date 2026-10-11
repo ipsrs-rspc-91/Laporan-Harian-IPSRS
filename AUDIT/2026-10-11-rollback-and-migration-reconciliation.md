@@ -39,3 +39,23 @@ Branch GitHub bukan backup data Supabase. Belum ada dump database eksternal yang
 - Jangan menjalankan `supabase db push` atau menerapkan ulang file migrasi lama secara massal.
 - Jangan memulihkan snapshot parsial ke `master_data` atau `reports` tanpa pemetaan ID, timestamp, dan dampak laporan yang dibuat sesudah snapshot.
 - Jangan mengubah/menonaktifkan trigger RLS atau kategori baku hanya untuk menyamakan riwayat migrasi.
+
+
+## Temuan lanjutan — audit baca-saja (11 Oktober 2026, 12:57 UTC)
+
+### Rekonsiliasi migrasi dan jalur pemulihan
+- Supabase project berstatus `ACTIVE_HEALTHY`, PostgreSQL 17.6.1.166.
+- Skema `rollback_20260926_1816` memang ada dan berisi delapan tabel historis. Ini adalah snapshot skema/data historis, bukan bukti backup penuh terkini: estimasi statistik menunjukkan `reports` sekitar 461 baris dan `master_data` sekitar 772 baris, sementara tabel produksi saat ini masing-masing 1.093 dan 715 baris. Angka historis tersebut hanya estimasi PostgreSQL, bukan hitungan eksak.
+- Tidak ditemukan grant tabel eksplisit ke `anon`, `authenticated`, atau `PUBLIC` pada skema rollback tersebut. Namun RLS juga tidak aktif di tabel-tabelnya; jangan menambah grant atau memulihkannya tanpa audit hak akses skema.
+- Catatan migrasi Supabase memuat `20260926112505_create_rollback_snapshot_20260926_1816`, tetapi file SQL dengan path/nama yang diperkirakan tidak ditemukan di `main`. Ini menambah bukti migration drift dan perlu dicari/diarsipkan dari sumber aslinya, bukan direkonstruksi lalu dijalankan ulang.
+- Branch database development Supabase yang terdaftar: tidak ada. Tidak ada lingkungan branch Supabase untuk menguji migrasi saat audit ini.
+
+### Hasil Supabase Security Advisor
+- **ERROR:** dua tabel snapshot publik tanpa RLS: `public.master_data_sipil_backup_20261010` dan `public.report_reclass_snapshot_20261011`.
+- **WARN:** tiga fungsi memiliki `search_path` yang dapat berubah: `prevent_duplicate_master_item`, `prevent_kategori_master_mutation`, dan `enforce_final_report_kategori`.
+- **WARN:** proteksi kata sandi bocor Supabase Auth nonaktif.
+- **INFO:** tabel `public.staff` RLS aktif tetapi tidak ada policy terdeteksi. Perlu memverifikasi jalur akses aplikasi/service-role sebelum menambah policy; jangan membuat policy tebakan.
+- Performance Advisor juga melaporkan 10 tabel tanpa primary key di skema snapshot historis dan dua tabel snapshot publik. Tidak ada indeks yang dihapus atau diubah.
+
+### Keputusan aman saat ini
+Tidak ada SQL produksi yang dijalankan dalam audit lanjutan ini. Mitigasi privilege untuk dua snapshot publik tetap kandidat dan belum diterapkan. Sebelum memperbaiki keamanan, perlu memastikan tidak ada akses aplikasi yang bergantung pada tabel snapshot, lalu membuat perubahan sempit yang dapat dibalikkan serta menguji grant efektif setelahnya. Jangan aktifkan RLS tanpa memastikan kebutuhan akses pemulihan karena itu dapat mengunci akses ke snapshot.
