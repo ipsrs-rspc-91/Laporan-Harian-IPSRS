@@ -291,7 +291,7 @@ const ITEMS_BY_AREA = {
     "Lampu led 12 w",
     "Lid 6 w",
     "Panel   LVMDP - CHILLER - GARFU  PLN - POMPA DW",
-    "LED 7 Watt Fhilips 60 cm"
+    "LED 7 Watt Fhilips 60 cm",
     "Lampu TL 36 w",
   ],
   "M.E. ( AC / Tata Udara / CHILLER )": [
