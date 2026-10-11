@@ -1903,6 +1903,11 @@
       const areas = Array.isArray(json.data.areas) ? json.data.areas : [];
       const items = json.data.items && typeof json.data.items === 'object' ? json.data.items : {};
       const kategori = Array.isArray(json.data.kategori) ? json.data.kategori : [];
+      if(!kategori.length || !areas.length || !Object.keys(items).length){
+        invalidateMasterDataFallback_();
+        console.error('[IPSRS_MASTER_DATA_INCOMPLETE]', { kategori:kategori.length, areas:areas.length, itemGroups:Object.keys(items).length });
+        return false;
+      }
       if(kategori.length){
         MASTER_KATEGORI = kategori
           .map(x => ({
