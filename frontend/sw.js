@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261012-area-no-hscroll1";
+const CACHE_NAME = "lhi-shell-v20261012-admin-below-util1";
 
 self.addEventListener("install", () => self.skipWaiting());
 
