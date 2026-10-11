@@ -12,7 +12,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: ipsrs-production
+  # Isolate each audited SHA so a later-completing stale audit cannot replace the latest commit's pending deployment.
+  group: ipsrs-production-${{ github.event.workflow_run.head_sha }}
   cancel-in-progress: false
 
 env:
