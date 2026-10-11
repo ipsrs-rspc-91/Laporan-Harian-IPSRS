@@ -1277,7 +1277,9 @@
     // membuat area utilitas jatuh ke kelompok generik LAINNYA.
     const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
     if(compact.includes('ceklistutilitas') || compact.includes('ceklistmeutiliti')) return 'CEK LIST UTILITAS';
-    // Rapat/Pertemuan adalah tombol kelompok tersendiri, tepat setelah Cek List Utilitas.
+    // Administrasi IPSRS menjadi tombol area tersendiri tepat setelah Cek List Utilitas.
+    if(compact === 'administrasiipsrs') return 'ADMINISTRASI IPSRS';
+    // Rapat/Pertemuan adalah tombol kelompok tersendiri.
     if(compact === 'rapatpertemuan') return 'RAPAT/PERTEMUAN';
     // Area panel LVMDV pada master data adalah kelompok cek list LVMDP.
     // Pisahkan dari LAINNYA agar sesuai pengelompokan operasional.
@@ -1290,7 +1292,7 @@
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
-    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST UTILITAS','RAPAT/PERTEMUAN','CEK LIST LVMDP','KITCHEN / DAPUR','LAINNYA'];
+    const base=['M.E.','SIPIL','ELEKTROMEDIK','KESLING','CEK LIST UTILITAS','ADMINISTRASI IPSRS','RAPAT/PERTEMUAN','CEK LIST LVMDP','KITCHEN / DAPUR','LAINNYA'];
     return mine ? [mine,...base.filter(x=>x!==mine)] : base;
   }
 
@@ -1491,7 +1493,7 @@
         const title=document.createElement('span');
         title.textContent=groupName==='CEK LIST UTILITAS' ? 'CEK LIST UTILITAS' : groupName==='RAPAT/PERTEMUAN' ? 'Rapat/Pertemuan' : groupName;
         const isChecklistUtility=groupName==='CEK LIST UTILITAS';
-        const isDirectAreaGroup=isChecklistUtility || groupName==='RAPAT/PERTEMUAN';
+        const isDirectAreaGroup=isChecklistUtility || groupName==='ADMINISTRASI IPSRS' || groupName==='RAPAT/PERTEMUAN';
         if(!isDirectAreaGroup){
           const plus=document.createElement('span');
           plus.className='area-item-picker-plus';
@@ -1560,7 +1562,7 @@
         head.addEventListener('click',()=>{
           // CEK LIST UTILITAS dan RAPAT/PERTEMUAN: klik judul langsung memuat
           // item di kanan, tanpa subkelompok dan tanpa ikon tambah.
-          if(groupName==='CEK LIST UTILITAS' || groupName==='RAPAT/PERTEMUAN'){
+          if(groupName==='CEK LIST UTILITAS' || groupName==='ADMINISTRASI IPSRS' || groupName==='RAPAT/PERTEMUAN'){
             list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
               const otherHead=otherGroup.querySelector('.area-item-picker-group-head');
               const otherBody=otherGroup.querySelector('.area-item-picker-group-body');
@@ -1575,7 +1577,9 @@
             const directArea=groups.get(groupName).find(area =>
               groupName==='RAPAT/PERTEMUAN'
                 ? String(area).trim().toLowerCase()==='rapat/pertemuan'
-                : true
+                : groupName==='ADMINISTRASI IPSRS'
+                  ? String(area).trim().toLowerCase()==='administrasi ipsrs'
+                  : true
             );
             if(directArea){
               sel.value=directArea;
