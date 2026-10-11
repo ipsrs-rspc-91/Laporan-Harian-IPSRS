@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261011-master-sync-guard1";
+const CACHE_NAME = "lhi-shell-v20261011-master-sync-guard2";
 
 self.addEventListener("install", () => self.skipWaiting());
 
