@@ -1325,6 +1325,8 @@
       .area-item-picker-columns{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr);min-height:260px;overflow:hidden;flex:1}
       .area-item-picker-side{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:12px}
       .area-item-picker-area-list,.area-item-picker-item-list{min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain;overflow-anchor:none}
+      .area-item-picker-area-list{overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;box-sizing:border-box}
+      .area-item-picker-area-list .area-item-picker-group,.area-item-picker-area-list .area-item-picker-area,.area-item-picker-area-list .area-item-picker-group-head{max-width:100%;box-sizing:border-box}
       .area-item-picker-group{border-bottom:1px solid #e2e8f0;padding:0 0 5px;margin:0 0 5px}
       .area-item-picker-group-head{display:flex;width:100%;min-height:42px;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;text-align:left;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
       .area-item-picker-group-head:hover{background:#f8fafc}
