@@ -1,5 +1,5 @@
 // GENERATED FROM public.master_data active rows; do not hand-edit.
-// Snapshot: 2026-10-11. Counts: 12 categories, 46 areas, 639 items.
+// Snapshot: 2026-10-11. Counts: 12 categories, 46 areas, 640 items.
 const STATIC_KATEGORI = [
   "PEMELIHARAAN",
   "PERBAIKAN",
@@ -292,6 +292,7 @@ const ITEMS_BY_AREA = {
     "Lid 6 w",
     "Panel   LVMDP - CHILLER - GARFU  PLN - POMPA DW",
     "LED 7 Watt Fhilips 60 cm"
+    "Lampu TL 36 w",
   ],
   "M.E. ( AC / Tata Udara / CHILLER )": [
     "Ac Sentral",
