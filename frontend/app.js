@@ -3271,9 +3271,8 @@
   }
 
   function openTambahKategoriModal(){
-    document.getElementById('kategoriBaruInput').value = '';
-    setMsg('kategoriBaruMsg', '');
-    document.getElementById('kategoriModalBg').classList.add('show');
+    setMsg('kategoriBaruMsg', 'Kategori baku sudah dikunci. Penambahan kategori baru tidak diizinkan.', true);
+    return false;
   }
   function closeTambahKategoriModal(){
     document.getElementById('kategoriModalBg').classList.remove('show');
@@ -5828,7 +5827,7 @@
     // Inisialisasi login HARUS ringan. Data tambahan dimuat di background/lazy
     // supaya user tidak tertahan di splash screen dan tidak ada navigasi tertunda.
     if(CURRENT_SESSION && CURRENT_SESSION.role === 'KA_IPSRS'){
-      appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
+      // Kategori baku dikunci; tidak ada opsi tambah kategori.
       appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
     }
     refreshItemOptions();
@@ -5841,7 +5840,7 @@
     // Tidak ada lagi jeda 1,2 detik atau edit manual static-data.js untuk perubahan master.
     _customDataReady = loadMasterDataFromSupabase().then(() => {
       if(CURRENT_SESSION && CURRENT_SESSION.role === 'KA_IPSRS'){
-        appendAddNewOption('Kategori', '+ Tambah Kategori Baru');
+        // Kategori baku dikunci; tidak ada opsi tambah kategori.
         appendAddNewOption('AreaKerja', '+ Tambah Area Kerja Baru');
       }
       refreshItemOptions();
