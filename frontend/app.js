@@ -1546,6 +1546,13 @@
           body.appendChild(btn);
           areaButtons.push(btn);
         });
+        const scrollGroupToTop=()=>requestAnimationFrame(()=>{
+          // Posisikan kelompok yang baru diklik di bagian atas area scroll,
+          // agar daftar area langsung terlihat tanpa pengguna menggulir manual.
+          const listRect=list.getBoundingClientRect();
+          const groupRect=group.getBoundingClientRect();
+          list.scrollTop += groupRect.top-listRect.top;
+        });
         head.addEventListener('click',()=>{
           // CEK LIST UTILITAS: klik judul langsung memuat item di kanan,
           // tanpa membuka subkelompok dan tanpa ikon tambah.
@@ -1567,6 +1574,7 @@
               sel.dispatchEvent(new Event('change',{bubbles:true}));
               renderItems_(directArea);
             }
+            scrollGroupToTop();
             return;
           }
           const willOpen=body.hidden;
@@ -1592,6 +1600,7 @@
             otherHead.classList.remove('is-direct-active');
             if(otherPlus) otherPlus.textContent=isCurrent && willOpen ? '−' : '+';
           });
+          scrollGroupToTop();
         });
         group.append(head,body);
         list.appendChild(group);
