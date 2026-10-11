@@ -272,11 +272,11 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Block failed production deployment
-        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' }}
+      - name: Block failed or skipped required production deployment
+        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') }}
         run: |
-          echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED"
-          echo "A required deployment target failed or was cancelled."
+          echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED OR WAS SKIPPED"
+          echo "A required deployment target failed, was cancelled, or was unexpectedly skipped."
           exit 1
 
       - name: Deployment target summary
