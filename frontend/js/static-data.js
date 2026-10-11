@@ -730,7 +730,7 @@ const ITEMS_BY_AREA = {
     "Saluran Air Kotor"
   ],
   "LAINNYA": [],
-  "Rapat/Sosialisasil/Pertemuan": [
+  "Rapat/Pertemuan": [
     "Morning Report",
     "Brefing IPSRS",
     "Rapat Klarifikasi/Negosiasi Vendor",
