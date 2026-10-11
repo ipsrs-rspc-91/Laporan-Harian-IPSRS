@@ -1874,10 +1874,32 @@
    * Satu request mengambil seluruh master aktif sehingga perubahan nama,
    * penambahan, nonaktif, dan perubahan parent langsung diikuti frontend.
    */
+  // Prevent stale STATIC_* fallback data from remaining selectable when the
+  // authoritative Supabase master-data request fails or returns an incomplete payload.
+  function invalidateMasterDataFallback_(){
+    MASTER_AREA = [];
+    MASTER_ITEMS_BY_AREA = {};
+    MASTER_KATEGORI = [];
+    MASTER_DATA_LOADED = false;
+    ['Kategori','FilterKategori','AreaKerja','FilterArea','Item'].forEach(id=>{
+      const sel=document.getElementById(id);
+      if(!sel) return;
+      const addNew=Array.from(sel.options).find(o=>o.value===ADD_NEW_VALUE);
+      sel.innerHTML='';
+      const empty=document.createElement('option');
+      empty.value='';
+      empty.textContent='Data master belum tersedia';
+      sel.appendChild(empty);
+      if(addNew) sel.appendChild(addNew);
+    });
+    try{ buildAreaKerjaPicker_(); syncAreaKerjaPicker_(); }catch(_e){}
+    try{ refreshItemOptions(); }catch(_e){}
+  }
+
   async function loadMasterDataFromSupabase(){
     try{
       const json = await authRun('apiGetMasterData');
-      if(!json || !json.ok || !json.data) return false;
+      if(!json || !json.ok || !json.data){ invalidateMasterDataFallback_(); return false; }
       const areas = Array.isArray(json.data.areas) ? json.data.areas : [];
       const items = json.data.items && typeof json.data.items === 'object' ? json.data.items : {};
       const kategori = Array.isArray(json.data.kategori) ? json.data.kategori : [];
@@ -1942,7 +1964,9 @@
       if(currentItem) setInputSelectValue('Item', currentItem);
       return true;
     }catch(e){
-      // Static fallback tetap aktif bila Supabase master gagal dimuat.
+      // Jangan tampilkan data master cadangan lama saat Supabase gagal dimuat.
+      invalidateMasterDataFallback_();
+      console.error('[IPSRS_MASTER_DATA_LOAD_FAILED]', e);
       return false;
     }
   }
