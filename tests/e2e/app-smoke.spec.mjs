@@ -282,3 +282,34 @@ test('add-item modal opens from input form when report fields are populated', as
   await expect(page.locator('#itemModalBg')).toBeVisible();
   expect(runtimeErrors, 'No runtime error may prevent opening the add-item modal').toEqual([]);
 });
+
+
+test('area picker stays open and explains when Item Baru is tapped without selecting an area', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+
+  const setup = await page.evaluate(() => {
+    const area = document.getElementById('AreaKerja');
+    const item = document.getElementById('Item');
+    if (!area || !item || typeof window.buildAreaKerjaPicker_ !== 'function') {
+      return { ready: false, builder: typeof window.buildAreaKerjaPicker_ };
+    }
+    area.value = '';
+    item.value = '';
+    window.buildAreaKerjaPicker_();
+    return { ready: true, areaValue: area.value };
+  });
+  expect(setup.ready, 'Real area picker builder must be available').toBeTruthy();
+  expect(setup.areaValue).toBe('');
+
+  await page.locator('#areaKerjaPicker .area-picker-trigger').click();
+  await expect(page.locator('#areaItemPickerModalBg')).toBeVisible();
+  await page.locator('.area-item-picker-add-item').click();
+
+  await expect(page.locator('#areaItemPickerModalBg')).toBeVisible();
+  await expect(page.locator('.area-item-picker-item-list'))
+    .toContainText('Pilih sub-area di kolom kiri dulu, lalu tekan Item Baru.');
+  await expect(page.locator('#itemModalBg')).not.toBeVisible();
+});
