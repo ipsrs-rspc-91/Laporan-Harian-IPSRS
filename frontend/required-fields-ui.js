@@ -173,19 +173,55 @@
     page.addEventListener('input',scheduleRefresh);
     page.addEventListener('change',scheduleRefresh);
 
+    // Tutup modal native/browser dapat tidak menghasilkan click atau keydown
+    // (terutama tombol Back Android). Pantau perubahan status modal, bukan hanya
+    // perubahan isi #page-input, lalu hitung ulang kelas warna berdasarkan nilai.
+    const modalIds = new Set([
+      'areaItemPickerModalBg',
+      'ipsrsKategoriModalRoot','ipsrsKategoriModal1','ipsrsKategoriModal2','ipsrsKategoriModal3',
+      'datetimePickerBackdrop','sparePartUnitModal','requiredFieldsModalBg'
+    ]);
+    let modalRefreshQueued = false;
+    const modalObserver = new MutationObserver(mutations=>{
+      const relevant = mutations.some(m=>{
+        const target = m.target;
+        if(!target || target.nodeType !== 1 || !modalIds.has(target.id)) return false;
+        if(m.attributeName === 'hidden') return true;
+        if(m.attributeName === 'class'){
+          const before = String(m.oldValue || '');
+          const after = String(target.className || '');
+          return before.split(/\\s+/).includes('show') !== after.split(/\\s+/).includes('show') ||
+            before.split(/\\s+/).includes('hidden') !== after.split(/\\s+/).includes('hidden');
+        }
+        return false;
+      });
+      if(!relevant || modalRefreshQueued) return;
+      modalRefreshQueued = true;
+      requestAnimationFrame(()=>{ modalRefreshQueued=false; refresh(); });
+    });
+    modalObserver.observe(document.body,{subtree:true,attributes:true,attributeOldValue:true,attributeFilter:['class','hidden']});
+
     // Klik penutup modal berada di luar #page-input. Sinkronkan setelah modal
     // ditutup agar field kosong langsung kembali putih, tanpa mengubah nilainya.
     document.addEventListener('click',scheduleRefresh,true);
+    document.addEventListener('pointerup',scheduleRefresh,true);
     document.addEventListener('keydown',e=>{
       if(e.key==='Escape' || e.key==='Backspace') scheduleRefresh();
     },true);
+    document.addEventListener('keyup',e=>{
+      if(e.key==='Escape' || e.key==='Backspace') scheduleRefresh();
+    },true);
     window.addEventListener('popstate',scheduleRefresh);
+    window.addEventListener('hashchange',scheduleRefresh);
     window.addEventListener('pageshow',scheduleRefresh);
     window.addEventListener('focus',scheduleRefresh);
     document.addEventListener('visibilitychange',scheduleRefresh);
 
-    // Pantau struktur yang berubah, termasuk modal/picker yang ditutup atau dibuat
-    // ulang. Observer hanya mengamati perubahan node, bukan kelas visual.
+    // Dipanggil eksplisit oleh fungsi penutup modal. Tetap gunakan sumber nilai
+    // native agar membuka/menutup modal tanpa memilih tidak pernah menjadi hijau.
+    window.__ipsrsRefreshFieldColors = refresh;
+
+    // Pantau field yang dibuat ulang di dalam formulir.
     let refreshQueued = false;
     const observer=new MutationObserver(()=>{
       if(refreshQueued) return;
