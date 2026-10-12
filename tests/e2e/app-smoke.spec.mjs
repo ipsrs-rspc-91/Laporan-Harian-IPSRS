@@ -167,6 +167,58 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
 
 
 
+test('area picker Item Baru opens modal and preserves selected item when fields are populated', async ({ page }) => {
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
+
+  const setup = await page.evaluate(() => {
+    const area = document.getElementById('AreaKerja');
+    const item = document.getElementById('Item');
+    if (!area || !item || typeof window.buildAreaKerjaPicker_ !== 'function') {
+      return { areaExists: !!area, itemExists: !!item, pickerBuilder: typeof window.buildAreaKerjaPicker_ };
+    }
+
+    // Arrange a realistic, already-filled form locally. No API calls or writes.
+    const areaName = 'M.E. Umum';
+    if (![...area.options].some(o => o.value === areaName)) area.add(new Option(areaName, areaName));
+    area.value = areaName;
+    item.innerHTML = '';
+    item.add(new Option('Pilih item…', ''));
+    item.add(new Option('Lampu LED', 'Lampu LED'));
+    item.add(new Option('+ Tambah Item Baru', '__ADD_NEW__'));
+    item.value = 'Lampu LED';
+    window.buildAreaKerjaPicker_();
+    return {
+      areaExists: true,
+      itemExists: true,
+      pickerBuilder: typeof window.buildAreaKerjaPicker_,
+      selectedArea: area.value,
+      selectedItem: item.value
+    };
+  });
+
+  expect(setup.areaExists && setup.itemExists, 'Area and Item controls must exist').toBeTruthy();
+  expect(setup.pickerBuilder, 'Real area picker builder must be callable').toBe('function');
+  expect(setup.selectedArea).toBe('M.E. Umum');
+  expect(setup.selectedItem).toBe('Lampu LED');
+
+  await page.locator('#areaKerjaPicker .area-picker-trigger').click();
+  await page.locator('.area-item-picker-group-head').filter({ hasText: 'M.E.' }).first().click();
+  await page.locator('.area-item-picker-area[data-area-value="M.E. Umum"]').click();
+  await page.locator('.area-item-picker-add-item').click();
+
+  await expect(page.locator('#itemModalBg')).toBeVisible({ timeout: 2000 });
+  await expect(page.locator('#itemBaruAreaLabel')).toHaveText('M.E. Umum');
+  await expect(page.locator('#itemBaruInput')).toBeVisible();
+  await expect(page.locator('#Item')).toHaveValue('Lampu LED');
+  expect(runtimeErrors, 'No runtime errors in the real picker click path').toEqual([]);
+});
+
 test('add-item modal opens from input form when report fields are populated', async ({ page }) => {
   const runtimeErrors = [];
   page.on('pageerror', error => runtimeErrors.push(error.message));
@@ -229,4 +281,35 @@ test('add-item modal opens from input form when report fields are populated', as
   expect(setup.modalAreaLabel).toBe('Rapat dan Pertemuan');
   await expect(page.locator('#itemModalBg')).toBeVisible();
   expect(runtimeErrors, 'No runtime error may prevent opening the add-item modal').toEqual([]);
+});
+
+
+test('area picker stays open and explains when Item Baru is tapped without selecting an area', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+
+  const setup = await page.evaluate(() => {
+    const area = document.getElementById('AreaKerja');
+    const item = document.getElementById('Item');
+    if (!area || !item || typeof window.buildAreaKerjaPicker_ !== 'function') {
+      return { ready: false, builder: typeof window.buildAreaKerjaPicker_ };
+    }
+    area.value = '';
+    item.value = '';
+    window.buildAreaKerjaPicker_();
+    return { ready: true, areaValue: area.value };
+  });
+  expect(setup.ready, 'Real area picker builder must be available').toBeTruthy();
+  expect(setup.areaValue).toBe('');
+
+  await page.locator('#areaKerjaPicker .area-picker-trigger').click();
+  await expect(page.locator('#areaItemPickerModalBg')).toBeVisible();
+  await page.locator('.area-item-picker-add-item').click();
+
+  await expect(page.locator('#areaItemPickerModalBg')).toBeVisible();
+  await expect(page.locator('.area-item-picker-item-list'))
+    .toContainText('Pilih sub-area di kolom kiri dulu, lalu tekan Item Baru.');
+  await expect(page.locator('#itemModalBg')).not.toBeVisible();
 });
