@@ -313,3 +313,38 @@ test('area picker stays open and explains when Item Baru is tapped without selec
     .toContainText('Pilih sub-area di kolom kiri dulu, lalu tekan Item Baru.');
   await expect(page.locator('#itemModalBg')).not.toBeVisible();
 });
+
+
+test('direct Area Kerja group selection is retained for Item Baru', async ({ page }) => {
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+
+  const setup = await page.evaluate(() => {
+    const area = document.getElementById('AreaKerja');
+    const item = document.getElementById('Item');
+    if (!area || !item || typeof window.buildAreaKerjaPicker_ !== 'function') return false;
+    if (![...area.options].some(o => o.value.trim().toLowerCase() === 'rapat/pertemuan')) {
+      area.add(new Option('Rapat/Pertemuan', 'Rapat/Pertemuan'));
+    }
+    area.value = '';
+    item.value = '';
+    // Reproduce the production lifecycle: picker is built more than once before use.
+    window.buildAreaKerjaPicker_();
+    window.buildAreaKerjaPicker_();
+    return [...area.options].some(o => o.value.trim().toLowerCase() === 'rapat/pertemuan');
+  });
+  expect(setup, 'Rapat/Pertemuan direct area must exist').toBeTruthy();
+
+  await page.locator('#areaKerjaPicker .area-picker-trigger').click();
+  await page.locator('.area-item-picker-group-head').filter({ hasText: 'Rapat/Pertemuan' }).click();
+  await expect(page.locator('.area-item-picker-item-list')).not.toContainText('Pilih kelompok dan area kerja');
+  await page.locator('.area-item-picker-add-item').click();
+
+  await expect(page.locator('#itemModalBg')).toBeVisible({ timeout: 2500 });
+  await expect(page.locator('#itemBaruAreaLabel')).toHaveText('Rapat/Pertemuan');
+  expect(runtimeErrors, 'No runtime errors for direct group selection').toEqual([]);
+});
