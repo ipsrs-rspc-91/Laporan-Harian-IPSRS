@@ -208,7 +208,7 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
   expect(setup.selectedItem).toBe('Lampu LED');
 
   await page.locator('#areaKerjaPicker .area-picker-trigger').click();
-  await page.getByRole('button', { name: /M\.E\./i }).first().click();
+  await page.locator('.area-item-picker-group-head').filter({ hasText: /^M\\.E\\.$/ }).click();
   await page.locator('.area-item-picker-area[data-area-value="M.E. Umum"]').click();
   await page.locator('.area-item-picker-add-item').click();
 
