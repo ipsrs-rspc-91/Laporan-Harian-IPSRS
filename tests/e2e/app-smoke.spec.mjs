@@ -164,3 +164,69 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
 
   expect(runtimeErrors, 'No runtime error may abort keyboard next-field scroll').toEqual([]);
 });
+
+
+
+test('add-item modal opens from input form when report fields are populated', async ({ page }) => {
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  // Modal harus tersedia bersama fragment input, tanpa menunggu fragment Laporan.
+  await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  // Smoke test berjalan tanpa autentikasi; tampilkan shell seperti tes form mobile
+  // agar visibility modal diuji, bukan status hidden pada shell login.
+  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
+  await expect(page.locator('#itemBaruAreaLabel')).toBeAttached();
+  await expect(page.locator('#itemBaruInput')).toBeAttached();
+
+  // Isi form secara lokal saja. Tidak login, tidak memanggil simpan, dan tidak menulis ke API/DB.
+  const setup = await page.evaluate(() => {
+    const values = {
+      Tanggal: '2026-10-12',
+      Pelapor: 'Uji Regresi',
+      Ruang: 'Ruang Uji',
+      MasalahKegiatan: 'Uji modal saat formulir terisi',
+      Tindakan: 'Uji regresi tanpa menyimpan laporan'
+    };
+    const fields = {};
+    for (const [id, value] of Object.entries(values)) {
+      const el = document.getElementById(id);
+      fields[id] = !!el;
+      if (el) el.value = value;
+    }
+
+    const area = document.getElementById('AreaKerja');
+    const item = document.getElementById('Item');
+    if (area && ![...area.options].some(o => o.value === 'Rapat dan Pertemuan')) {
+      area.add(new Option('Rapat dan Pertemuan', 'Rapat dan Pertemuan'));
+    }
+    if (area) area.value = 'Rapat dan Pertemuan';
+    if (item && ![...item.options].some(o => o.value === '__ADD_NEW__')) {
+      item.add(new Option('+ Tambah Item Baru', '__ADD_NEW__'));
+    }
+    if (item) item.value = '__ADD_NEW__';
+
+    const handlerType = typeof window.handleItemChange;
+    if (handlerType === 'function') window.handleItemChange();
+    return {
+      fields,
+      areaExists: !!area,
+      itemExists: !!item,
+      handlerType,
+      modalHasShow: !!document.getElementById('itemModalBg')?.classList.contains('show'),
+      modalAreaLabel: document.getElementById('itemBaruAreaLabel')?.textContent
+    };
+  });
+
+  expect(Object.values(setup.fields).every(Boolean), 'Representative report fields must exist').toBeTruthy();
+  expect(setup.areaExists && setup.itemExists, 'Area and Item controls must exist').toBeTruthy();
+  expect(setup.handlerType, 'The real Item change handler must be available').toBe('function');
+  expect(setup.modalHasShow, 'Add-item modal must open after report fields have values').toBeTruthy();
+  expect(setup.modalAreaLabel).toBe('Rapat dan Pertemuan');
+  await expect(page.locator('#itemModalBg')).toBeVisible();
+  expect(runtimeErrors, 'No runtime error may prevent opening the add-item modal').toEqual([]);
+});
