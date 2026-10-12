@@ -1647,6 +1647,9 @@
     syncAreaKerjaPicker_();
   }
 
+  // Expose picker builder for deterministic UI initialization and regression testing.
+  window.buildAreaKerjaPicker_ = buildAreaKerjaPicker_;
+
   function closeAreaItemPicker_(){
     const bg=document.getElementById('areaItemPickerModalBg');
     if(bg) bg.classList.remove('show');
