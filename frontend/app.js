@@ -3440,9 +3440,13 @@
     appendAddNewOption('Item', '+ Tambah Item Baru');
   }
 
-  function handleItemChange(){
+  function handleItemChange(event){
     const sel = document.getElementById('Item');
     if(sel.value === ADD_NEW_VALUE){
+      // Pemilihan "Tambah Item Baru" membuka modal, bukan memindahkan
+      // viewport ke tombol Simpan. Hentikan event sebelum listener change
+      // global menjalankan koreksi scroll keyboard Android.
+      if(event && typeof event.stopPropagation === 'function') event.stopPropagation();
       sel.value = ''; // select dikembalikan ke kosong SEBELUM modal dibuka
       const area = document.getElementById('AreaKerja').value;
       if(!area){ setMsg('msgInput', 'Pilih Area Kerja terlebih dahulu sebelum menambah item.', true); return; }
