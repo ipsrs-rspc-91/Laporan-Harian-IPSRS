@@ -131,53 +131,61 @@
 
   function syncFieldColor(el){
     if(!el || !el.classList) return;
-    const isProxy = el.id==='KategoriModalTrigger' || el.id==='areaKerjaPicker' ||
+    const isModalProxy = el.id==='KategoriModalTrigger' ||
+      el.id==='areaKerjaPicker' || el.classList.contains('area-picker-trigger') ||
       el.id==='TanggalWaktuDisplay' || el.classList.contains('status-choice-group') ||
-      el.classList.contains('spmu-choice-group') || el.classList.contains('area-picker-trigger');
-    if(!isProxy && !el.matches('input,textarea,select')) return;
-    setClass(el, 'ipsrs-field-filled', hasFieldValue(el));
-    setClass(el, 'ipsrs-field-focused', document.activeElement === el);
+      el.classList.contains('spmu-choice-group');
+    if(!isModalProxy && !el.matches('input,textarea,select')) return;
+
+    // Nilai data adalah satu-satunya penentu status "terisi".
+    // Fokus/tap tidak boleh meninggalkan status hijau pada field kosong.
+    const filled = hasFieldValue(el);
+    setClass(el, 'ipsrs-field-filled', filled);
+
+    // Tombol pembuka modal sering tetap menjadi activeElement setelah modal
+    // ditutup (termasuk tombol Back Android). Jangan anggap itu sebagai field
+    // yang sedang diketik; warna proxy mengikuti nilai yang benar-benar dipilih.
+    const focused = !isModalProxy && document.activeElement === el;
+    setClass(el, 'ipsrs-field-focused', focused);
   }
 
   function initFieldColorStates(){
     const page=document.getElementById('page-input');
     if(!page || page.dataset.ipsrsFieldColorsBound) return;
     page.dataset.ipsrsFieldColorsBound='1';
-    const proxies=[
-      document.getElementById('KategoriModalTrigger'),
-      document.getElementById('areaKerjaPicker'),
-      document.getElementById('TanggalWaktuDisplay'),
-      page.querySelector('.status-choice-group'),
-      page.querySelector('.spmu-choice-group')
-    ].filter(Boolean);
+
     const refresh=()=>{
+      // Ambil elemen proxy terbaru setiap refresh karena picker dapat dibangun ulang.
       page.querySelectorAll('input,textarea,select').forEach(syncFieldColor);
-      proxies.forEach(syncFieldColor);
-      const areaTrigger=page.querySelector('.area-picker-trigger');
-      if(areaTrigger) syncFieldColor(areaTrigger);
+      [
+        document.getElementById('KategoriModalTrigger'),
+        document.getElementById('areaKerjaPicker'),
+        document.getElementById('TanggalWaktuDisplay'),
+        page.querySelector('.status-choice-group'),
+        page.querySelector('.spmu-choice-group'),
+        page.querySelector('.area-picker-trigger')
+      ].filter(Boolean).forEach(syncFieldColor);
     };
-    page.addEventListener('focusin',e=>{
-      const target=e.target;
-      if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
-        setClass(target, 'ipsrs-field-focused', true);
-        setClass(target, 'ipsrs-field-filled', false);
-      }
-      refresh();
-    });
-    page.addEventListener('focusout',e=>{
-      const target=e.target;
-      if(target.matches && target.matches('input,textarea,select,[role="button"],button')){
-        setClass(target, 'ipsrs-field-focused', false);
-        syncFieldColor(target);
-      }
-      refresh();
-    });
-    page.addEventListener('input',refresh);
-    page.addEventListener('change',refresh);
-    page.addEventListener('click',()=>requestAnimationFrame(refresh));
-    // Pantau penambahan/penghapusan node saja. Perubahan class visual dibuat oleh
-    // refresh() sendiri, sedangkan nilai form diperbarui lewat event input/change.
-    // Ini mencegah observer memicu refresh hanya karena kelas visual berubah.
+    const scheduleRefresh=()=>requestAnimationFrame(refresh);
+
+    page.addEventListener('focusin',scheduleRefresh);
+    page.addEventListener('focusout',scheduleRefresh);
+    page.addEventListener('input',scheduleRefresh);
+    page.addEventListener('change',scheduleRefresh);
+
+    // Klik penutup modal berada di luar #page-input. Sinkronkan setelah modal
+    // ditutup agar field kosong langsung kembali putih, tanpa mengubah nilainya.
+    document.addEventListener('click',scheduleRefresh,true);
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape' || e.key==='Backspace') scheduleRefresh();
+    },true);
+    window.addEventListener('popstate',scheduleRefresh);
+    window.addEventListener('pageshow',scheduleRefresh);
+    window.addEventListener('focus',scheduleRefresh);
+    document.addEventListener('visibilitychange',scheduleRefresh);
+
+    // Pantau struktur yang berubah, termasuk modal/picker yang ditutup atau dibuat
+    // ulang. Observer hanya mengamati perubahan node, bukan kelas visual.
     let refreshQueued = false;
     const observer=new MutationObserver(()=>{
       if(refreshQueued) return;
