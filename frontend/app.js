@@ -3443,14 +3443,21 @@
   function handleItemChange(event){
     const sel = document.getElementById('Item');
     if(sel.value === ADD_NEW_VALUE){
-      // Pemilihan "Tambah Item Baru" membuka modal, bukan memindahkan
-      // viewport ke tombol Simpan. Hentikan event sebelum listener change
-      // global menjalankan koreksi scroll keyboard Android.
+      // Cegah event change memicu listener scroll global.
       if(event && typeof event.stopPropagation === 'function') event.stopPropagation();
-      sel.value = ''; // select dikembalikan ke kosong SEBELUM modal dibuka
+      sel.value = '';
       const area = document.getElementById('AreaKerja').value;
       if(!area){ setMsg('msgInput', 'Pilih Area Kerja terlebih dahulu sebelum menambah item.', true); return; }
-      openTambahItemModal();
+
+      // Android dapat menyelesaikan event native select setelah change.
+      // Buka modal pada task berikutnya agar event penutup native picker
+      // tidak langsung menutup modal yang baru tampil.
+      window.setTimeout(function(){
+        const page = document.getElementById('page-input');
+        const modal = document.getElementById('itemModalBg');
+        if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)) return;
+        openTambahItemModal();
+      }, 0);
       return;
     }
 
