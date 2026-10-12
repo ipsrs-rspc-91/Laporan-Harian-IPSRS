@@ -1413,25 +1413,24 @@
           sel.value=areaName;
           sel.dispatchEvent(new Event('change',{bubbles:true}));
         }
-        closeAreaItemPicker_();
+        // Validasi tujuan sebelum menutup picker agar tidak meninggalkan layar kosong.
+        const page=document.getElementById('page-input');
+        const modal=document.getElementById('itemModalBg');
+        if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)){
+          console.warn('[IPSRS] Modal Tambah Item tidak dibuka', {
+            pageExists:!!page,
+            pageActive:!!page?.classList.contains('active'),
+            modalExists:!!modal,
+            modalInsideInputPage:!!(page && modal && page.contains(modal))
+          });
+          return;
+        }
 
-        // Beri waktu Android menyelesaikan siklus tap dan penutupan overlay picker
-        // sebelum menampilkan modal kedua. Modal harus tetap berada di halaman input.
-        // Tidak memakai synthetic change pada select Item.
-        window.setTimeout(function(){
-          const page=document.getElementById('page-input');
-          const modal=document.getElementById('itemModalBg');
-          if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)){
-            console.warn('[IPSRS] Modal Tambah Item tidak dibuka', {
-              pageExists:!!page,
-              pageActive:!!page?.classList.contains('active'),
-              modalExists:!!modal,
-              modalInsideInputPage:!!(page && modal && page.contains(modal))
-            });
-            return;
-          }
-          openTambahItemModal();
-        },450);
+        // Tutup picker dan buka modal tujuan dalam satu event turn.
+        // Browser melukis hasil akhirnya sekali, sehingga tidak ada jeda 450 ms
+        // atau frame kosong yang terlihat di antara kedua modal.
+        closeAreaItemPicker_();
+        openTambahItemModal();
       });
     }
 

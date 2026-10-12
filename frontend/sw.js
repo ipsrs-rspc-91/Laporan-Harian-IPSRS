@@ -1,4 +1,4 @@
-const CACHE_NAME = "lhi-shell-v20261013-item-modal-android-fix7";
+const CACHE_NAME = "lhi-shell-v20261013-item-modal-android-fix8";
 
 self.addEventListener("install", () => self.skipWaiting());
 
