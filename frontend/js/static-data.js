@@ -1,5 +1,6 @@
-// GENERATED FROM public.master_data active rows; do not hand-edit.
-// Snapshot: 2026-10-11. Counts: 12 categories, 46 areas, 640 items.
+// GENERATED FROM live public.master_data in Supabase; do not hand-edit.
+// Snapshot generated: 2026-10-12 (Asia/Jakarta). Live counts: 12 categories, 46 active areas, 642 active items mapped to active areas.
+// Runtime source of truth is apiGetMasterData. This snapshot must never override a successful live response.
 const STATIC_KATEGORI = [
   "PEMELIHARAAN",
   "PERBAIKAN",
@@ -39,8 +40,9 @@ const STATIC_AREA = [
   "M.E. ( Hydrant )",
   "ELEKTROMEDIK UMUM",
   "ELEKTROMEDIK DIAGNOSTIK",
-  "ELEKTROMEDIK TERAPI & BEDAH",
-  "ELEKTROMEDIK LAB & HD",
+  "ELEKTROMEDIK RADIOLOGI",
+  "ELEKTROMEDIK TERAPI, BEDAH & ANESTESI",
+  "ELEKTROMEDIK LABORATORIUM, HD & STERILISASI",
   "ELEKTROMEDIK GAS MEDIS",
   "ELEKTROMEDIK PENUNJANG",
   "KESLING ( Umum )",
@@ -48,20 +50,19 @@ const STATIC_AREA = [
   "KESLING (Sistem Air Bersih)",
   "KESLING (Sistem Limbah B3)",
   "Cek List Utilitas",
-  "Rapat/Pertemuan",
   "KESLING (Pengendalian Vektor dan Binatang Pembawa Penyakit)",
+  "Administrasi IPSRS",
   "M.E. (Kitchen)",
+  "Rapat/Pertemuan",
   "KESLING (Pemantauan Kualitas Lingkungan)",
   "KESLING (Sanitasi dan Higiene Lingkungan)",
   "LAINNYA",
-    "Survei",
-  "Laporan/Surat",
+  "UMUM",
+  "Survei",
   "K3RS",
-  "Administrasi IPSRS",
   "Aksesoris",
   "Gambar",
-  "Area IPSRS",
-  "LAYANAN UMUM"
+  "Area IPSRS"
 ];
 
 const ITEMS_BY_AREA = {
@@ -292,7 +293,7 @@ const ITEMS_BY_AREA = {
     "Lid 6 w",
     "Panel   LVMDP - CHILLER - GARFU  PLN - POMPA DW",
     "LED 7 Watt Fhilips 60 cm",
-    "Lampu TL 36 w",
+    "Lampu TL 36 w"
   ],
   "M.E. ( AC / Tata Udara / CHILLER )": [
     "Ac Sentral",
@@ -509,31 +510,35 @@ const ITEMS_BY_AREA = {
     "Pemindahan Alat HD",
     "Printer",
     "Switch nurse call",
-    "UPS"
+    "UPS",
+    "Suction sentral"
   ],
   "ELEKTROMEDIK DIAGNOSTIK": [
     "Alat ECHO",
     "Alat mata lensometer",
     "Alat Scrining Suhu / Termometer",
-    "BOX X-Ray",
-    "Dental x ray",
     "Doppler",
     "ECG",
     "EEG",
     "EMg",
     "Manset",
     "Monitor Pasien",
-    "MRI",
-    "Rontgen Mobile ( Mobile X-Ray )",
     "Saturasi O2",
     "Spirometry",
     "Stetoskop",
     "Tensimeter",
     "Termometer",
     "TREADMILLE",
-    "USG"
+    "USG",
+    "Echo"
   ],
-  "ELEKTROMEDIK TERAPI & BEDAH": [
+  "ELEKTROMEDIK RADIOLOGI": [
+    "BOX X-Ray",
+    "Dental x ray",
+    "MRI",
+    "Rontgen Mobile ( Mobile X-Ray )"
+  ],
+  "ELEKTROMEDIK TERAPI, BEDAH & ANESTESI": [
     "Baby Incubator",
     "Blanket warmer",
     "Dc shock",
@@ -555,9 +560,10 @@ const ITEMS_BY_AREA = {
     "Suction pump Dental unit",
     "Syringe Pump",
     "Ventilator",
-    "Ventilator T 1"
+    "Ventilator T 1",
+    "Elektroda akupuntur"
   ],
-  "ELEKTROMEDIK LAB & HD": [
+  "ELEKTROMEDIK LABORATORIUM, HD & STERILISASI": [
     "Alat HD",
     "Centri fuge",
     "Incubator bacteri",
@@ -706,55 +712,15 @@ const ITEMS_BY_AREA = {
     "Glue Pad Fly Catcher",
     "Pest Control"
   ],
-  "M.E. (Kitchen)": [
-    "Mesin Chiler",
-    "Freezer",
-    "Mesin Diswashing",
-    "MIXER Duduk",
-    "Switch on-off",
-    "Pipa air panas",
-    "Pipa air dingin",
-    "Selang LPG",
-    "Area Dapur"
-  ],
-  "KESLING (Pemantauan Kualitas Lingkungan)": [
-    "Pengukuran Pencahayaan",
-    "Suhu dan Kelembaban",
-    "PT Unilab",
-    "Termometer suhu",
-    "Laboratorium Lingkungan"
-  ],
-  "KESLING (Sanitasi dan Higiene Lingkungan)": [
-    "Bilik Disenfeksi",
-    "Keamanan Pangan dan Jajanan",
-    "Saluran Air Kotor"
-  ],
-  "LAINNYA": [],
-  "Rapat/Pertemuan": [
-    "Morning Report",
-    "Brefing IPSRS",
-    "Rapat Klarifikasi/Negosiasi Vendor",
-    "Syukuran"
-  ],
-  "Survei": [
-    "Area Lobby lt.4"
-  ],
-  "Laporan/Surat": [
-    "Surat"
-  ],
-  "K3RS": [
-    "Kotak K3RS",
-    "Rapat K3",
-    "Perizinan Utilitas K3"
-  ],
   "Administrasi IPSRS": [
+    "Surat-Menyurat",
+    "SP3",
+    "Rekap Data Laporan/Evaluasi",
     "Rekap Laporan Kerusakan",
     "Rekap LPB",
     "Absensi",
-    "SP3",
     "Permintaan Barang Teknik",
-    "Surat-Menyurat",
-    "Rekap Indikator Mutu IPSRS",
+    "Rekap Indikator Mutu",
     "Penerimaan Laporan Kerusakan",
     "Koordinasi Laporan Kerusakan",
     "Koordinasi Lapangan",
@@ -772,9 +738,48 @@ const ITEMS_BY_AREA = {
     "Rekap SPK Vendor",
     "Dokumentasi dan Evaluasi Pekerjaan Vendor",
     "Pengarsipan Dokumen",
-    "Data Manual Book dan Dokumen Teknis",
     "Rekap Jadwal Pemeliharaan Berkala",
     "Rekap Pelatihan, Sertifikasi dan Perizinan"
+  ],
+  "M.E. (Kitchen)": [
+    "Mesin Chiler",
+    "Freezer",
+    "Mesin Diswashing",
+    "MIXER Duduk",
+    "Switch on-off",
+    "Pipa air panas",
+    "Pipa air dingin",
+    "Selang LPG",
+    "Area Dapur"
+  ],
+  "Rapat/Pertemuan": [
+    "Morning Report",
+    "Brefing IPSRS",
+    "Rapat Klarifikasi/Negosiasi Vendor",
+    "Syukuran"
+  ],
+  "KESLING (Pemantauan Kualitas Lingkungan)": [
+    "Pengukuran Pencahayaan",
+    "Suhu dan Kelembaban",
+    "PT Unilab",
+    "Termometer suhu",
+    "Laboratorium Lingkungan"
+  ],
+  "KESLING (Sanitasi dan Higiene Lingkungan)": [
+    "Bilik Disenfeksi",
+    "Keamanan Pangan dan Jajanan",
+    "Saluran Air Kotor"
+  ],
+  "UMUM": [
+    "Menurunkan Jenazah"
+  ],
+  "Survei": [
+    "Area Lobby lt.4"
+  ],
+  "K3RS": [
+    "Kotak K3RS",
+    "Rapat K3",
+    "Perizinan Utilitas K3"
   ],
   "Aksesoris": [
     "Kacamata",
@@ -792,8 +797,5 @@ const ITEMS_BY_AREA = {
   ],
   "Area IPSRS": [
     "Kebersihan dan Kerapian"
-  ],
-  "LAYANAN UMUM": [
-    "Menurunkan Jenazah"
   ]
 };
