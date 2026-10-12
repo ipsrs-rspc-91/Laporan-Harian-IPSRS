@@ -1402,14 +1402,20 @@
           setMsg('msgInput','Pilih Area Kerja terlebih dahulu sebelum menambah item.',true);
           return;
         }
+        // Commit area selection first so the Item list reflects this area.
         sel.value=areaName;
         sel.dispatchEvent(new Event('change',{bubbles:true}));
         closeAreaItemPicker_();
-        const itemSelect=document.getElementById('Item');
-        if(itemSelect){
-          itemSelect.value=ADD_NEW_VALUE;
-          itemSelect.dispatchEvent(new Event('change',{bubbles:true}));
-        }
+
+        // Do not synthesize a native <select> change to open the modal.
+        // The picker button's click can still be bubbling on Android; opening
+        // the modal on the next task prevents that same click from dismissing it.
+        window.setTimeout(function(){
+          const page=document.getElementById('page-input');
+          const modal=document.getElementById('itemModalBg');
+          if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)) return;
+          openTambahItemModal();
+        },0);
       });
     }
 
@@ -3463,6 +3469,10 @@
 
     // Posisi tombol Simpan ditangani terpusat oleh event change/focusin.
   }
+  // Page_Input.html uses onchange="handleItemChange(event)" and automated
+  // regression checks invoke the same public entry point.
+  window.handleItemChange = handleItemChange;
+
   function openTambahItemModal(){
     const area = document.getElementById('AreaKerja').value;
     document.getElementById('itemBaruAreaLabel').innerText = area || '-';
