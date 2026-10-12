@@ -164,3 +164,34 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
 
   expect(runtimeErrors, 'No runtime error may abort keyboard next-field scroll').toEqual([]);
 });
+
+test('category master fallback contains all 12 canonical parents and TPS LB3 item', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  const snapshot = await page.evaluate(() => ({
+    categories: Array.isArray(STATIC_KATEGORI) ? STATIC_KATEGORI : [],
+    itemCount: Object.values(ITEMS_BY_AREA || {}).reduce(
+      (total, items) => total + (Array.isArray(items) ? items.length : 0), 0
+    ),
+    keslingUmum: Array.isArray(ITEMS_BY_AREA['KESLING ( Umum )'])
+      ? ITEMS_BY_AREA['KESLING ( Umum )'] : []
+  }));
+
+  expect(snapshot.categories).toEqual([
+    'PEMELIHARAAN',
+    'PERBAIKAN',
+    'PEMERIKSAAN / INSPEKSI',
+    'PERMINTAAN LAYANAN',
+    'PERTEMUAN / KOORDINASI',
+    'ADMINISTRASI / MANAJEMEN',
+    'MONITORING',
+    'KUNJUNGAN',
+    'PENGUJIAN / ANALISA',
+    'PELATIHAN',
+    'PROYEK / RENOVASI',
+    'LAINNYA'
+  ]);
+  expect(snapshot.categories).toHaveLength(12);
+  expect(snapshot.keslingUmum).toContain('Perbaikan Pintu TPS LB3');
+  expect(snapshot.itemCount).toBe(643);
+});
