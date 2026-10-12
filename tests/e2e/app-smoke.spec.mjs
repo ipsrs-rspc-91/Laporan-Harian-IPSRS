@@ -184,7 +184,7 @@ test('add-item modal opens from input form when report fields are populated', as
   await expect(page.locator('#itemBaruInput')).toBeAttached();
 
   // Isi form secara lokal saja. Tidak login, tidak memanggil simpan, dan tidak menulis ke API/DB.
-  const setup = await page.evaluate(() => {
+  const setup = await page.evaluate(async () => {
     const values = {
       Tanggal: '2026-10-12',
       Pelapor: 'Uji Regresi',
@@ -212,14 +212,14 @@ test('add-item modal opens from input form when report fields are populated', as
 
     const handlerType = typeof window.handleItemChange;
     if (handlerType === 'function') window.handleItemChange();
-    return {
+    return new Promise(resolve => setTimeout(() => resolve({
       fields,
       areaExists: !!area,
       itemExists: !!item,
       handlerType,
       modalHasShow: !!document.getElementById('itemModalBg')?.classList.contains('show'),
       modalAreaLabel: document.getElementById('itemBaruAreaLabel')?.textContent
-    };
+    }), 10));
   });
 
   expect(Object.values(setup.fields).every(Boolean), 'Representative report fields must exist').toBeTruthy();
