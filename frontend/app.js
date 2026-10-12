@@ -1393,7 +1393,9 @@
       document.body.appendChild(bg);
       bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
-      bg.querySelector('.area-item-picker-add-item').addEventListener('click',()=>{
+      bg.querySelector('.area-item-picker-add-item').addEventListener('click',(event)=>{
+        // Hentikan bubbling agar klik tombol picker tidak ikut mengenai modal/layer di bawahnya.
+        if(event && typeof event.stopPropagation==='function') event.stopPropagation();
         const currentArea=String(sel.value||'').trim();
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
         const areaName=String(activeArea?.dataset.areaValue || browsingArea || currentArea || '').trim();
@@ -1402,14 +1404,16 @@
           setMsg('msgInput','Pilih Area Kerja terlebih dahulu sebelum menambah item.',true);
           return;
         }
-        // Commit area selection first so the Item list reflects this area.
-        sel.value=areaName;
-        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        // Jangan refresh ulang select Item jika Area Kerja sebenarnya tidak berubah.
+        // Ini mempertahankan item terpilih saat tombol Item Baru ditekan.
+        if(String(sel.value||'').trim() !== areaName){
+          sel.value=areaName;
+          sel.dispatchEvent(new Event('change',{bubbles:true}));
+        }
         closeAreaItemPicker_();
 
-        // Do not synthesize a native <select> change to open the modal.
-        // The picker button's click can still be bubbling on Android; opening
-        // the modal on the next task prevents that same click from dismissing it.
+        // Buka modal secara langsung setelah siklus klik picker selesai.
+        // Tidak memakai synthetic change pada select Item.
         window.setTimeout(function(){
           const page=document.getElementById('page-input');
           const modal=document.getElementById('itemModalBg');
