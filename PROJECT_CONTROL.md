@@ -260,8 +260,8 @@ Tanggal, Pelapor, Pukul, NoLK, Ruang, MasalahKegiatan, Tindakan, Status, Keteran
 **Snapshot audit 2026-10-12:**
 - 46 area aktif di Supabase.
 - 643 item aktif di Supabase pada saat audit.
-- Snapshot `static-data.js` berisi 642 item sebelum item `Perbaikan Pintu TPS LB3` ditambahkan.
-- Setelah pembaruan snapshot, item fallback harus diverifikasi jumlah dan urutannya terhadap master live.
+- Snapshot `static-data.js` sebelumnya berisi 642 item; item `Perbaikan Pintu TPS LB3` telah ditambahkan sehingga target snapshot menjadi 643 item.
+- Tes browser kini memeriksa 12 kategori fallback, keberadaan item TPS LB3, dan jumlah 643 item. Ini memverifikasi fallback lokal, bukan kesetaraan penuh terhadap master Supabase live.
 - 45 dari 46 area dilaporkan identik pada audit; satu area perlu diperiksa item per item jika snapshot berubah.
 
 **Kelompok KESLING aktif yang harus tercermin pada master:**
