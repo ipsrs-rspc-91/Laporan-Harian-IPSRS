@@ -164,3 +164,63 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
 
   expect(runtimeErrors, 'No runtime error may abort keyboard next-field scroll').toEqual([]);
 });
+
+
+test('add-item modal opens from input form when report fields are populated', async ({ page }) => {
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
+  await expect(page.locator('#itemBaruAreaLabel')).toBeAttached();
+  await expect(page.locator('#itemBaruInput')).toBeAttached();
+
+  // Simulasikan form yang sudah terisi, tanpa login/API write ke data produksi.
+  const setup = await page.evaluate(() => {
+    const setValue = (id, value) => {
+      const el = document.getElementById(id);
+      if (!el) return false;
+      if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === value)) {
+        el.add(new Option(value, value));
+      }
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    };
+    const fields = {
+      AreaKerja: setValue('AreaKerja', 'Rapat dan Pertemuan'),
+      Tanggal: setValue('Tanggal', '2026-10-12'),
+      Pelapor: setValue('Pelapor', 'Uji Regresi'),
+      Ruang: setValue('Ruang', 'Ruang Uji'),
+      MasalahKegiatan: setValue('MasalahKegiatan', 'Uji modal ketika formulir terisi'),
+      Tindakan: setValue('Tindakan', 'Uji regresi tanpa menyimpan laporan')
+    };
+    const item = document.getElementById('Item');
+    if (item && item.tagName === 'SELECT') {
+      if (![...item.options].some(o => o.value === '__ADD_NEW__')) {
+        item.add(new Option('+ Tambah Item Baru', '__ADD_NEW__'));
+      }
+      item.value = '__ADD_NEW__';
+    }
+    if (typeof window.handleItemChange !== 'function') {
+      return { fields, handlerType: typeof window.handleItemChange };
+    }
+    window.handleItemChange();
+    return {
+      fields,
+      handlerType: typeof window.handleItemChange,
+      modalHasShow: !!document.getElementById('itemModalBg')?.classList.contains('show'),
+      modalAreaLabel: document.getElementById('itemBaruAreaLabel')?.textContent
+    };
+  });
+
+  expect(setup.handlerType, 'The real Item change handler must be available').toBe('function');
+  expect(Object.values(setup.fields).every(Boolean), 'All representative report fields must exist').toBeTruthy();
+  expect(setup.modalHasShow, 'Add-item modal must open after report fields have values').toBeTruthy();
+  expect(setup.modalAreaLabel).toBe('Rapat dan Pertemuan');
+  await expect(page.locator('#itemModalBg')).toBeVisible();
+  expect(runtimeErrors, 'No runtime error may prevent opening the add-item modal').toEqual([]);
+});
