@@ -327,6 +327,9 @@ test('direct Area Kerja group selection is retained for Item Baru', async ({ pag
     const area = document.getElementById('AreaKerja');
     const item = document.getElementById('Item');
     if (!area || !item || typeof window.buildAreaKerjaPicker_ !== 'function') return false;
+    if (![...area.options].some(o => o.value.trim().toLowerCase() === 'rapat/pertemuan')) {
+      area.add(new Option('Rapat/Pertemuan', 'Rapat/Pertemuan'));
+    }
     area.value = '';
     item.value = '';
     // Reproduce the production lifecycle: picker is built more than once before use.
