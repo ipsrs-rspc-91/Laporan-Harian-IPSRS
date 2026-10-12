@@ -1800,17 +1800,16 @@
     // Detail PEMELIHARAAN/PERBAIKAN dipilih melalui Modal Picker,
     // bukan sebagai option native <select> agar tidak muncul sebagai
     // daftar ganda pada native picker Android.
-    const formValues=[
-      'PEMELIHARAAN',
-      'PERBAIKAN',
-      'PEMERIKSAAN / INSPEKSI',
-      'PERMINTAAN LAYANAN',
-      'PERTEMUAN / KOORDINASI',
-      'ADMINISTRASI / MANAJEMEN',
-      'PROYEK / RENOVASI',
-      'PENGUJIAN / ANALISA',
-      'LAINNYA'
-    ];
+    // Kategori formulir mengikuti master aktif dari Supabase.
+    // STATIC_KATEGORI hanya digunakan saat API master belum tersedia.
+    const masterValues = Array.isArray(MASTER_KATEGORI) && MASTER_KATEGORI.length
+      ? MASTER_KATEGORI
+      : (Array.isArray(STATIC_KATEGORI) ? STATIC_KATEGORI : []);
+    const formValues = [...new Set(masterValues
+      .map(value => String(value || '').trim())
+      .filter(Boolean))];
+    const previousSelectedKategori = selectedKategori ||
+      (sel ? String(sel.value || '').trim() : '');
 
     if(sel){
       sel.innerHTML='';
@@ -1824,8 +1823,16 @@
         opt.textContent=value;
         sel.appendChild(opt);
       });
-      if(selectedKategori && Array.from(sel.options).some(o=>o.value===selectedKategori)){
-        sel.value=selectedKategori;
+      // Pertahankan kategori detail yang dipilih modal atau kategori laporan lama
+      // jika nilainya bukan salah satu kategori induk master.
+      if(previousSelectedKategori && !Array.from(sel.options).some(o=>o.value===previousSelectedKategori)){
+        const opt=document.createElement('option');
+        opt.value=previousSelectedKategori;
+        opt.textContent=previousSelectedKategori;
+        sel.appendChild(opt);
+      }
+      if(previousSelectedKategori && Array.from(sel.options).some(o=>o.value===previousSelectedKategori)){
+        sel.value=previousSelectedKategori;
       }
       // Picker harus dibangun setelah option final tersedia.
       buildKategoriPicker_();
