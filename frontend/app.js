@@ -67,10 +67,11 @@
   // Dimuat sekali per sesi login lewat loadItemKustomAll().
   let CUSTOM_ITEMS_BY_AREA = {};
   // MASTER DATA RUNTIME: Supabase adalah sumber kebenaran utama.
-  // STATIC_* / ITEMS_BY_AREA hanya fallback jika master Supabase belum berhasil dimuat.
-  let MASTER_AREA = Array.isArray(STATIC_AREA) ? STATIC_AREA.slice() : [];
-  let MASTER_ITEMS_BY_AREA = (typeof ITEMS_BY_AREA === 'object' && ITEMS_BY_AREA) ? ITEMS_BY_AREA : {};
-  let MASTER_KATEGORI = Array.isArray(STATIC_KATEGORI) ? STATIC_KATEGORI.slice() : [];
+  // Supabase master_data adalah satu-satunya sumber aktif. Jangan tampilkan snapshot
+  // static saat startup; jika API gagal, pilihan tetap kosong sampai data live berhasil dimuat.
+  let MASTER_AREA = [];
+  let MASTER_ITEMS_BY_AREA = {};
+  let MASTER_KATEGORI = [];
   let MASTER_DATA_LOADED = false;
 
   function getSession(){
