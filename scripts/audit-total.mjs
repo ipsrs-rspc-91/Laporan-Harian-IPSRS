@@ -106,6 +106,31 @@ if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
     appText.includes("!document.getElementById('page-'+name)");
   if(hasDeferredPages && hasNavigationGuard) pass('Deferred navigation race gate','Lazy page mounting is guarded before DOM activation');
   else fail('Deferred navigation race gate','Deferred pages exist without a verified navigation readiness guard');
+
+  // Regression guard: browsing a group in the Area Kerja modal must not commit
+  // a form value. Only an actual item choice (or explicit Item Baru action)
+  // may set AreaKerja; otherwise the empty placeholder can become falsely green.
+  const areaPickerStart=appText.indexOf('function buildAreaKerjaPicker_(){');
+  const areaPickerEnd=appText.indexOf('function closeAreaItemPicker_(){',areaPickerStart);
+  const areaPickerSource=areaPickerStart>=0 && areaPickerEnd>areaPickerStart
+    ? appText.slice(areaPickerStart,areaPickerEnd) : '';
+  const noBrowseCommit=!/sel\.value\s*=\s*directArea/.test(areaPickerSource);
+  const hasTemporaryBrowseState=areaPickerSource.includes('browsingArea = directArea') &&
+    areaPickerSource.includes('browsingArea = area');
+  const itemChoiceCommits=areaPickerSource.includes('sel.value=area;') &&
+    areaPickerSource.includes('sel.dispatchEvent(new Event(\'change\',{bubbles:true}));');
+  if(noBrowseCommit && hasTemporaryBrowseState && itemChoiceCommits){
+    pass('Area picker browse-vs-select regression','Browsing group headings keeps AreaKerja empty; choosing an item commits the selection');
+  }else{
+    fail('Area picker browse-vs-select regression','Area picker can commit AreaKerja while browsing, or no longer commits on actual item selection');
+  }
+
+  const fieldUiPath=path.join(root,'frontend','required-fields-ui.js');
+  if(fs.existsSync(fieldUiPath) && fs.readFileSync(fieldUiPath,'utf8').includes('window.__ipsrsSyncFieldColors = refresh;')){
+    pass('Modal close field-color refresh','Custom modal close paths can explicitly refresh field color state');
+  }else{
+    fail('Modal close field-color refresh','Required field color refresh hook is missing');
+  }
 }else{
   fail('Deferred navigation race gate','frontend/index.html or frontend/app.js is missing');
 }
