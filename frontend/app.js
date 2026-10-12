@@ -3449,15 +3449,15 @@
       const area = document.getElementById('AreaKerja').value;
       if(!area){ setMsg('msgInput', 'Pilih Area Kerja terlebih dahulu sebelum menambah item.', true); return; }
 
-      // Android dapat menyelesaikan event native select setelah change.
-      // Buka modal pada task berikutnya agar event penutup native picker
-      // tidak langsung menutup modal yang baru tampil.
+      // Android menutup native select dengan event lanjutan setelah change.
+      // Jeda pendek saja (0 ms) masih memungkinkan event penutup itu berjalan
+      // setelah modal tampil. Tunda pembukaan sampai picker benar-benar selesai.
       window.setTimeout(function(){
         const page = document.getElementById('page-input');
         const modal = document.getElementById('itemModalBg');
         if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)) return;
         openTambahItemModal();
-      }, 0);
+      }, 450);
       return;
     }
 
