@@ -176,6 +176,9 @@ test('add-item modal opens from input form when report fields are populated', as
 
   // Modal harus tersedia bersama fragment input, tanpa menunggu fragment Laporan.
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  // Smoke test berjalan tanpa autentikasi; tampilkan shell seperti tes form mobile
+  // agar visibility modal diuji, bukan status hidden pada shell login.
+  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
   await expect(page.locator('#itemBaruAreaLabel')).toBeAttached();
   await expect(page.locator('#itemBaruInput')).toBeAttached();
