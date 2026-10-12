@@ -1412,14 +1412,15 @@
         }
         closeAreaItemPicker_();
 
-        // Buka modal secara langsung setelah siklus klik picker selesai.
+        // Beri waktu Android menyelesaikan siklus tap dan penutupan overlay picker
+        // sebelum menampilkan modal kedua. Modal harus tetap berada di halaman input.
         // Tidak memakai synthetic change pada select Item.
         window.setTimeout(function(){
           const page=document.getElementById('page-input');
           const modal=document.getElementById('itemModalBg');
           if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)) return;
           openTambahItemModal();
-        },0);
+        },450);
       });
     }
 
