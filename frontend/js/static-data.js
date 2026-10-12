@@ -640,6 +640,7 @@ const ITEMS_BY_AREA = {
     "Pengelasan",
     "Dokumen Memo/Surat Permohonan/Laporan Kerja",
     "Pengecetan",
+    "Perbaikan Pintu TPS LB3",
     "Sertifikasi BNPS",
     "Jadwal kerja",
     "BAST (Berita Acara Serah Terima Pekerjaan)",
