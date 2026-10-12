@@ -188,9 +188,17 @@ if(fs.existsSync(lockRegisterPath) && changed.length){
   const lockText=fs.readFileSync(lockRegisterPath,'utf8');
   const lockedFiles=parseLockedProtectedFiles(lockText);
   const touched=lockedFiles.filter(x=>changed.includes(x.file));
-  let commitMessage='';
-  try{ commitMessage=execFileSync('git',['log','-1','--pretty=%B'],{encoding:'utf8'}).trim(); }catch{}
-  const overrides=(commitMessage.match(/\[UNLOCK\s+([A-Z0-9_-]+)\]/gi)||[]).map(x=>x.replace(/^\[UNLOCK\s+/i,'').replace(/\]$/,'').toUpperCase());
+  let commitMessages='';
+  // Pull-request CI checks out a synthetic merge commit as HEAD. Inspect every
+  // commit introduced by the PR so an explicit [UNLOCK MODULE_ID] authorization
+  // on the feature branch is not hidden by the synthetic merge commit message.
+  try{
+    commitMessages=execFileSync('git',['log','origin/main..HEAD','--pretty=%B'],{encoding:'utf8'}).trim();
+  }catch{}
+  if(!commitMessages){
+    try{ commitMessages=execFileSync('git',['log','-20','--pretty=%B'],{encoding:'utf8'}).trim(); }catch{}
+  }
+  const overrides=(commitMessages.match(/\[UNLOCK\s+([A-Z0-9_-]+)\]/gi)||[]).map(x=>x.replace(/^\[UNLOCK\s+/i,'').replace(/\]$/,'').toUpperCase());
   const unauthorized=touched.filter(x=>!overrides.includes(x.module.toUpperCase()));
   if(unauthorized.length){
     fail('LOCK register gate',unauthorized.map(x=>x.file+' protected by '+x.module).join('\n')+'\nExplicit commit authorization required: [UNLOCK MODULE_ID]');
