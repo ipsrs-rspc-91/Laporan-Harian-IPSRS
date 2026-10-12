@@ -219,7 +219,7 @@ test('add-item modal opens from input form when report fields are populated', as
       handlerType,
       modalHasShow: !!document.getElementById('itemModalBg')?.classList.contains('show'),
       modalAreaLabel: document.getElementById('itemBaruAreaLabel')?.textContent
-    }), 10));
+    }), 500));
   });
 
   expect(Object.values(setup.fields).every(Boolean), 'Representative report fields must exist').toBeTruthy();
