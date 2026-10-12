@@ -223,52 +223,61 @@ Tanggal, Pelapor, Pukul, NoLK, Ruang, MasalahKegiatan, Tindakan, Status, Keteran
 
 # 006 — SISTEM KATEGORI
 
-**Frontend:** `kategori-modal.js`, `app.js`, `Page_Input.html`, `required-fields-ui.js`  
-**Backend:** `ipsrs-api/index.ts`
+**Frontend:** `frontend/js/kategori-modal.js`, `frontend/app.js`, `frontend/pages/Page_Input.html`  
+**Backend:** `supabase/functions/ipsrs-api/index.ts` dan trigger normalisasi kategori laporan.
 
-**Kategori bisnis yang dikendalikan saat ini harus mengikuti keputusan pengguna, bukan improvisasi AI:**
-1. PEMELIHARAAN RUTIN SESUAI JADWAL
-2. PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART / MATERIAL
-3. PEMELIHARAAN DILUAR JADWAL RUTIN
-4. PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART / MATERIAL
-5. PERBAIKAN SAJA
-6. PERBAIKAN DENGAN PENGGANTIAN SPARE PART / MATERIAL
-7. PENGGANTIAN ATAU PEMASANGAN UNIT / ALAT
-8. PERMINTAAN PELAYANAN ( DILUAR PEMELIHARAAN DAN PERBAIKAN)
+**12 kategori induk baku (urutan master):**
+1. PEMELIHARAAN
+2. PERBAIKAN
+3. PEMERIKSAAN / INSPEKSI
+4. PERMINTAAN LAYANAN
+5. PERTEMUAN / KOORDINASI
+6. ADMINISTRASI / MANAJEMEN
+7. MONITORING
+8. KUNJUNGAN
+9. PENGUJIAN / ANALISA
+10. PELATIHAN
+11. PROYEK / RENOVASI
+12. LAINNYA
 
-**Field terpisah:**
-- SPARE PART / MATERIAL
-- UNIT
+**Perilaku modal:**
+- Modal kategori utama menampilkan 12 kategori induk.
+- PEMELIHARAAN dan PERBAIKAN memiliki pilihan detail sesuai alur modal.
+- Nilai detail PEMELIHARAAN/PERBAIKAN dinormalisasi ke kategori induk kanonik pada penyimpanan.
+- Daftar formulir harus menggunakan `MASTER_KATEGORI` dari Supabase; `STATIC_KATEGORI` hanya fallback ketika master live tidak tersedia.
+- Saat daftar dibangun ulang, kategori yang sedang dipilih harus dipertahankan jika masih valid, termasuk nilai detail yang sedang diproses.
 
-Untuk penggantian, modal wajib menjaga field:
-- nama/jenis item sesuai pilihan
-- tipe
-- jumlah
-- field wajib lain sesuai desain modal yang disetujui
+**Data SPMU terpisah:** SPARE PART / MATERIAL dan UNIT, termasuk status, nama, tipe, dan jumlah sesuai validasi aktif.
 
-**Larangan:** jangan menambahkan kategori baru seperti “LAINNYA”, “BARU”, atau istilah lain tanpa permintaan pengguna.
+**Aturan:** jangan mengubah kategori baku tanpa permintaan eksplisit pengguna. Jangan menyamakan label detail modal dengan kategori induk tersimpan.
 
-**Status:** STABLE_CANDIDATE; belum LOCKED sampai browser + production parity terbukti.
-
----
+**Status:** PERLU REGRESSION — verifikasi modal, simpan, edit, filter, dan refresh master sebelum dinyatakan stabil.
 
 # 007 — AREA DAN ITEM
 
-**Source saat ini:** master data Supabase melalui `apiGetMasterData`, dengan fallback/static data di frontend.
+**Source utama:** `public.master_data` Supabase melalui `apiGetMasterData`. `frontend/js/static-data.js` merupakan fallback/bootstrap, bukan sumber kebenaran saat API berhasil.
 
-**Fungsi:** sinkronisasi area/item, pilihan area berdasarkan bidang, dan pengurutan master.
+**Snapshot audit 2026-10-12:**
+- 46 area aktif di Supabase.
+- 643 item aktif di Supabase pada saat audit.
+- Snapshot `static-data.js` sebelumnya berisi 642 item; item `Perbaikan Pintu TPS LB3` telah ditambahkan sehingga target snapshot menjadi 643 item.
+- Tes browser kini memeriksa 12 kategori fallback, keberadaan item TPS LB3, dan jumlah 643 item. Ini memverifikasi fallback lokal, bukan kesetaraan penuh terhadap master Supabase live.
+- 45 dari 46 area dilaporkan identik pada audit; satu area perlu diperiksa item per item jika snapshot berubah.
 
-**KESLING yang sudah dikoreksi:**
+**Kelompok KESLING aktif yang harus tercermin pada master:**
 - KESLING ( Umum )
 - KESLING ( Sistem IPAL )
 - KESLING (Sistem Air Bersih)
 - KESLING (Sistem Limbah B3)
+- KESLING (Pengendalian Vektor dan Binatang Pembawa Penyakit)
+- KESLING (Pemantauan Kualitas Lingkungan)
+- KESLING (Sanitasi dan Higiene Lingkungan)
 
-**Aturan:** master DB dan frontend harus direkonsiliasi. Perubahan nama/order tidak boleh dilakukan hanya di static fallback jika database menjadi source of truth.
+Catatan: daftar tersebut berisi tujuh nama area KESLING; jumlah area total tetap 46 dan mencakup bidang lain seperti K3RS serta Administrasi IPSRS.
 
-**Status:** STABLE_CANDIDATE.
+**Aturan:** nama, parent item, dan urutan harus dibandingkan terhadap Supabase. Jangan mengubah data laporan historis saat memperbaiki master. Setiap snapshot fallback yang berubah harus diuji dan tidak boleh memperlambat jalur startup.
 
----
+**Status:** PERLU REGRESSION — reconciliation snapshot/live harus PASS sebelum dianggap stabil.
 
 # 008 — DASHBOARD
 
@@ -478,7 +487,7 @@ Migration yang ada di repository mencakup:
 
 **Service worker saat ini:** install/activate dan network-only fetch; tidak menyimpan API/data aplikasi sebagai cache.
 
-**Catatan nyata:** `CACHE_NAME` masih menunjukkan versi `lhi-shell-v20261002-kategori-scroll5`; setiap perubahan strategi cache/versioning harus diverifikasi dan tidak boleh diasumsikan otomatis.
+**Catatan nyata (audit 2026-10-12):** `frontend/sw.js` menggunakan `CACHE_NAME = lhi-shell-v20261012-admin-below-util1`. Setiap perubahan asset frontend tetap harus memperbarui cache-buster pada `index.html` dan memeriksa versi service worker yang benar-benar aktif.
 
 **Status:** STABLE_CANDIDATE; production PWA verification = OPEN.
 

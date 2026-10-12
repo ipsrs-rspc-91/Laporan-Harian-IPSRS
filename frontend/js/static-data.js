@@ -1,5 +1,5 @@
 // GENERATED FROM live public.master_data in Supabase; do not hand-edit.
-// Snapshot generated: 2026-10-12 (Asia/Jakarta). Live counts: 12 categories, 46 active areas, 642 active items mapped to active areas.
+// Snapshot generated: 2026-10-12 (Asia/Jakarta). Live counts: 12 categories, 46 active areas, 643 active items mapped to active areas.
 // Runtime source of truth is apiGetMasterData. This snapshot must never override a successful live response.
 const STATIC_KATEGORI = [
   "PEMELIHARAAN",
@@ -640,6 +640,7 @@ const ITEMS_BY_AREA = {
     "Pengelasan",
     "Dokumen Memo/Surat Permohonan/Laporan Kerja",
     "Pengecetan",
+    "Perbaikan Pintu TPS LB3",
     "Sertifikasi BNPS",
     "Jadwal kerja",
     "BAST (Berita Acara Serah Terima Pekerjaan)",

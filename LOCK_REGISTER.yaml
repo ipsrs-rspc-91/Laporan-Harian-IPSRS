@@ -1,7 +1,7 @@
 version: "1.3"
 project: "Laporan-Harian-IPSRS"
 policy: "locked modules require explicit user approval before behavioral change"
-last_reviewed: "2026-10-04"
+last_reviewed: "2026-10-12"
 
 # LOCKED is granted only after source + regression + production verification.
 # STABLE_CANDIDATE means source is a reference point but production proof is incomplete.
@@ -66,7 +66,7 @@ modules:
       - "frontend/index.html"
       - "frontend/app.js"
     protected_behaviors:
-      - "four KESLING areas"
+      - "active KESLING area/master reconciliation (audit 2026-10-12)"
       - "area prioritization by bidang"
       - "Air Bersih casing"
       - "Limbah B3 ordering"
@@ -74,7 +74,7 @@ modules:
       - "area-master-reconciliation"
       - "kesling-area-order"
       - "bidang-prioritization"
-    verification: "source/data correction established; production parity still required"
+    verification: "Source/data reconciliation updated 2026-10-12; production parity and browser regression remain required."
 
   - id: AUTH
     name: "Login / Session / Access Control"
