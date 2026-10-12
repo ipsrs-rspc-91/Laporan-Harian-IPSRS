@@ -1398,7 +1398,7 @@
         if(event && typeof event.stopPropagation==='function') event.stopPropagation();
         const currentArea=String(sel.value||'').trim();
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
-        const areaName=String(activeArea?.dataset.areaValue || browsingArea || currentArea || '').trim();
+        const areaName=String(activeArea?.dataset.areaValue || bg.dataset.browsingArea || currentArea || '').trim();
         if(!areaName){
           // Jangan menutup picker tanpa konteks area; pesan harus terlihat di dalam modal.
           const itemList=bg.querySelector('.area-item-picker-item-list');
@@ -1563,6 +1563,7 @@
           btn.append(name,count);
           btn.addEventListener('click',()=>{
             browsingArea = area;
+            bg.dataset.browsingArea = area;
             list.querySelectorAll('.area-item-picker-area').forEach(x=>{
               const active=x===btn;
               x.classList.toggle('is-active',active);
@@ -1611,6 +1612,7 @@
             if(directArea){
               // Open the group for browsing only; do not commit AreaKerja yet.
               browsingArea = directArea;
+              bg.dataset.browsingArea = directArea;
               renderItems_(directArea);
             }
             scrollGroupToTop();
@@ -1624,6 +1626,7 @@
             if(directArea){
               // The LAINNYA heading opens the list; it is not a selection.
               browsingArea = directArea;
+              bg.dataset.browsingArea = directArea;
               renderItems_(directArea);
             }
           }
@@ -1649,6 +1652,7 @@
     function open_(){
       // Reset temporary browsing to the currently committed form value.
       browsingArea = String(sel.value || '').trim();
+      bg.dataset.browsingArea = browsingArea;
       renderAreas_();
       bg.classList.add('show');
       trigger.setAttribute('aria-expanded','true');
