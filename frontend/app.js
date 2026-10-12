@@ -1400,8 +1400,11 @@
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
         const areaName=String(activeArea?.dataset.areaValue || browsingArea || currentArea || '').trim();
         if(!areaName){
-          closeAreaItemPicker_();
-          setMsg('msgInput','Pilih Area Kerja terlebih dahulu sebelum menambah item.',true);
+          // Jangan menutup picker tanpa konteks area; pesan harus terlihat di dalam modal.
+          const itemList=bg.querySelector('.area-item-picker-item-list');
+          if(itemList){
+            itemList.innerHTML='<div class="area-item-picker-empty" role="status" style="color:#b91c1c;font-weight:700">Pilih sub-area di kolom kiri dulu, lalu tekan Item Baru.</div>';
+          }
           return;
         }
         // Jangan refresh ulang select Item jika Area Kerja sebenarnya tidak berubah.
@@ -1418,7 +1421,15 @@
         window.setTimeout(function(){
           const page=document.getElementById('page-input');
           const modal=document.getElementById('itemModalBg');
-          if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)) return;
+          if(!page || !page.classList.contains('active') || !modal || !page.contains(modal)){
+            console.warn('[IPSRS] Modal Tambah Item tidak dibuka', {
+              pageExists:!!page,
+              pageActive:!!page?.classList.contains('active'),
+              modalExists:!!modal,
+              modalInsideInputPage:!!(page && modal && page.contains(modal))
+            });
+            return;
+          }
           openTambahItemModal();
         },450);
       });
