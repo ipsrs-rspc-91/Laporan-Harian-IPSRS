@@ -66,7 +66,7 @@ modules:
       - "frontend/index.html"
       - "frontend/app.js"
     protected_behaviors:
-      - "four KESLING areas"
+      - "active KESLING area/master reconciliation (audit 2026-10-12)"
       - "area prioritization by bidang"
       - "Air Bersih casing"
       - "Limbah B3 ordering"
