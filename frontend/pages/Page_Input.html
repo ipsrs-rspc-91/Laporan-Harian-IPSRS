@@ -1070,6 +1070,16 @@
   #page-input .datetime-combined-input.ipsrs-field-filled{
     background-color:#D1FAE5!important;
   }
+  /* Modal proxy tanpa nilai nyata harus tetap putih, termasuk setelah Back Android.
+     Aturan ini mengalahkan warna focus/browser yang tertinggal; nilai asli tetap
+     ditentukan oleh required-fields-ui.js dari input native. */
+  #page-input .kategori-modal-trigger:not(.ipsrs-field-filled),
+  #page-input .area-picker-trigger:not(.ipsrs-field-filled),
+  #page-input .datetime-combined-input:not(.ipsrs-field-filled),
+  #page-input .spmu-choice-group:not(.ipsrs-field-filled){
+    background-color:#fff!important;
+  }
+
   /* STATUS FIX: wrapper tidak boleh mewarisi warna field terisi/wajib.
      Gunakan putih eksplisit agar celah di belakang tombol tidak tampak mint. */
   #page-input .status-choice-group,

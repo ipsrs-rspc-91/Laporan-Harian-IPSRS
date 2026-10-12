@@ -164,3 +164,50 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
 
   expect(runtimeErrors, 'No runtime error may abort keyboard next-field scroll').toEqual([]);
 });
+
+test('empty form fields stay white after modal dismissal without selection', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() =>
+    typeof window.__ipsrsRefreshFieldColors === 'function' &&
+    document.getElementById('AreaKerja') &&
+    document.querySelector('#areaKerjaPicker .area-picker-trigger')
+  , { timeout: 15000 });
+
+  // Reproduce a stale green class on both the visible proxy and a normal field.
+  await page.evaluate(() => {
+    const areaSelect = document.getElementById('AreaKerja');
+    const areaWrap = document.getElementById('areaKerjaPicker');
+    const areaTrigger = areaWrap && areaWrap.querySelector('.area-picker-trigger');
+    const masalah = document.getElementById('MasalahKegiatan');
+    if (areaSelect) areaSelect.value = '';
+    if (areaWrap) areaWrap.classList.add('ipsrs-field-filled');
+    if (areaTrigger) areaTrigger.classList.add('ipsrs-field-filled');
+    if (masalah) {
+      masalah.value = '';
+      masalah.classList.add('ipsrs-field-filled');
+    }
+    if (areaTrigger) areaTrigger.click();
+  });
+
+  const modal = page.locator('#areaItemPickerModalBg');
+  await expect(modal).toHaveClass(/show/, { timeout: 5000 });
+
+  // Simulate Android/browser Back dismissing the modal without a click event.
+  await page.evaluate(() => {
+    const areaSelect = document.getElementById('AreaKerja');
+    if (areaSelect) areaSelect.value = '';
+    const bg = document.getElementById('areaItemPickerModalBg');
+    if (bg) bg.classList.remove('show');
+  });
+
+  await expect(page.locator('#areaKerjaPicker .area-picker-trigger')).not.toHaveClass(/ipsrs-field-filled/, { timeout: 3000 });
+  await expect(page.locator('#areaKerjaPicker')).not.toHaveClass(/ipsrs-field-filled/, { timeout: 3000 });
+  await expect(page.locator('#MasalahKegiatan')).not.toHaveClass(/ipsrs-field-filled/, { timeout: 3000 });
+  const colors = await page.evaluate(() => ({
+    area: getComputedStyle(document.querySelector('#areaKerjaPicker .area-picker-trigger')).backgroundColor,
+    masalah: getComputedStyle(document.getElementById('MasalahKegiatan')).backgroundColor
+  }));
+  expect(colors.area, 'empty Area Kerja proxy should be white after modal dismissal').toBe('rgb(255, 255, 255)');
+  expect(colors.masalah, 'empty normal field should not retain the filled color').not.toBe('rgb(209, 250, 229)');
+});
+

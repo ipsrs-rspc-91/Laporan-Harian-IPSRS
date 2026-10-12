@@ -1635,8 +1635,13 @@
     const bg=document.getElementById('areaItemPickerModalBg');
     if(bg) bg.classList.remove('show');
     const trigger=document.querySelector('#areaKerjaPicker .area-picker-trigger');
-    if(trigger) trigger.setAttribute('aria-expanded','false');
+    if(trigger){
+      trigger.setAttribute('aria-expanded','false');
+      // Android Back may leave focus on the trigger even though its modal closed.
+      if(document.activeElement===trigger) trigger.blur();
+    }
     document.body.classList.remove('area-picker-open');
+    if(typeof window.__ipsrsRefreshFieldColors==='function') window.__ipsrsRefreshFieldColors();
   }
 
   function syncKategoriPicker_(){
@@ -2518,10 +2523,14 @@
     closeSpmuActionMenu_();
     // Perubahan yang sedang diketik tidak menjadi data tersimpan sampai OK.
     const modal = document.getElementById('sparePartUnitModal');
-    if(modal) modal.hidden = true;
+    if(modal){
+      modal.hidden = true;
+      if(modal.contains(document.activeElement)) document.activeElement.blur();
+    }
     const kindEl=document.getElementById('SparePartUnitKind');
     if(kindEl) kindEl.value='';
     updateSparePartToggleStatus();
+    if(typeof window.__ipsrsRefreshFieldColors==='function') window.__ipsrsRefreshFieldColors();
   }
 
   function saveSparePartUnitModal(){
@@ -3798,6 +3807,9 @@
 
   function closeDateTimePicker(){
     document.getElementById('datetimePickerBackdrop')?.classList.add('hidden');
+    const trigger=document.getElementById('TanggalWaktuDisplay');
+    if(trigger && document.activeElement===trigger) trigger.blur();
+    if(typeof window.__ipsrsRefreshFieldColors==='function') window.__ipsrsRefreshFieldColors();
   }
 
   function goToDateTimeTimeMode(){
@@ -3947,6 +3959,7 @@
     const bg = document.getElementById('requiredFieldsModalBg');
     if(bg) bg.classList.remove('show');
     document.body.classList.remove('modal-open');
+    if(typeof window.__ipsrsRefreshFieldColors==='function') window.__ipsrsRefreshFieldColors();
   }
 
   function validateInputPayload(p){
