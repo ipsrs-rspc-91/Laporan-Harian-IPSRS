@@ -167,6 +167,8 @@
       ].filter(Boolean).forEach(syncFieldColor);
     };
     const scheduleRefresh=()=>requestAnimationFrame(refresh);
+    // Explicit refresh hook for custom modal close paths, including Android Back.
+    window.__ipsrsSyncFieldColors = refresh;
 
     page.addEventListener('focusin',scheduleRefresh);
     page.addEventListener('focusout',scheduleRefresh);

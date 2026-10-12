@@ -1381,6 +1381,9 @@
     trigger.innerHTML='<span class="area-picker-value">Pilih area kerja…</span><span class="area-picker-chevron">⌄</span>';
     picker.appendChild(trigger);
 
+    // Browsing an area is temporary; only choosing an item commits AreaKerja.
+    let browsingArea = String(sel.value || '').trim();
+
     let bg=document.getElementById('areaItemPickerModalBg');
     if(!bg){
       bg=document.createElement('div');
@@ -1393,7 +1396,7 @@
       bg.querySelector('.area-item-picker-add-item').addEventListener('click',()=>{
         const currentArea=String(sel.value||'').trim();
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
-        const areaName=activeArea ? String(activeArea.dataset.areaValue||'').trim() : currentArea;
+        const areaName=String(activeArea?.dataset.areaValue || browsingArea || currentArea || '').trim();
         if(!areaName){
           closeAreaItemPicker_();
           setMsg('msgInput','Pilih Area Kerja terlebih dahulu sebelum menambah item.',true);
@@ -1537,6 +1540,7 @@
           count.textContent=String(getItemsForArea_(area).length);
           btn.append(name,count);
           btn.addEventListener('click',()=>{
+            browsingArea = area;
             list.querySelectorAll('.area-item-picker-area').forEach(x=>{
               const active=x===btn;
               x.classList.toggle('is-active',active);
@@ -1583,8 +1587,8 @@
                   : true
             );
             if(directArea){
-              sel.value=directArea;
-              sel.dispatchEvent(new Event('change',{bubbles:true}));
+              // Open the group for browsing only; do not commit AreaKerja yet.
+              browsingArea = directArea;
               renderItems_(directArea);
             }
             scrollGroupToTop();
@@ -1596,8 +1600,8 @@
           if(groupName==='LAINNYA' && willOpen){
             const directArea=groups.get(groupName).find(area=>String(area).trim().toUpperCase()==='LAINNYA');
             if(directArea){
-              sel.value=directArea;
-              sel.dispatchEvent(new Event('change',{bubbles:true}));
+              // The LAINNYA heading opens the list; it is not a selection.
+              browsingArea = directArea;
               renderItems_(directArea);
             }
           }
@@ -1621,7 +1625,8 @@
     }
 
     function open_(){
-      // Tombol Item Baru tetap tampil; tombol tambah area kerja sudah dihapus.
+      // Reset temporary browsing to the currently committed form value.
+      browsingArea = String(sel.value || '').trim();
       renderAreas_();
       bg.classList.add('show');
       trigger.setAttribute('aria-expanded','true');
@@ -1637,6 +1642,8 @@
     const trigger=document.querySelector('#areaKerjaPicker .area-picker-trigger');
     if(trigger) trigger.setAttribute('aria-expanded','false');
     document.body.classList.remove('area-picker-open');
+    syncAreaKerjaPicker_();
+    if(typeof window.__ipsrsSyncFieldColors === 'function') window.__ipsrsSyncFieldColors();
   }
 
   function syncKategoriPicker_(){
