@@ -64,18 +64,22 @@
     try{
       const session=typeof window.getSession==='function'?window.getSession():null;
       if(!session)return;
+      // Simpan pilihan per pengguna per hari: besok pengingat muncul kembali
+      // jika masih ada laporan yang memenuhi kriteria.
       try{if(localStorage.getItem(dismissedKey(session))===localISO(new Date()))return;}catch(_){}
-      if(typeof window.gsRun!=='function')return;
+      if(typeof window.authRun!=='function')return;
+      // Ambil riwayat bulan berjalan dan bulan sebelumnya melalui API berizin.
+      // Umur >=25 hari hanya memerlukan rentang ini; tanggal awal adalah hari ke-25 sebelum hari ini.
       const months=[monthOffset(-1),monthOffset(0)];
-      const responses=await Promise.all(months.map(m=>window.gsRun('apiGetReports',m,null,null,'daftar')));
+      const responses=await Promise.all(months.map(m=>window.authRun('apiGetReports',m,null,null,'daftar')));
       let all=[];
-      responses.forEach((r)=>{if(r?.ok===false)throw new Error(r.msg||'API gagal');all=all.concat(getRows(r));});
+      responses.forEach(r=>{if(!r||!r.ok)throw new Error(r?.msg||'Gagal memuat laporan');all=all.concat(getRows(r));});
       const cutoff=localISO(new Date(Date.now()-MIN_AGE_DAYS*86400000));
       const unique=new Map();
       all.forEach(r=>{
         const d=rowDate(r);
         if(!isUnfinished(r)||!d||d>cutoff||ageDays(d)<MIN_AGE_DAYS)return;
-        const id=String(r.id??r.ID??r.report_id??[d,r.Ruang,r.Item,r.Pelapor].join('|'));
+        const id=String(r.ID??r.report_id??r.id??[d,r.Ruang,r.Item,r.Pelapor].join('|'));
         unique.set(id,r);
       });
       if(unique.size)show(Array.from(unique.values()).sort((a,b)=>rowDate(a).localeCompare(rowDate(b))),session);
