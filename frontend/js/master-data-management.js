@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let rows=[],kind='area',busy=false;
+let rows=[],kind='area',busy=false,showInactive=false;
 const label={kategori:'Kategori',area:'Area Kerja',item:'Item',subarea:'Sub Area Kerja'};
 function session(){try{return typeof getSession==='function'?getSession():null}catch(_){return null}}
 function allowed(){return session()?.role==='KA_IPSRS'}
@@ -34,10 +34,10 @@ function render(){
  const activeCount=list.filter(x=>x.is_active).length;
  const areas=rows.filter(x=>x.data_type==='AREA'&&x.is_active).sort((a,b)=>String(a.name).localeCompare(String(b.name),'id'));
  const toolbar='<div class="ipsrs-master-crud-toolbar"><div><strong>'+esc(label[kind])+'</strong><div class="modal-sub">'+list.length+' data · '+activeCount+' aktif</div></div><div class="ipsrs-master-crud-actions"><label class="ipsrs-master-toggle"><input type="checkbox" id="masterCrudShowInactive"> Tampilkan nonaktif</label>'+(kind!=='kategori'?'<button class="btn primary" id="masterCrudAdd">+ Tambah</button>':'')+'</div></div>';
- const rowsToShow=list.filter(x=>document.getElementById('masterCrudShowInactive')?.checked||x.is_active);
+ const rowsToShow=list.filter(x=>showInactive||x.is_active);
  const table=rowsToShow.length?'<div class="ipsrs-master-crud-list">'+rowsToShow.map(x=>'<article class="ipsrs-master-crud-row"><div class="ipsrs-master-crud-main"><div class="ipsrs-master-crud-name">'+esc(x.name)+'</div><div class="modal-sub">'+(kind==='item'?'Area: '+esc(x.parent_name||'Tidak diketahui')+' · ':'')+'ID '+esc(x.id)+' · Urutan '+esc(x.sort_order)+' · <span class="'+(x.is_active?'ipsrs-active':'ipsrs-inactive')+'">'+(x.is_active?'Aktif':'Nonaktif')+'</span></div></div><div class="ipsrs-master-crud-row-actions">'+(kind!=='kategori'?'<button class="btn" data-edit="'+x.id+'">Ubah</button><button class="btn '+(x.is_active?'danger':'primary')+'" data-toggle="'+x.id+'" data-active="'+(!x.is_active)+'">'+(x.is_active?'Nonaktifkan':'Aktifkan')+'</button>':'<span class="modal-sub">Dikunci</span>')+'</div></article>').join('')+'</div>':'<div class="modal-sub ipsrs-master-empty">Tidak ada data pada filter ini.</div>';
  body.innerHTML=toolbar+table+'<div id="masterCrudNotice" class="modal-sub" style="margin-top:10px">'+(kind==='kategori'?'Kategori resmi dikunci agar 12 kategori baku tetap konsisten.':'Penonaktifan tidak menghapus data dan tidak menghapus laporan lama.')+'</div>';
- const show=document.getElementById('masterCrudShowInactive');if(show)show.addEventListener('change',render);
+ const show=document.getElementById('masterCrudShowInactive');if(show){show.checked=showInactive;show.addEventListener('change',()=>{showInactive=show.checked;render()})}
  const add=document.getElementById('masterCrudAdd');if(add)add.addEventListener('click',()=>form(null,areas));
  body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>form(rows.find(x=>String(x.id)===b.dataset.edit),areas)));
  body.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click',()=>toggle(b.dataset.toggle,b.dataset.active==='true')));
@@ -68,7 +68,7 @@ async function toggle(id,active){
 }
 window.__ipsrsOpenMasterDataManager=function(nextKind){
  if(!allowed()){alert('Menu ini khusus Ka IPSRS.');return}
- kind=['kategori','area','item','subarea'].includes(nextKind)?nextKind:'area';
+ kind=['kategori','area','item','subarea'].includes(nextKind)?nextKind:'area';showInactive=false;
  const bg=ensureModal();bg.querySelector('#masterCrudTitle').textContent='Manajemen '+(label[kind]||'Master Data');
  bg.querySelector('#masterCrudSub').textContent='Khusus Ka IPSRS · perubahan dicatat di audit log';
  bg.classList.add('show');bg.setAttribute('aria-hidden','false');load();
