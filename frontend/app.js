@@ -3639,17 +3639,23 @@
     }
     const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Item yang sama atau hampir sama — pilih jika sesuai:</div>'+
-      '<div style="display:grid;gap:6px">'+candidates.map((x,i)=>'<div data-live-item-card="'+i+'" style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:'+(_liveSelectedExistingItem_===x.name?'#d1fae5':'#fff')+';border:1px solid '+(_liveSelectedExistingItem_===x.name?'#6ee7b7':'#fde68a')+';border-radius:7px"><span>'+esc(x.name)+(x.exact?' <small>(sama persis)</small>':' <small style="color:#64748b">('+Math.round(x.score*100)+'% kemiripan)</small>')+'</span><button type="button" data-live-item-index="'+i+'" class="btn" style="padding:5px 9px;flex-shrink:0;background:'+(_liveSelectedExistingItem_===x.name?'#a7f3d0':'')+';border-color:'+(_liveSelectedExistingItem_===x.name?'#34d399':'')+';color:#064e3b">'+(_liveSelectedExistingItem_===x.name?'Dipilih':'Pilih')+'</button></div>').join('')+'</div>'+
-      '<div style="margin-top:7px;font-size:12px">Jika spesifikasi berbeda, lanjutkan mengetik nama lengkap lalu tekan Simpan untuk pemeriksaan akhir.</div>';
+      '<div style="display:grid;gap:6px">'+candidates.map((x,i)=>'<div data-live-item-card="'+i+'" role="button" tabindex="0" style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px;cursor:pointer;transition:background .12s,border-color .12s" onmouseover="this.style.background=\'#d1fae5\';this.style.borderColor=\'#6ee7b7\';this.querySelector(\'button\').style.background=\'#a7f3d0\'" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#fde68a\';this.querySelector(\'button\').style.background=\'transparent\'"><span>'+esc(x.name)+(x.exact?' <small>(sama persis)</small>':' <small style="color:#64748b">('+Math.round(x.score*100)+'% kemiripan)</small>')+'</span><button type="button" data-live-item-index="'+i+'" class="btn" style="padding:5px 9px;flex-shrink:0;background:transparent;border-color:#fde68a;color:#064e3b">Pilih</button></div>').join('')+'</div>'+
+      '<div style="margin-top:7px;font-size:12px">Jika spesifikasi berbeda, lanjutkan mengetik nama lengkap lalu tekan Simpan untuk item baru.</div>';
     p.style.display='block';
-    p.querySelectorAll('[data-live-item-index]').forEach(btn=>btn.addEventListener('click',()=>{
-      const candidate=candidates[Number(btn.getAttribute('data-live-item-index'))];if(!candidate)return;
-      _liveSelectedExistingItem_=candidate.name;
-      input.value=candidate.name;
-      renderLiveItemSuggestions_();
-      setMsg('itemBaruMsg','Item "'+candidate.name+'" dipilih. Tekan Simpan untuk memakai item yang sudah ada.');
-
-    }));
+    const chooseExisting=(index)=>{
+      const candidate=candidates[index];if(!candidate)return;
+      const sel=document.getElementById('Item');
+      if(sel){refreshItemOptions();sel.value=candidate.name;}
+      _liveSelectedExistingItem_='';
+      closeTambahItemModal();
+      hideItemSimilarityPanel_();
+      setMsg('msgInput','Item yang sudah ada dipilih: "'+candidate.name+'".');
+    };
+    p.querySelectorAll('[data-live-item-index]').forEach(btn=>btn.addEventListener('click',()=>chooseExisting(Number(btn.getAttribute('data-live-item-index')))));
+    p.querySelectorAll('[data-live-item-card]').forEach(card=>{
+      card.addEventListener('click',event=>{if(event.target.closest('button'))return;chooseExisting(Number(card.getAttribute('data-live-item-card')));});
+      card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();chooseExisting(Number(card.getAttribute('data-live-item-card')));}});
+    });
   }
   function showItemSimilarityPanel_(candidates,area,nama,exact=false){
     const p=itemSimilarityPanel_();if(!p)return;
