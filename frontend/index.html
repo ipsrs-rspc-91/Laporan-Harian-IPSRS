@@ -57,6 +57,23 @@
   </div>
   <div id="pwModalBg" class="modal-bg"><div class="modal" style="max-width:380px;"><h3>Ganti Password</h3><div class="modal-sub">Segera ganti password default setelah login pertama.</div><label for="pwOld">Password lama</label><input id="pwOld" type="password"><label for="pwNew">Password baru (min. 6 karakter)</label><input id="pwNew" type="password"><div id="pwMsg"></div><div class="modal-actions"><button class="btn" onclick="closePwModal()">Batal</button><button class="btn primary" onclick="doChangePassword()">Simpan</button></div></div></div>
   <style>
+    .ipsrs-master-crud-modal{width:min(780px,calc(100vw - 24px));max-height:86vh;overflow:auto}
+    .ipsrs-master-crud-head,.ipsrs-master-crud-toolbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .ipsrs-master-crud-toolbar{align-items:center;margin:14px 0;padding-bottom:12px;border-bottom:1px solid #e5e7eb}
+    .ipsrs-master-crud-actions,.ipsrs-master-crud-row-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+    .ipsrs-master-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569}
+    .ipsrs-master-crud-list{display:grid;gap:8px}
+    .ipsrs-master-crud-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid #e2e8f0;border-radius:10px}
+    .ipsrs-master-crud-main{min-width:0;overflow-wrap:anywhere}
+    .ipsrs-master-crud-name{font-weight:700;font-size:14px}
+    .ipsrs-active{color:#15803d;font-weight:700}.ipsrs-inactive{color:#b91c1c;font-weight:700}
+    .ipsrs-master-empty{padding:18px 0}
+    .ipsrs-master-form{display:grid;gap:8px}
+    .ipsrs-master-form label{font-weight:600;font-size:13px}
+    .ipsrs-master-form input,.ipsrs-master-form select{width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:9px;padding:8px 10px;font:inherit;background:#fff;color:#0f172a}
+    .ipsrs-master-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+    .ipsrs-master-crud-row-actions .btn{white-space:nowrap}
+    @media(max-width:600px){.ipsrs-master-crud-toolbar,.ipsrs-master-crud-row{align-items:stretch;flex-direction:column}.ipsrs-master-crud-actions{justify-content:space-between}.ipsrs-master-crud-row-actions .btn{flex:1}.ipsrs-master-crud-head{align-items:center}}
     .system-info-modal{width:min(760px,calc(100vw - 28px));max-height:82vh;overflow:auto}.master-data-management-modal{width:min(680px,calc(100vw - 28px));max-height:82vh;overflow:auto}.master-data-management-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.master-data-management-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left;padding:14px;border:1px solid #dbe2e8;border-radius:12px;background:#fff;color:#0f172a;cursor:pointer;font:inherit}.master-data-management-item strong{font-size:14px}.master-data-management-item span{font-size:12px;color:#64748b}.master-data-management-item:hover{border-color:#0f766e;background:#f0fdfa}.master-data-management-review{grid-column:1/-1}.master-data-management-count{display:inline-block!important;border-radius:999px;background:#dc2626;color:#fff!important;padding:1px 7px;font-size:11px!important}@media(max-width:480px){.master-data-management-grid{grid-template-columns:1fr}.master-data-management-review{grid-column:auto}}
     .system-info-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
     .system-info-content{display:grid;gap:8px}
