@@ -27,6 +27,13 @@
     return ['belum','belum selesai','proses','dalam proses','pending','belum ditindaklanjuti'].includes(s);
   }
   function rowDate(row){return dateOnly(row?.Tanggal??row?.tanggal??row?.tanggal_laporan??row?.created_at);}
+  function rowTime(row){
+    const raw=String(row?.Jam??row?.Waktu??row?.waktu??row?.jam??row?.TanggalWaktu??row?.tanggal_waktu??'').trim();
+    const m=raw.match(/(?:T|\s)(\d{1,2}:\d{2})(?::\d{2})?/);
+    if(m)return m[1];
+    const t=raw.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/);
+    return t?t[1]:'';
+  }
   function ageDays(date){
     if(!date)return -1;
     const [y,m,d]=date.split('-').map(Number);
@@ -45,7 +52,7 @@
     const escAttr=esc;
     const tableRows=rows.map((r,i)=>{
       const date=rowDate(r), age=ageDays(date);
-      const displayDate=date?(()=>{const p=date.split('-');return Number(p[2])+' '+['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][Number(p[1])-1]+' '+p[0];})():'-';
+      const displayDate=date?(()=>{const p=date.split('-');return Number(p[2])+' '+['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][Number(p[1])-1]+' '+p[0]+(rowTime(r)?'<br>'+esc(rowTime(r)):'');})():'-';
       const area=String(r.AreaKerja??r.area_kerja??'-');
       const item=String(r.Item??r.item??'-');
       const room=String(r.Ruang??r.ruang??'-');
@@ -70,8 +77,19 @@
       if(typeof window.__ipsrsFetchReminderReports!=='function')return;
       // Ambil riwayat bulan berjalan dan bulan sebelumnya melalui API berizin.
       // Umur >=25 hari hanya memerlukan rentang ini; tanggal awal adalah hari ke-25 sebelum hari ini.
-      const months=[monthOffset(-1),monthOffset(0)];
-      const responses=await Promise.all(months.map(m=>window.__ipsrsFetchReminderReports(m)));
+      const now=new Date();
+      const endYear=now.getFullYear(), endMonth=now.getMonth();
+      const months=[];
+      // Scan the full known app history from Jan 2020 so older unresolved reports are not missed.
+      for(let y=2020;y<=endYear;y++){
+        const lastMonth=y===endYear?endMonth:11;
+        for(let m=0;m<=lastMonth;m++)months.push(y+'-'+String(m+1).padStart(2,'0'));
+      }
+      const responses=[];
+      for(let i=0;i<months.length;i+=4){
+        const batch=await Promise.all(months.slice(i,i+4).map(m=>window.__ipsrsFetchReminderReports(m)));
+        responses.push(...batch);
+      }
       let all=[];
       responses.forEach(r=>{if(!r||!r.ok)throw new Error(r?.msg||'Gagal memuat laporan');all=all.concat(getRows(r));});
       const cutoff=localISO(new Date(Date.now()-MIN_AGE_DAYS*86400000));
