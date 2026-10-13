@@ -5,19 +5,13 @@
   let busy=false;
   function session(){try{return typeof getSession==='function'?getSession():null;}catch(_){return null;}}
   function ensureUI(){
-    const s=session(), nav=document.querySelector('.topbar-nav');
-    if(!nav)return;
-    let btn=document.getElementById('nav-master-item-review');
-    if(!s||s.role!=='KA_IPSRS'){if(btn)btn.remove();return;}
-    if(!btn){
-      btn=document.createElement('button');btn.type='button';btn.id='nav-master-item-review';btn.className='nav-item';
-      btn.title='Croscek item baru';btn.innerHTML='<span aria-hidden="true">✓</span><span>Croscek Item Baru</span><b id="master-item-review-count" style="display:none;margin-left:6px;border-radius:999px;background:#dc2626;color:white;padding:1px 6px;font-size:11px">0</b>';
-      btn.addEventListener('click',openReview);nav.appendChild(btn);
-    }
+    const s=session();
+    const modal=document.getElementById('masterDataManagementBg');
+    if(!s||s.role!=='KA_IPSRS'){if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}return;}
     refreshCount();
   }
   async function refreshCount(){
-    const s=session(), badge=document.getElementById('master-item-review-count');
+    const s=session(), badge=document.getElementById('masterDataReviewCount');
     if(!s||s.role!=='KA_IPSRS'||!badge)return;
     try{const r=await authRun('apiListMasterItemReviews','MENUNGGU');if(!r||!r.ok)return;const n=(r.data||[]).length;badge.textContent=String(n);badge.style.display=n?'inline-block':'none';}catch(_){}
   }
@@ -65,6 +59,8 @@
       await loadRows(filter);await refreshCount();
     }catch(e){alert(e.message||e);}finally{busy=false;}
   }
+  window.__ipsrsOpenMasterItemReview=openReview;
+  window.__ipsrsRefreshMasterReviewCount=refreshCount;
   const observer=new MutationObserver(()=>ensureUI());
   function init(){ensureUI();const shell=document.getElementById('appShell');if(shell)observer.observe(shell,{attributes:true,attributeFilter:['class']});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
