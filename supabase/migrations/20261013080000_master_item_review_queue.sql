@@ -32,7 +32,7 @@ DECLARE
   v_staff_name text;
   v_staff_role text;
 BEGIN
-  IF NEW.data_type <> 'ITEM' THEN RETURN NEW; END IF;
+  IF NEW.data_type <> 'ITEM' OR NEW.is_active IS NOT TRUE THEN RETURN NEW; END IF;
   SELECT name INTO v_area
   FROM public.master_data
   WHERE id = NEW.parent_id AND data_type = 'AREA';
