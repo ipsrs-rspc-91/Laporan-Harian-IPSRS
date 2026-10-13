@@ -52,7 +52,7 @@ function form(item,areas){
   const name=body.querySelector('#masterCrudName').value.trim(),order=Number(body.querySelector('#masterCrudOrder').value),parent=isItem?Number(body.querySelector('#masterCrudParent').value):null;
   if(!name){notify('Nama wajib diisi.',true);return}
   busy=true;const submit=body.querySelector('[type="submit"]');submit.disabled=true;submit.textContent='Menyimpan...';
-  try{const r=editing?await call('UPDATE',null,item.id,name,null,order):await call('CREATE',isItem?'ITEM':'AREA',null,name,parent,order);if(!r?.ok)throw new Error(r?.msg||'Penyimpanan gagal.');await load()}
+  try{const r=editing?await call('UPDATE',null,item.id,name,isItem?parent:null,order):await call('CREATE',isItem?'ITEM':'AREA',null,name,parent,order);if(!r?.ok)throw new Error(r?.msg||'Penyimpanan gagal.');await load()}
   catch(err){notify(err.message||err,true);submit.disabled=false;submit.textContent=editing?'Simpan perubahan':'Tambah data'}
   finally{busy=false}
  });
