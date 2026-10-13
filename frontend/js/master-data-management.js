@@ -2,12 +2,13 @@
 (function(){
 'use strict';
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let rows=[],kind='area',busy=false,showInactive=false;
+let rows=[],kind='area',busy=false,showInactive=false,areaFilter='';
 const label={kategori:'Kategori',area:'Area Kerja',subarea:'Sub Area Kerja',item:'Item'};
 function session(){try{return typeof getSession==='function'?getSession():null}catch(_){return null}}
 function allowed(){return session()?.role==='KA_IPSRS'}
 function typeOf(k){return ({kategori:'KATEGORI',area:'AREA',subarea:'SUBAREA',item:'ITEM'})[k]||'AREA'}
 function ensureModal(){
+ if(!document.getElementById('ipsrsMasterItemFilterStyles')){const st=document.createElement('style');st.id='ipsrsMasterItemFilterStyles';st.textContent='.ipsrs-master-item-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border:1px solid #dbe5f1;border-radius:10px;background:#f8fafc}.ipsrs-master-item-filter label{font-size:12px;font-weight:700;color:#334155}.ipsrs-master-item-filter select{min-width:220px;max-width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#0f172a;font:inherit;font-size:13px}.ipsrs-master-item-filter .modal-sub{margin-left:auto}';document.head.appendChild(st)}
  let bg=document.getElementById('masterDataCrudBg');if(bg)return bg;
  bg=document.createElement('div');bg.id='masterDataCrudBg';bg.className='modal-bg';bg.setAttribute('aria-hidden','true');
  bg.innerHTML='<div class="modal ipsrs-master-crud-modal" role="dialog" aria-modal="true" aria-labelledby="masterCrudTitle"><div class="ipsrs-master-crud-head"><div><h3 id="masterCrudTitle">Manajemen Master Data</h3><div id="masterCrudSub" class="modal-sub"></div></div><button type="button" class="btn" id="masterCrudClose">Tutup</button></div><div id="masterCrudBody"><div class="modal-sub">Memuat master data...</div></div></div>';
@@ -28,13 +29,16 @@ function render(){
  const areas=rows.filter(x=>x.data_type==='AREA'&&x.is_active).sort((a,b)=>Number(a.sort_order||0)-Number(b.sort_order||0)||String(a.name).localeCompare(String(b.name),'id'));
  const subareas=rows.filter(x=>x.data_type==='SUBAREA'&&x.is_active).sort((a,b)=>String(a.parent_name||'').localeCompare(String(b.parent_name||''),'id')||String(a.name).localeCompare(String(b.name),'id'));
  const toolbar='<div class="ipsrs-master-crud-toolbar"><div><strong>'+esc(label[kind])+'</strong><div class="modal-sub">'+list.length+' data · '+activeCount+' aktif</div></div><div class="ipsrs-master-crud-actions"><label class="ipsrs-master-toggle"><input type="checkbox" id="masterCrudShowInactive"> Tampilkan nonaktif</label><button class="btn primary" id="masterCrudAdd">+ Tambah</button></div></div>';
- const rowsToShow=list.filter(x=>showInactive||x.is_active);
+ const rowsToShow=list.filter(x=>(showInactive||x.is_active)&&(kind!=='item'||!areaFilter||String(x.parent_id||'')===String(areaFilter)));
+ const areaFilterOptions=areas.map(a=>'<option value="'+esc(a.id)+'">'+esc(a.name)+'</option>').join('')+subareas.map(a=>'<option value="'+esc(a.id)+'">'+esc((a.parent_name?a.parent_name+' / ':'')+a.name)+'</option>').join('');
+ const itemFilter=kind==='item'?'<div class="ipsrs-master-item-filter"><label for="masterCrudAreaFilter">Saring Area Kerja</label><select id="masterCrudAreaFilter"><option value="">Semua Area Kerja</option>'+areaFilterOptions+'</select><span class="modal-sub">Menampilkan '+rowsToShow.length+' dari '+list.filter(x=>showInactive||x.is_active).length+' item</span></div>':'';
  const table=rowsToShow.length?'<div class="ipsrs-master-crud-list">'+rowsToShow.map(x=>{
   const parentText=(kind==='subarea'?'Area induk: '+esc(x.parent_name||'Tidak diketahui')+' · ':kind==='item'?'Induk: '+esc(x.parent_name||'Tidak diketahui')+' · ':'');
   const actions=x.is_active?'<button class="btn" data-edit="'+x.id+'">Ubah</button><button class="btn danger" data-delete="'+x.id+'">Hapus</button>':'<button class="btn primary" data-toggle="'+x.id+'" data-active="true">Aktifkan kembali</button>';
   return '<article class="ipsrs-master-crud-row"><div class="ipsrs-master-crud-main"><div class="ipsrs-master-crud-name">'+esc(x.name)+'</div><div class="modal-sub">'+parentText+'ID '+esc(x.id)+' · Urutan '+esc(x.sort_order)+' · <span class="'+(x.is_active?'ipsrs-active':'ipsrs-inactive')+'">'+(x.is_active?'Aktif':'Nonaktif')+'</span></div></div><div class="ipsrs-master-crud-row-actions">'+actions+'</div></article>';
  }).join('')+'</div>':'<div class="modal-sub ipsrs-master-empty">Tidak ada data pada filter ini.</div>';
- body.innerHTML=toolbar+table+'<div id="masterCrudNotice" class="modal-sub" style="margin-top:10px">Tombol Hapus menonaktifkan data agar laporan dan riwayat lama tetap aman. Pengelolaan hanya untuk KA IPSRS.</div>';
+ body.innerHTML=toolbar+itemFilter+table+'<div id="masterCrudNotice" class="modal-sub" style="margin-top:10px">Tombol Hapus menonaktifkan data agar laporan dan riwayat lama tetap aman. Pengelolaan hanya untuk KA IPSRS.</div>';
+ const areaSelect=document.getElementById('masterCrudAreaFilter');if(areaSelect){areaSelect.value=areaFilter;areaSelect.addEventListener('change',()=>{areaFilter=areaSelect.value;render()})}
  const show=document.getElementById('masterCrudShowInactive');if(show){show.checked=showInactive;show.addEventListener('change',()=>{showInactive=show.checked;render()})}
  document.getElementById('masterCrudAdd')?.addEventListener('click',()=>form(null,areas,subareas));
  body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>form(rows.find(x=>String(x.id)===b.dataset.edit),areas,subareas)));
@@ -74,7 +78,7 @@ async function setActive(id,active,deleting){
 }
 window.__ipsrsOpenMasterDataManager=function(nextKind){
  if(!allowed()){alert('Menu ini khusus Ka IPSRS.');return}
- kind=['kategori','area','subarea','item'].includes(nextKind)?nextKind:'area';showInactive=false;
+ kind=['kategori','area','subarea','item'].includes(nextKind)?nextKind:'area';showInactive=false;areaFilter='';
  const bg=ensureModal();bg.querySelector('#masterCrudTitle').textContent='Manajemen '+label[kind];bg.querySelector('#masterCrudSub').textContent='Khusus Ka IPSRS · perubahan dicatat di audit log';bg.classList.add('show');bg.setAttribute('aria-hidden','false');load();
 };
 window.addEventListener('focus',()=>{const bg=document.getElementById('masterDataCrudBg');if(bg?.classList.contains('show')&&allowed())load()});
