@@ -28,7 +28,7 @@
   }
   function rowDate(row){return dateOnly(row?.Tanggal??row?.tanggal??row?.tanggal_laporan??row?.created_at);}
   function rowTime(row){
-    const raw=String(row?.Jam??row?.Waktu??row?.waktu??row?.jam??row?.TanggalWaktu??row?.tanggal_waktu??row?.Tanggal??row?.tanggal??'').trim();
+    const raw=String(row?.Pukul??row?.pukul??row?.Jam??row?.Waktu??row?.waktu??row?.jam??row?.TanggalWaktu??row?.tanggal_waktu??row?.Tanggal??row?.tanggal??'').trim();
     const m=raw.match(/(?:T|\s)(\d{1,2}[:.]\d{2})(?::\d{2})?/);
     if(m)return m[1].replace('.',':');
     const t=raw.match(/^(\d{1,2}[:.]\d{2})(?::\d{2})?$/);
@@ -67,43 +67,38 @@
     bg.querySelector('.orr-x').onclick=closeReminder;
     bg.querySelector('.orr-close').onclick=closeReminder;
   }
+  function showCheckError(message){
+    let el=document.getElementById('ipsrsOldReportReminderError');
+    if(!el){
+      el=document.createElement('div');el.id='ipsrsOldReportReminderError';
+      el.style.cssText='position:fixed;z-index:100002;left:12px;right:12px;bottom:12px;max-width:640px;margin:auto;padding:12px 14px;border-radius:9px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;box-shadow:0 6px 22px rgba(0,0,0,.16);font:13px/1.45 inherit';
+      document.body.appendChild(el);
+      setTimeout(()=>{if(el&&el.isConnected)el.remove();},10000);
+    }
+    el.textContent='Pengingat laporan lama belum dapat diperiksa. '+String(message||'Periksa koneksi lalu muat ulang aplikasi.');
+  }
   async function check(){
     if(running)return;running=true;
     try{
       const session=typeof window.getSession==='function'?window.getSession():null;
       if(!session)return;
-      // Simpan pilihan per pengguna per hari: besok pengingat muncul kembali
-      // jika masih ada laporan yang memenuhi kriteria.
       try{if(localStorage.getItem(dismissedKey(session))===localISO(new Date()))return;}catch(_){}
-      if(typeof window.__ipsrsFetchReminderReports!=='function')return;
-      // Ambil riwayat bulan berjalan dan bulan sebelumnya melalui API berizin.
-      // Umur >=25 hari hanya memerlukan rentang ini; tanggal awal adalah hari ke-25 sebelum hari ini.
-      const now=new Date();
-      const endYear=now.getFullYear(), endMonth=now.getMonth();
-      const months=[];
-      // Scan the full known app history from Jan 2020 so older unresolved reports are not missed.
-      for(let y=2020;y<=endYear;y++){
-        const lastMonth=y===endYear?endMonth:11;
-        for(let m=0;m<=lastMonth;m++)months.push(y+'-'+String(m+1).padStart(2,'0'));
-      }
-      const responses=[];
-      for(let i=0;i<months.length;i+=4){
-        const batch=await Promise.all(months.slice(i,i+4).map(m=>window.__ipsrsFetchReminderReports(m)));
-        responses.push(...batch);
-      }
-      let all=[];
-      responses.forEach(r=>{if(!r||!r.ok)throw new Error(r?.msg||'Gagal memuat laporan');all=all.concat(getRows(r));});
+      if(typeof window.__ipsrsFetchOverdueReports!=='function')throw new Error('Modul pengingat belum termuat. Muat ulang aplikasi.');
       const cutoff=localISO(new Date(Date.now()-MIN_AGE_DAYS*86400000));
+      const response=await window.__ipsrsFetchOverdueReports(cutoff);
+      if(!response||response.ok!==true)throw new Error(response?.msg||'Gagal memuat laporan dari server.');
       const unique=new Map();
-      all.forEach(r=>{
+      getRows(response).forEach(r=>{
         const d=rowDate(r);
         if(!isUnfinished(r)||!d||d>cutoff||ageDays(d)<MIN_AGE_DAYS)return;
         const id=String(r.ID??r.report_id??r.id??[d,r.Ruang,r.Item,r.Pelapor].join('|'));
         unique.set(id,r);
       });
       if(unique.size)show(Array.from(unique.values()).sort((a,b)=>rowDate(a).localeCompare(rowDate(b))),session);
-    }catch(e){console.warn('[IPSRS_OLD_REPORT_REMINDER] Tidak dapat memuat pengingat:',e);}
-    finally{running=false;}
+    }catch(e){
+      console.warn('[IPSRS_OLD_REPORT_REMINDER] Tidak dapat memuat pengingat:',e);
+      showCheckError(e&&e.message?e.message:'Terjadi kesalahan saat memeriksa laporan.');
+    }finally{running=false;}
   }
   const original=window.performLogin;
   if(typeof original==='function'&&!window.__ipsrsOldReportReminderWrapped){
