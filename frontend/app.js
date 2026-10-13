@@ -535,6 +535,12 @@
     return json;
   }
 
+  // Narrow read-only bridge for the aged-report login reminder.
+  // Uses the existing authenticated API and its server-side visibility policy.
+  window.__ipsrsFetchReminderReports = async function(month){
+    return await authRun('apiGetReports', month, null, null, 'daftar');
+  };
+
   // ============================================================
   // LOGIN / LOGOUT / PASSWORD
   // ============================================================
