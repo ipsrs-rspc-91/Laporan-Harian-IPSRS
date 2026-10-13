@@ -44,7 +44,7 @@ function render(){
 function form(item,areas,subareas){
  const body=document.getElementById('masterCrudBody');if(!body)return;
  const editing=!!item,isSubarea=kind==='subarea',isItem=kind==='item',needsParent=isSubarea||isItem;
- const parents=isSubarea?areas:(isItem?[...areas,...subareas]):[];
+ const parents=isSubarea?areas:(isItem?[...areas,...subareas]:[]);
  const parentLabel=isSubarea?'Area Kerja induk': 'Area Kerja / Sub Area Kerja';
  const parentOptions=parents.map(a=>{
   const display=a.data_type==='SUBAREA'?(String(a.parent_name||'')+' / '+a.name):a.name;
