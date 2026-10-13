@@ -464,6 +464,8 @@
         payload.token=token; payload.area=args[0]||''; payload.nama=args[1]||''; payload.existingItemsForArea=Array.isArray(args[2])?args[2]:[]; break;
       case 'apiTambahItem':
         payload.token=token; payload.area=args[0]||''; payload.nama=args[1]||''; payload.existingItemsForArea=Array.isArray(args[2])?args[2]:[]; break;
+      case 'apiManageMasterData':
+        payload.token=token; payload.operation=args[0]||'LIST'; payload.data_type=args[1]||''; payload.id=args[2]||null; payload.name=args[3]||''; payload.parent_id=args[4]??null; payload.sort_order=args[5]??null; payload.is_active=args[6]; break;
       case 'apiListMasterItemReviews':
         payload.token=token; payload.status=args[0]||'MENUNGGU'; break;
       case 'apiReviewMasterItem':
