@@ -28,11 +28,11 @@
   }
   function rowDate(row){return dateOnly(row?.Tanggal??row?.tanggal??row?.tanggal_laporan??row?.created_at);}
   function rowTime(row){
-    const raw=String(row?.Jam??row?.Waktu??row?.waktu??row?.jam??row?.TanggalWaktu??row?.tanggal_waktu??'').trim();
-    const m=raw.match(/(?:T|\s)(\d{1,2}:\d{2})(?::\d{2})?/);
-    if(m)return m[1];
-    const t=raw.match(/^(\d{1,2}:\d{2})(?::\d{2})?$/);
-    return t?t[1]:'';
+    const raw=String(row?.Jam??row?.Waktu??row?.waktu??row?.jam??row?.TanggalWaktu??row?.tanggal_waktu??row?.Tanggal??row?.tanggal??'').trim();
+    const m=raw.match(/(?:T|\s)(\d{1,2}[:.]\d{2})(?::\d{2})?/);
+    if(m)return m[1].replace('.',':');
+    const t=raw.match(/^(\d{1,2}[:.]\d{2})(?::\d{2})?$/);
+    return t?t[1].replace('.',':'):'';
   }
   function ageDays(date){
     if(!date)return -1;
