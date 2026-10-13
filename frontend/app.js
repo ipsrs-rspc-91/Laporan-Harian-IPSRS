@@ -3593,7 +3593,7 @@
     _itemSimilarityCandidates=[];
   }
   function normalizeLiveItem_(value){
-    return String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('id').replace(/[^a-z0-9]+/g,' ').trim().replace(/\\s+/g,' ');
+    return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('id').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
   }
   function liveLevenshteinScore_(a,b){
     if(a===b)return 1;
