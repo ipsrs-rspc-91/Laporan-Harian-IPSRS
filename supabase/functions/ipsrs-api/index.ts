@@ -457,6 +457,43 @@ if(a==="apiGetItemKustom"){const {data,error}=await db.from("master_data").selec
 if(a==="apiTambahKategori"){return{ok:false,msg:"Kategori baku sudah dikunci. Penambahan kategori baru tidak diizinkan."}}
 if(a==="apiTambahAreaKerja"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menambah area kerja."};const n=String(d.nama||"").trim();if(!n)return{ok:false,msg:"Nama area kerja wajib diisi."};if(n.length>120)return{ok:false,msg:"Nama area kerja maksimal 120 karakter."};const norm=(v:any)=>String(v||"").trim().toLocaleLowerCase("id");const staticList=Array.isArray(d.staticList)?d.staticList:[];if(staticList.some((x:any)=>norm(x)===norm(n)))return{ok:false,msg:"Area kerja sudah ada."};const {data:dup}=await db.from("master_data").select("id").eq("data_type","AREA").ilike("name",n).limit(1);if((dup||[]).length)return{ok:false,msg:"Area kerja sudah ada."};const {data,error}=await db.from("master_data").insert({data_type:"AREA",name:n,sort_order:999,is_active:true,created_by:ctx.userClaims.sub}).select("name").single();if(error)throw error;return{ok:true,area:data.name}}
 if(a==="apiTambahItem"){const ar=String(d.area||"").trim(),n=String(d.nama||"").trim();if(!ar||!n)return{ok:false,msg:"Area dan nama item wajib diisi."};if(n.length>120)return{ok:false,msg:"Nama item maksimal 120 karakter."};const norm=(v:any)=>String(v||"").trim().toLocaleLowerCase("id");const existingItemsForArea=Array.isArray(d.existingItemsForArea)?d.existingItemsForArea:[];if(existingItemsForArea.some((x:any)=>norm(x)===norm(n)))return{ok:false,msg:"Item sudah ada pada area tersebut."};const {data:a1}=await db.from("master_data").select("id").eq("data_type","AREA").eq("name",ar).maybeSingle();if(!a1)return{ok:false,msg:"Area kerja tidak ditemukan."};const {data:dup}=await db.from("master_data").select("id").eq("data_type","ITEM").eq("parent_id",a1.id).ilike("name",n).limit(1);if((dup||[]).length)return{ok:false,msg:"Item sudah ada pada area tersebut."};const {data,error}=await db.from("master_data").insert({data_type:"ITEM",parent_id:a1.id,name:n,sort_order:999,is_active:true,created_by:ctx.userClaims.sub}).select("name").single();if(error)throw error;return{ok:true,item:data.name}}
+if(a==="apiListMasterItemReviews"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memeriksa item baru."};
+ const status=String(d.status||"MENUNGGU").toUpperCase();
+ const allowed=["MENUNGGU","SESUAI","PERLU_KOREKSI","DITOLAK"];
+ if(!allowed.includes(status))return{ok:false,msg:"Filter status tidak valid."};
+ let q=db.from("master_item_review_queue").select("*").order("submitted_at",{ascending:false}).limit(300);
+ if(status!=="SEMUA")q=q.eq("status",status);
+ const {data,error}=await q;
+ if(error)throw error;
+ return{ok:true,data:data||[]};
+}
+if(a==="apiReviewMasterItem"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memeriksa item baru."};
+ const id=Number(d.reviewId),status=String(d.status||"").toUpperCase(),note=String(d.note||"").trim(),corrected=String(d.correctedName||"").trim();
+ if(!Number.isInteger(id)||id<1)return{ok:false,msg:"ID pemeriksaan tidak valid."};
+ if(!["SESUAI","PERLU_KOREKSI","DITOLAK"].includes(status))return{ok:false,msg:"Status pemeriksaan tidak valid."};
+ if(status==="PERLU_KOREKSI"&&!corrected&&!note)return{ok:false,msg:"Isi nama koreksi atau catatan untuk item ini."};
+ const {data:row,error:re}=await db.from("master_item_review_queue").select("review_id,master_data_id,item_name,status").eq("review_id",id).maybeSingle();
+ if(re)throw re;
+ if(!row)return{ok:false,msg:"Item pemeriksaan tidak ditemukan."};
+ if(corrected){
+   if(corrected.length>120)return{ok:false,msg:"Nama item maksimal 120 karakter."};
+   const {data:dups,error:de}=await db.from("master_data").select("id").eq("data_type","ITEM").eq("parent_id",(await db.from("master_data").select("parent_id").eq("id",row.master_data_id).single()).data?.parent_id).ilike("name",corrected).neq("id",row.master_data_id).limit(1);
+   if(de)throw de;
+   if((dups||[]).length)return{ok:false,msg:"Nama koreksi sudah digunakan pada area tersebut."};
+   const {error:ue}=await db.from("master_data").update({name:corrected,updated_at:new Date().toISOString(),updated_by:ctx.userClaims.sub}).eq("id",row.master_data_id).eq("data_type","ITEM");
+   if(ue)throw ue;
+ }
+ if(status==="DITOLAK"){
+   const {error:de}=await db.from("master_data").update({is_active:false,updated_at:new Date().toISOString(),updated_by:ctx.userClaims.sub}).eq("id",row.master_data_id).eq("data_type","ITEM");
+   if(de)throw de;
+ }
+ const {data:updated,error:qe}=await db.from("master_item_review_queue").update({item_name:corrected||row.item_name,status,checked_by_staff_id:s.staff_id,checked_by_name:s.nama,checked_at:new Date().toISOString(),review_note:note||null,updated_at:new Date().toISOString()}).eq("review_id",id).select("*").single();
+ if(qe)throw qe;
+ await audit(db,s,"REVIEW_MASTER_ITEM",null,"Pemeriksaan item master data",{field_changed:"status",old_value:row.status,new_value:status});
+ return{ok:true,data:updated};
+}
 if(a==="apiGetAccessControl"){if(s.role!=="KA_IPSRS"&&s.role!=="ADMINISTRASI")return{ok:false,msg:"Tidak memiliki akses pengaturan."};const {data,error}=await db.from("access_settings").select("key,value");if(error)throw error;const o:any={};for(const x of data||[])o[String(x.key).toLowerCase()]=x.value;const {data:ep,error:ee}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(ee)throw ee;return{ok:true,laporan_tim:o.laporan_tim||"AKTIF",administrasi_edit:o.administrasi_edit||"NONAKTIF",has_edit_permission:!!ep}}
 if(a==="apiListEditPermissions"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat izin edit."};const {data,error}=await db.from("edit_permissions").select("*").order("created_at",{ascending:false});if(error)throw error;return{ok:true,data:data||[]}}
 if(a==="apiSetAccessSetting"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengubah pengaturan."};const key=String(d.key||"").trim(),value=String(d.value||"").trim();if(!["LAPORAN_TIM","ADMINISTRASI_EDIT"].includes(key)||!["AKTIF","NONAKTIF"].includes(value))return{ok:false,msg:"Pengaturan tidak valid."};const {error}=await db.from("access_settings").upsert({key,value,updated_at:new Date().toISOString(),updated_by_staff_id:s.staff_id,updated_by_name:s.nama},{onConflict:"key"});if(error)throw error;return{ok:true}}
