@@ -457,6 +457,60 @@ if(a==="apiGetItemKustom"){const {data,error}=await db.from("master_data").selec
 if(a==="apiTambahKategori"){return{ok:false,msg:"Kategori baku sudah dikunci. Penambahan kategori baru tidak diizinkan."}}
 if(a==="apiTambahAreaKerja"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menambah area kerja."};const n=String(d.nama||"").trim();if(!n)return{ok:false,msg:"Nama area kerja wajib diisi."};if(n.length>120)return{ok:false,msg:"Nama area kerja maksimal 120 karakter."};const norm=(v:any)=>String(v||"").trim().toLocaleLowerCase("id");const staticList=Array.isArray(d.staticList)?d.staticList:[];if(staticList.some((x:any)=>norm(x)===norm(n)))return{ok:false,msg:"Area kerja sudah ada."};const {data:dup}=await db.from("master_data").select("id").eq("data_type","AREA").ilike("name",n).limit(1);if((dup||[]).length)return{ok:false,msg:"Area kerja sudah ada."};const {data,error}=await db.from("master_data").insert({data_type:"AREA",name:n,sort_order:999,is_active:true,created_by:ctx.userClaims.sub}).select("name").single();if(error)throw error;return{ok:true,area:data.name}}
 if(a==="apiTambahItem"){const ar=String(d.area||"").trim(),n=String(d.nama||"").trim();if(!ar||!n)return{ok:false,msg:"Area dan nama item wajib diisi."};if(n.length>120)return{ok:false,msg:"Nama item maksimal 120 karakter."};const norm=(v:any)=>String(v||"").trim().toLocaleLowerCase("id");const existingItemsForArea=Array.isArray(d.existingItemsForArea)?d.existingItemsForArea:[];if(existingItemsForArea.some((x:any)=>norm(x)===norm(n)))return{ok:false,msg:"Item sudah ada pada area tersebut."};const {data:a1}=await db.from("master_data").select("id").eq("data_type","AREA").eq("name",ar).maybeSingle();if(!a1)return{ok:false,msg:"Area kerja tidak ditemukan."};const {data:dup}=await db.from("master_data").select("id").eq("data_type","ITEM").eq("parent_id",a1.id).ilike("name",n).limit(1);if((dup||[]).length)return{ok:false,msg:"Item sudah ada pada area tersebut."};const {data,error}=await db.from("master_data").insert({data_type:"ITEM",parent_id:a1.id,name:n,sort_order:999,is_active:true,created_by:ctx.userClaims.sub}).select("name").single();if(error)throw error;return{ok:true,item:data.name}}
+if(a==="apiManageMasterData"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengelola master data."};
+ const op=String(d.operation||"LIST").toUpperCase();
+ const now=new Date().toISOString();
+ const norm=(v:any)=>String(v||"").trim().toLocaleLowerCase("id");
+ if(op==="LIST"){
+   const {data,error}=await db.from("master_data").select("id,data_type,parent_id,name,sort_order,is_active,created_at,updated_at").order("data_type").order("sort_order").order("name");
+   if(error)throw error;
+   const rows=data||[], byId:any={};for(const r of rows)byId[String(r.id)]=r;
+   return{ok:true,data:rows.map((r:any)=>({...r,parent_name:r.parent_id?String(byId[String(r.parent_id)]?.name||""):""}))};
+ }
+ if(op==="CREATE"){
+   const type=String(d.data_type||"").toUpperCase(),name=String(d.name||"").trim(),parentId=d.parent_id==null||d.parent_id===""?null:Number(d.parent_id);
+   if(!["AREA","ITEM"].includes(type))return{ok:false,msg:"Kategori baku dikunci. Hanya area kerja dan item yang dapat ditambahkan."};
+   if(!name||name.length>120)return{ok:false,msg:"Nama wajib diisi (maksimal 120 karakter)."};
+   if(type==="AREA"&&parentId!==null)return{ok:false,msg:"Area kerja utama tidak boleh memiliki induk."};
+   if(type==="ITEM"&&(!Number.isInteger(parentId)||parentId<1))return{ok:false,msg:"Pilih area kerja untuk item."};
+   if(type==="ITEM"){const {data:p,error:pe}=await db.from("master_data").select("id,name,is_active,data_type").eq("id",parentId).maybeSingle();if(pe)throw pe;if(!p||p.data_type!=="AREA"||!p.is_active)return{ok:false,msg:"Area kerja tidak ditemukan atau nonaktif."};}
+   let q=db.from("master_data").select("id,name").eq("data_type",type).ilike("name",name);
+   q=type==="ITEM"?q.eq("parent_id",parentId):q.is("parent_id",null);
+   const {data:dups,error:de}=await q.limit(1);if(de)throw de;if((dups||[]).length)return{ok:false,msg:"Nama sudah digunakan pada kelompok tersebut."};
+   const {data:created,error}=await db.from("master_data").insert({data_type:type,parent_id:type==="ITEM"?parentId:null,name,sort_order:999,is_active:true,created_by:ctx.userClaims.sub,updated_by:ctx.userClaims.sub}).select("id,data_type,parent_id,name,sort_order,is_active").single();if(error)throw error;
+   await audit(db,s,"MASTER_DATA_CREATE",null,"Menambah master data",{new_value:{id:created.id,data_type:type,parent_id:created.parent_id,name}});
+   return{ok:true,data:created,msg:"Master data berhasil ditambahkan."};
+ }
+ if(op==="UPDATE"){
+   const id=Number(d.id),name=String(d.name||"").trim(),sortOrder=Number(d.sort_order);
+   if(!Number.isInteger(id)||id<1)return{ok:false,msg:"ID master data tidak valid."};
+   if(!name||name.length>120)return{ok:false,msg:"Nama wajib diisi (maksimal 120 karakter)."};
+   const {data:old,error:oe}=await db.from("master_data").select("id,data_type,parent_id,name,sort_order,is_active").eq("id",id).maybeSingle();if(oe)throw oe;if(!old)return{ok:false,msg:"Master data tidak ditemukan."};
+   if(old.data_type==="KATEGORI")return{ok:false,msg:"Kategori baku dikunci agar 12 kategori resmi tetap konsisten."};
+   let q=db.from("master_data").select("id").eq("data_type",old.data_type).ilike("name",name).neq("id",id);
+   q=old.data_type==="ITEM"?q.eq("parent_id",old.parent_id):q.is("parent_id",null);
+   const {data:dups,error:de}=await q.limit(1);if(de)throw de;if((dups||[]).length)return{ok:false,msg:"Nama sudah digunakan pada kelompok tersebut."};
+   const patch:any={name,updated_at:now,updated_by:ctx.userClaims.sub};if(Number.isInteger(sortOrder)&&sortOrder>=0&&sortOrder<=9999)patch.sort_order=sortOrder;
+   const {data:updated,error:ue}=await db.from("master_data").update(patch).eq("id",id).select("id,data_type,parent_id,name,sort_order,is_active").single();if(ue)throw ue;
+   await audit(db,s,"MASTER_DATA_UPDATE",null,"Mengubah master data",{old_value:old,new_value:updated});
+   return{ok:true,data:updated,msg:"Perubahan master data berhasil disimpan."};
+ }
+ if(op==="SET_ACTIVE"){
+   const id=Number(d.id),active=d.is_active===true;
+   if(!Number.isInteger(id)||id<1)return{ok:false,msg:"ID master data tidak valid."};
+   const {data:old,error:oe}=await db.from("master_data").select("id,data_type,parent_id,name,is_active").eq("id",id).maybeSingle();if(oe)throw oe;if(!old)return{ok:false,msg:"Master data tidak ditemukan."};
+   if(old.data_type==="KATEGORI")return{ok:false,msg:"Kategori baku dikunci agar 12 kategori resmi tetap konsisten."};
+   if(!active&&old.data_type==="AREA"){
+     const {data:children,error:ce}=await db.from("master_data").select("id").eq("data_type","ITEM").eq("parent_id",id).eq("is_active",true).limit(1);if(ce)throw ce;
+     if((children||[]).length)return{ok:false,msg:"Nonaktifkan item aktif di area ini terlebih dahulu. Data dan laporan lama tidak akan dihapus."};
+   }
+   const {data:updated,error:ue}=await db.from("master_data").update({is_active:active,updated_at:now,updated_by:ctx.userClaims.sub}).eq("id",id).select("id,data_type,parent_id,name,is_active").single();if(ue)throw ue;
+   await audit(db,s,active?"MASTER_DATA_REACTIVATE":"MASTER_DATA_DEACTIVATE",null,active?"Mengaktifkan kembali master data":"Menonaktifkan master data",{old_value:old,new_value:updated});
+   return{ok:true,data:updated,msg:active?"Master data diaktifkan kembali.":"Master data dinonaktifkan. Riwayat laporan tetap dipertahankan."};
+ }
+ return{ok:false,msg:"Operasi master data tidak dikenal."};
+}
 if(a==="apiListMasterItemReviews"){
  if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memeriksa item baru."};
  const status=String(d.status||"MENUNGGU").toUpperCase();
