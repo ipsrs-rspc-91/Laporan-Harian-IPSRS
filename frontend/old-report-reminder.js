@@ -52,13 +52,14 @@
     const escAttr=esc;
     const tableRows=rows.map((r,i)=>{
       const date=rowDate(r), age=ageDays(date);
-      const displayDate=date?(()=>{const p=date.split('-');return Number(p[2])+' '+['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][Number(p[1])-1]+' '+p[0]+(rowTime(r)?'<br>'+esc(rowTime(r)):'');})():'-';
+      const displayDate=date?(()=>{const p=date.split('-');return Number(p[2])+' '+['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][Number(p[1])-1]+' '+p[0];})():'-';
+      const displayTime=rowTime(r);
       const area=String(r.AreaKerja??r.area_kerja??'-');
       const item=String(r.Item??r.item??'-');
       const room=String(r.Ruang??r.ruang??'-');
       const issue=String(r.MasalahKegiatan??r.masalah_kegiatan??r.Masalah??r.masalah??'-');
       const action=String(r.Tindakan??r.tindakan??'-');
-      return '<tr><td>'+(i+1)+'</td><td>'+esc(displayDate)+'</td><td class="orr-age">'+age+'</td><td><strong>'+esc(area)+'</strong><br>'+esc(item)+'</td><td>'+esc(room)+'</td><td>'+esc(issue)+'</td><td>'+esc(action)+'</td></tr>';
+      return '<tr><td>'+(i+1)+'</td><td>'+esc(displayDate)+(displayTime?'<br>'+esc(displayTime):'')+'</td><td class="orr-age">'+age+'</td><td><strong>'+esc(area)+'</strong><br>'+esc(item)+'</td><td>'+esc(room)+'</td><td>'+esc(issue)+'</td><td>'+esc(action)+'</td></tr>';
     }).join('');
     bg.innerHTML='<div class="orr-box" role="alertdialog" aria-modal="true" aria-labelledby="orrTitle"><div class="orr-head"><div class="orr-bell" aria-hidden="true">🔔</div><div class="orr-headtext"><h3 id="orrTitle">Pengingat Laporan IPSRS</h3><div class="orr-subtitle">Ada <strong>'+rows.length+' laporan</strong> yang sudah berumur 25 hari atau lebih dan masih berstatus <strong>Belum Selesai</strong>.</div></div><button type="button" class="orr-x" aria-label="Tutup">×</button></div><div class="orr-instructions"><div class="orr-instruction"><span class="orr-number">1</span><span><strong>Segera</strong> untuk ditindak lanjuti dan <strong>pesan spare part</strong> jika diperlukan.</span></div><div class="orr-instruction"><span class="orr-number">2</span><span>Jika sudah di tindak lanjut, <strong>rubah status laporan dari Belum menjadi Selesai.</strong></span></div></div><div class="orr-table-wrap"><table><thead><tr><th>No.</th><th>Tanggal Laporan</th><th>Umur</th><th>Area Kerja / Item</th><th>Ruang</th><th>Masalah</th><th>Tindakan Terakhir</th></tr></thead><tbody>'+tableRows+'</tbody></table></div><label class="orr-checkrow"><input type="checkbox" id="orrDismiss"><span>Jangan tampilkan lagi</span></label><div class="orr-hint">Pengingat akan muncul kembali besok jika masih ada laporan yang berumur ≥ 25 hari.</div><div class="orr-actions"><button type="button" class="orr-close">Tutup</button></div></div>';
     document.body.appendChild(bg);
