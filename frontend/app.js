@@ -535,6 +535,9 @@
     return json;
   }
 
+  // Expose only the existing session reader needed by the reminder module.
+  window.getSession = getSession;
+
   // Narrow read-only bridge for the aged-report login reminder.
   // Uses the existing authenticated API and its server-side visibility policy.
   window.__ipsrsFetchReminderReports = async function(month){
@@ -614,6 +617,10 @@
       await afterAuthReady();
       hideLoginScreen();
       goPage('input');
+      // Run the overdue-report reminder from the real login path (performLogin is lexical).
+      if(typeof window.__ipsrsCheckOldReportReminder==='function'){
+        setTimeout(()=>window.__ipsrsCheckOldReportReminder(),900);
+      }
       // Tampilkan warning server secara dinamis setelah login berhasil.
       // Fungsi login utama bersifat lexical, sehingga warning dipanggil eksplisit
       // di sini dan tidak bergantung pada wrapper window.performLogin.
