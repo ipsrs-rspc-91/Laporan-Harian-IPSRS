@@ -479,7 +479,7 @@ if(a==="apiManageMasterData"){
    q=type==="ITEM"?q.eq("parent_id",parentId):q.is("parent_id",null);
    const {data:dups,error:de}=await q.limit(1);if(de)throw de;if((dups||[]).length)return{ok:false,msg:"Nama sudah digunakan pada kelompok tersebut."};
    const {data:created,error}=await db.from("master_data").insert({data_type:type,parent_id:type==="ITEM"?parentId:null,name,sort_order:999,is_active:true,created_by:ctx.userClaims.sub,updated_by:ctx.userClaims.sub}).select("id,data_type,parent_id,name,sort_order,is_active").single();if(error)throw error;
-   await audit(db,s,"MASTER_DATA_CREATE",null,"Menambah master data",{new_value:{id:created.id,data_type:type,parent_id:created.parent_id,name}});
+   await audit(db,s,"MASTER_DATA_CREATE",null,"Menambah master data",{new_value:JSON.stringify({id:created.id,data_type:type,parent_id:created.parent_id,name})});
    return{ok:true,data:created,msg:"Master data berhasil ditambahkan."};
  }
  if(op==="UPDATE"){
@@ -495,7 +495,8 @@ if(a==="apiManageMasterData"){
    const {data:dups,error:de}=await q.limit(1);if(de)throw de;if((dups||[]).length)return{ok:false,msg:"Nama sudah digunakan pada kelompok tersebut."};
    const patch:any={name,updated_at:now,updated_by:ctx.userClaims.sub};if(old.data_type==="ITEM")patch.parent_id=targetParent;if(Number.isInteger(sortOrder)&&sortOrder>=0&&sortOrder<=9999)patch.sort_order=sortOrder;
    const {data:updated,error:ue}=await db.from("master_data").update(patch).eq("id",id).select("id,data_type,parent_id,name,sort_order,is_active").single();if(ue)throw ue;
-   await audit(db,s,"MASTER_DATA_UPDATE",null,"Mengubah master data",{old_value:old,new_value:updated});
+   if(updated.data_type==="ITEM"){const {data:areaRow,error:areaError}=await db.from("master_data").select("name").eq("id",updated.parent_id).eq("data_type","AREA").maybeSingle();if(areaError)throw areaError;const {error:queueError}=await db.from("master_item_review_queue").update({item_name:updated.name,area_name:areaRow?.name||"",updated_at:now}).eq("master_data_id",id);if(queueError)throw queueError;}
+   await audit(db,s,"MASTER_DATA_UPDATE",null,"Mengubah master data",{old_value:JSON.stringify(old),new_value:JSON.stringify(updated)});
    return{ok:true,data:updated,msg:"Perubahan master data berhasil disimpan."};
  }
  if(op==="SET_ACTIVE"){
@@ -508,7 +509,7 @@ if(a==="apiManageMasterData"){
      if((children||[]).length)return{ok:false,msg:"Nonaktifkan item aktif di area ini terlebih dahulu. Data dan laporan lama tidak akan dihapus."};
    }
    const {data:updated,error:ue}=await db.from("master_data").update({is_active:active,updated_at:now,updated_by:ctx.userClaims.sub}).eq("id",id).select("id,data_type,parent_id,name,is_active").single();if(ue)throw ue;
-   await audit(db,s,active?"MASTER_DATA_REACTIVATE":"MASTER_DATA_DEACTIVATE",null,active?"Mengaktifkan kembali master data":"Menonaktifkan master data",{old_value:old,new_value:updated});
+   await audit(db,s,active?"MASTER_DATA_REACTIVATE":"MASTER_DATA_DEACTIVATE",null,active?"Mengaktifkan kembali master data":"Menonaktifkan master data",{old_value:JSON.stringify(old),new_value:JSON.stringify(updated)});
    return{ok:true,data:updated,msg:active?"Master data diaktifkan kembali.":"Master data dinonaktifkan. Riwayat laporan tetap dipertahankan."};
  }
  return{ok:false,msg:"Operasi master data tidak dikenal."};
