@@ -33,7 +33,7 @@
   }
   async function openReview(){const bg=ensureModal();bg.classList.add('show');await loadRows('MENUNGGU');}
   async function loadRows(status){
-    const list=document.getElementById('masterItemReviewList');if(!list||busy)return;
+    const list=document.getElementById('masterItemReviewList');if(!list)return;
     list.innerHTML='<div class="modal-sub">Memuat antrean pemeriksaan...</div>';
     try{
       const r=await authRun('apiListMasterItemReviews',status);
@@ -66,7 +66,7 @@
     }catch(e){alert(e.message||e);}finally{busy=false;}
   }
   const observer=new MutationObserver(()=>ensureUI());
-  function init(){ensureUI();const shell=document.getElementById('appShell');if(shell)observer.observe(shell,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}
+  function init(){ensureUI();const shell=document.getElementById('appShell');if(shell)observer.observe(shell,{attributes:true,attributeFilter:['class']});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   window.addEventListener('focus',refreshCount);
 })();
