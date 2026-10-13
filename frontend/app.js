@@ -438,6 +438,8 @@
         payload.token=token; payload.payload=args[0]||{}; break;
       case 'apiGetReports':
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; break;
+      case 'apiGetOverdueReports':
+        payload.token=token; payload.cutoffDate=args[0]||''; break;
       case 'apiUpdateReport':
         payload.token=token; payload.reportId=args[0]||''; payload.payload=args[1]||{}; break;
       case 'apiDeleteReport':
@@ -538,10 +540,9 @@
   // Expose only the existing session reader needed by the reminder module.
   window.getSession = getSession;
 
-  // Narrow read-only bridge for the aged-report login reminder.
-  // Uses the existing authenticated API and its server-side visibility policy.
-  window.__ipsrsFetchReminderReports = async function(month){
-    return await authRun('apiGetReports', month, null, null, 'daftar');
+  // Single read-only request for the aged-report reminder; server applies existing report visibility policy.
+  window.__ipsrsFetchOverdueReports = async function(cutoffDate){
+    return await authRun('apiGetOverdueReports', cutoffDate);
   };
 
   // ============================================================
