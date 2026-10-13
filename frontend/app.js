@@ -3561,6 +3561,7 @@
     const input = document.getElementById('itemBaruInput');
     document.getElementById('itemBaruAreaLabel').innerText = area || '-';
     input.value = '';
+    _liveSelectedExistingItem_ = '';
     hideItemSimilarityPanel_();
     setMsg('itemBaruMsg', '');
     document.getElementById('itemModalBg').classList.add('show');
@@ -3577,6 +3578,7 @@
     if(sel.value === ADD_NEW_VALUE) sel.value = '';
   }
   let _itemSimilarityCandidates = [];
+  let _liveSelectedExistingItem_ = '';
   function itemSimilarityPanel_(){
     const input=document.getElementById('itemBaruInput');
     if(!input)return null;
@@ -3637,16 +3639,16 @@
     }
     const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Item yang sama atau hampir sama — pilih jika sesuai:</div>'+
-      '<div style="display:grid;gap:6px">'+candidates.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+(x.exact?' <small>(sama persis)</small>':' <small style="color:#64748b">('+Math.round(x.score*100)+'% kemiripan)</small>')+'</span><button type="button" data-live-item-index="'+i+'" class="btn" style="padding:5px 9px;flex-shrink:0">Gunakan</button></div>').join('')+'</div>'+
+      '<div style="display:grid;gap:6px">'+candidates.map((x,i)=>'<div data-live-item-card="'+i+'" style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:'+(_liveSelectedExistingItem_===x.name?'#d1fae5':'#fff')+';border:1px solid '+(_liveSelectedExistingItem_===x.name?'#6ee7b7':'#fde68a')+';border-radius:7px"><span>'+esc(x.name)+(x.exact?' <small>(sama persis)</small>':' <small style="color:#64748b">('+Math.round(x.score*100)+'% kemiripan)</small>')+'</span><button type="button" data-live-item-index="'+i+'" class="btn" style="padding:5px 9px;flex-shrink:0;background:'+(_liveSelectedExistingItem_===x.name?'#a7f3d0':'')+';border-color:'+(_liveSelectedExistingItem_===x.name?'#34d399':'')+';color:#064e3b">'+(_liveSelectedExistingItem_===x.name?'Dipilih':'Pilih')+'</button></div>').join('')+'</div>'+
       '<div style="margin-top:7px;font-size:12px">Jika spesifikasi berbeda, lanjutkan mengetik nama lengkap lalu tekan Simpan untuk pemeriksaan akhir.</div>';
     p.style.display='block';
     p.querySelectorAll('[data-live-item-index]').forEach(btn=>btn.addEventListener('click',()=>{
       const candidate=candidates[Number(btn.getAttribute('data-live-item-index'))];if(!candidate)return;
-      const sel=document.getElementById('Item');
-      if(sel){refreshItemOptions();sel.value=candidate.name;}
-      closeTambahItemModal();
-      hideItemSimilarityPanel_();
-      setMsg('msgInput','Menggunakan item yang sudah ada: "'+candidate.name+'".');
+      _liveSelectedExistingItem_=candidate.name;
+      input.value=candidate.name;
+      renderLiveItemSuggestions_();
+      setMsg('itemBaruMsg','Item "'+candidate.name+'" dipilih. Tekan Simpan untuk memakai item yang sudah ada.');
+
     }));
   }
   function showItemSimilarityPanel_(candidates,area,nama,exact=false){
@@ -3668,6 +3670,16 @@
   async function simpanItemBaru(allowSimilar=false){
     const area = document.getElementById('AreaKerja').value;
     const nama = document.getElementById('itemBaruInput').value.trim();
+    if(_liveSelectedExistingItem_ && normalizeLiveItem_(_liveSelectedExistingItem_)===normalizeLiveItem_(nama)){
+      const sel=document.getElementById('Item');
+      if(sel){refreshItemOptions();sel.value=_liveSelectedExistingItem_;}
+      const chosen=_liveSelectedExistingItem_;
+      closeTambahItemModal();
+      hideItemSimilarityPanel_();
+      _liveSelectedExistingItem_='';
+      setMsg('msgInput', 'Item yang sudah ada dipilih: "'+chosen+'".');
+      return;
+    }
     if(!area){ setMsg('itemBaruMsg', 'Area kerja wajib dipilih.', true); return; }
     if(!nama){ setMsg('itemBaruMsg', 'Nama item wajib diisi.', true); return; }
     setMsg('itemBaruMsg', allowSimilar?'Memeriksa ulang dan menambahkan...':'Memeriksa item yang sama atau mirip...');
