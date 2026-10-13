@@ -3558,11 +3558,18 @@
 
   function openTambahItemModal(){
     const area = document.getElementById('AreaKerja').value;
+    const input = document.getElementById('itemBaruInput');
     document.getElementById('itemBaruAreaLabel').innerText = area || '-';
-    document.getElementById('itemBaruInput').value = '';
+    input.value = '';
     hideItemSimilarityPanel_();
     setMsg('itemBaruMsg', '');
     document.getElementById('itemModalBg').classList.add('show');
+    // Live suggestions appear while typing; saving still runs the authoritative backend check.
+    if(input && !input.dataset.liveSimilarityBound){
+      input.addEventListener('input', renderLiveItemSuggestions_);
+      input.dataset.liveSimilarityBound = '1';
+    }
+    renderLiveItemSuggestions_();
   }
   function closeTambahItemModal(){
     document.getElementById('itemModalBg').classList.remove('show');
@@ -3584,6 +3591,63 @@
   function hideItemSimilarityPanel_(){
     const p=document.getElementById('itemSimilarityCandidates');if(p){p.style.display='none';p.innerHTML='';}
     _itemSimilarityCandidates=[];
+  }
+  function normalizeLiveItem_(value){
+    return String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('id').replace(/[^a-z0-9]+/g,' ').trim().replace(/\\s+/g,' ');
+  }
+  function liveLevenshteinScore_(a,b){
+    if(a===b)return 1;
+    if(!a.length||!b.length)return 0;
+    let prev=Array.from({length:b.length+1},(_,i)=>i);
+    for(let i=1;i<=a.length;i++){
+      const cur=[i];
+      for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+      prev=cur;
+    }
+    return 1-prev[b.length]/Math.max(a.length,b.length,1);
+  }
+  function renderLiveItemSuggestions_(){
+    const input=document.getElementById('itemBaruInput');
+    const areaEl=document.getElementById('AreaKerja');
+    if(!input||!areaEl)return;
+    const raw=String(input.value||'').trim(),query=normalizeLiveItem_(raw);
+    const p=itemSimilarityPanel_();
+    if(!p)return;
+    if(query.length<2){p.style.display='none';p.innerHTML='';return;}
+    const area=areaEl.value;
+    const all=(MASTER_ITEMS_BY_AREA[area]||[]).concat(CUSTOM_ITEMS_BY_AREA[area]||[]);
+    const unique=[],seen=new Set();
+    for(const value of all){
+      const name=String(value||'').trim(),norm=normalizeLiveItem_(name);
+      if(!name||!norm||seen.has(norm))continue;
+      seen.add(norm);
+      const tokens=new Set(query.split(' ').filter(Boolean)),other=new Set(norm.split(' ').filter(Boolean));
+      let overlap=0;for(const token of tokens)if(other.has(token))overlap++;
+      const tokenScore=tokens.size&&other.size?overlap/(tokens.size+other.size-overlap):0;
+      const score=Math.max(liveLevenshteinScore_(query,norm),tokenScore);
+      const isPrefix=norm.includes(query)||query.includes(norm);
+      if(norm===query||isPrefix||score>=0.58||tokenScore>=0.5)unique.push({name,score:norm===query?1:score,exact:norm===query});
+    }
+    unique.sort((a,b)=>Number(b.exact)-Number(a.exact)||b.score-a.score||a.name.localeCompare(b.name,'id'));
+    const candidates=unique.slice(0,8);
+    if(!candidates.length){
+      p.style.display='block';
+      p.innerHTML='<div style="font-weight:600">Belum ditemukan item yang sama atau mirip pada area kerja ini. Anda dapat melanjutkan mengetik; pemeriksaan akhir dilakukan saat Simpan.</div>';
+      return;
+    }
+    const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Item yang sama atau hampir sama — pilih jika sesuai:</div>'+
+      '<div style="display:grid;gap:6px">'+candidates.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+(x.exact?' <small>(sama persis)</small>':' <small style="color:#64748b">('+Math.round(x.score*100)+'% kemiripan)</small>')+'</span><button type="button" data-live-item-index="'+i+'" class="btn" style="padding:5px 9px;flex-shrink:0">Gunakan</button></div>').join('')+'</div>'+
+      '<div style="margin-top:7px;font-size:12px">Jika spesifikasi berbeda, lanjutkan mengetik nama lengkap lalu tekan Simpan untuk pemeriksaan akhir.</div>';
+    p.style.display='block';
+    p.querySelectorAll('[data-live-item-index]').forEach(btn=>btn.addEventListener('click',()=>{
+      const candidate=candidates[Number(btn.getAttribute('data-live-item-index'))];if(!candidate)return;
+      const sel=document.getElementById('Item');
+      if(sel){refreshItemOptions();sel.value=candidate.name;}
+      closeTambahItemModal();
+      hideItemSimilarityPanel_();
+      setMsg('msgInput','Menggunakan item yang sudah ada: "'+candidate.name+'".');
+    }));
   }
   function showItemSimilarityPanel_(candidates,area,nama,exact=false){
     const p=itemSimilarityPanel_();if(!p)return;
