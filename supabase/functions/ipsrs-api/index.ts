@@ -460,7 +460,7 @@ if(a==="apiTambahItem"){const ar=String(d.area||"").trim(),n=String(d.nama||"").
 if(a==="apiListMasterItemReviews"){
  if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memeriksa item baru."};
  const status=String(d.status||"MENUNGGU").toUpperCase();
- const allowed=["MENUNGGU","SESUAI","PERLU_KOREKSI","DITOLAK"];
+ const allowed=["MENUNGGU","SESUAI","PERLU_KOREKSI","DITOLAK","SEMUA"];
  if(!allowed.includes(status))return{ok:false,msg:"Filter status tidak valid."};
  let q=db.from("master_item_review_queue").select("*").order("submitted_at",{ascending:false}).limit(300);
  if(status!=="SEMUA")q=q.eq("status",status);
@@ -479,7 +479,7 @@ if(a==="apiReviewMasterItem"){
  if(!row)return{ok:false,msg:"Item pemeriksaan tidak ditemukan."};
  if(corrected){
    if(corrected.length>120)return{ok:false,msg:"Nama item maksimal 120 karakter."};
-   const {data:dups,error:de}=await db.from("master_data").select("id").eq("data_type","ITEM").eq("parent_id",(await db.from("master_data").select("parent_id").eq("id",row.master_data_id).single()).data?.parent_id).ilike("name",corrected).neq("id",row.master_data_id).limit(1);
+   const {data:masterRow,error:me}=await db.from("master_data").select("parent_id").eq("id",row.master_data_id).eq("data_type","ITEM").maybeSingle();if(me)throw me;if(!masterRow)return{ok:false,msg:"Item master data sudah tidak ditemukan."};const {data:dups,error:de}=await db.from("master_data").select("id").eq("data_type","ITEM").eq("parent_id",masterRow.parent_id).ilike("name",corrected).neq("id",row.master_data_id).limit(1);
    if(de)throw de;
    if((dups||[]).length)return{ok:false,msg:"Nama koreksi sudah digunakan pada area tersebut."};
    const {error:ue}=await db.from("master_data").update({name:corrected,updated_at:new Date().toISOString(),updated_by:ctx.userClaims.sub}).eq("id",row.master_data_id).eq("data_type","ITEM");
