@@ -3560,6 +3560,7 @@
     const area = document.getElementById('AreaKerja').value;
     document.getElementById('itemBaruAreaLabel').innerText = area || '-';
     document.getElementById('itemBaruInput').value = '';
+    hideItemSimilarityPanel_();
     setMsg('itemBaruMsg', '');
     document.getElementById('itemModalBg').classList.add('show');
   }
@@ -3568,16 +3569,50 @@
     const sel = document.getElementById('Item');
     if(sel.value === ADD_NEW_VALUE) sel.value = '';
   }
-  async function simpanItemBaru(){
+  let _itemSimilarityCandidates = [];
+  function itemSimilarityPanel_(){
+    const input=document.getElementById('itemBaruInput');
+    if(!input)return null;
+    let panel=document.getElementById('itemSimilarityCandidates');
+    if(!panel){
+      panel=document.createElement('div');panel.id='itemSimilarityCandidates';
+      panel.style.cssText='margin-top:10px;padding:10px;border:1px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#78350f;font-size:13px;display:none';
+      input.insertAdjacentElement('afterend',panel);
+    }
+    return panel;
+  }
+  function hideItemSimilarityPanel_(){
+    const p=document.getElementById('itemSimilarityCandidates');if(p){p.style.display='none';p.innerHTML='';}
+    _itemSimilarityCandidates=[];
+  }
+  function showItemSimilarityPanel_(candidates,area,nama){
+    const p=itemSimilarityPanel_();if(!p)return;
+    _itemSimilarityCandidates=Array.isArray(candidates)?candidates:[];
+    const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Ditemukan item yang mirip. Periksa sebelum membuat item baru:</div>'+
+      '<div style="display:grid;gap:6px" id="itemSimilarityList">'+_itemSimilarityCandidates.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+' <small style="color:#64748b">('+Math.round(Number(x.score||0)*100)+'% mirip)</small></span><button type="button" data-similar-index="'+i+'" class="btn" style="padding:5px 9px">Gunakan item ini</button></div>').join('')+'</div>'+
+      '<div style="margin-top:8px">Jika semua kandidat berbeda spesifikasi dan memang item baru, Anda dapat melanjutkan setelah memeriksa daftar.</div>'+
+      '<button type="button" id="itemSimilarityContinue" class="btn" style="margin-top:8px;width:100%">Kandidat tidak sesuai — lanjut tambah item baru</button>';
+    p.style.display='block';
+    p.querySelectorAll('[data-similar-index]').forEach(btn=>btn.addEventListener('click',()=>{
+      const x=_itemSimilarityCandidates[Number(btn.getAttribute('data-similar-index'))];if(!x)return;
+      const sel=document.getElementById('Item');if(sel){refreshItemOptions();sel.value=x.name;}
+      closeTambahItemModal();setMsg('msgInput','Menggunakan item yang sudah ada: "'+x.name+'".');
+      hideItemSimilarityPanel_();
+    }));
+    const go=p.querySelector('#itemSimilarityContinue');if(go)go.addEventListener('click',()=>simpanItemBaru(true));
+  }
+  async function simpanItemBaru(allowSimilar=false){
     const area = document.getElementById('AreaKerja').value;
     const nama = document.getElementById('itemBaruInput').value.trim();
     if(!area){ setMsg('itemBaruMsg', 'Area kerja wajib dipilih.', true); return; }
     if(!nama){ setMsg('itemBaruMsg', 'Nama item wajib diisi.', true); return; }
-    setMsg('itemBaruMsg', 'Menyimpan...');
+    setMsg('itemBaruMsg', allowSimilar?'Memeriksa ulang dan menambahkan...':'Memeriksa item yang sama atau mirip...');
     try{
       const existingForArea = (MASTER_ITEMS_BY_AREA[area] || []).concat(CUSTOM_ITEMS_BY_AREA[area] || []);
-      const json = await authRun('apiTambahItem', area, nama, existingForArea);
+      const json = await authRun('apiTambahItem', area, nama, existingForArea, allowSimilar);
       if(json && json.ok){
+        hideItemSimilarityPanel_();
         if(!MASTER_ITEMS_BY_AREA[area]) MASTER_ITEMS_BY_AREA[area] = [];
         if(!MASTER_ITEMS_BY_AREA[area].some(x => String(x).trim().toLowerCase() === String(json.item).trim().toLowerCase())){
           MASTER_ITEMS_BY_AREA[area].push(json.item);
@@ -3585,7 +3620,10 @@
         refreshItemOptions();
         document.getElementById('Item').value = json.item;
         closeTambahItemModal();
-        setMsg('msgInput', 'Item "' + json.item + '" ditambahkan & dipilih.');
+        setMsg('msgInput', 'Item "' + json.item + '" ditambahkan dan dipilih. Ka IPSRS dapat melakukan pemeriksaan setelahnya.');
+      } else if(json && json.needs_choice && Array.isArray(json.candidates) && json.candidates.length){
+        showItemSimilarityPanel_(json.candidates,area,nama);
+        setMsg('itemBaruMsg','Ada '+json.candidates.length+' kandidat mirip. Pilih yang sudah ada atau pastikan kandidat tidak sesuai.',true);
       } else {
         setMsg('itemBaruMsg', (json && json.msg) ? json.msg : 'Gagal menambah item.', true);
       }
