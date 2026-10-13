@@ -1,7 +1,7 @@
 /* Pengingat laporan aktif berumur >=25 hari. Tidak mengubah data/hak akses. */
 (function(){
   'use strict';
-  const KEY_PREFIX='ipsrs_old_report_reminder_dismissed_v1:';
+  const KEY_PREFIX='ipsrs_old_report_reminder_dismissed_v1:';\n  const DISMISS_DATE_KEY='ipsrs_old_report_reminder_dismissed_date_v1:';
   const MIN_AGE_DAYS=25;
   let running=false;
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -39,28 +39,32 @@
     close();
     const style=document.createElement('style');
     style.id='ipsrsOldReportReminderStyle';
-    style.textContent='#ipsrsOldReportReminder{position:fixed;inset:0;z-index:100001;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:14px;font-family:inherit}#ipsrsOldReportReminder .orr-box{width:min(620px,100%);max-height:88vh;overflow:auto;background:#fff;color:#0f172a;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}#ipsrsOldReportReminder h3{margin:0 0 8px;font-size:18px}#ipsrsOldReportReminder p{font-size:13px;line-height:1.5;margin:7px 0}#ipsrsOldReportReminder .orr-list{display:grid;gap:7px;margin:12px 0}#ipsrsOldReportReminder .orr-row{border:1px solid #e2e8f0;border-radius:9px;padding:9px;font-size:12px;line-height:1.45}#ipsrsOldReportReminder .orr-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}#ipsrsOldReportReminder button{min-height:40px;border:0;border-radius:9px;padding:9px 13px;font:inherit;font-weight:700;cursor:pointer}#ipsrsOldReportReminder .orr-primary{background:#0f766e;color:#fff}#ipsrsOldReportReminder .orr-secondary{background:#e2e8f0;color:#0f172a}#ipsrsOldReportReminder .orr-note{background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px}';
+    style.textContent='#ipsrsOldReportReminder{position:fixed;inset:0;z-index:100001;background:rgba(15,23,42,.56);display:flex;align-items:center;justify-content:center;padding:14px;font-family:inherit}#ipsrsOldReportReminder .orr-box{width:min(900px,100%);max-height:90vh;overflow:auto;background:#fff;color:#172033;border-radius:13px;padding:16px;box-shadow:0 18px 55px rgba(0,0,0,.24)}#ipsrsOldReportReminder .orr-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}#ipsrsOldReportReminder .orr-bell{width:48px;height:48px;flex:none;border-radius:50%;display:grid;place-items:center;background:#fee2e2;color:#dc2626;font-size:26px}#ipsrsOldReportReminder .orr-headtext{flex:1;min-width:0}#ipsrsOldReportReminder h3{margin:0;color:#b91c1c;font-size:19px;line-height:1.3}#ipsrsOldReportReminder .orr-subtitle{font-size:12px;line-height:1.4;margin-top:3px;color:#334155}#ipsrsOldReportReminder .orr-x{border:0;background:transparent;color:#64748b;font-size:25px;padding:2px 8px;cursor:pointer}#ipsrsOldReportReminder .orr-instructions{background:#fff1f2;border-radius:8px;padding:10px 12px;margin:10px 0 12px;color:#9f1239;font-size:12px;line-height:1.55}#ipsrsOldReportReminder .orr-instruction{display:flex;gap:8px;align-items:flex-start;margin:3px 0}#ipsrsOldReportReminder .orr-number{width:19px;height:19px;flex:none;border-radius:50%;background:#dc2626;color:white;font-weight:800;display:inline-grid;place-items:center;font-size:11px}#ipsrsOldReportReminder .orr-table-wrap{width:100%;overflow-x:auto;border:1px solid #e2e8f0;border-radius:7px}#ipsrsOldReportReminder table{width:100%;min-width:650px;border-collapse:collapse;font-size:11px;line-height:1.4}#ipsrsOldReportReminder th{background:#eff6ff;color:#475569;text-align:left;font-weight:700;padding:8px 6px;border-bottom:1px solid #dbeafe}#ipsrsOldReportReminder td{padding:8px 6px;vertical-align:top;border-bottom:1px solid #e5e7eb}#ipsrsOldReportReminder tr:last-child td{border-bottom:0}#ipsrsOldReportReminder .orr-age{font-weight:800;color:#dc2626;font-size:18px;text-align:center;white-space:nowrap}#ipsrsOldReportReminder .orr-checkrow{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12px;font-weight:700;color:#334155}#ipsrsOldReportReminder .orr-checkrow input{width:18px;height:18px;accent-color:#0f766e}#ipsrsOldReportReminder .orr-hint{font-size:10px;color:#64748b;margin:2px 0 0 26px}#ipsrsOldReportReminder .orr-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}#ipsrsOldReportReminder button.orr-close{min-height:38px;min-width:110px;padding:8px 20px;border:0;border-radius:7px;background:#0875e1;color:#fff;font:inherit;font-weight:700;cursor:pointer}@media(max-width:560px){#ipsrsOldReportReminder .orr-box{padding:14px;border-radius:13px}#ipsrsOldReportReminder h3{font-size:17px}#ipsrsOldReportReminder .orr-bell{width:42px;height:42px;font-size:23px}#ipsrsOldReportReminder .orr-subtitle{font-size:11px}#ipsrsOldReportReminder .orr-instructions{font-size:12px;padding:9px}#ipsrsOldReportReminder .orr-actions button.orr-close{width:100%}}';
     document.head.appendChild(style);
     const bg=document.createElement('div');bg.id='ipsrsOldReportReminder';
-    const list=rows.map(r=>{
+    const escAttr=esc;
+    const tableRows=rows.map((r,i)=>{
       const date=rowDate(r), age=ageDays(date);
-      const item=String(r.Item??r.item??r.Pekerjaan??r.pekerjaan??'-');
+      const displayDate=date?(()=>{const p=date.split('-');return Number(p[2])+' '+['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][Number(p[1])-1]+' '+p[0];})():'-';
+      const area=String(r.AreaKerja??r.area_kerja??'-');
+      const item=String(r.Item??r.item??'-');
       const room=String(r.Ruang??r.ruang??'-');
-      const reporter=String(r.Pelapor??r.pelapor??r.Petugas??r.petugas??'-');
-      return '<div class="orr-row"><strong>'+esc(date||'-')+' · '+age+' hari</strong><br>Ruang: '+esc(room)+'<br>Item/pekerjaan: '+esc(item)+'<br>Pelapor/petugas: '+esc(reporter)+'</div>';
+      const issue=String(r.MasalahKegiatan??r.masalah_kegiatan??r.Masalah??r.masalah??'-');
+      const action=String(r.Tindakan??r.tindakan??'-');
+      return '<tr><td>'+(i+1)+'</td><td>'+esc(displayDate)+'</td><td class="orr-age">'+age+'</td><td><strong>'+esc(area)+'</strong><br>'+esc(item)+'</td><td>'+esc(room)+'</td><td>'+esc(issue)+'</td><td>'+esc(action)+'</td></tr>';
     }).join('');
-    bg.innerHTML='<div class="orr-box" role="alertdialog" aria-modal="true" aria-labelledby="orrTitle"><h3 id="orrTitle">⚠️ Pengingat Laporan Belum Selesai</h3><p>Ditemukan <strong>'+rows.length+' laporan</strong> berstatus belum selesai dengan umur minimal 25 hari.</p><div class="orr-list">'+list+'</div><div class="orr-note"><p><strong>Tindak lanjut:</strong></p><p>1. Periksa penyebab laporan belum selesai dan koordinasikan dengan petugas penanggung jawab.</p><p>2. Lakukan tindak lanjut sampai selesai, lalu perbarui status laporan pada aplikasi.</p></div><div class="orr-actions"><button type="button" class="orr-primary" data-action="open">Buka Laporan</button><button type="button" class="orr-secondary" data-action="dismiss">Jangan tampilkan lagi</button><button type="button" class="orr-secondary" data-action="close">Tutup</button></div></div>';
+    bg.innerHTML='<div class="orr-box" role="alertdialog" aria-modal="true" aria-labelledby="orrTitle"><div class="orr-head"><div class="orr-bell" aria-hidden="true">♟</div><div class="orr-headtext"><h3 id="orrTitle">Pengingat Laporan IPSRS</h3><div class="orr-subtitle">Ada <strong>'+rows.length+' laporan</strong> yang sudah berumur 25 hari atau lebih dan masih berstatus <strong>Belum Selesai</strong>.</div></div><button type="button" class="orr-x" aria-label="Tutup">×</button></div><div class="orr-instructions"><div class="orr-instruction"><span class="orr-number">1</span><span><strong>Segera</strong> untuk ditindak lanjuti dan <strong>pesan spare part</strong> jika diperlukan.</span></div><div class="orr-instruction"><span class="orr-number">2</span><span>Jika sudah di tindak lanjut, <strong>rubah status laporan dari Belum menjadi Selesai.</strong></span></div></div><div class="orr-table-wrap"><table><thead><tr><th>No.</th><th>Tanggal Laporan</th><th>Umur</th><th>Area Kerja / Item</th><th>Ruang</th><th>Masalah</th><th>Tindakan Terakhir</th></tr></thead><tbody>'+tableRows+'</tbody></table></div><label class="orr-checkrow"><input type="checkbox" id="orrDismiss"><span>Jangan tampilkan lagi</span></label><div class="orr-hint">Pengingat akan muncul kembali besok jika masih ada laporan yang berumur ≥ 25 hari.</div><div class="orr-actions"><button type="button" class="orr-close">Tutup</button></div></div>';
     document.body.appendChild(bg);
-    bg.querySelector('[data-action="open"]').onclick=function(){close();try{if(typeof window.goPage==='function')window.goPage('laporan');}catch(_){}};
-    bg.querySelector('[data-action="close"]').onclick=close;
-    bg.querySelector('[data-action="dismiss"]').onclick=function(){try{localStorage.setItem(dismissedKey(session),'1');}catch(_){}close();};
+    function closeReminder(){const checkBox=document.getElementById('orrDismiss');if(checkBox&&checkBox.checked){try{localStorage.setItem(dismissedKey(session),'1');}catch(_){}}close();}
+    bg.querySelector('.orr-x').onclick=closeReminder;
+    bg.querySelector('.orr-close').onclick=closeReminder;
   }
   async function check(){
     if(running)return;running=true;
     try{
       const session=typeof window.getSession==='function'?window.getSession():null;
       if(!session)return;
-      try{if(localStorage.getItem(dismissedKey(session))==='1')return;}catch(_){}
+      try{if(localStorage.getItem(dismissedKey(session))===localISO(new Date()))return;}catch(_){}
       if(typeof window.gsRun!=='function')return;
       const months=[monthOffset(-1),monthOffset(0)];
       const responses=await Promise.all(months.map(m=>window.gsRun('apiGetReports',m,null,null,'daftar')));
