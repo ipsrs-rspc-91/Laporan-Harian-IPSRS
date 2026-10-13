@@ -1327,7 +1327,18 @@
       .area-item-picker-bg{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
       .area-item-picker-bg.show{display:flex}
       .area-item-picker-modal{width:min(760px,100%);max-height:min(82vh,760px);display:flex;flex-direction:column;background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 24px 70px rgba(15,23,42,.28);overflow:hidden;color:#0f172a}
-      .area-item-picker-head{display:grid;grid-template-columns:minmax(0, .9fr) minmax(0,1.1fr) 36px;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid #e2e8f0}
+      .area-item-picker-head{display:grid;grid-template-columns:minmax(0,.9fr) auto minmax(0,1.1fr) 36px;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid #e2e8f0}
+      .area-item-picker-search-toggle{min-height:32px;padding:5px 9px;border:1px solid #93c5fd;border-radius:9px;background:#eff6ff;color:#1d4ed8;font:inherit;font-size:12px;font-weight:800;white-space:nowrap;cursor:pointer}
+      .area-item-picker-search-toggle:hover,.area-item-picker-search-toggle[aria-expanded="true"]{background:#dbeafe;border-color:#60a5fa}
+      .area-item-picker-search-panel{display:flex;flex-direction:column;gap:8px;padding:10px 14px;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+      .area-item-picker-search-panel[hidden]{display:none!important}
+      .area-item-picker-search-input{width:100%;min-height:42px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font:inherit;font-size:14px;outline:none}
+      .area-item-picker-search-input:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12)}
+      .area-item-picker-search-results{max-height:210px;overflow:auto;display:grid;gap:6px}
+      .area-item-picker-search-result{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#0f172a;text-align:left;cursor:pointer}
+      .area-item-picker-search-result:hover{background:#eff6ff;border-color:#93c5fd}
+      .area-item-picker-search-result strong{font-size:13px;line-height:1.35}
+      .area-item-picker-search-result span{font-size:11px;color:#64748b}
       .area-item-picker-head-label{text-align:center;font-size:11px;font-weight:800;letter-spacing:.07em;color:#64748b;padding:4px 8px}
       .area-item-picker-close{width:36px;height:36px;flex:0 0 36px;border:1px solid #fecaca;border-radius:10px;background:#fef2f2;color:#dc2626;font-size:24px;font-weight:800;line-height:1;cursor:pointer}
       .area-item-picker-close:hover{background:#fee2e2;border-color:#f87171;color:#b91c1c}
@@ -1395,10 +1406,54 @@
       bg=document.createElement('div');
       bg.id='areaItemPickerModalBg';
       bg.className='area-item-picker-bg';
-      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-label area-item-picker-head-area">AREA KERJA</div><div class="area-item-picker-head-label area-item-picker-head-item">ITEM</div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-area-list"></div></div><div class="area-item-picker-side"><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋  Item Baru</button></div></div></section>';
+      bg.innerHTML='<section class="area-item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="areaItemPickerTitle"><header class="area-item-picker-head"><div class="area-item-picker-head-label area-item-picker-head-area">AREA KERJA</div><button type="button" class="area-item-picker-search-toggle" aria-expanded="false">⌕ Cari Item</button><div class="area-item-picker-head-label area-item-picker-head-item">ITEM</div><button type="button" class="area-item-picker-close" aria-label="Tutup">×</button></header><div class="area-item-picker-search-panel" hidden><input type="search" class="area-item-picker-search-input" placeholder="Ketik nama item yang dicari…" aria-label="Cari item"><div class="area-item-picker-search-results" role="listbox" aria-label="Hasil pencarian item"><div class="area-item-picker-empty">Ketik nama item untuk mencari di semua area kerja.</div></div></div><div class="area-item-picker-columns"><div class="area-item-picker-side"><div class="area-item-picker-area-list"></div></div><div class="area-item-picker-side"><div class="area-item-picker-item-list"><div class="area-item-picker-empty">Pilih area kerja di kolom kiri.</div></div><button type="button" class="area-item-picker-add area-item-picker-add-item">＋  Item Baru</button></div></div></section>';
       document.body.appendChild(bg);
       bg.addEventListener('click',e=>{if(e.target===bg) closeAreaItemPicker_();});
       bg.querySelector('.area-item-picker-close').addEventListener('click',closeAreaItemPicker_);
+      const searchToggle=bg.querySelector('.area-item-picker-search-toggle');
+      const searchPanel=bg.querySelector('.area-item-picker-search-panel');
+      const searchInput=bg.querySelector('.area-item-picker-search-input');
+      const searchResults=bg.querySelector('.area-item-picker-search-results');
+      function renderGlobalItemSearch_(query){
+        if(!searchResults)return;
+        const q=String(query||'').trim().toLocaleLowerCase('id');
+        searchResults.innerHTML='';
+        if(!q){searchResults.innerHTML='<div class="area-item-picker-empty">Ketik nama item untuk mencari di semua area kerja.</div>';return;}
+        const allAreas=Array.from(sel.options).filter(o=>o.value&&o.value!==ADD_NEW_VALUE&&!o.disabled).map(o=>o.value);
+        const matches=[];
+        allAreas.forEach(areaName=>getItemsForArea_(areaName).forEach(itemName=>{
+          if(itemName.toLocaleLowerCase('id').includes(q))matches.push({area:areaName,item:itemName});
+        }));
+        const unique=new Map();
+        matches.forEach(x=>unique.set(x.area+'\\u0000'+x.item,x));
+        const found=Array.from(unique.values()).sort((a,b)=>a.item.localeCompare(b.item,'id')||a.area.localeCompare(b.area,'id')).slice(0,100);
+        if(!found.length){searchResults.innerHTML='<div class="area-item-picker-empty">Item tidak ditemukan. Coba kata kunci lain.</div>';return;}
+        found.forEach(result=>{
+          const button=document.createElement('button');button.type='button';button.className='area-item-picker-search-result';button.setAttribute('role','option');
+          const name=document.createElement('strong');name.textContent=result.item;
+          const areaLabel=document.createElement('span');areaLabel.textContent='Area Kerja: '+result.area;
+          button.append(name,areaLabel);
+          button.addEventListener('click',()=>{
+            sel.value=result.area;sel.dispatchEvent(new Event('change',{bubbles:true}));
+            const itemSel=document.getElementById('Item');
+            if(itemSel){
+              if(!Array.from(itemSel.options).some(o=>o.value===result.item)){
+                const opt=document.createElement('option');opt.value=result.item;opt.textContent=result.item;
+                itemSel.insertBefore(opt,itemSel.options.length?itemSel.options[itemSel.options.length-1]:null);
+              }
+              itemSel.value=result.item;itemSel.dispatchEvent(new Event('input',{bubbles:true}));itemSel.dispatchEvent(new Event('change',{bubbles:true}));
+            }
+            syncAreaKerjaPicker_();closeAreaItemPicker_();
+          });
+          searchResults.appendChild(button);
+        });
+      }
+      searchToggle.addEventListener('click',()=>{
+        const opening=searchPanel.hidden;
+        searchPanel.hidden=!opening;searchToggle.setAttribute('aria-expanded',String(opening));
+        if(opening){searchInput.focus();renderGlobalItemSearch_(searchInput.value);}
+      });
+      searchInput.addEventListener('input',()=>renderGlobalItemSearch_(searchInput.value));
       bg.querySelector('.area-item-picker-add-item').addEventListener('click',(event)=>{
         // Hentikan bubbling agar klik tombol picker tidak ikut mengenai modal/layer di bawahnya.
         if(event && typeof event.stopPropagation==='function') event.stopPropagation();
