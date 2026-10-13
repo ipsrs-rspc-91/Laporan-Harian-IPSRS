@@ -1,7 +1,7 @@
 /* Pengingat laporan aktif berumur >=25 hari. Tidak mengubah data/hak akses. */
 (function(){
   'use strict';
-  const KEY_PREFIX='ipsrs_old_report_reminder_dismissed_v1:';\n  const DISMISS_DATE_KEY='ipsrs_old_report_reminder_dismissed_date_v1:';
+  const KEY_PREFIX='ipsrs_old_report_reminder_dismissed_v1:';
   const MIN_AGE_DAYS=25;
   let running=false;
   const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
