@@ -483,15 +483,17 @@ if(a==="apiManageMasterData"){
    return{ok:true,data:created,msg:"Master data berhasil ditambahkan."};
  }
  if(op==="UPDATE"){
-   const id=Number(d.id),name=String(d.name||"").trim(),sortOrder=Number(d.sort_order);
+   const id=Number(d.id),name=String(d.name||"").trim(),sortOrder=Number(d.sort_order),requestedParent=d.parent_id==null||d.parent_id===""?null:Number(d.parent_id);
    if(!Number.isInteger(id)||id<1)return{ok:false,msg:"ID master data tidak valid."};
    if(!name||name.length>120)return{ok:false,msg:"Nama wajib diisi (maksimal 120 karakter)."};
    const {data:old,error:oe}=await db.from("master_data").select("id,data_type,parent_id,name,sort_order,is_active").eq("id",id).maybeSingle();if(oe)throw oe;if(!old)return{ok:false,msg:"Master data tidak ditemukan."};
    if(old.data_type==="KATEGORI")return{ok:false,msg:"Kategori baku dikunci agar 12 kategori resmi tetap konsisten."};
+   const targetParent=old.data_type==="ITEM"?(requestedParent||old.parent_id):null;
+   if(old.data_type==="ITEM"){if(!Number.isInteger(targetParent)||targetParent<1)return{ok:false,msg:"Pilih area kerja untuk item."};const {data:p,error:pe}=await db.from("master_data").select("id,data_type,is_active").eq("id",targetParent).maybeSingle();if(pe)throw pe;if(!p||p.data_type!=="AREA"||!p.is_active)return{ok:false,msg:"Area kerja tujuan tidak ditemukan atau nonaktif."};}
    let q=db.from("master_data").select("id").eq("data_type",old.data_type).ilike("name",name).neq("id",id);
-   q=old.data_type==="ITEM"?q.eq("parent_id",old.parent_id):q.is("parent_id",null);
+   q=old.data_type==="ITEM"?q.eq("parent_id",targetParent):q.is("parent_id",null);
    const {data:dups,error:de}=await q.limit(1);if(de)throw de;if((dups||[]).length)return{ok:false,msg:"Nama sudah digunakan pada kelompok tersebut."};
-   const patch:any={name,updated_at:now,updated_by:ctx.userClaims.sub};if(Number.isInteger(sortOrder)&&sortOrder>=0&&sortOrder<=9999)patch.sort_order=sortOrder;
+   const patch:any={name,updated_at:now,updated_by:ctx.userClaims.sub};if(old.data_type==="ITEM")patch.parent_id=targetParent;if(Number.isInteger(sortOrder)&&sortOrder>=0&&sortOrder<=9999)patch.sort_order=sortOrder;
    const {data:updated,error:ue}=await db.from("master_data").update(patch).eq("id",id).select("id,data_type,parent_id,name,sort_order,is_active").single();if(ue)throw ue;
    await audit(db,s,"MASTER_DATA_UPDATE",null,"Mengubah master data",{old_value:old,new_value:updated});
    return{ok:true,data:updated,msg:"Perubahan master data berhasil disimpan."};
