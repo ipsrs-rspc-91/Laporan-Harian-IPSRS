@@ -55,7 +55,7 @@
     }).join('');
     bg.innerHTML='<div class="orr-box" role="alertdialog" aria-modal="true" aria-labelledby="orrTitle"><div class="orr-head"><div class="orr-bell" aria-hidden="true">🔔</div><div class="orr-headtext"><h3 id="orrTitle">Pengingat Laporan IPSRS</h3><div class="orr-subtitle">Ada <strong>'+rows.length+' laporan</strong> yang sudah berumur 25 hari atau lebih dan masih berstatus <strong>Belum Selesai</strong>.</div></div><button type="button" class="orr-x" aria-label="Tutup">×</button></div><div class="orr-instructions"><div class="orr-instruction"><span class="orr-number">1</span><span><strong>Segera</strong> untuk ditindak lanjuti dan <strong>pesan spare part</strong> jika diperlukan.</span></div><div class="orr-instruction"><span class="orr-number">2</span><span>Jika sudah di tindak lanjut, <strong>rubah status laporan dari Belum menjadi Selesai.</strong></span></div></div><div class="orr-table-wrap"><table><thead><tr><th>No.</th><th>Tanggal Laporan</th><th>Umur</th><th>Area Kerja / Item</th><th>Ruang</th><th>Masalah</th><th>Tindakan Terakhir</th></tr></thead><tbody>'+tableRows+'</tbody></table></div><label class="orr-checkrow"><input type="checkbox" id="orrDismiss"><span>Jangan tampilkan lagi</span></label><div class="orr-hint">Pengingat akan muncul kembali besok jika masih ada laporan yang berumur ≥ 25 hari.</div><div class="orr-actions"><button type="button" class="orr-close">Tutup</button></div></div>';
     document.body.appendChild(bg);
-    function closeReminder(){const checkBox=document.getElementById('orrDismiss');if(checkBox&&checkBox.checked){try{localStorage.setItem(dismissedKey(session),'1');}catch(_){}}close();}
+    function closeReminder(){const checkBox=document.getElementById('orrDismiss');if(checkBox&&checkBox.checked){try{localStorage.setItem(dismissedKey(session),localISO(new Date()));}catch(_){}}close();}
     bg.querySelector('.orr-x').onclick=closeReminder;
     bg.querySelector('.orr-close').onclick=closeReminder;
   }
@@ -67,11 +67,11 @@
       // Simpan pilihan per pengguna per hari: besok pengingat muncul kembali
       // jika masih ada laporan yang memenuhi kriteria.
       try{if(localStorage.getItem(dismissedKey(session))===localISO(new Date()))return;}catch(_){}
-      if(typeof window.authRun!=='function')return;
+      if(typeof window.__ipsrsFetchReminderReports!=='function')return;
       // Ambil riwayat bulan berjalan dan bulan sebelumnya melalui API berizin.
       // Umur >=25 hari hanya memerlukan rentang ini; tanggal awal adalah hari ke-25 sebelum hari ini.
       const months=[monthOffset(-1),monthOffset(0)];
-      const responses=await Promise.all(months.map(m=>window.authRun('apiGetReports',m,null,null,'daftar')));
+      const responses=await Promise.all(months.map(m=>window.__ipsrsFetchReminderReports(m)));
       let all=[];
       responses.forEach(r=>{if(!r||!r.ok)throw new Error(r?.msg||'Gagal memuat laporan');all=all.concat(getRows(r));});
       const cutoff=localISO(new Date(Date.now()-MIN_AGE_DAYS*86400000));
