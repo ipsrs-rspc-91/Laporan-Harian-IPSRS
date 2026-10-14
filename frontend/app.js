@@ -5,7 +5,7 @@
   // ============================================================
   // MODE MAINTENANCE SEMENTARA: seluruh akses login dinonaktifkan.
   // Ubah ke false setelah maintenance selesai.
-  const IPSRS_MAINTENANCE_MODE = false;
+  const IPSRS_MAINTENANCE_MODE = true;
   const IPSRS_MAINTENANCE_TEST_ROLE = 'KA_IPSRS';
   const SESSION_KEY = 'ipsrs_session_v1';
   // "Ingat saya": preferensi + username disimpan di localStorage.
