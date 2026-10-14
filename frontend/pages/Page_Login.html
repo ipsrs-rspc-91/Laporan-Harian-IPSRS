@@ -21,6 +21,12 @@
       Silakan masuk untuk mengakses Sistem Laporan Harian IPSRS.
     </div>
 
+    <div class="ipsrs-maintenance-notice" role="status" aria-live="polite">
+      <div class="ipsrs-maintenance-title">PEMELIHARAAN SEMENTARA</div>
+      <div>Sistem Laporan Harian IPSRS sedang dalam pemeliharaan. Untuk sementara, akses login dibatasi hanya untuk <strong>Ka. IPSRS</strong>. Akun petugas lainnya belum dapat masuk.</div>
+      <div class="ipsrs-maintenance-foot">Data laporan tetap tersimpan. Pemeliharaan ini tidak menghapus data.</div>
+    </div>
+
     <form class="login-login" id="ipsrsLoginForm" autocomplete="on" onsubmit="return doLogin(event)">
       <label for="loginUsername">USERNAME</label>
       <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="Username">
@@ -126,6 +132,20 @@
       line-height:1.55;
       font-weight:500;
     }
+    #loginScreen .ipsrs-maintenance-notice{
+      margin:18px auto 0;
+      padding:14px 16px;
+      border:1px solid #f2c879;
+      border-left:4px solid #d99a18;
+      border-radius:12px;
+      background:#fff8e8;
+      color:#704b08;
+      text-align:left;
+      font-size:.9rem;
+      line-height:1.5;
+    }
+    #loginScreen .ipsrs-maintenance-title{font-weight:850;letter-spacing:.035em;margin-bottom:5px;color:#8a5700}
+    #loginScreen .ipsrs-maintenance-foot{margin-top:7px;font-size:.82rem;color:#806b45}
     #loginScreen .login-login{
       width:100%;
       margin-top:22px;
