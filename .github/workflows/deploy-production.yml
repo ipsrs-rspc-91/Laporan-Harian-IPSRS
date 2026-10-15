@@ -191,6 +191,33 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Generate deployment metadata for System Info
+        shell: bash
+        env:
+          BUILD_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          AUDIT_RUN_ID: ${{ github.event.workflow_run.id }}
+          DEPLOY_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          BUILD_TIME_UTC="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          export BUILD_TIME_UTC
+          python3 - <<'PY'
+          import json, os
+          payload = {
+              "commit_sha": os.environ["BUILD_COMMIT_SHA"],
+              "build_time_utc": os.environ["BUILD_TIME_UTC"],
+              "audit_run_id": os.environ["AUDIT_RUN_ID"],
+              "deployment_run_id": os.environ["DEPLOY_RUN_ID"],
+              "frontend_build": os.environ["BUILD_COMMIT_SHA"],
+              "environment": "PRODUCTION"
+          }
+          with open("frontend/build-info.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+              f.write("\\n")
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+          test -s frontend/build-info.json
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
         with:
