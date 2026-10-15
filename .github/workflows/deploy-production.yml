@@ -236,6 +236,20 @@ jobs:
           fi
           echo "✅ Cloudflare Worker smoke check passed"
 
+      - name: Verify deployed System Info metadata
+        env:
+          WORKER_URL: https://laporan-harian-ipsrs.rspc.workers.dev/
+          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 20 "$WORKER_URL/build-info.json" -o /tmp/build-info.json
+          actual_commit="$(python3 -c 'import json; print(json.load(open("/tmp/build-info.json", encoding="utf-8"))["commit_sha"])')"
+          if [ "$actual_commit" != "$EXPECTED_COMMIT" ]; then
+            echo "❌ System Info metadata commit mismatch: expected $EXPECTED_COMMIT, got $actual_commit"
+            exit 1
+          fi
+          echo "✅ System Info metadata matches audited commit $actual_commit"
+
   deploy-pages:
     name: Deploy GitHub Pages
     needs: detect-changes
