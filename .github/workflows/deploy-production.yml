@@ -81,19 +81,17 @@ jobs:
           # Do not deploy based only on the single audit-gate commit: frontend changes
           # can be followed by audit-only commits (cache/audit fixes), which previously
           # caused the actual frontend change to remain undeployed.
-          frontend=true
-
           # Frontend/Cloudflare are deployed from the exact audited commit so
           # an audit-only follow-up commit cannot leave the approved UI change behind.
           frontend=true
 
-          # Cloudflare is deployed when its credential is available.
-          # Missing credentials must not falsely report a frontend failure.
+          # Cloudflare is the production frontend host and is required for every frontend release.
+          # Never mark production successful if the Cloudflare credential is missing.
           if [ -n "$CLOUDFLARE_TOKEN" ]; then
             cloudflare=true
           else
-            cloudflare=false
-            echo "⚠️ CLOUDFLARE_API_TOKEN is unavailable; Cloudflare deployment will be skipped."
+            echo "❌ Required secret CLOUDFLARE_API_TOKEN is unavailable; refusing a partial frontend deployment."
+            exit 1
           fi
 
           # Supabase is deployed only when the audited commit actually changes
@@ -191,6 +189,33 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Generate deployment metadata for System Info
+        shell: bash
+        env:
+          BUILD_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          AUDIT_RUN_ID: ${{ github.event.workflow_run.id }}
+          DEPLOY_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          BUILD_TIME_UTC="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          export BUILD_TIME_UTC
+          python3 - <<'PY'
+          import json, os
+          payload = {
+              "commit_sha": os.environ["BUILD_COMMIT_SHA"],
+              "build_time_utc": os.environ["BUILD_TIME_UTC"],
+              "audit_run_id": os.environ["AUDIT_RUN_ID"],
+              "deployment_run_id": os.environ["DEPLOY_RUN_ID"],
+              "frontend_build": os.environ["BUILD_COMMIT_SHA"],
+              "environment": "PRODUCTION"
+          }
+          with open("frontend/build-info.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+              f.write("\n")
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+          test -s frontend/build-info.json
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
         with:
@@ -208,6 +233,20 @@ jobs:
             exit 1
           fi
           echo "✅ Cloudflare Worker smoke check passed"
+
+      - name: Verify deployed System Info metadata
+        env:
+          WORKER_URL: https://laporan-harian-ipsrs.rspc.workers.dev/
+          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 20 "$WORKER_URL/build-info.json" -o /tmp/build-info.json
+          actual_commit="$(python3 -c 'import json; print(json.load(open("/tmp/build-info.json", encoding="utf-8"))["commit_sha"])')"
+          if [ "$actual_commit" != "$EXPECTED_COMMIT" ]; then
+            echo "❌ System Info metadata commit mismatch: expected $EXPECTED_COMMIT, got $actual_commit"
+            exit 1
+          fi
+          echo "✅ System Info metadata matches audited commit $actual_commit"
 
   deploy-pages:
     name: Deploy GitHub Pages
@@ -273,7 +312,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Block failed or skipped required production deployment
-        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') }}
+        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-cloudflare.result != 'success') }}
         run: |
           echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED OR WAS SKIPPED"
           echo "A required deployment target failed, was cancelled, or was unexpectedly skipped."

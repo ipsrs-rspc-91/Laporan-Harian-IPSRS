@@ -111,8 +111,19 @@
   </style>
   <script>
   (function(){
-    const VERSION='20261013-MASTER-DATA-MANAGER1';
-    const BUILD_INFO={system_version:'20261013-MASTER-DATA-MANAGER1',frontend_build:'20261013-MASTER-DATA-MANAGER1',api_version:'ipsrs-api v86',database_migration:'20261013010650',environment:'PRODUCTION',git_commit:'main (GitHub Pages deployment pending audit gate; build 20261013-MASTER-DATA-MANAGER1)',service_worker:'lhi-shell-v20261013-master-data-manager1',last_deployment:'Pending GitHub Pages audit gate'};
+    const VERSION='auto-build';
+    let BUILD_INFO={system_version:'METADATA BELUM TERSEDIA',frontend_build:'METADATA BELUM TERSEDIA',api_version:'Dibaca dari API backend',database_migration:'Dibaca dari API backend',environment:'PRODUCTION',git_commit:'METADATA BELUM TERSEDIA',service_worker:'Dibaca dari browser',last_deployment:'METADATA BELUM TERSEDIA',deployment_run:'-'};
+    async function refreshBuildInfo(){
+      try{
+        const response=await fetch('./build-info.json?refresh='+Date.now(),{cache:'no-store',credentials:'same-origin'});
+        if(!response.ok)throw new Error('HTTP '+response.status);
+        const info=await response.json();
+        if(!info||!info.commit_sha||!info.build_time_utc)throw new Error('Metadata build tidak lengkap');
+        BUILD_INFO={...BUILD_INFO,...info,system_version:'frontend-'+info.commit_sha.slice(0,12),frontend_build:info.commit_sha,git_commit:info.commit_sha,last_deployment:info.build_time_utc};
+      }catch(_e){
+        BUILD_INFO={...BUILD_INFO,system_version:'METADATA BUILD TIDAK TERSEDIA',frontend_build:'METADATA BUILD TIDAK TERSEDIA',git_commit:'Tidak dapat membaca commit deployment',last_deployment:'Tidak dapat memverifikasi waktu deployment'};
+      }
+    }
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -124,18 +135,26 @@
       try{
         const r=await authRun('apiGetSystemInfo');
         if(!r||!r.ok)throw new Error((r&&r.msg)||'Informasi sistem tidak dapat dimuat.');
+        await refreshBuildInfo();
         const x=r.data||{};
+        const sw=(navigator.serviceWorker&&navigator.serviceWorker.controller&&navigator.serviceWorker.controller.scriptURL)||'Tidak ada controller aktif';
         const rows=[
+          ['Frontend Hosting','Cloudflare Workers — laporan-harian-ipsrs'],
+          ['Backend API','Supabase Edge Functions'],
+          ['Database','Supabase PostgreSQL'],
+          ['Source Control','GitHub (kode, audit, dan riwayat perubahan)'],
           ['System Version',BUILD_INFO.system_version],
-          ['Frontend Build',BUILD_INFO.frontend_build],
-          ['API Version',BUILD_INFO.api_version],
-          ['Database Migration',BUILD_INFO.database_migration],
+          ['Frontend Build / Commit SHA',BUILD_INFO.frontend_build],
+          ['API Version (dilaporkan backend)',x.api_version||'Tidak dilaporkan backend'],
+          ['Database Migration (dilaporkan backend)',x.database_migration||'Tidak dilaporkan backend'],
           ['Environment',BUILD_INFO.environment],
           ['Git Commit',BUILD_INFO.git_commit],
-          ['Service Worker',BUILD_INFO.service_worker],
+          ['Service Worker Aktif',sw],
+          ['Build Time (UTC)',BUILD_INFO.build_time_utc||BUILD_INFO.last_deployment],
+          ['Deployment Run',BUILD_INFO.deployment_run_id||'-'],
           ['API Status',x.api_status||'-'],
           ['Database Status',x.database_status||'-'],
-          ['Last Deployment',BUILD_INFO.last_deployment],
+          ['Build Metadata Generated (UTC)',BUILD_INFO.last_deployment],
           ['Rollback Baseline','checkpoint-2026-10-11-0423'], 
           ['Rollback Commit','3805c05ac3e0b4c7420bc9a52e222360fccb258e'], 
           ['Rollback Branch','checkpoint-2026-10-11-0423'], 
