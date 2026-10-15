@@ -213,7 +213,7 @@ jobs:
           }
           with open("frontend/build-info.json", "w", encoding="utf-8") as f:
               json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-              f.write("\\n")
+              f.write("\n")
           print(json.dumps(payload, ensure_ascii=False))
           PY
           test -s frontend/build-info.json
