@@ -81,19 +81,17 @@ jobs:
           # Do not deploy based only on the single audit-gate commit: frontend changes
           # can be followed by audit-only commits (cache/audit fixes), which previously
           # caused the actual frontend change to remain undeployed.
-          frontend=true
-
           # Frontend/Cloudflare are deployed from the exact audited commit so
           # an audit-only follow-up commit cannot leave the approved UI change behind.
           frontend=true
 
-          # Cloudflare is deployed when its credential is available.
-          # Missing credentials must not falsely report a frontend failure.
+          # Cloudflare is the production frontend host and is required for every frontend release.
+          # Never mark production successful if the Cloudflare credential is missing.
           if [ -n "$CLOUDFLARE_TOKEN" ]; then
             cloudflare=true
           else
-            cloudflare=false
-            echo "⚠️ CLOUDFLARE_API_TOKEN is unavailable; Cloudflare deployment will be skipped."
+            echo "❌ Required secret CLOUDFLARE_API_TOKEN is unavailable; refusing a partial frontend deployment."
+            exit 1
           fi
 
           # Supabase is deployed only when the audited commit actually changes
@@ -314,7 +312,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Block failed or skipped required production deployment
-        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') }}
+        if: ${{ needs.detect-changes.result == 'failure' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-cloudflare.result != 'success') }}
         run: |
           echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED OR WAS SKIPPED"
           echo "A required deployment target failed, was cancelled, or was unexpectedly skipped."
