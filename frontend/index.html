@@ -112,7 +112,7 @@
   <script>
   (function(){
     const VERSION='20261013-MASTER-DATA-MANAGER1';
-    const BUILD_INFO={system_version:'20261013-MASTER-DATA-MANAGER1',frontend_build:'20261013-MASTER-DATA-MANAGER1',api_version:'ipsrs-api v86',database_migration:'20261013010650',environment:'PRODUCTION',git_commit:'main (GitHub Pages deployment pending audit gate; build 20261013-MASTER-DATA-MANAGER1)',service_worker:'lhi-shell-v20261013-master-data-manager1',last_deployment:'Pending GitHub Pages audit gate'};
+    const BUILD_INFO={system_version:'20261013-MASTER-DATA-MANAGER1',frontend_build:'20261013-MASTER-DATA-MANAGER1',api_version:'ipsrs-api v86 (label aplikasi; runtime perlu dicocokkan)',database_migration:'20261013010650',environment:'PRODUCTION',git_commit:'GitHub main (sumber kode dan audit; build 20261013-MASTER-DATA-MANAGER1)',service_worker:'lhi-shell-v20261013-master-data-manager1',last_deployment:'Status deployment produksi perlu diverifikasi'};
     function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     async function openSystemInfo(){
       const session=typeof getSession==='function'?getSession():null;
@@ -126,6 +126,10 @@
         if(!r||!r.ok)throw new Error((r&&r.msg)||'Informasi sistem tidak dapat dimuat.');
         const x=r.data||{};
         const rows=[
+          ['Frontend Hosting','Cloudflare Workers — laporan-harian-ipsrs'],
+          ['Backend API','Supabase Edge Functions'],
+          ['Database','Supabase PostgreSQL'],
+          ['Source Control','GitHub (kode, audit, dan riwayat perubahan)'],
           ['System Version',BUILD_INFO.system_version],
           ['Frontend Build',BUILD_INFO.frontend_build],
           ['API Version',BUILD_INFO.api_version],
