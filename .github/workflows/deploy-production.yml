@@ -246,7 +246,7 @@ jobs:
           attempt=1
           max_attempts=10
           while [ "$attempt" -le "$max_attempts" ]; do
-            code="$(curl --silent --show-error --max-time 20 -o /tmp/build-info.json -w '%{http_code}' "$WORKER_URL/build-info.json?verify=$DEPLOY_RUN_ID-$attempt")" || code="000"
+            code="$(curl --silent --show-error --max-time 20 -o /tmp/build-info.json -w '%{http_code}' "${WORKER_URL%/}/build-info.json?verify=$DEPLOY_RUN_ID-$attempt")" || code="000"
             if [ "$code" = "200" ]; then
               if actual_commit="$(python3 -c 'import json; print(json.load(open("/tmp/build-info.json", encoding="utf-8"))["commit_sha"])' 2>/dev/null)"; then
                 if [ "$actual_commit" = "$EXPECTED_COMMIT" ]; then
