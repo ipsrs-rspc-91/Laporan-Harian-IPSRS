@@ -238,10 +238,10 @@ jobs:
           echo "name=$artifact_name" >> "$GITHUB_OUTPUT"
           echo "Using Pages artifact: $artifact_name"
 
-      - name: Upload frontend
+      - name: Upload GitHub Pages redirect
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './frontend'
+          path: './github-pages-redirect'
           name: ${{ steps.pages-artifact.outputs.name }}
 
       - name: Deploy to GitHub Pages
@@ -257,8 +257,8 @@ jobs:
           set -euo pipefail
           for attempt in 1 2 3 4 5 6; do
             code="$(curl -L -sS -o /tmp/ipsrs-index.html -w '%{http_code}' --max-time 20 "$SITE_URL")" || code="000"
-            if [ "$code" = "200" ] && grep -q "LAPORAN HARIAN IPSRS" /tmp/ipsrs-index.html; then
-              echo "✅ GitHub Pages smoke check passed"
+            if [ "$code" = "200" ] && grep -q "https://laporan-harian-ipsrs.rspc.workers.dev/" /tmp/ipsrs-index.html; then
+              echo "✅ GitHub Pages redirect smoke check passed"
               exit 0
             fi
             sleep 10
