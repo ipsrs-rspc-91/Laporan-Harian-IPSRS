@@ -238,15 +238,33 @@ jobs:
         env:
           WORKER_URL: https://laporan-harian-ipsrs.rspc.workers.dev/
           EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
+          DEPLOY_RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --max-time 20 "$WORKER_URL/build-info.json" -o /tmp/build-info.json
-          actual_commit="$(python3 -c 'import json; print(json.load(open("/tmp/build-info.json", encoding="utf-8"))["commit_sha"])')"
-          if [ "$actual_commit" != "$EXPECTED_COMMIT" ]; then
-            echo "❌ System Info metadata commit mismatch: expected $EXPECTED_COMMIT, got $actual_commit"
-            exit 1
-          fi
-          echo "✅ System Info metadata matches audited commit $actual_commit"
+          # Cloudflare asset propagation can lag slightly behind a successful Worker deploy.
+          # Retry the metadata request with a cache-busting query before declaring failure.
+          attempt=1
+          max_attempts=10
+          while [ "$attempt" -le "$max_attempts" ]; do
+            code="$(curl --silent --show-error --max-time 20 -o /tmp/build-info.json -w '%{http_code}' "$WORKER_URL/build-info.json?verify=$DEPLOY_RUN_ID-$attempt")" || code="000"
+            if [ "$code" = "200" ]; then
+              if actual_commit="$(python3 -c 'import json; print(json.load(open("/tmp/build-info.json", encoding="utf-8"))["commit_sha"])' 2>/dev/null)"; then
+                if [ "$actual_commit" = "$EXPECTED_COMMIT" ]; then
+                  echo "✅ System Info metadata matches audited commit $actual_commit (attempt $attempt)"
+                  exit 0
+                fi
+                echo "⚠️ Metadata returned a different commit on attempt $attempt: $actual_commit"
+              else
+                echo "⚠️ Metadata endpoint returned HTTP 200 but invalid JSON on attempt $attempt"
+              fi
+            else
+              echo "⚠️ Metadata endpoint returned HTTP $code on attempt $attempt"
+            fi
+            if [ "$attempt" -lt "$max_attempts" ]; then sleep 3; fi
+            attempt=$((attempt + 1))
+          done
+          echo "❌ System Info metadata verification failed after $max_attempts attempts; expected commit $EXPECTED_COMMIT"
+          exit 1
 
   deploy-pages:
     name: Deploy GitHub Pages
