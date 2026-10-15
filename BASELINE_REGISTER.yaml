@@ -1,8 +1,24 @@
 version: "1.3"
 project: "Laporan-Harian-IPSRS"
-last_reviewed: "2026-10-04"
+last_reviewed: "2026-10-16"
 
 baselines:
+  - id: "BASELINE-20261016-0656"
+    commit: "7951ba160e9857f86a608e7baa7e9a204ed08bc5"
+    branch: "checkpoint-2026-10-16-0656"
+    purpose: "Post-deployment stable checkpoint after Cloudflare build metadata URL fix; audit, browser smoke regression, Cloudflare deployment, metadata commit SHA verification, GitHub Pages deployment and production gate passed. User confirmed report input works."
+    status: "PRODUCTION_VERIFIED"
+    deployment_run: "38822284948"
+    audit_run: "38822172324"
+    cloudflare_worker: "https://laporan-harian-ipsrs.rspc.workers.dev/"
+    supabase_changed: false
+    database_backup: false
+    notes:
+      - "Checkpoint code commit is the exact audited and deployed SHA."
+      - "Cloudflare metadata endpoint returned HTTP 404 on attempt 1, then succeeded on attempt 2 with matching commit SHA."
+      - "No application business logic, Supabase schema, database data, RLS, or Edge Function was changed in this fix."
+      - "This is a Git checkpoint, not a physical database backup."
+
   - id: "BASE-2026-10-03-CATEGORY"
     commit: "27177ad80bd4f8faf6757f38a25ff497a828dff3"
     purpose: "Known-good checkpoint before category corrective update"
@@ -17,7 +33,6 @@ baselines:
     commit: "a10f4ad08ac317ae61a023c0365a982df2902040"
     purpose: "KESLING normalization and area prioritization"
     status: "REFERENCE"
-
 
   - id: "BASE-2026-10-04-CONTROL-AUDIT-GATE"
     commit: "869ec51da37648f810e2d89f8c425cc8ec21765c"
@@ -48,4 +63,3 @@ rules:
   - "Never delete a baseline that is the only known recovery point for a module."
   - "A new baseline replaces an old baseline only after regression and deployment verification."
   - "A baseline is not automatically a production-approved state."
-
