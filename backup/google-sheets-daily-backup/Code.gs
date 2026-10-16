@@ -88,7 +88,7 @@ function runDailyBackup() {
     writeMeta_(meta, {
       status: 'COMPLETED',
       backup_date: day,
-      started_at_utc: meta.getRange('B3').getDisplayValue() || '',
+      started_at_utc: meta.getRange('B4').getDisplayValue() || '',
       finished_at_utc: new Date().toISOString(),
       project_ref: baseUrl.match(/https:\/\/([^.]+)\.supabase\.co/i)?.[1] || 'configured-project',
       table_count_expected: CONFIG.TABLES.length,
