@@ -2,7 +2,7 @@
 
 ## Fungsi
 - Membuat satu spreadsheet snapshot per hari: `IPSRS_DB_BACKUP_YYYY-MM-DD`.
-- Mengekspor 11 tabel produksi dan snapshot historis yang telah diperiksa pada 2026-10-16, termasuk laporan, riwayat edit, audit log, master data, staf operasional, pengaturan, izin edit, dan snapshot historis.
+- Mengekspor 12 tabel produksi dan snapshot historis yang telah diperiksa pada 2026-10-16, termasuk laporan, riwayat edit, audit log, master data, staf operasional, pengaturan, izin edit, dan snapshot historis.
 - Pagination 500 baris, sheet per tabel, ringkasan jumlah baris, status COMPLETED/FAILED.
 - Aman terhadap trigger ganda: memakai lock; backup COMPLETED hari itu tidak ditimpa. Backup gagal dapat dijalankan ulang pada file yang sama.
 - Tidak mengubah data Supabase dan tidak terhubung ke alur deployment aplikasi.
@@ -20,7 +20,7 @@ Google Sheets adalah salinan sekunder, bukan backup native PostgreSQL yang bisa 
 3. Salin seluruh isi `Code.gs` ke file `Code.gs` di Apps Script.
 4. Buka **Project Settings → Script properties** dan tambahkan:
    - `SUPABASE_URL` = `https://tcrmlhfsroyhaxdfwyll.supabase.co`
-   - `SUPABASE_SERVICE_ROLE_KEY` = service-role/secret key Supabase untuk proyek ini (jangan gunakan publishable/anon key)
+   - `SUPABASE_SERVICE_ROLE_KEY` = legacy service_role JWT key Supabase untuk proyek ini (jangan gunakan publishable/anon key atau sb_secret_ key pada kolom Authorization; script ini memakai REST API langsung)
    - `BACKUP_FOLDER_ID` = ID folder Google Drive privat yang dibuat pada langkah 1
 5. Di **Project Settings**, set **Time zone** ke `Asia/Jakarta`.
 6. Jalankan `runDailyBackup` sekali secara manual dan berikan izin Apps Script yang diperlukan.
