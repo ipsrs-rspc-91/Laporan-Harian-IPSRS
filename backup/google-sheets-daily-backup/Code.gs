@@ -160,6 +160,9 @@ function fetchAllRows_(baseUrl, serviceKey, table) {
 }
 
 function writeRows_(sheet, columns, rows) {
+  const requiredRows = Math.max(1, rows.length + 1);
+  if (sheet.getMaxRows() < requiredRows) sheet.insertRowsAfter(sheet.getMaxRows(), requiredRows - sheet.getMaxRows());
+  if (sheet.getMaxColumns() < columns.length) sheet.insertColumnsAfter(sheet.getMaxColumns(), columns.length - sheet.getMaxColumns());
   sheet.clearContents();
   sheet.setFrozenRows(1);
   sheet.getRange(1, 1, 1, columns.length).setValues([columns]);
