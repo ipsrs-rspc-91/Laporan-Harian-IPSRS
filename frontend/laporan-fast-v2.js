@@ -79,11 +79,18 @@
 
     const cached=responseCache.get(key);
     if(!forceRefresh && cached && (Date.now()-cached.at)<RESPONSE_CACHE_TTL) return Promise.resolve(cached.value);
-    if(inflight.has(key)) return inflight.get(key);
+    // Force refresh must start a fresh request even if an older request for the same
+    // filters is still in flight. Older responses must not overwrite the fresh cache.
+    if(!forceRefresh && inflight.has(key)) return inflight.get(key);
 
     const p=authRun('apiGetReports',month||'',staff||'','',viewMode||'daftar',startDate||'',endDate||'')
-      .then(function(value){ responseCache.set(key,{at:Date.now(),value:value}); return value; })
-      .finally(function(){ inflight.delete(key); });
+      .then(function(value){
+        if(inflight.get(key)===p) responseCache.set(key,{at:Date.now(),value:value});
+        return value;
+      })
+      .finally(function(){
+        if(inflight.get(key)===p) inflight.delete(key);
+      });
     inflight.set(key,p);
     return p;
   }
