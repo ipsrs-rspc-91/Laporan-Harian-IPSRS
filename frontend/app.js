@@ -5018,6 +5018,7 @@
       if(!el) return;
       if(id === 'FilterKategori' && preserveDashboardCategory) return;
       el.value = '';
+      if(id === 'FilterCari') window.__IPSRS_APPLIED_REPORT_SEARCH = '';
     });
 
     // Pastikan nilai target benar-benar terpasang setelah reset filter.
