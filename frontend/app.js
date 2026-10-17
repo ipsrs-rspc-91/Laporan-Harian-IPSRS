@@ -4741,14 +4741,17 @@
       if(bidang && r.Bidang !== bidang) return false;
       if(adminSelectedStaffId && r.StaffID !== adminSelectedStaffId) return false;
       if(cari){
-        // Pencarian global: periksa SELURUH field pada record laporan.
-        // Tidak perlu menambah nama field di sini jika field baru ditambahkan.
-        const hay = Object.values(r)
-          .filter(v => v !== null && v !== undefined)
-          .map(v => typeof v === 'object' ? JSON.stringify(v) : String(v))
-          .join(' ')
-          .toLowerCase();
-        if(hay.indexOf(cari) === -1) return false;
+        // Pencarian hanya pada kolom isi laporan yang ditentukan.
+        // ID internal, tanggal, nama petugas, dan metadata tidak ikut dicari.
+        const hay = [
+          r.Ruang,
+          r.MasalahKegiatan,
+          r.Tindakan,
+          r.Keterangan
+        ]
+          .map(v => String(v ?? '').toLowerCase())
+          .join(' ');
+        if(!hay.includes(cari)) return false;
       }
       return true;
     });
