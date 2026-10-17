@@ -437,7 +437,7 @@
       case 'apiCreateReport':
         payload.token=token; payload.payload=args[0]||{}; break;
       case 'apiGetReports':
-        payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; break;
+        payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; payload.startDate=args[4]||''; payload.endDate=args[5]||''; break;
       case 'apiGetOverdueReports':
         payload.token=token; payload.cutoffDate=args[0]||''; break;
       case 'apiUpdateReport':
@@ -4720,7 +4720,7 @@
     const bidang = document.getElementById('FilterBidang').value;
     // Filter "Shift" dihapus (P1 §3.6) -- elemen #FilterShift tidak ada lagi
     // di HTML, dan backend tidak pernah memproses parameter shift.
-    const cari = document.getElementById('FilterCari').value.trim().toLowerCase();
+    const cari = String(window.__IPSRS_APPLIED_REPORT_SEARCH ?? '').trim().toLowerCase();
 
     const viewData = rawData.filter(r => {
       if(isDashboardUnfinishedFilter){
@@ -5018,6 +5018,7 @@
       if(!el) return;
       if(id === 'FilterKategori' && preserveDashboardCategory) return;
       el.value = '';
+      if(id === 'FilterCari') window.__IPSRS_APPLIED_REPORT_SEARCH = '';
     });
 
     // Pastikan nilai target benar-benar terpasang setelah reset filter.
