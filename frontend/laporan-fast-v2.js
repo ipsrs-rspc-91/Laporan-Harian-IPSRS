@@ -202,12 +202,50 @@
 
   window.loadReportsBySelectedMonth=loadReportsUltra;
 
-  // Public helper untuk tombol "Muat Ulang".
-  // Tidak mengubah perilaku pemanggilan biasa dari filter/menu.
+  // Indikator aksi yang terlihat dan dapat dipulihkan jika terjadi error.
+  function setReportActionBusy_(id,busy,busyLabel,normalLabel){
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(busy){
+      if(!el.dataset.normalLabel) el.dataset.normalLabel=normalLabel||el.textContent.trim();
+      el.disabled=true;
+      el.setAttribute('aria-busy','true');
+      el.innerHTML='<span class="ipsrs-action-spinner" aria-hidden="true" style="display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:ipsrsActionSpin .7s linear infinite"></span>'+busyLabel;
+    }else{
+      el.disabled=false;
+      el.removeAttribute('aria-busy');
+      el.textContent=normalLabel||el.dataset.normalLabel||'';
+    }
+  }
+  if(!document.getElementById('ipsrsActionSpinnerStyle')){
+    const style=document.createElement('style');
+    style.id='ipsrsActionSpinnerStyle';
+    style.textContent='@keyframes ipsrsActionSpin{to{transform:rotate(360deg)}} #btnSearchLaporan:disabled,#btnRefreshLaporan:disabled{opacity:.72;cursor:wait}';
+    document.head.appendChild(style);
+  }
+
+  // Klik Cari menerapkan keyword pada data yang sudah dimuat; Enter memakai jalur sama.
   window.searchLaporan=function(){
     const input=document.getElementById('FilterCari');
     window.__IPSRS_APPLIED_REPORT_SEARCH=String(input&&input.value||'').trim();
-    if(typeof applyFilters==='function') applyFilters();
+    setReportActionBusy_('btnSearchLaporan',true,'Mencari…','Cari');
+    setMsg('msgReport','Mencari laporan…');
+    // Beri browser satu frame untuk menggambar indikator sebelum filter dijalankan.
+    requestAnimationFrame(function(){
+      try{
+        if(typeof window.applyFilters!=='function') throw new Error('Fungsi filter laporan belum siap. Muat ulang halaman.');
+        window.applyFilters();
+        const msg=document.getElementById('msgReport');
+        if(msg && !/^Error:/i.test(msg.textContent||'')){
+          const shown=(msg.textContent||'').trim();
+          setMsg('msgReport',(window.__IPSRS_APPLIED_REPORT_SEARCH?'Pencarian selesai. ':'Filter diterapkan. ')+(shown||''));
+        }
+      }catch(err){
+        setMsg('msgReport','Pencarian gagal: '+(err&&err.message?err.message:err),true);
+      }finally{
+        setReportActionBusy_('btnSearchLaporan',false,'','Cari');
+      }
+    });
   };
 
   window.forceReloadLaporan=function(){
@@ -227,7 +265,11 @@
       const current=String(now.getFullYear())+'-'+String(now.getMonth()+1).padStart(2,'0');
       if(Array.from(month.options).some(function(o){return o.value===current;})) month.value=current;
     }
-    return loadReportsUltra(true);
+    setReportActionBusy_('btnRefreshLaporan',true,'Memuat…','Refresh');
+    setMsg('msgReport','Memuat ulang data terbaru…');
+    return loadReportsUltra(true).finally(function(){
+      setReportActionBusy_('btnRefreshLaporan',false,'','Refresh');
+    });
   };
 
   const originalApply=window.applyFilters;
