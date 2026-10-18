@@ -207,14 +207,14 @@
     const el=document.getElementById(id);
     if(!el) return;
     if(busy){
-      if(!el.dataset.normalLabel) el.dataset.normalLabel=normalLabel||el.textContent.trim();
+      if(!el.dataset.normalHtml) el.dataset.normalHtml=el.innerHTML;
       el.disabled=true;
       el.setAttribute('aria-busy','true');
       el.innerHTML='<span class="ipsrs-action-spinner" aria-hidden="true" style="display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:ipsrsActionSpin .7s linear infinite"></span>'+busyLabel;
     }else{
       el.disabled=false;
       el.removeAttribute('aria-busy');
-      el.textContent=normalLabel||el.dataset.normalLabel||'';
+      el.innerHTML=el.dataset.normalHtml||normalLabel||'';
     }
   }
   if(!document.getElementById('ipsrsActionSpinnerStyle')){
@@ -267,7 +267,12 @@
     }
     setReportActionBusy_('btnRefreshLaporan',true,'Memuat…','Refresh');
     setMsg('msgReport','Memuat ulang data terbaru…');
-    return loadReportsUltra(true).finally(function(){
+    return Promise.resolve().then(function(){
+      return loadReportsUltra(true);
+    }).catch(function(err){
+      setMsg('msgReport','Refresh gagal: '+(err&&err.message?err.message:err),true);
+      return false;
+    }).finally(function(){
       setReportActionBusy_('btnRefreshLaporan',false,'','Refresh');
     });
   };
