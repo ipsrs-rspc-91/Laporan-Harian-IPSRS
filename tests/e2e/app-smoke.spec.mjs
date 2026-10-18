@@ -50,6 +50,38 @@ test('Delete Report control is present but hidden outside edit mode', async ({ p
   await expect(deleteButton).toBeHidden();
 });
 
+test('report-search-and-refresh-controls-are-tappable-on-mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#btnSearchLaporan')).toBeAttached({ timeout: 10000 });
+  await expect(page.locator('#btnRefreshLaporan')).toBeAttached({ timeout: 10000 });
+
+  // Expose only the report panel for a UI-only test; do not log in or call APIs.
+  await page.evaluate(() => {
+    const root = document.getElementById('page-laporan');
+    if (root) { root.classList.add('active'); root.style.display = 'block'; }
+    const panel = document.getElementById('subtab-daftar');
+    if (panel) { panel.classList.remove('hidden'); panel.style.display = 'block'; }
+    window.__searchTapCount = 0;
+    window.__refreshTapCount = 0;
+    window.searchLaporan = () => { window.__searchTapCount += 1; };
+    window.forceReloadLaporan = () => { window.__refreshTapCount += 1; };
+  });
+
+  const search = page.locator('#btnSearchLaporan');
+  const refresh = page.locator('#btnRefreshLaporan');
+  await expect(search).toBeVisible();
+  await expect(refresh).toBeVisible();
+  const searchBox = await search.boundingBox();
+  const refreshBox = await refresh.boundingBox();
+  expect(searchBox && searchBox.width >= 70 && searchBox.height >= 40, 'Cari has a usable mobile tap target').toBeTruthy();
+  expect(refreshBox && refreshBox.width >= 90 && refreshBox.height >= 40, 'Refresh has a usable mobile tap target').toBeTruthy();
+  await search.tap();
+  await refresh.tap();
+  const taps = await page.evaluate(() => [window.__searchTapCount, window.__refreshTapCount]);
+  expect(taps).toEqual([1, 1]);
+});
+
 test('dashboard-load', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-dashboard')).toBeAttached({timeout:10000});
