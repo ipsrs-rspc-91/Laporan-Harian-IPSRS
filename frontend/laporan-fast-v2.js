@@ -66,12 +66,12 @@
     if(sel) sel.value='';
   }
 
-  function requestKey(month,staff,viewMode){
-    return String(month||'')+'|'+String(staff||'')+'|'+String(viewMode||'daftar');
+  function requestKey(month,staff,viewMode,startDate,endDate){
+    return String(month||'')+'|'+String(startDate||'')+'|'+String(endDate||'')+'|'+String(staff||'')+'|'+String(viewMode||'daftar');
   }
 
-  function requestReports(month,staff,viewMode,forceRefresh){
-    const key=requestKey(month,staff,viewMode);
+  function requestReports(month,staff,viewMode,forceRefresh,startDate,endDate){
+    const key=requestKey(month,staff,viewMode,startDate,endDate);
 
     // Force refresh hanya dipakai oleh tombol "Muat Ulang".
     // Cache normal tetap aktif untuk navigasi/menu agar performa tidak turun.
@@ -79,11 +79,18 @@
 
     const cached=responseCache.get(key);
     if(!forceRefresh && cached && (Date.now()-cached.at)<RESPONSE_CACHE_TTL) return Promise.resolve(cached.value);
-    if(inflight.has(key)) return inflight.get(key);
+    // Force refresh must start a fresh request even if an older request for the same
+    // filters is still in flight. Older responses must not overwrite the fresh cache.
+    if(!forceRefresh && inflight.has(key)) return inflight.get(key);
 
-    const p=authRun('apiGetReports',month||'',staff||'','',viewMode||'daftar')
-      .then(function(value){ responseCache.set(key,{at:Date.now(),value:value}); return value; })
-      .finally(function(){ inflight.delete(key); });
+    const p=authRun('apiGetReports',month||'',staff||'','',viewMode||'daftar',startDate||'',endDate||'')
+      .then(function(value){
+        if(inflight.get(key)===p) responseCache.set(key,{at:Date.now(),value:value});
+        return value;
+      })
+      .finally(function(){
+        if(inflight.get(key)===p) inflight.delete(key);
+      });
     inflight.set(key,p);
     return p;
   }
@@ -94,6 +101,16 @@
     const requestSeq=(Number(window.__IPSRS_LAPORAN_REQUEST_SEQ)||0)+1;
     window.__IPSRS_LAPORAN_REQUEST_SEQ=requestSeq;
     const b=bulan();
+    const periodEl=document.getElementById('FilterPeriode');
+    const periodMonths=Math.max(1,Math.min(12,Number(periodEl&&periodEl.value)||3));
+    const monthMatch=/^(\d{4})-(\d{2})$/.exec(b);
+    const selectedYear=monthMatch?Number(monthMatch[1]):new Date().getFullYear();
+    const selectedMonth=monthMatch?Number(monthMatch[2]):(new Date().getMonth()+1);
+    const rangeStartDate=new Date(selectedYear,selectedMonth-periodMonths,1);
+    const rangeEndDate=new Date(selectedYear,selectedMonth,0);
+    const toIsoDate=function(d){return String(d.getFullYear()).padStart(4,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+    const startDate=toIsoDate(rangeStartDate);
+    const endDate=toIsoDate(rangeEndDate);
     let staff='';
 
     // Begitu mode berubah, kosongkan dataset bersama agar data Daftar (mis. 309)
@@ -122,7 +139,7 @@
     setMsg('msgReport','Memuat data...');
 
     try{
-      const json=await requestReports(b,staff,m==='saya'?'saya':'daftar',forceRefresh===true);
+      const json=await requestReports(b,staff,m==='saya'?'saya':'daftar',forceRefresh===true,startDate,endDate);
       if(mySerial!==requestSerial ||
          requestSeq!==Number(window.__IPSRS_LAPORAN_REQUEST_SEQ) ||
          mode()!==m) return false;
@@ -185,10 +202,79 @@
 
   window.loadReportsBySelectedMonth=loadReportsUltra;
 
-  // Public helper untuk tombol "Muat Ulang".
-  // Tidak mengubah perilaku pemanggilan biasa dari filter/menu.
+  // Indikator aksi yang terlihat dan dapat dipulihkan jika terjadi error.
+  function setReportActionBusy_(id,busy,busyLabel,normalLabel){
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(busy){
+      if(!el.dataset.normalHtml) el.dataset.normalHtml=el.innerHTML;
+      el.disabled=true;
+      el.setAttribute('aria-busy','true');
+      el.innerHTML='<span class="ipsrs-action-spinner" aria-hidden="true" style="display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:ipsrsActionSpin .7s linear infinite"></span>'+busyLabel;
+    }else{
+      el.disabled=false;
+      el.removeAttribute('aria-busy');
+      el.innerHTML=el.dataset.normalHtml||normalLabel||'';
+    }
+  }
+  if(!document.getElementById('ipsrsActionSpinnerStyle')){
+    const style=document.createElement('style');
+    style.id='ipsrsActionSpinnerStyle';
+    style.textContent='@keyframes ipsrsActionSpin{to{transform:rotate(360deg)}} #btnSearchLaporan:disabled,#btnRefreshLaporan:disabled{opacity:.72;cursor:wait}';
+    document.head.appendChild(style);
+  }
+
+  // Klik Cari menerapkan keyword pada data yang sudah dimuat; Enter memakai jalur sama.
+  window.searchLaporan=function(){
+    const input=document.getElementById('FilterCari');
+    window.__IPSRS_APPLIED_REPORT_SEARCH=String(input&&input.value||'').trim();
+    setReportActionBusy_('btnSearchLaporan',true,'Mencari…','Cari');
+    setMsg('msgReport','Mencari laporan…');
+    // Beri browser satu frame untuk menggambar indikator sebelum filter dijalankan.
+    requestAnimationFrame(function(){
+      try{
+        if(typeof window.applyFilters!=='function') throw new Error('Fungsi filter laporan belum siap. Muat ulang halaman.');
+        window.applyFilters();
+        const msg=document.getElementById('msgReport');
+        if(msg && !/^Error:/i.test(msg.textContent||'')){
+          const shown=(msg.textContent||'').trim();
+          setMsg('msgReport',(window.__IPSRS_APPLIED_REPORT_SEARCH?'Pencarian selesai. ':'Filter diterapkan. ')+(shown||''));
+        }
+      }catch(err){
+        setMsg('msgReport','Pencarian gagal: '+(err&&err.message?err.message:err),true);
+      }finally{
+        setReportActionBusy_('btnSearchLaporan',false,'','Cari');
+      }
+    });
+  };
+
   window.forceReloadLaporan=function(){
-    return loadReportsUltra(true);
+    const input=document.getElementById('FilterCari');
+    // Refresh mempertahankan kata kunci, tetapi mengosongkan filter tambahan.
+    window.__IPSRS_APPLIED_REPORT_SEARCH=String(input&&input.value||'').trim();
+    ['FilterStatus','FilterKategori','FilterArea','FilterBidang','adminStaffSelect'].forEach(function(id){
+      const el=document.getElementById(id);
+      if(el) el.value='';
+    });
+    try{ if(typeof adminSelectedStaffId!=='undefined') adminSelectedStaffId=''; }catch(e){}
+    const period=document.getElementById('FilterPeriode');
+    if(period) period.value='3';
+    const month=document.getElementById('FilterBulan');
+    if(month){
+      const now=new Date();
+      const current=String(now.getFullYear())+'-'+String(now.getMonth()+1).padStart(2,'0');
+      if(Array.from(month.options).some(function(o){return o.value===current;})) month.value=current;
+    }
+    setReportActionBusy_('btnRefreshLaporan',true,'Memuat…','Refresh');
+    setMsg('msgReport','Memuat ulang data terbaru…');
+    return Promise.resolve().then(function(){
+      return loadReportsUltra(true);
+    }).catch(function(err){
+      setMsg('msgReport','Refresh gagal: '+(err&&err.message?err.message:err),true);
+      return false;
+    }).finally(function(){
+      setReportActionBusy_('btnRefreshLaporan',false,'','Refresh');
+    });
   };
 
   const originalApply=window.applyFilters;
@@ -272,7 +358,7 @@
     if(!fnName){ responseCache.clear(); return; }
     if(fnName!=='apiGetReports') return;
     if(!Array.isArray(args) || args.length<2){ responseCache.clear(); return; }
-    responseCache.delete(requestKey(args[0],args[1],args[3]||'daftar'));
+    responseCache.clear();
   }
 
   window.__ipsrsClearLaporanApiCache=clearReportCache;
