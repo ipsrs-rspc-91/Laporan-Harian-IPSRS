@@ -58,10 +58,16 @@ test('report-search-and-refresh-controls-are-tappable-on-mobile', async ({ page 
 
   // Expose only the report panel for a UI-only test; do not log in or call APIs.
   await page.evaluate(() => {
+    const searchButton = document.getElementById('btnSearchLaporan');
+    let node = searchButton;
+    while (node && node !== document.body) {
+      node.classList?.remove('hidden');
+      node.style?.setProperty('display', 'block', 'important');
+      node.style?.setProperty('visibility', 'visible', 'important');
+      node = node.parentElement;
+    }
     const root = document.getElementById('page-laporan');
-    if (root) { root.classList.add('active'); root.style.display = 'block'; }
-    const panel = document.getElementById('subtab-daftar');
-    if (panel) { panel.classList.remove('hidden'); panel.style.display = 'block'; }
+    if (root) root.classList.add('active');
     window.__searchTapCount = 0;
     window.__refreshTapCount = 0;
     window.searchLaporan = () => { window.__searchTapCount += 1; };
