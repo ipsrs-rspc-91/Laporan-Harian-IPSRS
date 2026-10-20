@@ -19,8 +19,18 @@
     const oldBtn=document.getElementById('accessBtn');if(oldBtn)oldBtn.remove();const btn=document.createElement('button');btn.id='accessBtn';btn.type='button';btn.className='btn block';btn.textContent='⚙ Hak Akses';btn.onclick=open;const userMenu=document.getElementById('userMenu');const pwBtn=userMenu&&userMenu.querySelector('button[onclick="openPwModal()"]');if(pwBtn&&pwBtn.parentNode===userMenu){pwBtn.insertAdjacentElement('afterend',btn);}else if(userMenu){userMenu.appendChild(btn);}else{document.body.appendChild(btn);}
     const bg=document.createElement('div');bg.id='accessBg';bg.innerHTML=`<div class="access-modal"><div class="access-head"><div><h2>Pengaturan Hak Akses</h2><div class="access-muted">Dikelola khusus oleh KA IPSRS</div></div><button class="access-btn-secondary" onclick="closeAccessPanel()">Tutup</button></div><div id="accessContent"><div class="access-muted">Memuat...</div></div></div>`;bg.onclick=e=>{if(e.target===bg)closeAccessPanel()};document.body.appendChild(bg);
   }
-  async function open(){document.getElementById('accessBg').classList.add('show');await render();}
-  window.__ipsrsOpenAccessPanel=open;
+  async function open(){
+    let bg=document.getElementById('accessBg');
+    if(!bg){mount();bg=document.getElementById('accessBg');}
+    if(!bg)return;
+    bg.classList.add('show');
+    await render();
+  }
+  window.__ipsrsOpenAccessPanel=function(){
+    const s=typeof getSession==='function'?getSession():null;
+    if(!s||s.role!=='KA_IPSRS')return;
+    return open();
+  };
   window.closeAccessPanel=function(){document.getElementById('accessBg').classList.remove('show');};
   async function render(){
     const el=document.getElementById('accessContent');if(!el)return;el.innerHTML='<div class="access-muted">Memuat pengaturan...</div>';
