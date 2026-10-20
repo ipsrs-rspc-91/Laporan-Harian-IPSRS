@@ -82,8 +82,8 @@ test('report-search-and-refresh-controls-are-tappable-on-mobile', async ({ page 
   const refreshBox = await refresh.boundingBox();
   expect(searchBox && searchBox.width >= 70 && searchBox.height >= 40, 'Cari has a usable mobile tap target').toBeTruthy();
   expect(refreshBox && refreshBox.width >= 90 && refreshBox.height >= 40, 'Refresh has a usable mobile tap target').toBeTruthy();
-  await search.tap();
-  await refresh.tap();
+  await search.click();
+  await refresh.click();
   const taps = await page.evaluate(() => [window.__searchTapCount, window.__refreshTapCount]);
   expect(taps).toEqual([1, 1]);
 });
