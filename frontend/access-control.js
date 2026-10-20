@@ -20,6 +20,7 @@
     const bg=document.createElement('div');bg.id='accessBg';bg.innerHTML=`<div class="access-modal"><div class="access-head"><div><h2>Pengaturan Hak Akses</h2><div class="access-muted">Dikelola khusus oleh KA IPSRS</div></div><button class="access-btn-secondary" onclick="closeAccessPanel()">Tutup</button></div><div id="accessContent"><div class="access-muted">Memuat...</div></div></div>`;bg.onclick=e=>{if(e.target===bg)closeAccessPanel()};document.body.appendChild(bg);
   }
   async function open(){document.getElementById('accessBg').classList.add('show');await render();}
+  window.__ipsrsOpenAccessPanel=open;
   window.closeAccessPanel=function(){document.getElementById('accessBg').classList.remove('show');};
   async function render(){
     const el=document.getElementById('accessContent');if(!el)return;el.innerHTML='<div class="access-muted">Memuat pengaturan...</div>';
