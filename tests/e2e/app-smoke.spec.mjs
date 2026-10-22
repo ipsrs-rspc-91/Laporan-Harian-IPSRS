@@ -55,18 +55,6 @@ test('Excel export module and Daftar Laporan button load without login', async (
 });
 
 test('Excel export downloads only reports rendered in the current list', async ({ page }) => {
-  await page.route('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js', route => route.fulfill({
-    status: 200,
-    contentType: 'application/javascript',
-    body: `window.XLSX = {
-      utils: {
-        aoa_to_sheet: data => { window.__ipsrsExportTestData = data; return { '!ref': 'A1' }; },
-        book_new: () => ({}),
-        book_append_sheet: () => {}
-      },
-      writeFile: (_book, filename) => { window.__ipsrsExportTestFile = filename; }
-    };`
-  }));
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
   await page.evaluate(() => {
@@ -84,6 +72,16 @@ test('Excel export downloads only reports rendered in the current list', async (
         ID: 'TEST-NOT-DISPLAYED', Tanggal: '2026-10-21',
         Ruang: 'Tidak tampil', MasalahKegiatan: 'Jangan diekspor'
       }
+    };
+    // Inject a deterministic SheetJS stub so this test exercises the export handler
+    // without relying on a third-party CDN request inside the browser runner.
+    window.XLSX = {
+      utils: {
+        aoa_to_sheet: data => { window.__ipsrsExportTestData = data; return { '!ref': 'A1' }; },
+        book_new: () => ({}),
+        book_append_sheet: () => {}
+      },
+      writeFile: (_book, filename) => { window.__ipsrsExportTestFile = filename; }
     };
     document.getElementById('reportTableBody').innerHTML =
       '<tr data-report-id="TEST-ONLY-1"><td>synthetic test row</td></tr>';
