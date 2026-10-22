@@ -129,6 +129,12 @@
   }
 
   function currentDisplayedRows() {
+    // The renderer publishes the full filtered dataset for the selected month.
+    // Prefer it over DOM rows so bulk export includes every matching report,
+    // even when the table is paginated or only part of the list is visible.
+    if (Array.isArray(window.__IPSRS_RENDERED_REPORT_ROWS)) {
+      return window.__IPSRS_RENDERED_REPORT_ROWS.slice();
+    }
     const tbody = document.getElementById('reportTableBody');
     if (!tbody) return [];
     const store = window.__IPSRS_REPORTS || {};
