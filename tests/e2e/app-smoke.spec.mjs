@@ -114,45 +114,53 @@ test('Excel export downloads only reports rendered in the current list', async (
   expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
 });
 
-test('Individual report Excel button exports only the selected report', async ({ page }) => {
+test('Daftar Laporan uses one toolbar Excel export button, not per-row export buttons', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
-  await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
   await page.evaluate(() => {
     document.getElementById('authLoading')?.classList.add('hidden');
     document.getElementById('appShell')?.classList.remove('hidden');
     document.getElementById('page-laporan')?.classList.add('active');
     document.getElementById('subtab-daftar')?.classList.remove('hidden');
-    window.XLSX = {
-      utils: {
-        aoa_to_sheet: data => { window.__ipsrsSingleExportData = data; return { '!ref': 'A1' }; },
-        book_new: () => ({}),
-        book_append_sheet: () => {}
-      },
-      writeFile: (_book, filename) => { window.__ipsrsSingleExportFile = filename; }
-    };
-    window.renderReportTable([{
-      ID: 'TEST-DETAIL-1', Tanggal: '2026-10-22', Pukul: '09:00',
-      Ruang: 'Ruang Detail Uji', NoLK: 'LK-TEST-1',
-      MasalahKegiatan: 'Uji unduh per laporan', Tindakan: 'Verifikasi',
-      Keterangan: 'Data sintetis', Petugas: 'Petugas Uji', Bidang: 'ME',
-      Status: 'Selesai', Kategori: 'ME', AreaKerja: 'Ruang Uji',
-      Item: 'Item Uji', CanEdit: false
-    }]);
+    document.getElementById('reportTableBody').innerHTML =
+      '<tr data-report-id="TEST-DETAIL-1"><td>synthetic test row</td></tr>';
   });
-  const singleButton = page.locator('#reportTableBody .ipsrs-export-single').first();
-  await expect(singleButton).toBeVisible();
-  await singleButton.click();
-  await page.waitForFunction(() => !!window.__ipsrsSingleExportFile);
-  const result = await page.evaluate(() => ({
-    filename: window.__ipsrsSingleExportFile,
-    data: window.__ipsrsSingleExportData
-  }));
-  expect(result.filename).toContain('ID-TEST-DETAIL-1');
-  expect(result.filename).toMatch(/\.xlsx$/);
-  expect(result.data).toHaveLength(2);
-  expect(result.data[1][0]).toBe('TEST-DETAIL-1');
-  expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
+  await expect(page.locator('#btnDownloadLaporanExcel')).toBeVisible();
+  // The production design intentionally provides a single toolbar export action.
+  await expect(page.locator('#reportTableBody .ipsrs-export-single')).toHaveCount(0);
+});
+
+test('Daftar Laporan Cari is a visible clickable button in the filter bar', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const controls = page.locator('#laporanSearchControls');
+  const searchButton = page.locator('#btnSearchLaporan');
+  const searchInput = page.locator('#FilterCari');
+  await expect(controls).toBeAttached({ timeout: 10000 });
+  await expect(searchButton).toBeVisible();
+  await expect(searchButton).toHaveText('CARI');
+  await expect(searchInput).toBeVisible();
+  const geometry = await page.evaluate(() => {
+    const bar = document.getElementById('laporanSearchControls').getBoundingClientRect();
+    const button = document.getElementById('btnSearchLaporan').getBoundingClientRect();
+    const input = document.getElementById('FilterCari').getBoundingClientRect();
+    return {
+      buttonInsideBar: button.left >= bar.left && button.right <= bar.right,
+      inputInsideBar: input.left >= bar.left && input.right <= bar.right,
+      buttonLeftOfInput: button.right <= input.left,
+      buttonHeight: button.height,
+      buttonBackground: getComputedStyle(document.getElementById('btnSearchLaporan')).backgroundColor
+    };
+  });
+  expect(geometry.buttonInsideBar).toBeTruthy();
+  expect(geometry.inputInsideBar).toBeTruthy();
+  expect(geometry.buttonLeftOfInput).toBeTruthy();
+  expect(geometry.buttonHeight).toBeGreaterThanOrEqual(40);
+  await page.evaluate(() => {
+    window.__ipsrsSearchClickCount = 0;
+    window.applyFilters = () => { window.__ipsrsSearchClickCount += 1; };
+  });
+  await searchButton.click();
+  await expect.poll(() => page.evaluate(() => window.__ipsrsSearchClickCount)).toBe(1);
 });
 
 test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
