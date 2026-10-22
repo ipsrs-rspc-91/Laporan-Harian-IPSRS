@@ -234,7 +234,21 @@
     decorateRenderedReports();
   }
 
+  function injectStyles() {
+    if (document.getElementById('ipsrsExcelExportStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'ipsrsExcelExportStyles';
+    style.textContent = [
+      '.ipsrs-export-excel{border-color:#217346!important;color:#217346!important;font-weight:700!important}',
+      '.ipsrs-export-single{font-size:11px!important;padding:5px 8px!important;margin:2px!important;border-color:#217346!important;color:#217346!important;white-space:nowrap!important}',
+      '#reportCardList>.ipsrs-export-single{align-self:flex-start;margin-top:10px!important}',
+      '.ipsrs-export-single:disabled,#btnDownloadLaporanExcel:disabled{opacity:.6;cursor:wait}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
   function start() {
+    injectStyles();
     const pageReady = window.__ipsrsPageReady && window.__ipsrsPageReady.laporan;
     if (pageReady && typeof pageReady.then === 'function') {
       pageReady.then(installToolbar).catch(error => console.warn('[IPSRS_EXCEL_EXPORT] Page not ready.', error));
