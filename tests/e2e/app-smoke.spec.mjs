@@ -91,7 +91,7 @@ test('Excel export downloads only reports rendered in the current list', async (
     data: window.__ipsrsExportTestData
   }));
   expect(result.filename).toContain('Daftar-Tampil');
-  expect(result.filename).toMatch(/\\.xlsx$/);
+  expect(result.filename).toMatch(/\.xlsx$/);
   expect(result.data).toHaveLength(2);
   expect(result.data[1][0]).toBe('TEST-ONLY-1');
   expect(result.data[1][5]).toBe("'=1+1");
