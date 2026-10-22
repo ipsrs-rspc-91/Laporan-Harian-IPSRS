@@ -88,6 +88,7 @@ test('Excel export downloads only reports rendered in the current list', async (
     document.getElementById('reportTableBody').innerHTML =
       '<tr data-report-id="TEST-ONLY-1"><td>synthetic test row</td></tr>';
   });
+  await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
   await page.locator('#btnDownloadLaporanExcel').click();
   await page.waitForFunction(() => !!window.__ipsrsExportTestFile);
   const result = await page.evaluate(() => ({
