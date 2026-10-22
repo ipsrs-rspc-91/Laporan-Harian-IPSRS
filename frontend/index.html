@@ -252,7 +252,7 @@
       window.__ipsrsPageReady.dashboard = fragment('page-dashboard', deferredMounts['page-dashboard']);
       window.__ipsrsPageReady.laporan = fragment('page-laporan', deferredMounts['page-laporan']);
       window.__ipsrsPageReady.online = fragment('page-online', deferredMounts['page-online']);
-      await script('./export-laporan-excel.js?v=20261022-EXCEL-EXPORT1').catch(e=>console.warn('[IPSRS_EXCEL_EXPORT] Module could not be loaded:',e));
+      await script('./export-laporan-excel.js?v=20261022-EXCEL-EXPORT2').catch(e=>console.warn('[IPSRS_EXCEL_EXPORT] Module could not be loaded:',e));
       Promise.all([window.__ipsrsPageReady.dashboard, window.__ipsrsPageReady.laporan, window.__ipsrsPageReady.online]).catch(e=>console.warn('Deferred page load:',e));
       window.__ipsrsChartReady = script('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js').catch(e=>{ console.warn('Deferred Chart.js load:', e); throw e; });
     }
