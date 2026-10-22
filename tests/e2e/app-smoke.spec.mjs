@@ -36,11 +36,22 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
       ].includes(clean);
     });
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
-  const assets = ['/index.html', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
+  const assets = ['/index.html', '/export-laporan-excel.js', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
   }
+});
+
+test('Excel export module and Daftar Laporan button load without login', async ({ page }) => {
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-laporan')).toBeAttached({ timeout: 10000 });
+  await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
+  const moduleLoaded = await page.evaluate(() => window.__IPSRS_EXCEL_EXPORT_V1 === true);
+  expect(moduleLoaded, 'Excel export module initialized').toBeTruthy();
+  expect(runtimeErrors, 'Excel export module must not introduce runtime errors').toEqual([]);
 });
 
 test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
