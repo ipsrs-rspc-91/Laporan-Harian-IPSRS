@@ -57,6 +57,10 @@ test('Excel export module and Daftar Laporan button load without login', async (
 test('Excel export downloads only reports rendered in the current list', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
+
+  // Set up synthetic visible rows only after the application has finished installing
+  // the export handler, so normal page initialization cannot overwrite the test data.
   await page.evaluate(() => {
     document.getElementById('authLoading')?.classList.add('hidden');
     document.getElementById('appShell')?.classList.remove('hidden');
@@ -73,8 +77,7 @@ test('Excel export downloads only reports rendered in the current list', async (
         Ruang: 'Tidak tampil', MasalahKegiatan: 'Jangan diekspor'
       }
     };
-    // Inject a deterministic SheetJS stub so this test exercises the export handler
-    // without relying on a third-party CDN request inside the browser runner.
+    // Deterministic SheetJS stub: test the export handler without depending on a CDN.
     window.XLSX = {
       utils: {
         aoa_to_sheet: data => { window.__ipsrsExportTestData = data; return { '!ref': 'A1' }; },
@@ -86,7 +89,6 @@ test('Excel export downloads only reports rendered in the current list', async (
     document.getElementById('reportTableBody').innerHTML =
       '<tr data-report-id="TEST-ONLY-1"><td>synthetic test row</td></tr>';
   });
-  await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
   await page.locator('#btnDownloadLaporanExcel').click();
   await page.waitForFunction(() => !!window.__ipsrsExportTestFile);
   const result = await page.evaluate(() => ({
@@ -94,7 +96,7 @@ test('Excel export downloads only reports rendered in the current list', async (
     data: window.__ipsrsExportTestData
   }));
   expect(result.filename).toContain('Daftar-Tampil');
-  expect(result.filename).toMatch(/\.xlsx$/);
+  expect(result.filename).toMatch(/\\.xlsx$/);
   expect(result.data).toHaveLength(2);
   expect(result.data[1][0]).toBe('TEST-ONLY-1');
   expect(result.data[1][5]).toBe("'=1+1");
