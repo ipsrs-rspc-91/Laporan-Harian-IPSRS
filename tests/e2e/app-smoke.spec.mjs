@@ -70,6 +70,10 @@ test('Excel export downloads only reports rendered in the current list', async (
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
   await page.evaluate(() => {
+    document.getElementById('authLoading')?.classList.add('hidden');
+    document.getElementById('appShell')?.classList.remove('hidden');
+    document.getElementById('page-laporan')?.classList.add('active');
+    document.getElementById('subtab-daftar')?.classList.remove('hidden');
     window.__IPSRS_REPORTS = {
       'TEST-ONLY-1': {
         ID: 'TEST-ONLY-1', Tanggal: '2026-10-22', Pukul: '08:00',
