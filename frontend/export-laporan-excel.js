@@ -181,19 +181,9 @@
   }
 
   function decorateRenderedReports() {
-    const tbody = document.getElementById('reportTableBody');
-    if (!tbody) return;
-
-    const store = window.__IPSRS_REPORTS || {};
-    Array.from(tbody.querySelectorAll('tr[data-report-id]')).forEach(tr => {
-      const id = String(tr.dataset.reportId || '');
-      const row = store[id];
-      const cell = tr.querySelector('td.report-action');
-      if (!row || !cell) return;
-      cell.style.display = '';
-      cell.style.whiteSpace = 'nowrap';
-      addSingleButton(cell, row, true);
-    });
+    // Daftar Laporan berbentuk tabel hanya memakai satu tombol ekspor utama
+    // (btnDownloadLaporanExcel). Jangan menambahkan tombol Excel per baris
+    // di samping Edit karena ekspor seluruh hasil filter sudah tersedia di toolbar.
 
     const cards = document.getElementById('reportCardList');
     if (cards) {
