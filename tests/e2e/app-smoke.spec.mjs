@@ -140,9 +140,20 @@ test('Daftar Laporan Cari is a visible clickable button in the filter bar', asyn
     document.getElementById('authLoading')?.classList.add('hidden');
     document.getElementById('appShell')?.classList.remove('hidden');
     document.getElementById('page-laporan')?.classList.add('active');
-    document.getElementById('subtab-daftar')?.classList.remove('hidden');
+    if (typeof window.goLaporanSubTab === 'function') {
+      window.goLaporanSubTab('daftar');
+    } else {
+      document.getElementById('subtab-daftar')?.classList.remove('hidden');
+    }
   });
   await expect(controls).toBeAttached({ timeout: 10000 });
+  // Some startup UI scripts restore the default subtab asynchronously; select
+  // Daftar Laporan through the app's real navigation function after initialization.
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    if (typeof window.goLaporanSubTab === 'function') window.goLaporanSubTab('daftar');
+    document.getElementById('subtab-daftar')?.classList.remove('hidden');
+  });
   await expect(searchButton).toBeVisible();
   await expect(searchButton).toHaveText('CARI');
   await expect(searchInput).toBeVisible();
