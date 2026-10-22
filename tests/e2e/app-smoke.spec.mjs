@@ -129,7 +129,7 @@ test('Individual report Excel button exports only the selected report', async ({
       Item: 'Item Uji', CanEdit: false
     }]);
   });
-  const singleButton = page.locator('#reportCardList .ipsrs-export-single').first();
+  const singleButton = page.locator('#reportTableBody .ipsrs-export-single').first();
   await expect(singleButton).toBeVisible();
   await singleButton.click();
   await page.waitForFunction(() => !!window.__ipsrsSingleExportFile);
