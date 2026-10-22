@@ -4889,6 +4889,10 @@
       return ownerRole !== 'KA_IPSRS' && ownerId !== 'KAIPSRS';
     });
 
+    // Keep the full currently filtered month/list in sync with the rendered table.
+    // Bulk export must not depend on DOM rows or a visible page slice.
+    window.__IPSRS_RENDERED_REPORT_ROWS = safeViewData.slice();
+
     const tbody = document.getElementById('reportTableBody');
     const cardList = document.getElementById('reportCardList');
     tbody.innerHTML = '';
