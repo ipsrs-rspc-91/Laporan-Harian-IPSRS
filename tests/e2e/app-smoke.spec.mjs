@@ -36,11 +36,112 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
       ].includes(clean);
     });
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
-  const assets = ['/index.html', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
+  const assets = ['/index.html', '/export-laporan-excel.js', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
   }
+});
+
+test('Excel export module and Daftar Laporan button load without login', async ({ page }) => {
+  const runtimeErrors = [];
+  page.on('pageerror', error => runtimeErrors.push(error.message));
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#page-laporan')).toBeAttached({ timeout: 10000 });
+  await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
+  const moduleLoaded = await page.evaluate(() => window.__IPSRS_EXCEL_EXPORT_V1 === true);
+  expect(moduleLoaded, 'Excel export module initialized').toBeTruthy();
+  expect(runtimeErrors, 'Excel export module must not introduce runtime errors').toEqual([]);
+});
+
+test('Excel export downloads only reports rendered in the current list', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
+
+  // Set up synthetic visible rows only after the application has finished installing
+  // the export handler, so normal page initialization cannot overwrite the test data.
+  await page.evaluate(() => {
+    document.getElementById('authLoading')?.classList.add('hidden');
+    document.getElementById('appShell')?.classList.remove('hidden');
+    document.getElementById('page-laporan')?.classList.add('active');
+    document.getElementById('subtab-daftar')?.classList.remove('hidden');
+    window.__IPSRS_REPORTS = {
+      'TEST-ONLY-1': {
+        ID: 'TEST-ONLY-1', Tanggal: '2026-10-22', Pukul: '08:00',
+        Ruang: 'Ruang Uji', MasalahKegiatan: '=1+1', Tindakan: 'Uji ekspor',
+        Petugas: 'Petugas Uji', Status: 'Selesai'
+      },
+      'TEST-NOT-DISPLAYED': {
+        ID: 'TEST-NOT-DISPLAYED', Tanggal: '2026-10-21',
+        Ruang: 'Tidak tampil', MasalahKegiatan: 'Jangan diekspor'
+      }
+    };
+    // Deterministic SheetJS stub: test the export handler without depending on a CDN.
+    window.XLSX = {
+      utils: {
+        aoa_to_sheet: data => { window.__ipsrsExportTestData = data; return { '!ref': 'A1' }; },
+        book_new: () => ({}),
+        book_append_sheet: () => {}
+      },
+      writeFile: (_book, filename) => { window.__ipsrsExportTestFile = filename; }
+    };
+    document.getElementById('reportTableBody').innerHTML =
+      '<tr data-report-id="TEST-ONLY-1"><td>synthetic test row</td></tr>';
+  });
+  await page.locator('#btnDownloadLaporanExcel').click();
+  await page.waitForFunction(() => !!window.__ipsrsExportTestFile);
+  const result = await page.evaluate(() => ({
+    filename: window.__ipsrsExportTestFile,
+    data: window.__ipsrsExportTestData
+  }));
+  expect(result.filename).toContain('Daftar-Tampil');
+  expect(result.filename).toMatch(/\.xlsx$/);
+  expect(result.data).toHaveLength(2);
+  expect(result.data[1][0]).toBe('TEST-ONLY-1');
+  expect(result.data[1][5]).toBe("'=1+1");
+  expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
+});
+
+test('Individual report Excel button exports only the selected report', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
+  await page.evaluate(() => {
+    document.getElementById('authLoading')?.classList.add('hidden');
+    document.getElementById('appShell')?.classList.remove('hidden');
+    document.getElementById('page-laporan')?.classList.add('active');
+    document.getElementById('subtab-daftar')?.classList.remove('hidden');
+    window.XLSX = {
+      utils: {
+        aoa_to_sheet: data => { window.__ipsrsSingleExportData = data; return { '!ref': 'A1' }; },
+        book_new: () => ({}),
+        book_append_sheet: () => {}
+      },
+      writeFile: (_book, filename) => { window.__ipsrsSingleExportFile = filename; }
+    };
+    window.renderReportTable([{
+      ID: 'TEST-DETAIL-1', Tanggal: '2026-10-22', Pukul: '09:00',
+      Ruang: 'Ruang Detail Uji', NoLK: 'LK-TEST-1',
+      MasalahKegiatan: 'Uji unduh per laporan', Tindakan: 'Verifikasi',
+      Keterangan: 'Data sintetis', Petugas: 'Petugas Uji', Bidang: 'ME',
+      Status: 'Selesai', Kategori: 'ME', AreaKerja: 'Ruang Uji',
+      Item: 'Item Uji', CanEdit: false
+    }]);
+  });
+  const singleButton = page.locator('#reportTableBody .ipsrs-export-single').first();
+  await expect(singleButton).toBeVisible();
+  await singleButton.click();
+  await page.waitForFunction(() => !!window.__ipsrsSingleExportFile);
+  const result = await page.evaluate(() => ({
+    filename: window.__ipsrsSingleExportFile,
+    data: window.__ipsrsSingleExportData
+  }));
+  expect(result.filename).toContain('ID-TEST-DETAIL-1');
+  expect(result.filename).toMatch(/\.xlsx$/);
+  expect(result.data).toHaveLength(2);
+  expect(result.data[1][0]).toBe('TEST-DETAIL-1');
+  expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
 });
 
 test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
