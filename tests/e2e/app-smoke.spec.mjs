@@ -66,17 +66,27 @@ test('Excel export downloads only reports rendered in the current list', async (
     document.getElementById('appShell')?.classList.remove('hidden');
     document.getElementById('page-laporan')?.classList.add('active');
     document.getElementById('subtab-daftar')?.classList.remove('hidden');
+    const reportOne = {
+      ID: 'TEST-ONLY-1', Tanggal: '2026-10-22', Pukul: '08:00',
+      Ruang: 'Ruang Uji', MasalahKegiatan: '=1+1', Tindakan: 'Uji ekspor',
+      Petugas: 'Petugas Uji', Status: 'Selesai'
+    };
+    const reportTwo = {
+      ID: 'TEST-ONLY-2', Tanggal: '2026-10-21', Pukul: '09:00',
+      Ruang: 'Ruang Uji 2', MasalahKegiatan: 'Laporan bulan berjalan kedua',
+      Tindakan: 'Uji ekspor kedua', Petugas: 'Petugas Uji', Status: 'Belum'
+    };
     window.__IPSRS_REPORTS = {
-      'TEST-ONLY-1': {
-        ID: 'TEST-ONLY-1', Tanggal: '2026-10-22', Pukul: '08:00',
-        Ruang: 'Ruang Uji', MasalahKegiatan: '=1+1', Tindakan: 'Uji ekspor',
-        Petugas: 'Petugas Uji', Status: 'Selesai'
-      },
+      'TEST-ONLY-1': reportOne,
+      'TEST-ONLY-2': reportTwo,
       'TEST-NOT-DISPLAYED': {
-        ID: 'TEST-NOT-DISPLAYED', Tanggal: '2026-10-21',
+        ID: 'TEST-NOT-DISPLAYED', Tanggal: '2026-09-30',
         Ruang: 'Tidak tampil', MasalahKegiatan: 'Jangan diekspor'
       }
     };
+    // Simulate two filtered reports for the selected month while only one
+    // row is currently present in the DOM (e.g. a paginated table).
+    window.__IPSRS_RENDERED_REPORT_ROWS = [reportOne, reportTwo];
     // Deterministic SheetJS stub: test the export handler without depending on a CDN.
     window.XLSX = {
       utils: {
@@ -97,9 +107,10 @@ test('Excel export downloads only reports rendered in the current list', async (
   }));
   expect(result.filename).toContain('Daftar-Tampil');
   expect(result.filename).toMatch(/\.xlsx$/);
-  expect(result.data).toHaveLength(2);
+  expect(result.data).toHaveLength(3);
   expect(result.data[1][0]).toBe('TEST-ONLY-1');
   expect(result.data[1][5]).toBe("'=1+1");
+  expect(result.data[2][0]).toBe('TEST-ONLY-2');
   expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
 });
 
