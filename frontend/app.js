@@ -4747,7 +4747,8 @@
           r.Ruang,
           r.MasalahKegiatan,
           r.Tindakan,
-          r.Keterangan
+          r.Keterangan,
+          r.Item
         ]
           .map(v => String(v ?? '').toLowerCase())
           .join(' ');
