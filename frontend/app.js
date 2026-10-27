@@ -5059,6 +5059,10 @@
     }
   }
 
+  // Public helper for the Refresh button: reuse the canonical filter reset
+  // while preserving special Dashboard drill-down constraints.
+  window.__ipsrsResetLaporanFilters = resetLaporanFilterControls_;
+
   function goLaporanSubTab(name){
     const loadingName = (name === 'monitoring' || name === 'rekap') ? name : (name === 'daftar' ? 'daftar' : 'saya');
     if(typeof window.__ipsrsLaporanNavigationStart === 'function') window.__ipsrsLaporanNavigationStart(loadingName);
