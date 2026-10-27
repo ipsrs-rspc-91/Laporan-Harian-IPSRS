@@ -180,7 +180,14 @@
     </details>
 
     <div style="display:flex; align-items:center; width:100%; min-height:54px; box-sizing:border-box; margin-top:10px; margin-bottom:var(--sp-2); padding:4px 6px; border:1px solid #d8c9ef; border-radius:14px; background:#f5f0ff; box-shadow:0 2px 6px rgba(90,60,130,.07);">
-      <button type="button" onclick="applyFilters()" aria-label="Cari laporan" title="Jalankan pencarian" style="flex:0 0 auto; height:44px; padding:0 14px; border:1px solid #6b46c1; border-radius:10px; background:#6b46c1; color:#fff; font-size:var(--fs-sm); font-weight:800; letter-spacing:.04em; white-space:nowrap; cursor:pointer;">CARI</button>
+      <style>
+        .ipsrs-search-button{flex:0 0 auto;height:44px;padding:0 14px;border:1px solid #6b46c1;border-radius:10px;background:#6b46c1;color:#fff;font-size:var(--fs-sm);font-weight:800;letter-spacing:.04em;white-space:nowrap;cursor:pointer;transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+        .ipsrs-search-button:hover{background:#4c1d95;border-color:#4c1d95;box-shadow:0 4px 12px rgba(76,29,149,.35);transform:translateY(-1px)}
+        .ipsrs-search-button:focus-visible{outline:3px solid rgba(107,70,193,.32);outline-offset:2px;background:#4c1d95}
+        .ipsrs-search-button:active{background:#3b0764;border-color:#3b0764;box-shadow:0 1px 4px rgba(76,29,149,.28);transform:translateY(1px)}
+        @media(prefers-reduced-motion:reduce){.ipsrs-search-button{transition:none}}
+      </style>
+      <button type="button" class="ipsrs-search-button" onclick="applyFilters()" aria-label="Cari laporan" title="Jalankan pencarian">CARI</button>
       <div style="flex:1; min-width:0; margin-left:8px;">
         <input id="FilterCari" style="display:block; width:100%; height:44px; box-sizing:border-box; padding:0 14px; border:1px solid #d8c9ef; border-radius:10px; background:#fff; color:var(--text,#17343d); font-size:var(--fs-sm); outline:none;" placeholder="Cari ruang, masalah, item..." oninput="applyFilters()" onkeydown="if(event.key==='Enter'){event.preventDefault();applyFilters();}">
       </div>
