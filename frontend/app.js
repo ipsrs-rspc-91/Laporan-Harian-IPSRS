@@ -6003,9 +6003,14 @@
   const _dashboardResponseCache = new Map();
   const _dashboardInflight = new Map();
   const _DASHBOARD_CACHE_TTL = 3000;
+  let _dashboardCacheGeneration = 0;
 
   function clearDashboardResponseCache(){
+    // Invalidasi juga request yang masih berjalan agar respons lama tidak
+    // mengisi ulang cache setelah laporan baru dibuat atau diedit.
+    _dashboardCacheGeneration++;
     _dashboardResponseCache.clear();
+    _dashboardInflight.clear();
   }
 
   window.__ipsrsClearDashboardCache = clearDashboardResponseCache;
@@ -6018,18 +6023,24 @@
     }
     if(_dashboardInflight.has(key)) return _dashboardInflight.get(key);
 
+    const requestGeneration = _dashboardCacheGeneration;
     // DashboardStats sekarang sudah membawa KPI monitoring hari yang sama,
     // sehingga tidak perlu request apiGetStaffMonitoring kedua.
-    const p = authRun('apiDashboardStats', bulan, staffFilter)
+    let p;
+    p = authRun('apiDashboardStats', bulan, staffFilter)
       .then(function(statsJson){
         const monData = statsJson && statsJson.data && statsJson.data.monitoring_today
           ? statsJson.data.monitoring_today
           : {tanggal:todayLocalISO(),data:[]};
         const value=[statsJson,{ok:!!(statsJson&&statsJson.ok),data:Array.isArray(monData.data)?monData.data:[]}];
-        _dashboardResponseCache.set(key,{at:Date.now(),value:value});
+        // Respons dari generasi cache lama tidak boleh disimpan kembali.
+        if(requestGeneration === _dashboardCacheGeneration){
+          _dashboardResponseCache.set(key,{at:Date.now(),value:value});
+        }
         return value;
       }).finally(function(){
-        _dashboardInflight.delete(key);
+        // Request lama tidak boleh menghapus referensi request baru dengan key sama.
+        if(_dashboardInflight.get(key) === p) _dashboardInflight.delete(key);
       });
 
     _dashboardInflight.set(key,p);
