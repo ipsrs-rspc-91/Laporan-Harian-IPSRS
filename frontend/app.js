@@ -6275,7 +6275,7 @@
     if(form) form.addEventListener('submit',async event=>{
       event.preventDefault();
       const code=String(codeInput&&codeInput.value||'').trim();
-      if(!/^\\d{6}$/.test(code)){if(msg)msg.textContent='Masukkan 6 angka reset.';return;}
+      if(!/^\d{6}$/.test(code)){if(msg)msg.textContent='Masukkan 6 angka reset.';return;}
       if(submit){submit.disabled=true;submit.textContent='Memeriksa...';}
       if(msg)msg.textContent='Memverifikasi kode ke server...';
       try{
