@@ -6174,16 +6174,11 @@
     }).catch(() => {});
   }
 
-  let IPSRS_LOGIN_MARKUP_BEFORE_GLOBAL_BLOCK = null;
-
-  function renderLhiGlobalBlockScreen_(message, canShowKaLogin){
+  function renderLhiGlobalBlockScreen_(message){
     const screen = document.getElementById('loginScreen');
     const shell = document.getElementById('appShell');
     const loading = document.getElementById('authLoading');
     if(!screen) return;
-    if(IPSRS_LOGIN_MARKUP_BEFORE_GLOBAL_BLOCK === null){
-      IPSRS_LOGIN_MARKUP_BEFORE_GLOBAL_BLOCK = screen.innerHTML;
-    }
     if(loading) loading.classList.add('hidden');
     if(shell) shell.classList.add('hidden');
     screen.classList.remove('hidden');
@@ -6193,13 +6188,11 @@
         <div class="lhi-global-lock-kicker">PEMBERITAHUAN SISTEM IPSRS</div>
         <h1>MODE FORM BLOK APLIKASI AKTIF</h1>
         <p class="lhi-global-lock-message">${String(message || 'Akses aplikasi sementara dibatasi oleh KA IPSRS.').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}</p>
-        <div class="lhi-global-lock-note">Seluruh petugas tidak dapat masuk selama mode blokir aktif. Petugas diminta menyelesaikan kewajiban LHI sesuai arahan KA IPSRS.</div>
+        <div class="lhi-global-lock-note">Seluruh petugas tidak dapat masuk selama mode blokir aktif. Selesaikan kewajiban LHI sesuai arahan KA IPSRS.</div>
         <div class="lhi-global-lock-actions">
-          <button type="button" id="lhiGlobalBlockKaAccess" class="lhi-global-lock-primary">Akses KA IPSRS</button>
           <button type="button" id="lhiGlobalBlockRetry" class="lhi-global-lock-secondary">Periksa kembali status</button>
         </div>
-        <div id="lhiGlobalBlockKaLogin" class="lhi-global-lock-ka-login" hidden></div>
-        <div class="lhi-global-lock-foot">Status blokir diperiksa langsung dari server. Login petugas tetap ditolak oleh API selama status AKTIF.</div>
+        <div class="lhi-global-lock-foot">Login ditahan sampai status blokir dinonaktifkan melalui prosedur resmi KA IPSRS.</div>
       </section>
       <style>
         #loginScreen .lhi-global-lock{width:min(100%,560px);margin:auto;padding:34px 28px;background:#fff;border:1px solid #e3a4a4;border-top:7px solid #b42318;border-radius:20px;box-shadow:0 16px 45px rgba(0,0,0,.16);box-sizing:border-box;text-align:center;color:#203447;font-family:inherit}
@@ -6208,28 +6201,13 @@
         #loginScreen .lhi-global-lock h1{font-size:clamp(22px,4vw,30px);line-height:1.2;margin:12px 0;color:#9d1c17}
         #loginScreen .lhi-global-lock-message{font-size:15px;line-height:1.6;font-weight:700;margin:14px 0}
         #loginScreen .lhi-global-lock-note{background:#fff4f2;border:1px solid #f1c7c3;border-radius:12px;padding:14px;text-align:left;font-size:14px;line-height:1.55}
-        #loginScreen .lhi-global-lock-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+        #loginScreen .lhi-global-lock-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:20px}
         #loginScreen .lhi-global-lock-actions button{min-height:46px;border-radius:10px;padding:10px 12px;font-weight:800;cursor:pointer}
-        #loginScreen .lhi-global-lock-primary{background:#164b70;color:#fff;border:1px solid #164b70}
         #loginScreen .lhi-global-lock-secondary{background:#fff;color:#164b70;border:1px solid #9ab1c2}
-        #loginScreen .lhi-global-lock-ka-login{margin-top:16px;text-align:left}
         #loginScreen .lhi-global-lock-foot{font-size:11px;line-height:1.5;color:#718096;margin-top:18px}
-        @media(max-width:600px){#loginScreen .lhi-global-lock{padding:24px 18px;border-radius:16px}#loginScreen .lhi-global-lock-actions{grid-template-columns:1fr}}
+        @media(max-width:600px){#loginScreen .lhi-global-lock{padding:24px 18px;border-radius:16px}}
       </style>`;
-    const accessButton = document.getElementById('lhiGlobalBlockKaAccess');
     const retryButton = document.getElementById('lhiGlobalBlockRetry');
-    const kaLogin = document.getElementById('lhiGlobalBlockKaLogin');
-    if(accessButton) accessButton.addEventListener('click',()=>{
-      if(!kaLogin) return;
-      if(!kaLogin.hasChildNodes()){
-        kaLogin.innerHTML = IPSRS_LOGIN_MARKUP_BEFORE_GLOBAL_BLOCK || '';
-        const form = kaLogin.querySelector('#ipsrsLoginForm');
-        if(form) form.addEventListener('submit',()=>{window.__IPSRS_LOGIN_BUTTON_CLICKED=true;});
-      }
-      kaLogin.hidden = false;
-      accessButton.disabled = true;
-      accessButton.textContent = 'Form login KA IPSRS ditampilkan';
-    });
     if(retryButton) retryButton.addEventListener('click',()=>checkAuthAndInit());
   }
 
@@ -6251,16 +6229,16 @@
       });
       const status = await response.json().catch(()=>null);
       if(!response.ok || !status || status.ok !== true){
-        renderLhiGlobalBlockScreen_((status && status.message) || 'Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara.', true);
+        renderLhiGlobalBlockScreen_((status && status.message) || 'Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara.');
         return;
       }
       if(status.blocked){
-        renderLhiGlobalBlockScreen_(status.message, true);
+        renderLhiGlobalBlockScreen_(status.message);
         return;
       }
       showLoginScreen();
     }catch(error){
-      renderLhiGlobalBlockScreen_('Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara. Silakan hubungi KA IPSRS.', true);
+      renderLhiGlobalBlockScreen_('Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara. Silakan hubungi KA IPSRS.');
     }
   }
 
