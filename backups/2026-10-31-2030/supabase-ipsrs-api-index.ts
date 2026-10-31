@@ -330,10 +330,8 @@ if(a==="apiGetLhiDisciplineStatus"){
  const today=new Date(todayStr+"T00:00:00Z");
  const startDate=new Date(today);startDate.setUTCDate(startDate.getUTCDate()-11);
  const start=startDate.toISOString().slice(0,10);
- const {data:people,error:staffError}=await db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").in("status",["Aktif","DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"]).order("nama");
- if(staffError)throw staffError;
- const {data:reports,error:reportError}=await db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",start).lt("tanggal",todayStr);
- if(reportError)throw reportError;
+ const people=await fetchAllPages(()=>db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").in("status",["Aktif","DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"]).order("nama"));
+ const reports=await fetchAllPages(()=>db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",start).lt("tanggal",todayStr).order("staff_id").order("tanggal"));
  const filledByStaff=new Map<string,Set<string>>();
  for(const r of reports||[]){const id=String(r.staff_id||"");if(!filledByStaff.has(id))filledByStaff.set(id,new Set());filledByStaff.get(id)!.add(String(r.tanggal||"").slice(0,10));}
  const data=(people||[]).filter((p:any)=>String(p.role||"").toUpperCase()!=="KA_IPSRS").map((p:any)=>{
