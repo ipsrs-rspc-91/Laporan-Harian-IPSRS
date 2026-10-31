@@ -633,18 +633,21 @@
       }
       return true;
     }catch(err){
+      // FAIL-CLOSED: Supabase Auth membuat sesi sebelum pemeriksaan kebijakan
+      // backend. Jika apiWhoAmI menolak (mis. blokir global LHI), sesi Auth
+      // wajib langsung dicabut agar tidak tertinggal sebagai sesi aktif.
+      try{ await client.auth.signOut(); }catch(_signOutError){}
+      clearSession();
+      try{ resetSupabaseClient_(); }catch(_resetError){}
       const rawMsg=String(err&&err.message?err.message:err);
-      // Supabase sengaja menggunakan pesan yang sama untuk username maupun password
-      // yang tidak valid. Jangan tampilkan pesan teknis "Invalid login credentials"
-      // kepada pengguna; gunakan pesan yang jelas dan tidak membocorkan apakah akun ada.
       if(msgEl){
-        // Pesan blokir LHI 7 hari dikirim backend berdasarkan status/hasil
-        // pengecekan LHI. Tidak ada daftar nama yang ditanam di frontend.
-        msgEl.innerText=/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
-          ? 'Anda tidak disiplin mengisi laporan selama 8 hari.'
-          : (/invalid login credentials/i.test(rawMsg)
-              ? 'Username atau password salah.'
-              : 'Error: '+rawMsg);
+        msgEl.innerText=/MODE FORM BLOK APLIKASI AKTIF|tidak dapat login|blokir aplikasi/i.test(rawMsg)
+          ? 'FORM BLOK APLIKASI AKTIF. Login sementara ditutup oleh KA IPSRS.'
+          : (/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
+              ? 'Anda tidak disiplin mengisi laporan selama 8 hari.'
+              : (/invalid login credentials/i.test(rawMsg)
+                  ? 'Username atau password salah.'
+                  : 'Error: '+rawMsg));
       }
       return false;
     }
