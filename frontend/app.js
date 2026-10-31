@@ -421,6 +421,7 @@
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
       case 'apiGetDisciplineWarning':
+      case 'apiGetLhiDisciplineStatus':
       case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
