@@ -212,7 +212,7 @@
             content.scrollTop + (cardRect.top - contentRect.top) - 8
           );
           content.scrollTo({top:targetTop, behavior:'auto'});
-undefinedelse if(formCard){
+else if(formCard){
           formCard.scrollIntoView({behavior:'auto', block:'start'});
         }
       }catch(e){
