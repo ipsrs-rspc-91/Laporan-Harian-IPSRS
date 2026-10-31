@@ -6276,7 +6276,7 @@
           ${triggerNotice}
           <section class="lhi-server-notice" role="note" aria-label="Notifikasi Server">
             <strong>NOTIFIKASI SERVER</strong>
-            <p>Setiap akun yang telah terdaftar wajib mengisi LHI secara estafet. Kelalaian satu akun akan terdeteksi sistem dan dapat menyebabkan pemblokiran akses seluruh aplikasi.</p>
+            <p>Setiap akun yang telah terdaftar wajib mengisi LHI secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>. Kelalaian satu akun akan terdeteksi sistem dan dapat menyebabkan pemblokiran akses seluruh aplikasi.</p>
           </section>
           <div class="lhi-lock-actions">
             <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M26 12a11 11 0 0 0-19-4L4 11M4 5v6h6M6 20a11 11 0 0 0 19 4l3-3m0 6v-6h-6"/></svg>Reset Sistem</button>
