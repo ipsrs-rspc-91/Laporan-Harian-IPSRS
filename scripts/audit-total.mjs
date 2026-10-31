@@ -434,6 +434,7 @@ if(fs.existsSync(lhiBackendPath) && fs.existsSync(lhiFrontendPath) && fs.existsS
     ['LHI new block status is denied',gate.includes('"DIBLOKIR_LHI_LEBIH_10_HARI"].includes(String(data.status).toUpperCase())')],
     ['LHI legacy block migration',gate.includes('else if(["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"]')&&gate.includes('update({status:"Aktif",lhi_manual_unblock_until:null})')],
     ['LHI warning API includes Administrasi',lhi.includes('filter((p:any)=>String(p.role||"").toUpperCase()!=="KA_IPSRS")')],
+    ['LHI warning API paginates staff and report rows',lhi.includes('const people=await fetchAllPages(')&&lhi.includes('const reports=await fetchAllPages(')&&lhi.includes('.order("staff_id").order("tanggal")')],
     ['LHI frontend action transport',app.includes("case 'apiGetLhiDisciplineStatus':")],
     ['LHI login warning copy matches day 11',login.includes('mulai hari ke-11')&&login.includes("n>10?'DIBLOKIR (>10 HARI)'")]
   ];
