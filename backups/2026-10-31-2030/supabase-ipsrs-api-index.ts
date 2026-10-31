@@ -197,7 +197,7 @@ async function staff(ctx:any,req?:Request){
    const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
    const today=new Date(todayStr+"T00:00:00Z");
    const dates:string[]=[];
-   for(let i=1;i<=11;i++){
+   for(let i=0;i<=10;i++){
      const d=new Date(today);
      d.setUTCDate(d.getUTCDate()-i);
      dates.push(d.toISOString().slice(0,10));
@@ -329,16 +329,16 @@ if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").sele
 if(a==="apiGetLhiDisciplineStatus"){
  const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
  const today=new Date(todayStr+"T00:00:00Z");
- const startDate=new Date(today);startDate.setUTCDate(startDate.getUTCDate()-11);
+ const startDate=new Date(today);startDate.setUTCDate(startDate.getUTCDate()-10);
  const start=startDate.toISOString().slice(0,10);
  const people=await fetchAllPages(()=>db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").in("status",["Aktif","DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"]).order("nama"));
- const reports=await fetchAllPages(()=>db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",start).lt("tanggal",todayStr).order("staff_id").order("tanggal"));
+ const reports=await fetchAllPages(()=>db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",start).lte("tanggal",todayStr).order("staff_id").order("tanggal"));
  const filledByStaff=new Map<string,Set<string>>();
  for(const r of reports||[]){const id=String(r.staff_id||"");if(!filledByStaff.has(id))filledByStaff.set(id,new Set());filledByStaff.get(id)!.add(String(r.tanggal||"").slice(0,10));}
  const data=(people||[]).filter((p:any)=>String(p.role||"").toUpperCase()!=="KA_IPSRS").map((p:any)=>{
    const filled=filledByStaff.get(String(p.staff_id))||new Set<string>();
    let missedDays=0;
-   for(let i=1;i<=11;i++){const day=new Date(today);day.setUTCDate(day.getUTCDate()-i);if(filled.has(day.toISOString().slice(0,10)))break;missedDays++;}
+   for(let i=0;i<=10;i++){const day=new Date(today);day.setUTCDate(day.getUTCDate()-i);if(filled.has(day.toISOString().slice(0,10)))break;missedDays++;}
    const blocked=String(p.status||"").toUpperCase().startsWith("DIBLOKIR_LHI_")||missedDays>10;
    const warningLevel=blocked?11:(missedDays>=7?7:missedDays>=5?5:missedDays>=3?3:0);
    return{staff_id:p.staff_id,nama:p.nama,jabatan:p.jabatan||"",role:p.role,bidang:p.bidang||"",status:p.status,missed_days:missedDays,warning_level:warningLevel,blocked};
