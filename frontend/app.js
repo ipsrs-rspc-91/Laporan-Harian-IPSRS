@@ -510,6 +510,9 @@
     return json;
   }
 
+  // Expose transport for the post-login warning module.
+  window.gsRun = gsRun;
+
   function resetLaporanUnfinishedState(){
     // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
     clearDashboardCategoryTarget_();
