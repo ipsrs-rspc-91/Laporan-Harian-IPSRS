@@ -6279,7 +6279,7 @@
       <div class="lhi-reset-backdrop" id="lhiResetBackdrop" role="dialog" aria-modal="true" aria-labelledby="lhiResetTitle">
         <div class="lhi-reset-modal">
           <h2 id="lhiResetTitle">Reset Aplikasi LHI</h2>
-          <p>Masukkan angka reset untuk membuka form login KA IPSRS. Kode diverifikasi oleh server.</p>
+          
           <form id="lhiResetForm">
             <input id="lhiResetCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Angka reset" placeholder="••••••" required>
             <div class="lhi-reset-msg" id="lhiResetMessage" role="status"></div>
