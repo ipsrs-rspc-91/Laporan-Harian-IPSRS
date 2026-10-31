@@ -262,7 +262,7 @@ async function staff(ctx:any,req?:Request){
  if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
  return data
 }
-async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){
+async function audit(db:any,s:any,a:string,id:string|null,k:string,v:any={}){
  const row={username:s.staff_id,staff_id:s.staff_id,action:a,report_id:id,keterangan:k,field_changed:v.field_changed||null,old_value:v.old_value??null,new_value:v.new_value??null,version_before:v.version_before??null,version_after:v.version_after??null};
  for(let attempt=1;attempt<=2;attempt++){
   try{
@@ -423,7 +423,7 @@ if(a==="apiDashboardStats"){
      dashboardPolicy=await reportPolicyBatch(db,s,recentCandidates);
      rr=recentCandidates.filter((r:any)=>dashboardPolicy.visible.has(String(r.report_id)));
    }catch(policyErr){
-     console.error("[DASHBOARD_RECENT_POLICY_FAILED]",String(policyErr?.message||policyErr));
+     console.error("[DASHBOARD_RECENT_POLICY_FAILED]",String((policyErr as any)?.message||policyErr));
      rr=[];
    }
  }
@@ -551,7 +551,7 @@ if(a==="apiManageMasterData"){
   if(!validTypes.includes(type))return{ok:false,msg:"Jenis master data tidak valid."};
   if(!name||name.length>120)return{ok:false,msg:"Nama wajib diisi (maksimal 120 karakter)."};
   if(["KATEGORI","AREA"].includes(type)&&parentId!==null)return{ok:false,msg:"Kategori dan Area Kerja utama tidak boleh memiliki induk."};
-  if(["SUBAREA","ITEM"].includes(type)&&(!Number.isInteger(parentId)||parentId<1))return{ok:false,msg:type==="SUBAREA"?"Pilih Area Kerja induk.":"Pilih Area Kerja atau Sub Area Kerja induk."};
+  if(["SUBAREA","ITEM"].includes(type)&&(parentId===null||!Number.isInteger(parentId)||parentId<1))return{ok:false,msg:type==="SUBAREA"?"Pilih Area Kerja induk.":"Pilih Area Kerja atau Sub Area Kerja induk."};
   if(type==="SUBAREA"||type==="ITEM"){
    const {data:p,error:pe}=await db.from("master_data").select("id,name,is_active,data_type").eq("id",parentId).maybeSingle();if(pe)throw pe;
    const validParent=type==="SUBAREA"?p?.data_type==="AREA":(p?.data_type==="AREA"||p?.data_type==="SUBAREA");
