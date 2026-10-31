@@ -6191,41 +6191,99 @@
     },null);
     const triggerName=trigger?escapeHtml(trigger.nama||'Petugas terkait'):'Petugas terkait';
     const triggerDays=trigger?(Number(trigger.kewajiban_belum_selesai)||0):0;
-    const triggerStart=trigger&&trigger.tanggal_awal?new Date(trigger.tanggal_awal+'T00:00:00+07:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Jakarta'}):'';
-    const triggerEnd=trigger&&trigger.tanggal_akhir?new Date(trigger.tanggal_akhir+'T00:00:00+07:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Jakarta'}):'';
-    const triggerRange=triggerStart&&triggerEnd?triggerStart+' sampai '+triggerEnd:'';
-    const incidentDate=serverDetails&&serverDetails.incident_started_at?new Date(serverDetails.incident_started_at).toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Jakarta'})+' WIB':'-';
-    const deadline=serverDetails&&serverDetails.incident_deadline_at?new Date(serverDetails.incident_deadline_at).toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Jakarta'})+' WIB':'-';
-    const safeMessage=escapeHtml(message||'Server mendeteksi kewajiban Laporan Harian IPSRS (LHI) yang belum dipenuhi sesuai ketentuan.');
     const triggerNotice=trigger
-      ? `<div style="border:1px solid #f0c8c5;background:#fff8f7;border-radius:10px;padding:16px;margin-bottom:18px">
-          <div style="font-size:12px;font-weight:800;letter-spacing:.04em;color:#8f2424;margin-bottom:9px">PEMICU PEMBERLAKUAN BLOKIR GLOBAL</div>
-          <div style="font-size:17px;font-weight:800;color:#253044">${triggerName}</div>
-          <p style="font-size:14px;line-height:1.7;color:#475467;margin:7px 0 0">Sistem mendeteksi bahwa petugas tersebut belum mengisi Laporan Harian IPSRS (LHI) selama <strong>${triggerDays} hari berturut-turut</strong>.${triggerRange?' Periode yang tercatat: <strong>'+escapeHtml(triggerRange)+'</strong>.':''}</p>
-        </div>`
-      : '<div style="border:1px solid #f0c8c5;background:#fff8f7;border-radius:10px;padding:14px 16px;margin-bottom:18px"><strong style="color:#8f2424">PEMICU BLOKIR GLOBAL</strong><p style="font-size:13px;line-height:1.65;margin:6px 0 0;color:#475467">Server telah mengaktifkan pembatasan global. Rincian petugas pemicu belum dapat ditampilkan.</p></div>';
-    screen.innerHTML=`<section class="lhi-global-lock" role="alert" aria-live="assertive" style="max-width:680px;margin:24px auto;padding:clamp(20px,4vw,32px);background:#fff;border:1px solid #d9dee5;border-top:5px solid #a52b2b;border-radius:14px;box-shadow:0 12px 34px rgba(16,24,40,.10);color:#253044;text-align:left">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <div style="width:46px;height:46px;flex:0 0 46px;border-radius:12px;background:#fff1f0;display:grid;place-items:center;font-size:25px">🔒</div>
-        <div><div style="font-size:11px;font-weight:800;letter-spacing:.11em;color:#667085">SISTEM INFORMASI IPSRS</div><div style="font-size:13px;font-weight:700;color:#9b2525;margin-top:3px">PEMBERITAHUAN OTOMATIS SERVER</div></div>
-      </div>
-      <h1 style="font-size:clamp(21px,4vw,27px);line-height:1.25;color:#253044;margin:0 0 12px">AKSES APLIKASI DIBLOKIR SEMENTARA</h1>
-      <p style="font-size:14px;line-height:1.7;margin:0 0 18px;color:#475467">${safeMessage}</p>
-      ${triggerNotice}
-      <div style="padding:14px 16px;border:1px solid #d9dee5;background:#f8fafc;border-radius:10px;margin-bottom:18px">
-        <div style="font-size:13px;font-weight:800;color:#344054;margin-bottom:6px">STATUS SISTEM: BLOKIR GLOBAL AKTIF</div>
-        <p style="font-size:13px;line-height:1.65;margin:0;color:#475467"><strong>Seluruh pengguna diblokir dari login</strong>, termasuk petugas yang telah mengisi LHI dan tidak memiliki tunggakan. Kebijakan ini berlaku pada seluruh aplikasi, bukan hanya pada akun petugas yang menjadi pemicu.</p>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-        <div style="background:#f8fafc;padding:11px;border-radius:8px"><div style="font-size:11px;color:#667085">Waktu blokir diaktifkan</div><div style="font-size:12px;font-weight:700;margin-top:4px">${escapeHtml(incidentDate)}</div></div>
-        <div style="background:#f8fafc;padding:11px;border-radius:8px"><div style="font-size:11px;color:#667085">Tenggat penanganan</div><div style="font-size:12px;font-weight:700;margin-top:4px">${escapeHtml(deadline)}</div></div>
-      </div>
-      <p style="font-size:13px;line-height:1.65;color:#475467;margin:0 0 16px">Silakan menghubungi Kepala IPSRS (KA IPSRS). Pembukaan akses hanya dapat dilakukan oleh akun KA IPSRS yang telah terautentikasi dan berwenang sesuai prosedur sistem.</p>
-      <button type="button" id="lhiGlobalBlockRetry" style="width:100%;min-height:46px;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:800;background:#253b53;color:#fff;border:1px solid #253b53;cursor:pointer">Periksa Status Kembali</button>
-      <div style="font-size:11px;line-height:1.5;color:#98a2b3;text-align:center;margin-top:14px">Pemberitahuan ini dibuat otomatis oleh server berdasarkan catatan kewajiban LHI.</div>
-    </section>`;
+      ? '<div class="lhi-lock-person"><div class="lhi-lock-person-label">SISTEM MENDETEKSI</div><div class="lhi-lock-person-name">'+triggerName+'</div><p>Belum mengisi Laporan Harian IPSRS (LHI) selama <strong>'+triggerDays+' hari berturut-turut</strong>.</p></div>'
+      : '<div class="lhi-lock-person"><div class="lhi-lock-person-label">STATUS PEMICU</div><p>Server telah mengaktifkan blokir aplikasi LHI.</p></div>';
+
+    screen.innerHTML=`
+      <style>
+        #loginScreen .lhi-lock-wrap{box-sizing:border-box;width:min(100% - 28px,440px);margin:clamp(18px,5vh,48px) auto;padding:26px 22px 22px;background:#fff;border:1px solid #e5e7eb;border-top:5px solid #b42318;border-radius:18px;box-shadow:0 12px 34px rgba(16,24,40,.12);font-family:inherit;color:#182230;text-align:center}
+        #loginScreen .lhi-lock-brand{font-size:11px;font-weight:800;letter-spacing:.12em;color:#667085;margin-bottom:18px}
+        #loginScreen .lhi-lock-icon{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;background:#fff1f0;display:grid;place-items:center;font-size:31px}
+        #loginScreen .lhi-lock-title{font-size:clamp(21px,5vw,27px);font-weight:900;line-height:1.2;color:#b42318;margin:0 0 18px}
+        #loginScreen .lhi-lock-person{padding:17px 14px;background:#fff8f7;border:1px solid #fecdca;border-radius:12px;margin:0 0 17px}
+        #loginScreen .lhi-lock-person-label{font-size:10px;font-weight:900;letter-spacing:.1em;color:#b42318;margin-bottom:8px}
+        #loginScreen .lhi-lock-person-name{font-size:19px;font-weight:850;color:#253044}
+        #loginScreen .lhi-lock-person p{font-size:14px;line-height:1.55;color:#475467;margin:8px 0 0}
+        #loginScreen .lhi-lock-global{font-size:13px;line-height:1.55;color:#667085;margin:0 0 19px}
+        #loginScreen .lhi-lock-actions{display:flex;justify-content:center;align-items:center;gap:14px}
+        #loginScreen .lhi-lock-retry{border:0;background:#253b53;color:#fff;border-radius:10px;min-height:44px;padding:0 20px;font-weight:800;font-size:13px;cursor:pointer}
+        #loginScreen .lhi-lock-reset{border:1px solid #16803c;background:#16a34a;color:#fff;border-radius:9px;min-height:36px;padding:0 15px;font-size:12px;font-weight:800;cursor:pointer}
+        #loginScreen .lhi-lock-reset:hover{background:#15803d}
+        #loginScreen .lhi-reset-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;padding:18px}
+        #loginScreen .lhi-reset-backdrop.show{display:flex}
+        #loginScreen .lhi-reset-modal{box-sizing:border-box;width:min(100%,360px);background:#fff;border-radius:16px;padding:22px;text-align:left;box-shadow:0 22px 60px rgba(0,0,0,.25)}
+        #loginScreen .lhi-reset-modal h2{font-size:19px;margin:0 0 7px;color:#182230}
+        #loginScreen .lhi-reset-modal p{font-size:13px;line-height:1.5;color:#667085;margin:0 0 16px}
+        #loginScreen .lhi-reset-modal input{box-sizing:border-box;width:100%;height:48px;border:1px solid #cbd5e1;border-radius:9px;padding:0 13px;font-size:20px;letter-spacing:.25em;text-align:center}
+        #loginScreen .lhi-reset-msg{min-height:20px;margin-top:10px;font-size:12px;color:#b42318}
+        #loginScreen .lhi-reset-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
+        #loginScreen .lhi-reset-modal-actions button{min-height:40px;padding:0 15px;border-radius:9px;font-weight:800;cursor:pointer}
+        @media(max-width:380px){#loginScreen .lhi-lock-wrap{padding:22px 16px 18px}#loginScreen .lhi-lock-actions{gap:9px}#loginScreen .lhi-lock-retry{padding:0 13px}}
+      </style>
+      <section class="lhi-lock-wrap" role="alert" aria-live="assertive">
+        <div class="lhi-lock-brand">RUMAH SAKIT PURI CINERE · IPSRS</div>
+        <div class="lhi-lock-icon" aria-hidden="true">🔒</div>
+        <h1 class="lhi-lock-title">Akses Aplikasi LHI diblokir</h1>
+        ${triggerNotice}
+        <p class="lhi-lock-global">Mode blokir aplikasi aktif untuk seluruh pengguna.</p>
+        <div class="lhi-lock-actions">
+          <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">Periksa Kembali</button>
+          <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset">Reset</button>
+        </div>
+      </section>
+      <div class="lhi-reset-backdrop" id="lhiResetBackdrop" role="dialog" aria-modal="true" aria-labelledby="lhiResetTitle">
+        <div class="lhi-reset-modal">
+          <h2 id="lhiResetTitle">Reset Aplikasi LHI</h2>
+          <p>Masukkan angka reset untuk membuka form login KA IPSRS. Kode diverifikasi oleh server.</p>
+          <form id="lhiResetForm">
+            <input id="lhiResetCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Angka reset" placeholder="••••••" required>
+            <div class="lhi-reset-msg" id="lhiResetMessage" role="status"></div>
+            <div class="lhi-reset-modal-actions">
+              <button type="button" id="lhiResetCancel" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1">Batal</button>
+              <button type="submit" id="lhiResetSubmit" style="background:#16a34a;color:#fff;border:1px solid #16a34a">OK</button>
+            </div>
+          </form>
+        </div>
+      </div>`;
+
     const retry=document.getElementById('lhiGlobalBlockRetry');
     if(retry) retry.addEventListener('click',()=>checkAuthAndInit());
+    const backdrop=document.getElementById('lhiResetBackdrop');
+    const resetButton=document.getElementById('lhiGlobalBlockReset');
+    const cancel=document.getElementById('lhiResetCancel');
+    const form=document.getElementById('lhiResetForm');
+    const codeInput=document.getElementById('lhiResetCode');
+    const msg=document.getElementById('lhiResetMessage');
+    const submit=document.getElementById('lhiResetSubmit');
+    if(resetButton) resetButton.addEventListener('click',()=>{
+      if(backdrop) backdrop.classList.add('show');
+      if(msg) msg.textContent='';
+      if(codeInput){codeInput.value='';setTimeout(()=>codeInput.focus(),50);}
+    });
+    if(cancel) cancel.addEventListener('click',()=>backdrop&&backdrop.classList.remove('show'));
+    if(backdrop) backdrop.addEventListener('click',event=>{if(event.target===backdrop)backdrop.classList.remove('show');});
+    if(form) form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      const code=String(codeInput&&codeInput.value||'').trim();
+      if(!/^\\d{6}$/.test(code)){if(msg)msg.textContent='Masukkan 6 angka reset.';return;}
+      if(submit){submit.disabled=true;submit.textContent='Memeriksa...';}
+      if(msg)msg.textContent='Memverifikasi kode ke server...';
+      try{
+        const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\\/$/,'');
+        const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
+        const response=await fetch(base+'/functions/v1/lhi-reset-verify',{
+          method:'POST',headers:{'Content-Type':'application/json','apikey':key},
+          body:JSON.stringify({code}),cache:'no-store'
+        });
+        const result=await response.json().catch(()=>null);
+        if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
+        try{sessionStorage.setItem('IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY');}catch(_e){}
+        if(backdrop)backdrop.classList.remove('show');
+        showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
+      }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
+      finally{if(submit){submit.disabled=false;submit.textContent='OK';}}
+    });
   }
 
   async function checkAuthAndInit(){
