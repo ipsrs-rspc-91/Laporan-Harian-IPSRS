@@ -6201,66 +6201,119 @@
     const triggerName=trigger?escapeHtml(trigger.nama||'Petugas terkait'):'Petugas terkait';
     const triggerDays=trigger?(Number(trigger.kewajiban_belum_selesai)||0):0;
     const triggerNotice=trigger
-      ? '<div class="lhi-lock-person"><div class="lhi-lock-person-label">SISTEM MENDETEKSI</div><div class="lhi-lock-person-name">'+triggerName+'</div><p>Belum mengisi Laporan Harian IPSRS (LHI) selama <strong>'+triggerDays+' hari berturut-turut</strong>.</p></div>'
-      : '<div class="lhi-lock-person"><div class="lhi-lock-person-label">STATUS PEMICU</div><p>Server telah mengaktifkan blokir aplikasi LHI.</p></div>';
+      ? '<div class="lhi-person-box"><div class="lhi-person-row"><div class="lhi-person-symbol">♟</div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><strong>'+triggerName+'</strong><span>Petugas IPSRS</span></div></div><div class="lhi-person-separator"></div><div class="lhi-person-row lhi-person-days"><div class="lhi-person-symbol">▦</div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><span>Tidak mengisi LHI selama</span><strong>'+triggerDays+' hari berturut-turut</strong></div></div></div>'
+      : '<div class="lhi-person-box"><div class="lhi-person-copy"><strong>Status blokir aktif</strong><span>Server telah mengaktifkan blokir aplikasi LHI.</span></div></div>';
 
     screen.innerHTML=`
       <style>
-        #loginScreen{min-height:100vh;background:#07111f!important;color:#e8eef7}
-        #loginScreen .lhi-lock-wrap{box-sizing:border-box;position:relative;overflow:hidden;width:min(calc(100% - 28px),430px);margin:clamp(22px,7vh,64px) auto;padding:0;background:linear-gradient(160deg,#111f32 0%,#0b1727 62%,#081321 100%);border:1px solid #263b52;border-radius:8px;box-shadow:0 22px 65px rgba(0,0,0,.48);font-family:Arial,Helvetica,sans-serif;color:#e8eef7;text-align:left}
-        #loginScreen .lhi-lock-wrap:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:#e04444}
-        #loginScreen .lhi-lock-brand{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:20px 19px 15px;border-bottom:1px solid #26384d;color:#9db0c6;font-size:10px;font-weight:800;letter-spacing:.14em}
-        #loginScreen .lhi-lock-brand span:last-child{color:#f07878;white-space:nowrap}
-        #loginScreen .lhi-lock-head{padding:25px 20px 20px;text-align:center}
-        #loginScreen .lhi-lock-kicker{font-size:10px;font-weight:800;letter-spacing:.2em;color:#f07878;margin-bottom:12px}
-        #loginScreen .lhi-lock-icon{width:66px;height:66px;margin:0 auto 15px;border:1px solid #783d49;border-radius:50%;background:#2b1b2a;display:grid;place-items:center;font-size:30px;box-shadow:0 0 24px rgba(224,68,68,.12)}
-        #loginScreen .lhi-lock-title{font-size:clamp(21px,5.8vw,27px);font-weight:900;line-height:1.18;letter-spacing:.01em;color:#fff;margin:0}
-        #loginScreen .lhi-lock-subtitle{margin:9px 0 0;color:#9aacc1;font-size:11px;font-weight:700;letter-spacing:.16em}
-        #loginScreen .lhi-lock-response{margin:0 20px 17px;padding:10px 12px;border:1px solid #633842;background:#251b29;color:#ff9b9b;font:700 11px/1.4 'Courier New',monospace;letter-spacing:.04em;text-align:center}
-        #loginScreen .lhi-lock-person{margin:0 20px 17px;padding:15px 15px 14px;background:#101d2d;border:1px solid #31465e;border-left:3px solid #e04444;border-radius:4px}
-        #loginScreen .lhi-lock-person-label{font:700 9px/1.4 'Courier New',monospace;letter-spacing:.16em;color:#8ea4bc;margin-bottom:8px}
-        #loginScreen .lhi-lock-person-name{font-size:18px;font-weight:800;color:#f5f7fb;letter-spacing:.01em}
-        #loginScreen .lhi-lock-person p{font-size:12px;line-height:1.55;color:#b2c0d0;margin:7px 0 0}
-        #loginScreen .lhi-lock-person p strong{color:#ff8888}
-        #loginScreen .lhi-lock-status{display:flex;justify-content:space-between;gap:12px;margin:0 20px 18px;padding:12px 0;border-top:1px solid #26384d;border-bottom:1px solid #26384d;font:700 10px/1.4 'Courier New',monospace;letter-spacing:.08em}
-        #loginScreen .lhi-lock-status span:first-child{color:#8ea4bc}
-        #loginScreen .lhi-lock-status span:last-child{color:#ff7777}
-        #loginScreen .lhi-lock-global{margin:0 20px 18px;color:#b6c3d2;font:11px/1.55 'Courier New',monospace;text-align:center;letter-spacing:.02em}
-        #loginScreen .lhi-lock-actions{display:flex;align-items:center;justify-content:center;gap:18px;padding:0 20px 19px}
-        #loginScreen .lhi-lock-retry{border:1px solid #526b86;background:#1b3048;color:#f2f6fb;border-radius:4px;min-height:42px;padding:0 19px;font:700 11px Arial,sans-serif;letter-spacing:.06em;cursor:pointer}
-        #loginScreen .lhi-lock-retry:hover{background:#294563;border-color:#8ca5c0}
-        #loginScreen .lhi-lock-reset{border:0;background:transparent;color:#82c7a0;text-decoration:underline;text-underline-offset:3px;min-height:40px;padding:0 5px;font:700 11px Arial,sans-serif;cursor:pointer}
-        #loginScreen .lhi-lock-reset:hover{color:#b2f0c9}
-        #loginScreen .lhi-lock-footer{padding:12px 16px;border-top:1px solid #26384d;color:#6f849b;text-align:center;font:9px/1.5 'Courier New',monospace;letter-spacing:.08em}
-        #loginScreen .lhi-reset-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(2,8,17,.82);display:none;align-items:center;justify-content:center;padding:18px}
+        html,body{height:100%;margin:0}
+        body{overflow:hidden}
+        #loginScreen{position:fixed!important;inset:0!important;z-index:99990!important;display:block!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;padding:0!important;margin:0!important;background:#07549a!important;color:#101d49!important;font-family:Arial,Helvetica,sans-serif!important;box-sizing:border-box}
+        #loginScreen *{box-sizing:border-box}
+        #loginScreen .lhi-page{position:relative;isolation:isolate;min-height:100%;padding:0 0 22px;background:linear-gradient(180deg,#003c78 0%,#075aa0 34%,#0a5da0 100%);overflow:hidden}
+        #loginScreen .lhi-page:before{content:"";position:absolute;z-index:-1;left:-12%;right:-12%;top:185px;height:420px;opacity:.42;background:linear-gradient(180deg,rgba(110,190,239,.65),rgba(0,47,94,.15)),repeating-linear-gradient(90deg,transparent 0 38px,rgba(5,44,83,.38) 39px 43px),repeating-linear-gradient(0deg,transparent 0 35px,rgba(5,44,83,.32) 36px 40px);clip-path:polygon(0 22%,10% 15%,19% 18%,27% 3%,36% 12%,46% 5%,55% 18%,66% 7%,77% 15%,88% 2%,100% 20%,100% 100%,0 100%)}
+        #loginScreen .lhi-page:after{content:"";position:absolute;z-index:-1;left:-10%;right:-10%;top:190px;height:130px;border-radius:0 0 50% 50%;background:#003e79}
+        #loginScreen .lhi-header{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:20px 22px 30px;color:#fff}
+        #loginScreen .lhi-brand-row{display:flex;align-items:center;justify-content:center;gap:16px}
+        #loginScreen .lhi-brand-logo{width:62px;height:62px;object-fit:contain;filter:brightness(0) invert(1);flex:none}
+        #loginScreen .lhi-brand-hospital{font-size:17px;font-weight:800;line-height:1.12;min-width:0}
+        #loginScreen .lhi-brand-hospital small{display:block;font-size:13px;font-weight:600;margin-top:5px}
+        #loginScreen .lhi-brand-divider{height:66px;width:2px;background:rgba(255,255,255,.8);flex:none}
+        #loginScreen .lhi-brand-ipsrs{font-size:25px;font-weight:900;line-height:1.1}
+        #loginScreen .lhi-brand-ipsrs small{display:block;font-size:13px;font-weight:600;line-height:1.25;margin-top:5px}
+        #loginScreen .lhi-product-title{display:flex;justify-content:center;align-items:center;gap:12px;margin:20px auto 0;text-align:left}
+        #loginScreen .lhi-product-title svg{width:42px;height:42px;flex:none}
+        #loginScreen .lhi-product-title strong{display:block;font-size:21px;line-height:1.15;font-weight:900}
+        #loginScreen .lhi-product-title span{display:block;font-size:13px;margin-top:5px}
+        #loginScreen .lhi-lock-card{position:relative;z-index:2;width:min(94%,620px);margin:96px auto 0;padding:126px 26px 58px;border-radius:28px;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);box-shadow:0 14px 35px rgba(0,29,69,.24);text-align:center}
+        #loginScreen .lhi-lock-emblem{position:absolute;left:50%;top:-98px;transform:translateX(-50%);width:190px;height:190px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff2929,#bd0000);border:12px solid #fff;box-shadow:0 9px 22px rgba(0,0,0,.17)}
+        #loginScreen .lhi-lock-emblem svg{width:94px;height:94px;stroke:#fff;fill:none;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+        #loginScreen .lhi-lock-title{margin:8px 0 24px;color:#071844;font-size:clamp(32px,7.2vw,62px);font-weight:950;line-height:1.02;letter-spacing:-.035em}
+        #loginScreen .lhi-lock-title span{display:block;color:#d00000;font-size:1.12em;margin-top:8px}
+        #loginScreen .lhi-lock-banner{display:block;margin:0 auto 28px;padding:13px 14px;border-radius:999px;background:linear-gradient(90deg,#cf0000,#f00000,#cf0000);color:#fff;font-size:clamp(13px,2.7vw,20px);font-weight:800;line-height:1.2}
+        #loginScreen .lhi-lock-intro{margin:0 0 25px;color:#071844;font-size:clamp(15px,3vw,22px);font-weight:750}
+        #loginScreen .lhi-person-box{padding:16px 20px;border:2px solid #ffaaaa;border-radius:25px;background:linear-gradient(120deg,#fff0f0,#ffe7e7);text-align:left}
+        #loginScreen .lhi-person-row{display:grid;grid-template-columns:100px 2px minmax(0,1fr);align-items:center;gap:20px;min-height:108px}
+        #loginScreen .lhi-person-symbol{font-size:56px;line-height:1;text-align:center;color:#c90000;font-weight:900}
+        #loginScreen .lhi-person-divider{height:82%;width:2px;background:#e00000}
+        #loginScreen .lhi-person-copy{min-width:0;color:#071844}
+        #loginScreen .lhi-person-copy strong{display:block;font-size:clamp(22px,4.8vw,38px);font-weight:900;line-height:1.08;overflow-wrap:anywhere}
+        #loginScreen .lhi-person-copy span{display:block;margin-top:6px;font-size:clamp(15px,3.4vw,24px);font-weight:700;line-height:1.2}
+        #loginScreen .lhi-person-separator{height:2px;background:#ffb1b1;margin:2px 0}
+        #loginScreen .lhi-person-days .lhi-person-symbol{font-size:54px}
+        #loginScreen .lhi-person-days .lhi-person-copy span{margin:0 0 4px}
+        #loginScreen .lhi-person-days .lhi-person-copy strong{color:#cf0000;font-size:clamp(21px,4.8vw,36px)}
+        #loginScreen .lhi-lock-actions{display:flex;justify-content:center;margin:48px auto 0}
+        #loginScreen .lhi-lock-reset{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:68px;padding:0 32px;border:0;border-radius:22px;background:linear-gradient(180deg,#079c16,#00750b);color:#fff;font-size:clamp(20px,4vw,30px);font-weight:900;box-shadow:0 5px 12px rgba(0,95,8,.2);cursor:pointer}
+        #loginScreen .lhi-lock-reset svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+        #loginScreen .lhi-lock-reset:hover{background:linear-gradient(180deg,#08ad1a,#006b09);filter:brightness(1.05)}
+        #loginScreen .lhi-lock-retry{display:none}
+        #loginScreen .lhi-reset-backdrop{position:fixed;inset:0;z-index:100000;background:rgba(0,20,48,.72);display:none;align-items:center;justify-content:center;padding:18px}
         #loginScreen .lhi-reset-backdrop.show{display:flex}
-        #loginScreen .lhi-reset-modal{box-sizing:border-box;width:min(100%,360px);background:#101e30;border:1px solid #3a5069;border-top:3px solid #35a66a;border-radius:7px;padding:22px;text-align:left;box-shadow:0 22px 60px rgba(0,0,0,.55);color:#edf3fa}
-        #loginScreen .lhi-reset-modal h2{font-size:18px;margin:0 0 7px;color:#fff}
-        #loginScreen .lhi-reset-modal p{font-size:12px;line-height:1.5;color:#aab9ca;margin:0 0 16px}
-        #loginScreen .lhi-reset-modal input{box-sizing:border-box;width:100%;height:48px;border:1px solid #526981;border-radius:4px;background:#081525;color:#fff;padding:0 13px;font-size:20px;letter-spacing:.25em;text-align:center}
-        #loginScreen .lhi-reset-msg{min-height:20px;margin-top:10px;font-size:11px;color:#ff9292}
+        #loginScreen .lhi-reset-modal{box-sizing:border-box;width:min(100%,360px);background:#fff;border-radius:16px;padding:22px;text-align:left;box-shadow:0 22px 60px rgba(0,0,0,.3);color:#102044}
+        #loginScreen .lhi-reset-modal h2{font-size:19px;margin:0 0 7px;color:#102044}
+        #loginScreen .lhi-reset-modal p{font-size:13px;line-height:1.5;color:#53627a;margin:0 0 16px}
+        #loginScreen .lhi-reset-modal input{box-sizing:border-box;width:100%;height:48px;border:1px solid #cbd5e1;border-radius:9px;padding:0 13px;font-size:20px;letter-spacing:.25em;text-align:center;background:#fff;color:#102044}
+        #loginScreen .lhi-reset-msg{min-height:20px;margin-top:10px;font-size:12px;color:#b42318}
         #loginScreen .lhi-reset-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
-        #loginScreen .lhi-reset-modal-actions button{min-height:39px;padding:0 15px;border-radius:4px;font-weight:800;cursor:pointer}
-        @media(max-width:380px){#loginScreen .lhi-lock-wrap{width:calc(100% - 22px);margin:22px auto}#loginScreen .lhi-lock-brand{padding:17px 14px 13px;font-size:9px}#loginScreen .lhi-lock-head{padding:22px 14px 18px}#loginScreen .lhi-lock-person{margin-left:14px;margin-right:14px}#loginScreen .lhi-lock-response,#loginScreen .lhi-lock-status{margin-left:14px;margin-right:14px}#loginScreen .lhi-lock-global{margin-left:14px;margin-right:14px}}
+        #loginScreen .lhi-reset-modal-actions button{min-height:40px;padding:0 15px;border-radius:9px;font-weight:800;cursor:pointer}
+        @media(max-width:520px){
+          #loginScreen .lhi-header{padding:16px 12px 20px}
+          #loginScreen .lhi-brand-row{gap:10px}
+          #loginScreen .lhi-brand-logo{width:45px;height:45px}
+          #loginScreen .lhi-brand-hospital{font-size:13px}
+          #loginScreen .lhi-brand-hospital small{font-size:10px}
+          #loginScreen .lhi-brand-divider{height:50px}
+          #loginScreen .lhi-brand-ipsrs{font-size:20px}
+          #loginScreen .lhi-brand-ipsrs small{font-size:10px}
+          #loginScreen .lhi-product-title{gap:9px;margin-top:16px}
+          #loginScreen .lhi-product-title svg{width:34px;height:34px}
+          #loginScreen .lhi-product-title strong{font-size:17px}
+          #loginScreen .lhi-product-title span{font-size:10px}
+          #loginScreen .lhi-lock-card{width:calc(100% - 28px);margin:94px auto 20px;padding:110px 16px 42px;border-radius:23px}
+          #loginScreen .lhi-lock-emblem{width:154px;height:154px;top:-80px;border-width:9px}
+          #loginScreen .lhi-lock-emblem svg{width:76px;height:76px}
+          #loginScreen .lhi-lock-title{font-size:clamp(31px,8vw,42px);margin:5px 0 20px}
+          #loginScreen .lhi-lock-banner{padding:10px 8px;margin-bottom:23px;font-size:13px}
+          #loginScreen .lhi-lock-intro{font-size:15px;margin-bottom:20px}
+          #loginScreen .lhi-person-box{padding:10px 9px;border-radius:19px}
+          #loginScreen .lhi-person-row{grid-template-columns:54px 2px minmax(0,1fr);gap:10px;min-height:86px}
+          #loginScreen .lhi-person-symbol{font-size:39px}
+          #loginScreen .lhi-person-days .lhi-person-symbol{font-size:38px}
+          #loginScreen .lhi-person-copy strong{font-size:clamp(19px,5.2vw,25px)}
+          #loginScreen .lhi-person-copy span{font-size:14px}
+          #loginScreen .lhi-person-days .lhi-person-copy strong{font-size:clamp(18px,4.8vw,23px)}
+          #loginScreen .lhi-lock-actions{margin-top:34px}
+          #loginScreen .lhi-lock-reset{min-height:58px;padding:0 24px;border-radius:18px;font-size:21px}
+          #loginScreen .lhi-lock-reset svg{width:29px;height:29px}
+        }
+        @media(max-width:360px){#loginScreen .lhi-brand-hospital{font-size:11px}#loginScreen .lhi-brand-ipsrs{font-size:17px}#loginScreen .lhi-product-title strong{font-size:15px}#loginScreen .lhi-person-row{grid-template-columns:44px 2px minmax(0,1fr);gap:8px}}
       </style>
-      <section class="lhi-lock-wrap" role="alert" aria-live="assertive">
-        <div class="lhi-lock-brand"><span>RUMAH SAKIT PURI CINERE · IPSRS</span><span>LHI SYSTEM</span></div>
-        <div class="lhi-lock-head">
-          <div class="lhi-lock-kicker">LHI SYSTEM NOTIFICATION</div>
-          <div class="lhi-lock-icon" aria-hidden="true">🔒</div>
-          <h1 class="lhi-lock-title">Akses Aplikasi LHI diblokir</h1>
-          <div class="lhi-lock-subtitle">APPLICATION LOCKED</div>
-        </div>
-        <div class="lhi-lock-response">SERVER RESPONSE: 403 — ACCESS BLOCKED</div>
-        ${triggerNotice}
-        <div class="lhi-lock-status"><span>SYSTEM STATUS</span><span>● BLOCKED</span></div>
-        <p class="lhi-lock-global">ACCESS TO LHI SYSTEM IS CURRENTLY DENIED</p>
-        <div class="lhi-lock-actions">
-          <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">PERIKSA STATUS</button>
-          <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset">Reset</button>
-        </div>
-        <div class="lhi-lock-footer">LHI SERVER · AUTOMATED SECURITY RESPONSE</div>
-      </section>
+      <div class="lhi-page">
+        <header class="lhi-header">
+          <div class="lhi-brand-row">
+            <img class="lhi-brand-logo" src="./logo.png" alt="Logo Rumah Sakit Puri Cinere">
+            <div class="lhi-brand-hospital">Rumah Sakit<br>Puri Cinere<small>Tipe B</small></div>
+            <div class="lhi-brand-divider"></div>
+            <div class="lhi-brand-ipsrs">IPSRS<small>Instalasi Pemeliharaan<br>Sarana Rumah Sakit</small></div>
+          </div>
+          <div class="lhi-product-title">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="7" width="30" height="37" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M18 7V4h12v3M16 18h16M16 26h16M16 34h11" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="13" cy="18" r="1.5" fill="currentColor"/><circle cx="13" cy="26" r="1.5" fill="currentColor"/></svg>
+            <div><strong>Laporan Harian IPSRS (LHI)</strong><span>Sistem Pelaporan &amp; Monitoring Operasional</span></div>
+          </div>
+        </header>
+        <main class="lhi-lock-card" role="alert" aria-live="assertive">
+          <div class="lhi-lock-emblem" aria-hidden="true"><svg viewBox="0 0 100 100"><rect x="22" y="43" width="56" height="43" rx="7"/><path d="M33 43V30a17 17 0 0 1 34 0v13"/><circle cx="50" cy="62" r="5" fill="#fff" stroke="none"/><path d="M50 67v8"/></svg></div>
+          <h1 class="lhi-lock-title">Akses Aplikasi LHI<span>DIBLOKIR</span></h1>
+          <div class="lhi-lock-banner">Pemberitahuan Otomatis dari Sistem Server</div>
+          <p class="lhi-lock-intro">Sistem mendeteksi bahwa petugas berikut:</p>
+          ${triggerNotice}
+          <div class="lhi-lock-actions">
+            <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M26 12a11 11 0 0 0-19-4L4 11M4 5v6h6M6 20a11 11 0 0 0 19 4l3-3m0 6v-6h-6"/></svg>Reset Sistem</button>
+            <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">Periksa Kembali</button>
+          </div>
+        </main>
+      </div>
       <div class="lhi-reset-backdrop" id="lhiResetBackdrop" role="dialog" aria-modal="true" aria-labelledby="lhiResetTitle">
         <div class="lhi-reset-modal">
           <h2 id="lhiResetTitle">Reset Aplikasi LHI</h2>
@@ -6269,8 +6322,8 @@
             <input id="lhiResetCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Angka reset" placeholder="••••••" required>
             <div class="lhi-reset-msg" id="lhiResetMessage" role="status"></div>
             <div class="lhi-reset-modal-actions">
-              <button type="button" id="lhiResetCancel" style="background:#1b3048;color:#e7eef7;border:1px solid #526981">Batal</button>
-              <button type="submit" id="lhiResetSubmit" style="background:#16834b;color:#fff;border:1px solid #16834b">OK</button>
+              <button type="button" id="lhiResetCancel" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1">Batal</button>
+              <button type="submit" id="lhiResetSubmit" style="background:#16a34a;color:#fff;border:1px solid #16a34a">OK</button>
             </div>
           </form>
         </div>
