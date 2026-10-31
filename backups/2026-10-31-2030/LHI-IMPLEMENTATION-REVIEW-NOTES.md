@@ -10,6 +10,6 @@ Policy (revised per user): warnings at 3, 5, and 7 consecutive calendar days wit
 
 No database schema change. No production API/function deployed. No Cloudflare deployment. No production data changed.
 
-Audit hardening: the automated audit now checks the LHI policy contract and the workflow type-checks the staged backend source with Deno. A prior browser regression failure was traced to an obsolete test expecting per-row Excel buttons while the current app intentionally uses toolbar-only export; the test was updated to reflect the current UI contract and must pass in the next workflow run.
+Audit hardening: the automated audit now checks the LHI policy contract and the workflow type-checks the staged backend source with Deno. A prior browser regression failure was traced to an obsolete test expecting per-row Excel buttons while the current app intentionally uses toolbar-only export; the test was updated to reflect the current UI contract. The staged backend also now paginates staff and report queries to avoid the PostgREST default row cap. The latest audit run passed Deno type-check and all LHI static policy checks; the browser regression suite is running.
 
 IMPORTANT REVIEW: This feature computes status on request and shows a modal after successful login; it is not persistent push notification and does not notify staff who do not log in. Need later add in-app notification inbox/scheduled delivery only after backup and acceptance testing.
