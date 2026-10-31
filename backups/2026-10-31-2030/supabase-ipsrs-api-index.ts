@@ -187,16 +187,16 @@ async function staff(ctx:any,req?:Request){
  if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");
 
  // LHI DISCIPLINE GATE:
- // Setiap petugas aktif yang tidak mempunyai satu pun LHI pada masing-masing
- // dari 7 hari kalender terakhir akan otomatis diblokir. Perhitungan memakai
- // tanggal Asia/Jakarta dan laporan yang belum dihapus.
+ // Petugas diblokir setelah 10 hari kalender berturut-turut tanpa LHI.
+ // Status blokir lama 7 hari tetap dikenali untuk kompatibilitas dan pemulihan manual.
+ // Perhitungan memakai tanggal Asia/Jakarta dan laporan yang belum dihapus.
  const manualUnblockUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
  const manualUnblockActive=manualUnblockUntil>0&&manualUnblockUntil>Date.now();
- if((String(data.status).toLowerCase()==="aktif"||String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI")&&!manualUnblockActive){
+ if((String(data.status).toLowerCase()==="aktif"||["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase()))&&!manualUnblockActive){
    const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
    const today=new Date(todayStr+"T00:00:00Z");
    const dates:string[]=[];
-   for(let i=1;i<=7;i++){
+   for(let i=1;i<=10;i++){
      const d=new Date(today);
      d.setUTCDate(d.getUTCDate()-i);
      dates.push(d.toISOString().slice(0,10));
@@ -212,29 +212,29 @@ async function staff(ctx:any,req?:Request){
    if(lhiError)throw lhiError;
    const filled=new Set((lhis||[]).map((r:any)=>String(r.tanggal||"").slice(0,10)));
    const missed=dates.filter(x=>!filled.has(x));
-   if(missed.length===7){
+   if(missed.length===10){
      const previousStatus=data.status;
      const {error:blockError}=await ctx.supabaseAdmin
        .from("staff")
-       .update({status:"DIBLOKIR_LHI_7_HARI"})
+       .update({status:"DIBLOKIR_LHI_10_HARI"})
        .eq("staff_id",data.staff_id)
-       .eq("status","Aktif");
+        .eq("status","Aktif");
      if(blockError)throw blockError;
      await ctx.supabaseAdmin.from("audit_log").insert({
        username:"SYSTEM",
        staff_id:data.staff_id,
-       action:"BLOCK_LOGIN_LHI_7_HARI",
+       action:"BLOCK_LOGIN_LHI_10_HARI",
        report_id:null,
-       keterangan:"Akun diblokir otomatis karena tidak mengisi LHI selama 7 hari kalender terakhir.",
+       keterangan:"Akun diblokir otomatis karena tidak mengisi LHI selama 10 hari kalender berturut-turut.",
        field_changed:"status",
        old_value:previousStatus,
-       new_value:"DIBLOKIR_LHI_7_HARI"
+       new_value:"DIBLOKIR_LHI_10_HARI"
      });
-     data.status="DIBLOKIR_LHI_7_HARI";
+     data.status="DIBLOKIR_LHI_10_HARI";
    }
  }
- if(String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI"&&!manualUnblockActive){
-   throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
+ if(["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase())&&!manualUnblockActive){
+   throw Error("Akun diblokir karena tidak mengisi laporan LHI selama 10 hari. Hubungi KA IPSRS.");
  }
  if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
  return data
@@ -301,7 +301,29 @@ if(a==="apiGetOnlineUsers"){
 }
 if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
 if(a==="apiListStaff"){const {data,error}=await db.from("staff_dropdown").select("staff_id,nama,jabatan,role,bidang,status");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({...x,role_label:label(x.role)}))}}
-if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").select("staff_id,nama").eq("status","DIBLOKIR_LHI_7_HARI").order("nama");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama}))}}
+if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").select("staff_id,nama").in("status",["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"]).order("nama");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama}))}}
+if(a==="apiGetLhiDisciplineStatus"){
+ const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
+ const today=new Date(todayStr+"T00:00:00Z");
+ const startDate=new Date(today);startDate.setUTCDate(startDate.getUTCDate()-10);
+ const start=startDate.toISOString().slice(0,10);
+ const {data:people,error:staffError}=await db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").in("status",["Aktif","DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"]).order("nama");
+ if(staffError)throw staffError;
+ const {data:reports,error:reportError}=await db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",start).lt("tanggal",todayStr);
+ if(reportError)throw reportError;
+ const filledByStaff=new Map<string,Set<string>>();
+ for(const r of reports||[]){const id=String(r.staff_id||"");if(!filledByStaff.has(id))filledByStaff.set(id,new Set());filledByStaff.get(id)!.add(String(r.tanggal||"").slice(0,10));}
+ const data=(people||[]).filter((p:any)=>!["KA_IPSRS","ADMINISTRASI"].includes(String(p.role||"").toUpperCase())).map((p:any)=>{
+   const filled=filledByStaff.get(String(p.staff_id))||new Set<string>();
+   let missedDays=0;
+   for(let i=1;i<=10;i++){const day=new Date(today);day.setUTCDate(day.getUTCDate()-i);if(filled.has(day.toISOString().slice(0,10)))break;missedDays++;}
+   const blocked=String(p.status||"").toUpperCase().startsWith("DIBLOKIR_LHI_");
+   const warningLevel=blocked?10:(missedDays>=7?7:missedDays>=5?5:missedDays>=3?3:0);
+   return{staff_id:p.staff_id,nama:p.nama,jabatan:p.jabatan||"",role:p.role,bidang:p.bidang||"",status:p.status,missed_days:missedDays,warning_level:warningLevel,blocked};
+ }).filter((p:any)=>p.warning_level>0).sort((a:any,b:any)=>b.warning_level-a.warning_level||a.nama.localeCompare(b.nama,"id"));
+ return{ok:true,data,today:todayStr,policy:{warning_days:[3,5,7],block_day:10}};
+}
+
 if(a==="apiGetReports"){const mode=String(d.viewMode||"daftar").toLowerCase()==="saya"?"saya":"daftar",z=range(d.bulan),ck=`reports:${mode}:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;const rows=await fetchAllPages(()=>{let q=db.from("reports").select("report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pelapor,pukul,nolk,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit_kind,spare_part_unit_status,spare_part_unit,type,jumlah,unit_status,unit_name,unit_type,unit_jumlah,spare_part_material_status,spare_part_material,spare_part_material_type,spare_part_material_jumlah,created_at,updated_at,created_by_username,created_by_staff_id,created_by_name,created_by_role,updated_by_staff_id,updated_by_name,updated_by_role,version").is("deleted_at",null).gte("tanggal",z.start).lte("tanggal",z.end).order("tanggal",{ascending:false}).order("pukul",{ascending:false}).order("report_id",{ascending:true});if(mode==="saya"){q=q.eq("staff_id",s.staff_id);}else if(d.staffIdFilter){q=q.eq("staff_id",d.staffIdFilter);}if(d.bidangFilter)q=q.eq("bidang_snapshot",d.bidangFilter);return q;});const policy=await reportPolicyBatch(db,s,rows);const visible=[];for(const r of rows){if(policy.visible.has(String(r.report_id)))visible.push(map(r,policy.editable.has(String(r.report_id))));}return cacheSet(ck,{ok:true,data:visible})}
 if(a==="apiGetOverdueReports"){const cutoff=String(d.cutoffDate||"").trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(cutoff))return{ok:false,msg:"Tanggal batas pengingat tidak valid."};const fields="report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pelapor,pukul,nolk,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit_kind,spare_part_unit_status,spare_part_unit,type,jumlah,unit_status,unit_name,unit_type,unit_jumlah,spare_part_material_status,spare_part_material,spare_part_material_type,spare_part_material_jumlah,created_at,updated_at,created_by_username,created_by_staff_id,created_by_name,created_by_role,updated_by_staff_id,updated_by_name,updated_by_role,version";const {data,error}=await db.from("reports").select(fields).is("deleted_at",null).lte("tanggal",cutoff).order("tanggal",{ascending:false}).order("pukul",{ascending:false}).limit(5000);if(error)throw error;const rows=data||[];const policy=await reportPolicyBatch(db,s,rows);const visible=[];for(const r of rows){if(policy.visible.has(String(r.report_id)))visible.push(map(r,policy.editable.has(String(r.report_id))));}return{ok:true,data:visible,cutoffDate:cutoff}}
 if(a==="apiGetReportById"){const {data,error}=await db.from("reports").select("*").eq("report_id",d.reportId).is("deleted_at",null).maybeSingle();if(error)throw error;if(!data)return{ok:false,msg:"Laporan tidak ditemukan."};if(!(await canViewReport(db,s,data)))return{ok:false,msg:"Anda tidak memiliki akses untuk melihat laporan ini."};const ce=await canEditReport(db,s,data);return{ok:true,data:map(data,ce.ok)}}
