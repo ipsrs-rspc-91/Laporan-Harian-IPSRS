@@ -166,27 +166,27 @@
 
   async function showServerDisciplineWarning_(){
     if(document.getElementById('ipsrsServerDisciplineWarning')) return;
-    let names=[];
+    let rows=[];
     try{
       if(typeof window.gsRun==='function'){
-        const data=await window.gsRun('apiGetDisciplineWarning');
-        const rows=Array.isArray(data)?data:(Array.isArray(data?.data)?data.data:(Array.isArray(data?.staff)?data.staff:[]));
-        names=rows.map(x=>String(x?.nama||'').trim()).filter(Boolean);
+        const result=await window.gsRun('apiGetLhiDisciplineStatus');
+        rows=Array.isArray(result?.data)?result.data:[];
       }
     }catch(_e){}
-    if(!names.length) return;
+    if(!rows.length) return;
     const style=document.createElement('style');
     style.id='ipsrsServerDisciplineWarningStyle';
-    style.textContent='#ipsrsServerDisciplineWarning{position:fixed;inset:0;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99999}#ipsrsServerDisciplineWarning .sdw-box{width:min(360px,100%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.22);font-family:inherit}#ipsrsServerDisciplineWarning .sdw-title{font-weight:800;font-size:16px;margin-bottom:12px}#ipsrsServerDisciplineWarning .sdw-body{font-size:14px;line-height:1.55}#ipsrsServerDisciplineWarning .sdw-btn{margin-top:16px;width:100%;height:40px;border:0;border-radius:9px;font-weight:700;cursor:pointer}';
+    style.textContent='#ipsrsServerDisciplineWarning{position:fixed;inset:0;background:rgba(15,23,42,.52);display:flex;align-items:center;justify-content:center;padding:18px;z-index:99999}#ipsrsServerDisciplineWarning .sdw-box{width:min(520px,100%);max-height:82vh;overflow:auto;background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.22);font-family:inherit}#ipsrsServerDisciplineWarning .sdw-title{font-weight:800;font-size:16px;margin-bottom:8px}#ipsrsServerDisciplineWarning .sdw-body{font-size:13px;line-height:1.55}#ipsrsServerDisciplineWarning .sdw-list{margin:12px 0;padding:0;list-style:none}#ipsrsServerDisciplineWarning .sdw-list li{padding:8px 0;border-bottom:1px solid #e5e7eb}#ipsrsServerDisciplineWarning .sdw-meta{color:#475569;font-size:12px}#ipsrsServerDisciplineWarning .sdw-btn{margin-top:16px;width:100%;height:40px;border:0;border-radius:9px;font-weight:700;cursor:pointer}';
     document.head.appendChild(style);
+    const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const levelLabel=n=>n>=10?'DIBLOKIR':n>=7?'PERINGATAN 7 HARI':n>=5?'PERINGATAN 5 HARI':'PERINGATAN 3 HARI';
+    const list=rows.map(x=>'<li><strong>'+esc(x.nama)+'</strong><div class="sdw-meta">'+esc(x.bidang||x.jabatan||'')+' · '+levelLabel(Number(x.warning_level||0))+' · '+Number(x.missed_days||0)+' hari tanpa LHI</div></li>').join('');
     const bg=document.createElement('div');
     bg.id='ipsrsServerDisciplineWarning';
-    const list=names.map(n=>'🔴 '+n).join('<br>');
-    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ SERVER WARNING</div><div class="sdw-body">'+names.length+' staf telah diblokir karena tidak mengisi LHI selama 7 hari:<br><br>'+list+'</div><button class="sdw-btn" type="button">OK</button></div>';
+    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PENGINGAT KEDISIPLINAN LHI</div><div class="sdw-body">Berikut petugas yang perlu menindaklanjuti pengisian LHI. Mohon segera lengkapi laporan harian.</div><ul class="sdw-list">'+list+'</ul><div class="sdw-meta">Peringatan diberikan pada hari ke-3, 5, dan 7. Pemblokiran akun dilakukan pada hari ke-10 berturut-turut.</div><button class="sdw-btn" type="button">Tutup</button></div>';
     document.body.appendChild(bg);
     bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
   }
-
   window.showServerDisciplineWarning_=showServerDisciplineWarning_;
 
   window.performLogin=async function(username,password,remember,msgEl,autoMode){
