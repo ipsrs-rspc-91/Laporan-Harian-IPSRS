@@ -6174,13 +6174,50 @@
     }).catch(() => {});
   }
 
-  async function checkAuthAndInit(){
-    // Startup SELALU berhenti di halaman login.
-    // Tidak ada auto-login dari Supabase session maupun sessionStorage aplikasi.
-    // Pengguna tetap harus menekan tombol MASUK.
-    clearSession();
-    showLoginScreen();
+  function renderLhiGlobalBlockScreen_(message){
+    const screen=document.getElementById('loginScreen');
+    const shell=document.getElementById('appShell');
+    const loading=document.getElementById('authLoading');
+    if(!screen) return;
+    if(loading) loading.classList.add('hidden');
+    if(shell) shell.classList.add('hidden');
+    screen.classList.remove('hidden');
+    const safe=String(message||'Akses aplikasi sementara dibatasi oleh KA IPSRS.').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    screen.innerHTML=`<section class="lhi-global-lock" role="alert" aria-live="assertive">
+      <div style="font-size:48px">🔒</div><div style="font-size:12px;font-weight:850;letter-spacing:.12em;color:#9d2720">PEMBERITAHUAN SISTEM IPSRS</div>
+      <h1 style="font-size:clamp(22px,4vw,30px);color:#9d1c17;margin:12px 0">MODE FORM BLOK APLIKASI AKTIF</h1>
+      <p style="font-size:15px;line-height:1.6;font-weight:700">${safe}</p>
+      <div style="background:#fff4f2;border:1px solid #f1c7c3;border-radius:12px;padding:14px;text-align:left;font-size:14px;line-height:1.55">Seluruh petugas tidak dapat masuk selama mode blokir aktif. Selesaikan kewajiban LHI sesuai arahan KA IPSRS.</div>
+      <button type="button" id="lhiGlobalBlockRetry" style="margin-top:20px;min-height:46px;border-radius:10px;padding:10px 18px;font-weight:800;background:#fff;color:#164b70;border:1px solid #9ab1c2;cursor:pointer">Periksa kembali status</button>
+      <div style="font-size:11px;color:#718096;margin-top:18px">Login ditahan sampai status blokir dinonaktifkan melalui prosedur resmi KA IPSRS.</div>
+    </section>`;
+    const retry=document.getElementById('lhiGlobalBlockRetry');
+    if(retry) retry.addEventListener('click',()=>checkAuthAndInit());
   }
+
+  async function checkAuthAndInit(){
+    clearSession();
+    const screen=document.getElementById('loginScreen');
+    const loading=document.getElementById('authLoading');
+    if(screen) screen.classList.add('hidden');
+    if(loading) loading.classList.remove('hidden');
+    try{
+      const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\\/$/,'');
+      const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
+      if(!base||!key) throw new Error('Konfigurasi server tidak tersedia.');
+      const response=await fetch(base+'/functions/v1/lhi-block-status',{method:'GET',headers:{'apikey':key},cache:'no-store'});
+      const status=await response.json().catch(()=>null);
+      if(!response.ok||!status||status.ok!==true){
+        renderLhiGlobalBlockScreen_((status&&status.message)||'Status blokir belum dapat diverifikasi. Login ditahan sementara.');
+        return;
+      }
+      if(status.blocked){renderLhiGlobalBlockScreen_(status.message);return;}
+      showLoginScreen();
+    }catch(_error){
+      renderLhiGlobalBlockScreen_('Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara. Silakan hubungi KA IPSRS.');
+    }
+  }
+
 
   // Jika browser kehilangan koneksi, reset state drill-down agar setelah
   // koneksi/session pulih aplikasi kembali ke daftar normal.
