@@ -212,7 +212,7 @@
             content.scrollTop + (cardRect.top - contentRect.top) - 8
           );
           content.scrollTo({top:targetTop, behavior:'auto'});
-        }else if(formCard){
+undefinedelse if(formCard){
           formCard.scrollIntoView({behavior:'auto', block:'start'});
         }
       }catch(e){
@@ -6208,19 +6208,19 @@
       <style>
         html,body{height:100%;margin:0}
         body{overflow:hidden}
-        #loginScreen{position:fixed!important;inset:0!important;z-index:99990!important;display:block!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;padding:0!important;margin:0!important;background:#07549a!important;color:#101d49!important;font-family:Arial,Helvetica,sans-serif!important;box-sizing:border-box}
+        #loginScreen{position:fixed!important;inset:0!important;z-index:99990!important;display:block!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:0!important;overflow:hidden!important;padding:0!important;margin:0!important;background:#07549a!important;color:#101d49!important;font-family:Arial,Helvetica,sans-serif!important;box-sizing:border-box}
         #loginScreen *{box-sizing:border-box}
-        #loginScreen .lhi-page{position:relative;isolation:isolate;min-height:100%;padding:0 0 22px;background:linear-gradient(180deg,#1682d0 0%,#0871bd 35%,#07549a 100%);overflow:hidden}
+        #loginScreen .lhi-page{position:relative;isolation:isolate;width:100%;height:100%;min-height:0;padding:8px 0;background:linear-gradient(180deg,#1682d0 0%,#0871bd 35%,#07549a 100%);overflow:hidden;display:flex;align-items:center;justify-content:center}
         #loginScreen .lhi-page:before{content:"";position:absolute;z-index:-1;left:-12%;right:-12%;top:17vh;height:420px;opacity:.48;background:linear-gradient(180deg,rgba(110,190,239,.65),rgba(0,47,94,.15)),repeating-linear-gradient(90deg,transparent 0 38px,rgba(5,44,83,.38) 39px 43px),repeating-linear-gradient(0deg,transparent 0 35px,rgba(5,44,83,.32) 36px 40px);clip-path:polygon(0 22%,10% 15%,19% 18%,27% 3%,36% 12%,46% 5%,55% 18%,66% 7%,77% 15%,88% 2%,100% 20%,100% 100%,0 100%)}
-        #loginScreen .lhi-lock-card{position:relative;z-index:2;width:min(94%,620px);margin:24vh auto 0;padding:126px 26px 58px;border-radius:28px;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);box-shadow:0 14px 35px rgba(0,29,69,.24);text-align:center}
-        #loginScreen .lhi-lock-emblem{position:absolute;left:50%;top:-98px;transform:translateX(-50%);width:190px;height:190px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff2929,#bd0000);border:12px solid #fff;box-shadow:0 9px 22px rgba(0,0,0,.17)}
+        #loginScreen .lhi-lock-card{position:relative;z-index:2;width:min(94%,620px);max-height:100%;margin:0 auto;padding:clamp(76px,11vh,106px) 26px clamp(14px,3vh,28px);border-radius:28px;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);box-shadow:0 14px 35px rgba(0,29,69,.24);text-align:center;overflow:hidden}
+        #loginScreen .lhi-lock-emblem{position:absolute;left:50%;top:clamp(-68px,-10vh,-54px);transform:translateX(-50%);width:clamp(108px,18vh,142px);height:clamp(108px,18vh,142px);border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff2929,#bd0000);border:9px solid #fff;box-shadow:0 9px 22px rgba(0,0,0,.17)}
         #loginScreen .lhi-lock-emblem svg{width:94px;height:94px;stroke:#fff;fill:none;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
-        #loginScreen .lhi-lock-title{margin:8px 0 24px;color:#071844;font-size:clamp(32px,7.2vw,62px);font-weight:950;line-height:1.02;letter-spacing:-.035em}
+        #loginScreen .lhi-lock-title{margin:0 0 clamp(9px,1.8vh,16px);color:#071844;font-size:clamp(29px,6.8vw,54px);font-weight:950;line-height:1.0;letter-spacing:-.035em}
         #loginScreen .lhi-lock-title span{display:block;color:#d00000;font-size:1.12em;margin-top:8px}
-        #loginScreen .lhi-lock-banner{display:block;margin:0 auto 28px;padding:13px 14px;border-radius:999px;background:linear-gradient(90deg,#cf0000,#f00000,#cf0000);color:#fff;font-size:clamp(13px,2.7vw,20px);font-weight:800;line-height:1.2}
-        #loginScreen .lhi-lock-intro{margin:0 0 25px;color:#071844;font-size:clamp(15px,3vw,22px);font-weight:750}
-        #loginScreen .lhi-person-box{padding:16px 20px;border:2px solid #ffaaaa;border-radius:25px;background:linear-gradient(120deg,#fff0f0,#ffe7e7);text-align:left}
-        #loginScreen .lhi-person-row{display:grid;grid-template-columns:100px 2px minmax(0,1fr);align-items:center;gap:20px;min-height:108px}
+        #loginScreen .lhi-lock-banner{display:block;margin:0 auto clamp(9px,1.8vh,16px);padding:clamp(7px,1.3vh,11px) 12px;border-radius:999px;background:linear-gradient(90deg,#cf0000,#f00000,#cf0000);color:#fff;font-size:clamp(12px,2.5vw,18px);font-weight:800;line-height:1.15}
+        #loginScreen .lhi-lock-intro{margin:0 0 clamp(8px,1.6vh,14px);color:#071844;font-size:clamp(13px,2.8vw,19px);font-weight:750}
+        #loginScreen .lhi-person-box{padding:clamp(7px,1.4vh,12px) clamp(8px,2vw,16px);border:2px solid #ffaaaa;border-radius:20px;background:linear-gradient(120deg,#fff0f0,#ffe7e7);text-align:left}
+        #loginScreen .lhi-person-row{display:grid;grid-template-columns:clamp(48px,9vh,76px) 2px minmax(0,1fr);align-items:center;gap:clamp(8px,1.8vw,16px);min-height:clamp(58px,10vh,82px)}
         #loginScreen .lhi-person-symbol{display:grid;place-items:center;color:#c90000}#loginScreen .lhi-person-symbol svg{width:68px;height:68px;display:block}
         #loginScreen .lhi-person-divider{height:82%;width:2px;background:#e00000}
         #loginScreen .lhi-person-copy{min-width:0;color:#071844}
@@ -6230,7 +6230,8 @@
         #loginScreen .lhi-person-days .lhi-person-symbol svg{width:66px;height:66px}
         #loginScreen .lhi-person-days .lhi-person-copy span{margin:0 0 4px}
         #loginScreen .lhi-person-days .lhi-person-copy strong{color:#cf0000;font-size:clamp(21px,4.8vw,36px)}
-        #loginScreen .lhi-lock-actions{display:flex;justify-content:center;margin:48px auto 0}
+        @media(max-width:520px){
+          #loginScreen .lhi-lock-card{width:calc(100% - 22px);padding:clamp(72px,11vh,96px) 12px clamp(12px,2.5vh,20px);border-radius:21px}
         #loginScreen .lhi-lock-reset{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:68px;padding:0 32px;border:0;border-radius:22px;background:linear-gradient(180deg,#079c16,#00750b);color:#fff;font-size:clamp(20px,4vw,30px);font-weight:900;box-shadow:0 5px 12px rgba(0,95,8,.2);cursor:pointer}
         #loginScreen .lhi-lock-reset svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
         #loginScreen .lhi-lock-reset:hover{background:linear-gradient(180deg,#08ad1a,#006b09);filter:brightness(1.05)}
@@ -6244,22 +6245,22 @@
         #loginScreen .lhi-reset-msg{min-height:20px;margin-top:10px;font-size:12px;color:#b42318}
         #loginScreen .lhi-reset-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
         #loginScreen .lhi-reset-modal-actions button{min-height:40px;padding:0 15px;border-radius:9px;font-weight:800;cursor:pointer}
-        @media(max-width:520px){
-          #loginScreen .lhi-lock-card{width:calc(100% - 28px);margin:24vh auto 20px;padding:110px 16px 42px;border-radius:23px}
-          #loginScreen .lhi-lock-emblem{width:154px;height:154px;top:-80px;border-width:9px}
+                  #loginScreen .lhi-lock-emblem{width:clamp(106px,17vh,132px);height:clamp(106px,17vh,132px);top:clamp(-62px,-9vh,-50px);border-width:8px}
+          #loginScreen .lhi-lock-title{font-size:clamp(27px,7.6vw,38px);margin:0 0 clamp(8px,1.5vh,13px)}
           #loginScreen .lhi-lock-emblem svg{width:76px;height:76px}
-          #loginScreen .lhi-lock-title{font-size:clamp(31px,8vw,42px);margin:5px 0 20px}
-          #loginScreen .lhi-lock-banner{padding:10px 8px;margin-bottom:23px;font-size:13px}
-          #loginScreen .lhi-lock-intro{font-size:15px;margin-bottom:20px}
-          #loginScreen .lhi-person-box{padding:10px 9px;border-radius:19px}
-          #loginScreen .lhi-person-row{grid-template-columns:54px 2px minmax(0,1fr);gap:10px;min-height:86px}
+          #loginScreen .lhi-lock-banner{padding:7px 7px;margin-bottom:clamp(8px,1.4vh,12px);font-size:clamp(11px,3vw,13px)}
+          #loginScreen .lhi-lock-intro{font-size:clamp(12px,3.5vw,15px);margin-bottom:clamp(7px,1.3vh,11px)}
+          #loginScreen .lhi-person-box{padding:7px 7px;border-radius:16px}
+          #loginScreen .lhi-person-row{grid-template-columns:clamp(42px,8vh,58px) 2px minmax(0,1fr);gap:8px;min-height:clamp(54px,9vh,72px)}
+          #loginScreen .lhi-lock-actions{margin-top:clamp(10px,2vh,18px)}
+          #loginScreen .lhi-lock-reset{min-height:clamp(42px,7vh,54px);padding:0 20px;border-radius:15px;font-size:clamp(17px,4.5vw,21px)}
           #loginScreen .lhi-person-symbol svg{width:44px;height:44px}
           #loginScreen .lhi-person-days .lhi-person-symbol svg{width:43px;height:43px}
           #loginScreen .lhi-person-copy strong{font-size:clamp(19px,5.2vw,25px)}
           #loginScreen .lhi-person-copy span{font-size:14px}
           #loginScreen .lhi-person-days .lhi-person-copy strong{font-size:clamp(18px,4.8vw,23px)}
-          #loginScreen .lhi-lock-actions{margin-top:34px}
-          #loginScreen .lhi-lock-reset{min-height:58px;padding:0 24px;border-radius:18px;font-size:21px}
+undefined
+undefined
           #loginScreen .lhi-lock-reset svg{width:29px;height:29px}
         }
       </style>
