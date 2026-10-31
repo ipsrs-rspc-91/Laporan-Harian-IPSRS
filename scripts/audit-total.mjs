@@ -417,6 +417,34 @@ if(fs.existsSync(deleteApi) && fs.existsSync(deletePage) && fs.existsSync(delete
   else fail('Delete Report RLS contract','Soft-delete migration file not found');
 }else fail('Delete Report safety contract','Required Delete Report files are missing');
 
+// LHI graduated-discipline policy contract (staged backend copy; never deployed from this backup path).
+const lhiBackendPath=path.join(root,'backups','2026-10-31-2030','supabase-ipsrs-api-index.ts');
+const lhiFrontendPath=path.join(root,'frontend','login-fast.js');
+const lhiAppPath=path.join(root,'frontend','app.js');
+if(fs.existsSync(lhiBackendPath) && fs.existsSync(lhiFrontendPath) && fs.existsSync(lhiAppPath)){
+  const lhi=fs.readFileSync(lhiBackendPath,'utf8');
+  const login=fs.readFileSync(lhiFrontendPath,'utf8');
+  const app=fs.readFileSync(lhiAppPath,'utf8');
+  const gateStart=lhi.indexOf('// LHI DISCIPLINE GATE:');
+  const gateEnd=lhi.indexOf('async function audit',gateStart);
+  const gate=gateStart>=0&&gateEnd>gateStart?lhi.slice(gateStart,gateEnd):'';
+  const conditions=[
+    ['LHI block threshold >10 days (inclusive Jakarta date)',gate.includes('for(let i=0;i<=10;i++){')&&gate.includes('if(missed.length===11)')],
+    ['LHI warning streak includes current Jakarta date',lhi.includes('startDate.setUTCDate(startDate.getUTCDate()-10)')&&lhi.includes('.gte("tanggal",start).lte("tanggal",todayStr)')&&lhi.includes('for(let i=0;i<=10;i++){')],
+    ['LHI KA IPSRS-only exemption',gate.includes('const disciplineExempt=String(data.role||"").toUpperCase()==="KA_IPSRS";')&&!gate.includes('ADMINISTRASI"].includes(String(data.role')],
+    ['LHI KA IPSRS bypasses only LHI block statuses',gate.includes('!(disciplineExempt&&lhiBlockedStatuses.includes(String(data.status).toUpperCase()))')],
+    ['LHI new block status is denied',gate.includes('"DIBLOKIR_LHI_LEBIH_10_HARI"].includes(String(data.status).toUpperCase())')],
+    ['LHI legacy block migration',gate.includes('else if(["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"]')&&gate.includes('update({status:"Aktif",lhi_manual_unblock_until:null})')],
+    ['LHI warning API includes Administrasi',lhi.includes('filter((p:any)=>String(p.role||"").toUpperCase()!=="KA_IPSRS")')],
+    ['LHI warning API paginates staff and report rows',lhi.includes('const people=await fetchAllPages(')&&lhi.includes('const reports=await fetchAllPages(')&&lhi.includes('.order("staff_id").order("tanggal")')],
+    ['LHI frontend action transport',app.includes("case 'apiGetLhiDisciplineStatus':")],
+    ['LHI login warning copy matches day 11',login.includes('mulai hari ke-11')&&login.includes("n>10?'DIBLOKIR (>10 HARI)'")]
+  ];
+  for(const [name,ok] of conditions){if(ok)pass(name,'Required policy contract detected');else fail(name,'Required LHI policy contract is missing or inconsistent');}
+}else{
+  fail('LHI policy contract','Staged LHI backend/frontend files are missing');
+}
+
 const md = [
   '# IPSRS Automated Audit Report','',
   'Generated: '+new Date().toISOString(),

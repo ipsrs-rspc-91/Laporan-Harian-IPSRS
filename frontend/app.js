@@ -421,6 +421,7 @@
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
       case 'apiGetDisciplineWarning':
+      case 'apiGetLhiDisciplineStatus':
       case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
@@ -509,6 +510,10 @@
     if(!response.ok && (!json || json.ok!==false)) throw new Error('HTTP '+response.status);
     return json;
   }
+
+  // Dipakai modul login-fast.js untuk mengambil peringatan disiplin setelah login.
+  // gsRun sebelumnya hanya berada dalam scope lokal app.js sehingga window.gsRun tidak tersedia.
+  window.gsRun = gsRun;
 
   function resetLaporanUnfinishedState(){
     // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
