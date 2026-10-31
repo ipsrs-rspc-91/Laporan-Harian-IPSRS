@@ -114,7 +114,7 @@ test('Excel export downloads only reports rendered in the current list', async (
   expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
 });
 
-test('Individual report Excel button exports only the selected report', async ({ page }) => {
+test('Individual report rows do not add duplicate Excel buttons', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#btnDownloadLaporanExcel')).toBeAttached({ timeout: 10000 });
   await page.waitForFunction(() => document.getElementById('btnDownloadLaporanExcel')?.dataset.exportBound === '1');
@@ -123,14 +123,6 @@ test('Individual report Excel button exports only the selected report', async ({
     document.getElementById('appShell')?.classList.remove('hidden');
     document.getElementById('page-laporan')?.classList.add('active');
     document.getElementById('subtab-daftar')?.classList.remove('hidden');
-    window.XLSX = {
-      utils: {
-        aoa_to_sheet: data => { window.__ipsrsSingleExportData = data; return { '!ref': 'A1' }; },
-        book_new: () => ({}),
-        book_append_sheet: () => {}
-      },
-      writeFile: (_book, filename) => { window.__ipsrsSingleExportFile = filename; }
-    };
     window.renderReportTable([{
       ID: 'TEST-DETAIL-1', Tanggal: '2026-10-22', Pukul: '09:00',
       Ruang: 'Ruang Detail Uji', NoLK: 'LK-TEST-1',
@@ -140,19 +132,10 @@ test('Individual report Excel button exports only the selected report', async ({
       Item: 'Item Uji', CanEdit: false
     }]);
   });
-  const singleButton = page.locator('#reportTableBody .ipsrs-export-single').first();
-  await expect(singleButton).toBeVisible();
-  await singleButton.click();
-  await page.waitForFunction(() => !!window.__ipsrsSingleExportFile);
-  const result = await page.evaluate(() => ({
-    filename: window.__ipsrsSingleExportFile,
-    data: window.__ipsrsSingleExportData
-  }));
-  expect(result.filename).toContain('ID-TEST-DETAIL-1');
-  expect(result.filename).toMatch(/\.xlsx$/);
-  expect(result.data).toHaveLength(2);
-  expect(result.data[1][0]).toBe('TEST-DETAIL-1');
-  expect(JSON.stringify(result.data)).not.toContain('TEST-NOT-DISPLAYED');
+  // Kebijakan UI saat ini: unduhan Excel tersedia melalui satu tombol toolbar,
+  // bukan tombol tambahan di setiap baris laporan.
+  await expect(page.locator('#reportTableBody .ipsrs-export-single')).toHaveCount(0);
+  await expect(page.locator('#btnDownloadLaporanExcel')).toBeVisible();
 });
 
 test('Delete Report control is present but hidden outside edit mode', async ({ page }) => {
