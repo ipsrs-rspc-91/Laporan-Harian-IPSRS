@@ -6201,7 +6201,7 @@
     const triggerName=trigger?escapeHtml(trigger.nama||'Petugas terkait'):'Petugas terkait';
     const triggerDays=trigger?(Number(trigger.kewajiban_belum_selesai)||0):0;
     const triggerNotice=trigger
-      ? '<div class="lhi-person-box"><div class="lhi-person-row"><div class="lhi-person-symbol">♟</div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><strong>'+triggerName+'</strong><span>Petugas IPSRS</span></div></div><div class="lhi-person-separator"></div><div class="lhi-person-row lhi-person-days"><div class="lhi-person-symbol">▦</div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><span>Tidak mengisi LHI selama</span><strong>'+triggerDays+' hari berturut-turut</strong></div></div></div>'
+      ? '<div class="lhi-person-box"><div class="lhi-person-row"><div class="lhi-person-symbol"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="17" r="12" fill="currentColor"/><path d="M7 57c1-15 10-23 25-23s24 8 25 23z" fill="currentColor"/></svg></div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><strong>'+triggerName+'</strong><span>Petugas IPSRS</span></div></div><div class="lhi-person-separator"></div><div class="lhi-person-row lhi-person-days"><div class="lhi-person-symbol"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="13" width="48" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M8 25h48M20 7v13M44 7v13M19 34h7m12 0h7M19 44h7m12 0h7" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><span>Tidak mengisi LHI selama</span><strong>'+triggerDays+' hari berturut-turut</strong></div></div></div>'
       : '<div class="lhi-person-box"><div class="lhi-person-copy"><strong>Status blokir aktif</strong><span>Server telah mengaktifkan blokir aplikasi LHI.</span></div></div>';
 
     screen.innerHTML=`
@@ -6234,13 +6234,13 @@
         #loginScreen .lhi-lock-intro{margin:0 0 25px;color:#071844;font-size:clamp(15px,3vw,22px);font-weight:750}
         #loginScreen .lhi-person-box{padding:16px 20px;border:2px solid #ffaaaa;border-radius:25px;background:linear-gradient(120deg,#fff0f0,#ffe7e7);text-align:left}
         #loginScreen .lhi-person-row{display:grid;grid-template-columns:100px 2px minmax(0,1fr);align-items:center;gap:20px;min-height:108px}
-        #loginScreen .lhi-person-symbol{font-size:56px;line-height:1;text-align:center;color:#c90000;font-weight:900}
+        #loginScreen .lhi-person-symbol{display:grid;place-items:center;color:#c90000}#loginScreen .lhi-person-symbol svg{width:68px;height:68px;display:block}
         #loginScreen .lhi-person-divider{height:82%;width:2px;background:#e00000}
         #loginScreen .lhi-person-copy{min-width:0;color:#071844}
         #loginScreen .lhi-person-copy strong{display:block;font-size:clamp(22px,4.8vw,38px);font-weight:900;line-height:1.08;overflow-wrap:anywhere}
         #loginScreen .lhi-person-copy span{display:block;margin-top:6px;font-size:clamp(15px,3.4vw,24px);font-weight:700;line-height:1.2}
         #loginScreen .lhi-person-separator{height:2px;background:#ffb1b1;margin:2px 0}
-        #loginScreen .lhi-person-days .lhi-person-symbol{font-size:54px}
+        #loginScreen .lhi-person-days .lhi-person-symbol svg{width:66px;height:66px}
         #loginScreen .lhi-person-days .lhi-person-copy span{margin:0 0 4px}
         #loginScreen .lhi-person-days .lhi-person-copy strong{color:#cf0000;font-size:clamp(21px,4.8vw,36px)}
         #loginScreen .lhi-lock-actions{display:flex;justify-content:center;margin:48px auto 0}
@@ -6278,8 +6278,8 @@
           #loginScreen .lhi-lock-intro{font-size:15px;margin-bottom:20px}
           #loginScreen .lhi-person-box{padding:10px 9px;border-radius:19px}
           #loginScreen .lhi-person-row{grid-template-columns:54px 2px minmax(0,1fr);gap:10px;min-height:86px}
-          #loginScreen .lhi-person-symbol{font-size:39px}
-          #loginScreen .lhi-person-days .lhi-person-symbol{font-size:38px}
+          #loginScreen .lhi-person-symbol svg{width:44px;height:44px}
+          #loginScreen .lhi-person-days .lhi-person-symbol svg{width:43px;height:43px}
           #loginScreen .lhi-person-copy strong{font-size:clamp(19px,5.2vw,25px)}
           #loginScreen .lhi-person-copy span{font-size:14px}
           #loginScreen .lhi-person-days .lhi-person-copy strong{font-size:clamp(18px,4.8vw,23px)}
