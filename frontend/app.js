@@ -6251,7 +6251,10 @@
           #loginScreen .lhi-lock-emblem svg{width:62%;height:62%}
           #loginScreen .lhi-lock-banner{padding:7px 7px;margin-bottom:clamp(8px,1.4vh,12px);font-size:clamp(11px,3vw,13px)}
           #loginScreen .lhi-lock-intro{font-size:clamp(12px,3.5vw,15px);margin-bottom:clamp(7px,1.3vh,11px)}
-          #loginScreen .lhi-person-box{padding:7px 7px;border-radius:16px}
+          #loginScreen .lhi-server-notice{margin:clamp(8px,1.5vh,14px) 0 0;padding:10px 13px;border:1px solid #b8d8e5;border-left:4px solid #0e6b83;border-radius:12px;background:#edf7fa;text-align:left;color:#15384a}
+         #loginScreen .lhi-server-notice strong{display:block;margin-bottom:4px;color:#0b5368;font-size:clamp(11px,2.2vw,14px);font-weight:900;letter-spacing:.04em}
+         #loginScreen .lhi-server-notice p{margin:0;font-size:clamp(11px,2.3vw,14px);line-height:1.35;font-weight:600}
+         #loginScreen .lhi-person-box{padding:7px 7px;border-radius:16px}
           #loginScreen .lhi-person-row{grid-template-columns:clamp(42px,8vh,58px) 2px minmax(0,1fr);gap:8px;min-height:clamp(54px,9vh,72px)}
           #loginScreen .lhi-lock-actions{margin-top:clamp(10px,2vh,18px)}
           #loginScreen .lhi-lock-reset{min-height:clamp(42px,7vh,54px);padding:0 20px;border-radius:15px;font-size:clamp(17px,4.5vw,21px)}
@@ -6271,6 +6274,10 @@
           <div class="lhi-lock-banner">Pemberitahuan Otomatis dari Sistem Server</div>
           <p class="lhi-lock-intro">Sistem mendeteksi bahwa petugas berikut:</p>
           ${triggerNotice}
+          <section class="lhi-server-notice" role="note" aria-label="Notifikasi Server">
+            <strong>NOTIFIKASI SERVER</strong>
+            <p>Setiap akun yang telah terdaftar wajib mengisi LHI secara estafet. Kelalaian satu akun akan terdeteksi sistem dan dapat menyebabkan pemblokiran akses seluruh aplikasi.</p>
+          </section>
           <div class="lhi-lock-actions">
             <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M26 12a11 11 0 0 0-19-4L4 11M4 5v6h6M6 20a11 11 0 0 0 19 4l3-3m0 6v-6h-6"/></svg>Reset Sistem</button>
             <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">Periksa Kembali</button>
