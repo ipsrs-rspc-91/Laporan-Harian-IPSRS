@@ -325,7 +325,7 @@ if(a==="apiGetOnlineUsers"){
 }
 if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
 if(a==="apiListStaff"){const {data,error}=await db.from("staff_dropdown").select("staff_id,nama,jabatan,role,bidang,status");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({...x,role_label:label(x.role)}))}}
-if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").select("staff_id,nama").in("status",["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"]).order("nama");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama}))}}
+if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").select("staff_id,nama").in("status",["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"]).order("nama");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama}))}}
 if(a==="apiGetLhiDisciplineStatus"){
  const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
  const today=new Date(todayStr+"T00:00:00Z");
