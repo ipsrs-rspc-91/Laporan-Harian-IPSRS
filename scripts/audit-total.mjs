@@ -431,6 +431,7 @@ if(fs.existsSync(lhiBackendPath) && fs.existsSync(lhiFrontendPath) && fs.existsS
   const conditions=[
     ['LHI block threshold >10 days',gate.includes('for(let i=1;i<=11;i++){')&&gate.includes('if(missed.length===11)')],
     ['LHI KA IPSRS-only exemption',gate.includes('const disciplineExempt=String(data.role||"").toUpperCase()==="KA_IPSRS";')&&!gate.includes('ADMINISTRASI"].includes(String(data.role')],
+    ['LHI KA IPSRS bypasses only LHI block statuses',gate.includes('!(disciplineExempt&&lhiBlockedStatuses.includes(String(data.status).toUpperCase()))')],
     ['LHI new block status is denied',gate.includes('"DIBLOKIR_LHI_LEBIH_10_HARI"].includes(String(data.status).toUpperCase())')],
     ['LHI legacy block migration',gate.includes('else if(["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"]')&&gate.includes('update({status:"Aktif",lhi_manual_unblock_until:null})')],
     ['LHI warning API includes Administrasi',lhi.includes('filter((p:any)=>String(p.role||"").toUpperCase()!=="KA_IPSRS")')],
