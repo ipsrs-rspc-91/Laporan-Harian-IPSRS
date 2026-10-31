@@ -182,7 +182,7 @@
     const bg=document.createElement('div');
     bg.id='ipsrsServerDisciplineWarning';
     const list=names.map(n=>'🔴 '+n).join('<br>');
-    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PERINGATAN DISIPLIN LHI</div><div class="sdw-body">'+names.length+' staf telah diblokir karena tidak mengisi LHI lebih dari 10 hari berturut-turut:<br><br>'+list+'</div><button class="sdw-btn" type="button">OK</button></div>';
+    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PERINGATAN DISIPLIN LHI</div><div class="sdw-body">'+names.length+' petugas tercatat tidak mengisi LHI selama 9 hari berturut-turut atau lebih:<br><br>'+list+'</div><button class="sdw-btn" type="button">OK</button></div>';
     document.body.appendChild(bg);
     bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
   }
