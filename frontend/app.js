@@ -640,8 +640,8 @@
       if(msgEl){
         // Pesan blokir LHI 7 hari dikirim backend berdasarkan status/hasil
         // pengecekan LHI. Tidak ada daftar nama yang ditanam di frontend.
-        msgEl.innerText=/tidak disiplin mengisi laporan selama 7 hari/i.test(rawMsg)
-          ? 'Anda tidak disiplin mengisi laporan selama 7 hari.'
+        msgEl.innerText=/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
+          ? 'Anda tidak disiplin mengisi laporan selama 8 hari.'
           : (/invalid login credentials/i.test(rawMsg)
               ? 'Username atau password salah.'
               : 'Error: '+rawMsg);
