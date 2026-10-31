@@ -429,7 +429,8 @@ if(fs.existsSync(lhiBackendPath) && fs.existsSync(lhiFrontendPath) && fs.existsS
   const gateEnd=lhi.indexOf('async function audit',gateStart);
   const gate=gateStart>=0&&gateEnd>gateStart?lhi.slice(gateStart,gateEnd):'';
   const conditions=[
-    ['LHI block threshold >10 days',gate.includes('for(let i=1;i<=11;i++){')&&gate.includes('if(missed.length===11)')],
+    ['LHI block threshold >10 days (inclusive Jakarta date)',gate.includes('for(let i=0;i<=10;i++){')&&gate.includes('if(missed.length===11)')],
+    ['LHI warning streak includes current Jakarta date',lhi.includes('startDate.setUTCDate(startDate.getUTCDate()-10)')&&lhi.includes('.gte("tanggal",start).lte("tanggal",todayStr)')&&lhi.includes('for(let i=0;i<=10;i++){')],
     ['LHI KA IPSRS-only exemption',gate.includes('const disciplineExempt=String(data.role||"").toUpperCase()==="KA_IPSRS";')&&!gate.includes('ADMINISTRASI"].includes(String(data.role')],
     ['LHI KA IPSRS bypasses only LHI block statuses',gate.includes('!(disciplineExempt&&lhiBlockedStatuses.includes(String(data.status).toUpperCase()))')],
     ['LHI new block status is denied',gate.includes('"DIBLOKIR_LHI_LEBIH_10_HARI"].includes(String(data.status).toUpperCase())')],
