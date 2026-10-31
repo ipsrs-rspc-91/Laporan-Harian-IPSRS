@@ -6279,7 +6279,7 @@
       if(submit){submit.disabled=true;submit.textContent='Memeriksa...';}
       if(msg)msg.textContent='Memverifikasi kode ke server...';
       try{
-        const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\\/$/,'');
+        const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\/$/,'');
         const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
         const response=await fetch(base+'/functions/v1/lhi-reset-verify',{
           method:'POST',headers:{'Content-Type':'application/json','apikey':key},
