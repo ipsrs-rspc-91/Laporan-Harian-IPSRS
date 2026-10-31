@@ -6185,34 +6185,44 @@
 
     const escapeHtml=(value)=>String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     const staff=Array.isArray(serverDetails&&serverDetails.noncompliant_staff)?serverDetails.noncompliant_staff:[];
-    const staffRows=staff.length?staff.map((person,index)=>`<li style="padding:10px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><span><strong>${index+1}. ${escapeHtml(person.nama||'Nama tidak tersedia')}</strong><br><span style="font-size:12px;color:#667085">${escapeHtml(person.jabatan||'Petugas IPSRS')}</span></span><strong style="white-space:nowrap;color:#9b2525">${Number(person.kewajiban_belum_selesai)||0} kewajiban</strong></li>`).join(''):'<li style="padding:8px 0">Rincian kewajiban belum dapat ditampilkan. Silakan hubungi KA IPSRS.</li>';
-    const total=staff.reduce((sum,person)=>sum+(Number(person.kewajiban_belum_selesai)||0),0);
+    const trigger=staff.reduce((best,person)=>{
+      const days=Number(person.kewajiban_belum_selesai)||0;
+      return !best||days>(Number(best.kewajiban_belum_selesai)||0)?person:best;
+    },null);
+    const triggerName=trigger?escapeHtml(trigger.nama||'Petugas terkait'):'Petugas terkait';
+    const triggerDays=trigger?(Number(trigger.kewajiban_belum_selesai)||0):0;
+    const triggerStart=trigger&&trigger.tanggal_awal?new Date(trigger.tanggal_awal+'T00:00:00+07:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Jakarta'}):'';
+    const triggerEnd=trigger&&trigger.tanggal_akhir?new Date(trigger.tanggal_akhir+'T00:00:00+07:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Jakarta'}):'';
+    const triggerRange=triggerStart&&triggerEnd?triggerStart+' sampai '+triggerEnd:'';
     const incidentDate=serverDetails&&serverDetails.incident_started_at?new Date(serverDetails.incident_started_at).toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Jakarta'})+' WIB':'-';
     const deadline=serverDetails&&serverDetails.incident_deadline_at?new Date(serverDetails.incident_deadline_at).toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short',timeZone:'Asia/Jakarta'})+' WIB':'-';
     const safeMessage=escapeHtml(message||'Server mendeteksi kewajiban Laporan Harian IPSRS (LHI) yang belum dipenuhi sesuai ketentuan.');
+    const triggerNotice=trigger
+      ? `<div style="border:1px solid #f0c8c5;background:#fff8f7;border-radius:10px;padding:16px;margin-bottom:18px">
+          <div style="font-size:12px;font-weight:800;letter-spacing:.04em;color:#8f2424;margin-bottom:9px">PEMICU PEMBERLAKUAN BLOKIR GLOBAL</div>
+          <div style="font-size:17px;font-weight:800;color:#253044">${triggerName}</div>
+          <p style="font-size:14px;line-height:1.7;color:#475467;margin:7px 0 0">Sistem mendeteksi bahwa petugas tersebut belum mengisi Laporan Harian IPSRS (LHI) selama <strong>${triggerDays} hari berturut-turut</strong>.${triggerRange?' Periode yang tercatat: <strong>'+escapeHtml(triggerRange)+'</strong>.':''}</p>
+        </div>`
+      : '<div style="border:1px solid #f0c8c5;background:#fff8f7;border-radius:10px;padding:14px 16px;margin-bottom:18px"><strong style="color:#8f2424">PEMICU BLOKIR GLOBAL</strong><p style="font-size:13px;line-height:1.65;margin:6px 0 0;color:#475467">Server telah mengaktifkan pembatasan global. Rincian petugas pemicu belum dapat ditampilkan.</p></div>';
     screen.innerHTML=`<section class="lhi-global-lock" role="alert" aria-live="assertive" style="max-width:680px;margin:24px auto;padding:clamp(20px,4vw,32px);background:#fff;border:1px solid #d9dee5;border-top:5px solid #a52b2b;border-radius:14px;box-shadow:0 12px 34px rgba(16,24,40,.10);color:#253044;text-align:left">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
         <div style="width:46px;height:46px;flex:0 0 46px;border-radius:12px;background:#fff1f0;display:grid;place-items:center;font-size:25px">🔒</div>
         <div><div style="font-size:11px;font-weight:800;letter-spacing:.11em;color:#667085">SISTEM INFORMASI IPSRS</div><div style="font-size:13px;font-weight:700;color:#9b2525;margin-top:3px">PEMBERITAHUAN OTOMATIS SERVER</div></div>
       </div>
-      <h1 style="font-size:clamp(21px,4vw,27px);line-height:1.25;color:#253044;margin:0 0 12px">Akses Aplikasi Ditangguhkan Sementara</h1>
+      <h1 style="font-size:clamp(21px,4vw,27px);line-height:1.25;color:#253044;margin:0 0 12px">AKSES APLIKASI DIBLOKIR SEMENTARA</h1>
       <p style="font-size:14px;line-height:1.7;margin:0 0 18px;color:#475467">${safeMessage}</p>
-      <div style="padding:14px 16px;border:1px solid #f0c8c5;background:#fff8f7;border-radius:10px;margin-bottom:18px">
-        <div style="font-size:13px;font-weight:800;color:#8f2424;margin-bottom:6px">STATUS PEMBATASAN: AKTIF</div>
-        <p style="font-size:13px;line-height:1.65;margin:0;color:#475467">Sesuai kebijakan pengisian LHI, server telah memberlakukan pembatasan akses secara menyeluruh. <strong>Seluruh akun tidak dapat melakukan login, termasuk petugas yang telah menyelesaikan LHI.</strong> Pembatasan ini berlaku pada tingkat aplikasi, bukan hanya pada akun petugas yang memiliki kewajiban tertunda.</p>
-      </div>
-      <div style="border:1px solid #e4e7ec;border-radius:10px;padding:14px 16px;margin-bottom:16px">
-        <div style="font-size:13px;font-weight:800;color:#344054;margin-bottom:8px">Data kewajiban LHI yang tercatat oleh server</div>
-        <ul style="margin:0;padding:0;list-style:none">${staffRows}</ul>
-        <div style="display:flex;justify-content:space-between;gap:10px;padding-top:12px;margin-top:4px;font-size:13px;border-top:1px solid #e5e7eb"><span style="color:#667085">Total kewajiban belum diselesaikan</span><strong>${total}</strong></div>
+      ${triggerNotice}
+      <div style="padding:14px 16px;border:1px solid #d9dee5;background:#f8fafc;border-radius:10px;margin-bottom:18px">
+        <div style="font-size:13px;font-weight:800;color:#344054;margin-bottom:6px">STATUS SISTEM: BLOKIR GLOBAL AKTIF</div>
+        <p style="font-size:13px;line-height:1.65;margin:0;color:#475467"><strong>Seluruh pengguna diblokir dari login</strong>, termasuk petugas yang telah mengisi LHI dan tidak memiliki tunggakan. Kebijakan ini berlaku pada seluruh aplikasi, bukan hanya pada akun petugas yang menjadi pemicu.</p>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-        <div style="background:#f8fafc;padding:11px;border-radius:8px"><div style="font-size:11px;color:#667085">Waktu pemberlakuan</div><div style="font-size:12px;font-weight:700;margin-top:4px">${escapeHtml(incidentDate)}</div></div>
-        <div style="background:#f8fafc;padding:11px;border-radius:8px"><div style="font-size:11px;color:#667085">Tenggat kejadian</div><div style="font-size:12px;font-weight:700;margin-top:4px">${escapeHtml(deadline)}</div></div>
+        <div style="background:#f8fafc;padding:11px;border-radius:8px"><div style="font-size:11px;color:#667085">Waktu blokir diaktifkan</div><div style="font-size:12px;font-weight:700;margin-top:4px">${escapeHtml(incidentDate)}</div></div>
+        <div style="background:#f8fafc;padding:11px;border-radius:8px"><div style="font-size:11px;color:#667085">Tenggat penanganan</div><div style="font-size:12px;font-weight:700;margin-top:4px">${escapeHtml(deadline)}</div></div>
       </div>
-      <p style="font-size:13px;line-height:1.65;color:#475467;margin:0 0 16px">Untuk pemulihan akses, silakan berkoordinasi dengan <strong>Kepala IPSRS (KA IPSRS)</strong>. Prosedur pemulihan hanya dapat dilakukan oleh akun KA IPSRS yang terautentikasi sesuai kewenangan sistem.</p>
+      <p style="font-size:13px;line-height:1.65;color:#475467;margin:0 0 16px">Silakan menghubungi Kepala IPSRS (KA IPSRS). Pembukaan akses hanya dapat dilakukan oleh akun KA IPSRS yang telah terautentikasi dan berwenang sesuai prosedur sistem.</p>
       <button type="button" id="lhiGlobalBlockRetry" style="width:100%;min-height:46px;border-radius:9px;padding:10px 18px;font-size:14px;font-weight:800;background:#253b53;color:#fff;border:1px solid #253b53;cursor:pointer">Periksa Status Kembali</button>
-      <div style="font-size:11px;line-height:1.5;color:#98a2b3;text-align:center;margin-top:14px">Pesan ini diterbitkan secara otomatis oleh server berdasarkan data LHI. Tidak diperlukan tindakan pada perangkat Anda.</div>
+      <div style="font-size:11px;line-height:1.5;color:#98a2b3;text-align:center;margin-top:14px">Pemberitahuan ini dibuat otomatis oleh server berdasarkan catatan kewajiban LHI.</div>
     </section>`;
     const retry=document.getElementById('lhiGlobalBlockRetry');
     if(retry) retry.addEventListener('click',()=>checkAuthAndInit());
