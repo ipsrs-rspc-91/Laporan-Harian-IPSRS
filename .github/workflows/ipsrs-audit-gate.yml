@@ -28,6 +28,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Validate staged Supabase Edge Function with Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check staged LHI backend source
+        run: deno check --config backups/2026-10-31-2030/supabase-ipsrs-api-deno.json backups/2026-10-31-2030/supabase-ipsrs-api-index.ts
       - name: Run IPSRS Automated Audit
         run: node scripts/audit-total.mjs
       - name: Upload static audit checklist
