@@ -192,7 +192,8 @@ async function staff(ctx:any,req?:Request){
  // Perhitungan memakai tanggal Asia/Jakarta dan laporan yang belum dihapus.
  const manualUnblockUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
  const manualUnblockActive=manualUnblockUntil>0&&manualUnblockUntil>Date.now();
- if((String(data.status).toLowerCase()==="aktif"||["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase()))&&!manualUnblockActive){
+ const disciplineExempt=["KA_IPSRS","ADMINISTRASI"].includes(String(data.role||"").toUpperCase());
+ if(!disciplineExempt&&(String(data.status).toLowerCase()==="aktif"||["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase()))&&!manualUnblockActive){
    const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
    const today=new Date(todayStr+"T00:00:00Z");
    const dates:string[]=[];
@@ -233,7 +234,7 @@ async function staff(ctx:any,req?:Request){
      data.status="DIBLOKIR_LHI_10_HARI";
    }
  }
- if(["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase())&&!manualUnblockActive){
+ if(!disciplineExempt&&["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase())&&!manualUnblockActive){
    throw Error("Akun diblokir karena tidak mengisi laporan LHI selama 10 hari. Hubungi KA IPSRS.");
  }
  if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
