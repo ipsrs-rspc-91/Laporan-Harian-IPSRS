@@ -6206,40 +6206,60 @@
 
     screen.innerHTML=`
       <style>
-        #loginScreen .lhi-lock-wrap{box-sizing:border-box;width:min(100% - 28px,440px);margin:clamp(18px,5vh,48px) auto;padding:26px 22px 22px;background:#fff;border:1px solid #e5e7eb;border-top:5px solid #b42318;border-radius:18px;box-shadow:0 12px 34px rgba(16,24,40,.12);font-family:inherit;color:#182230;text-align:center}
-        #loginScreen .lhi-lock-brand{font-size:11px;font-weight:800;letter-spacing:.12em;color:#667085;margin-bottom:18px}
-        #loginScreen .lhi-lock-icon{width:62px;height:62px;margin:0 auto 16px;border-radius:18px;background:#fff1f0;display:grid;place-items:center;font-size:31px}
-        #loginScreen .lhi-lock-title{font-size:clamp(21px,5vw,27px);font-weight:900;line-height:1.2;color:#b42318;margin:0 0 18px}
-        #loginScreen .lhi-lock-person{padding:17px 14px;background:#fff8f7;border:1px solid #fecdca;border-radius:12px;margin:0 0 17px}
-        #loginScreen .lhi-lock-person-label{font-size:10px;font-weight:900;letter-spacing:.1em;color:#b42318;margin-bottom:8px}
-        #loginScreen .lhi-lock-person-name{font-size:19px;font-weight:850;color:#253044}
-        #loginScreen .lhi-lock-person p{font-size:14px;line-height:1.55;color:#475467;margin:8px 0 0}
-        #loginScreen .lhi-lock-global{font-size:13px;line-height:1.55;color:#667085;margin:0 0 19px}
-        #loginScreen .lhi-lock-actions{display:flex;justify-content:center;align-items:center;gap:14px}
-        #loginScreen .lhi-lock-retry{border:0;background:#253b53;color:#fff;border-radius:10px;min-height:44px;padding:0 20px;font-weight:800;font-size:13px;cursor:pointer}
-        #loginScreen .lhi-lock-reset{border:1px solid #16803c;background:#16a34a;color:#fff;border-radius:9px;min-height:36px;padding:0 15px;font-size:12px;font-weight:800;cursor:pointer}
-        #loginScreen .lhi-lock-reset:hover{background:#15803d}
-        #loginScreen .lhi-reset-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.62);display:none;align-items:center;justify-content:center;padding:18px}
+        #loginScreen{min-height:100vh;background:#07111f!important;color:#e8eef7}
+        #loginScreen .lhi-lock-wrap{box-sizing:border-box;position:relative;overflow:hidden;width:min(calc(100% - 28px),430px);margin:clamp(22px,7vh,64px) auto;padding:0;background:linear-gradient(160deg,#111f32 0%,#0b1727 62%,#081321 100%);border:1px solid #263b52;border-radius:8px;box-shadow:0 22px 65px rgba(0,0,0,.48);font-family:Arial,Helvetica,sans-serif;color:#e8eef7;text-align:left}
+        #loginScreen .lhi-lock-wrap:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:#e04444}
+        #loginScreen .lhi-lock-brand{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:20px 19px 15px;border-bottom:1px solid #26384d;color:#9db0c6;font-size:10px;font-weight:800;letter-spacing:.14em}
+        #loginScreen .lhi-lock-brand span:last-child{color:#f07878;white-space:nowrap}
+        #loginScreen .lhi-lock-head{padding:25px 20px 20px;text-align:center}
+        #loginScreen .lhi-lock-kicker{font-size:10px;font-weight:800;letter-spacing:.2em;color:#f07878;margin-bottom:12px}
+        #loginScreen .lhi-lock-icon{width:66px;height:66px;margin:0 auto 15px;border:1px solid #783d49;border-radius:50%;background:#2b1b2a;display:grid;place-items:center;font-size:30px;box-shadow:0 0 24px rgba(224,68,68,.12)}
+        #loginScreen .lhi-lock-title{font-size:clamp(21px,5.8vw,27px);font-weight:900;line-height:1.18;letter-spacing:.01em;color:#fff;margin:0}
+        #loginScreen .lhi-lock-subtitle{margin:9px 0 0;color:#9aacc1;font-size:11px;font-weight:700;letter-spacing:.16em}
+        #loginScreen .lhi-lock-response{margin:0 20px 17px;padding:10px 12px;border:1px solid #633842;background:#251b29;color:#ff9b9b;font:700 11px/1.4 'Courier New',monospace;letter-spacing:.04em;text-align:center}
+        #loginScreen .lhi-lock-person{margin:0 20px 17px;padding:15px 15px 14px;background:#101d2d;border:1px solid #31465e;border-left:3px solid #e04444;border-radius:4px}
+        #loginScreen .lhi-lock-person-label{font:700 9px/1.4 'Courier New',monospace;letter-spacing:.16em;color:#8ea4bc;margin-bottom:8px}
+        #loginScreen .lhi-lock-person-name{font-size:18px;font-weight:800;color:#f5f7fb;letter-spacing:.01em}
+        #loginScreen .lhi-lock-person p{font-size:12px;line-height:1.55;color:#b2c0d0;margin:7px 0 0}
+        #loginScreen .lhi-lock-person p strong{color:#ff8888}
+        #loginScreen .lhi-lock-status{display:flex;justify-content:space-between;gap:12px;margin:0 20px 18px;padding:12px 0;border-top:1px solid #26384d;border-bottom:1px solid #26384d;font:700 10px/1.4 'Courier New',monospace;letter-spacing:.08em}
+        #loginScreen .lhi-lock-status span:first-child{color:#8ea4bc}
+        #loginScreen .lhi-lock-status span:last-child{color:#ff7777}
+        #loginScreen .lhi-lock-global{margin:0 20px 18px;color:#b6c3d2;font:11px/1.55 'Courier New',monospace;text-align:center;letter-spacing:.02em}
+        #loginScreen .lhi-lock-actions{display:flex;align-items:center;justify-content:center;gap:18px;padding:0 20px 19px}
+        #loginScreen .lhi-lock-retry{border:1px solid #526b86;background:#1b3048;color:#f2f6fb;border-radius:4px;min-height:42px;padding:0 19px;font:700 11px Arial,sans-serif;letter-spacing:.06em;cursor:pointer}
+        #loginScreen .lhi-lock-retry:hover{background:#294563;border-color:#8ca5c0}
+        #loginScreen .lhi-lock-reset{border:0;background:transparent;color:#82c7a0;text-decoration:underline;text-underline-offset:3px;min-height:40px;padding:0 5px;font:700 11px Arial,sans-serif;cursor:pointer}
+        #loginScreen .lhi-lock-reset:hover{color:#b2f0c9}
+        #loginScreen .lhi-lock-footer{padding:12px 16px;border-top:1px solid #26384d;color:#6f849b;text-align:center;font:9px/1.5 'Courier New',monospace;letter-spacing:.08em}
+        #loginScreen .lhi-reset-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(2,8,17,.82);display:none;align-items:center;justify-content:center;padding:18px}
         #loginScreen .lhi-reset-backdrop.show{display:flex}
-        #loginScreen .lhi-reset-modal{box-sizing:border-box;width:min(100%,360px);background:#fff;border-radius:16px;padding:22px;text-align:left;box-shadow:0 22px 60px rgba(0,0,0,.25)}
-        #loginScreen .lhi-reset-modal h2{font-size:19px;margin:0 0 7px;color:#182230}
-        #loginScreen .lhi-reset-modal p{font-size:13px;line-height:1.5;color:#667085;margin:0 0 16px}
-        #loginScreen .lhi-reset-modal input{box-sizing:border-box;width:100%;height:48px;border:1px solid #cbd5e1;border-radius:9px;padding:0 13px;font-size:20px;letter-spacing:.25em;text-align:center}
-        #loginScreen .lhi-reset-msg{min-height:20px;margin-top:10px;font-size:12px;color:#b42318}
+        #loginScreen .lhi-reset-modal{box-sizing:border-box;width:min(100%,360px);background:#101e30;border:1px solid #3a5069;border-top:3px solid #35a66a;border-radius:7px;padding:22px;text-align:left;box-shadow:0 22px 60px rgba(0,0,0,.55);color:#edf3fa}
+        #loginScreen .lhi-reset-modal h2{font-size:18px;margin:0 0 7px;color:#fff}
+        #loginScreen .lhi-reset-modal p{font-size:12px;line-height:1.5;color:#aab9ca;margin:0 0 16px}
+        #loginScreen .lhi-reset-modal input{box-sizing:border-box;width:100%;height:48px;border:1px solid #526981;border-radius:4px;background:#081525;color:#fff;padding:0 13px;font-size:20px;letter-spacing:.25em;text-align:center}
+        #loginScreen .lhi-reset-msg{min-height:20px;margin-top:10px;font-size:11px;color:#ff9292}
         #loginScreen .lhi-reset-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
-        #loginScreen .lhi-reset-modal-actions button{min-height:40px;padding:0 15px;border-radius:9px;font-weight:800;cursor:pointer}
-        @media(max-width:380px){#loginScreen .lhi-lock-wrap{padding:22px 16px 18px}#loginScreen .lhi-lock-actions{gap:9px}#loginScreen .lhi-lock-retry{padding:0 13px}}
+        #loginScreen .lhi-reset-modal-actions button{min-height:39px;padding:0 15px;border-radius:4px;font-weight:800;cursor:pointer}
+        @media(max-width:380px){#loginScreen .lhi-lock-wrap{width:calc(100% - 22px);margin:22px auto}#loginScreen .lhi-lock-brand{padding:17px 14px 13px;font-size:9px}#loginScreen .lhi-lock-head{padding:22px 14px 18px}#loginScreen .lhi-lock-person{margin-left:14px;margin-right:14px}#loginScreen .lhi-lock-response,#loginScreen .lhi-lock-status{margin-left:14px;margin-right:14px}#loginScreen .lhi-lock-global{margin-left:14px;margin-right:14px}}
       </style>
       <section class="lhi-lock-wrap" role="alert" aria-live="assertive">
-        <div class="lhi-lock-brand">RUMAH SAKIT PURI CINERE · IPSRS</div>
-        <div class="lhi-lock-icon" aria-hidden="true">🔒</div>
-        <h1 class="lhi-lock-title">Akses Aplikasi LHI diblokir</h1>
+        <div class="lhi-lock-brand"><span>RUMAH SAKIT PURI CINERE · IPSRS</span><span>LHI SYSTEM</span></div>
+        <div class="lhi-lock-head">
+          <div class="lhi-lock-kicker">LHI SYSTEM NOTIFICATION</div>
+          <div class="lhi-lock-icon" aria-hidden="true">🔒</div>
+          <h1 class="lhi-lock-title">Akses Aplikasi LHI diblokir</h1>
+          <div class="lhi-lock-subtitle">APPLICATION LOCKED</div>
+        </div>
+        <div class="lhi-lock-response">SERVER RESPONSE: 403 — ACCESS BLOCKED</div>
         ${triggerNotice}
-        <p class="lhi-lock-global">Mode blokir aplikasi aktif untuk seluruh pengguna.</p>
+        <div class="lhi-lock-status"><span>SYSTEM STATUS</span><span>● BLOCKED</span></div>
+        <p class="lhi-lock-global">ACCESS TO LHI SYSTEM IS CURRENTLY DENIED</p>
         <div class="lhi-lock-actions">
-          <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">Periksa Kembali</button>
+          <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">PERIKSA STATUS</button>
           <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset">Reset</button>
         </div>
+        <div class="lhi-lock-footer">LHI SERVER · AUTOMATED SECURITY RESPONSE</div>
       </section>
       <div class="lhi-reset-backdrop" id="lhiResetBackdrop" role="dialog" aria-modal="true" aria-labelledby="lhiResetTitle">
         <div class="lhi-reset-modal">
@@ -6249,8 +6269,8 @@
             <input id="lhiResetCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" aria-label="Angka reset" placeholder="••••••" required>
             <div class="lhi-reset-msg" id="lhiResetMessage" role="status"></div>
             <div class="lhi-reset-modal-actions">
-              <button type="button" id="lhiResetCancel" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1">Batal</button>
-              <button type="submit" id="lhiResetSubmit" style="background:#16a34a;color:#fff;border:1px solid #16a34a">OK</button>
+              <button type="button" id="lhiResetCancel" style="background:#1b3048;color:#e7eef7;border:1px solid #526981">Batal</button>
+              <button type="submit" id="lhiResetSubmit" style="background:#16834b;color:#fff;border:1px solid #16834b">OK</button>
             </div>
           </form>
         </div>
