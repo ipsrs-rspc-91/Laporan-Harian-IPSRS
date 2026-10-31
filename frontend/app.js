@@ -6202,7 +6202,7 @@
     if(screen) screen.classList.add('hidden');
     if(loading) loading.classList.remove('hidden');
     try{
-      const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\\/$/,'');
+      const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\/$/,'');
       const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
       if(!base||!key) throw new Error('Konfigurasi server tidak tersedia.');
       const response=await fetch(base+'/functions/v1/lhi-block-status',{method:'GET',headers:{'apikey':key},cache:'no-store'});
