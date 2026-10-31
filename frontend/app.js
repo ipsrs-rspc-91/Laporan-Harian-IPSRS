@@ -6174,7 +6174,7 @@
     }).catch(() => {});
   }
 
-  function renderLhiGlobalBlockScreen_(message){
+  function renderLhiGlobalBlockScreen_(message, serverDetails){
     const screen=document.getElementById('loginScreen');
     const shell=document.getElementById('appShell');
     const loading=document.getElementById('authLoading');
@@ -6182,14 +6182,24 @@
     if(loading) loading.classList.add('hidden');
     if(shell) shell.classList.add('hidden');
     screen.classList.remove('hidden');
-    const safe=String(message||'Akses aplikasi sementara dibatasi oleh KA IPSRS.').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    const escapeHtml=(value)=>String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const safeMessage=escapeHtml(message||'Server mendeteksi pembatasan akses berdasarkan status kewajiban LHI.');
+    const staff=Array.isArray(serverDetails&&serverDetails.noncompliant_staff)?serverDetails.noncompliant_staff:[];
+    const staffRows=staff.length?staff.map((person,index)=>`<li style="padding:9px 0;border-bottom:1px solid #eadfdd;display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><span><strong>${index+1}. ${escapeHtml(person.nama||'Nama tidak tersedia')}</strong><br><span style="font-size:12px;color:#667085">${escapeHtml(person.jabatan||person.bidang||'Petugas IPSRS')}</span></span><strong style="white-space:nowrap;color:#9d2720">${Number(person.kewajiban_belum_selesai)||0} LHI</strong></li>`).join(''):'<li>Rincian petugas belum dapat dimuat dari server.</li>';
+    const count=staff.reduce((total,person)=>total+(Number(person.kewajiban_belum_selesai)||0),0);
     screen.innerHTML=`<section class="lhi-global-lock" role="alert" aria-live="assertive">
-      <div style="font-size:48px">🔒</div><div style="font-size:12px;font-weight:850;letter-spacing:.12em;color:#9d2720">PEMBERITAHUAN SISTEM IPSRS</div>
-      <h1 style="font-size:clamp(22px,4vw,30px);color:#9d1c17;margin:12px 0">MODE FORM BLOK APLIKASI AKTIF</h1>
-      <p style="font-size:15px;line-height:1.6;font-weight:700">${safe}</p>
-      <div style="background:#fff4f2;border:1px solid #f1c7c3;border-radius:12px;padding:14px;text-align:left;font-size:14px;line-height:1.55">Seluruh petugas tidak dapat masuk selama mode blokir aktif. Selesaikan kewajiban LHI sesuai arahan KA IPSRS.</div>
-      <button type="button" id="lhiGlobalBlockRetry" style="margin-top:20px;min-height:46px;border-radius:10px;padding:10px 18px;font-weight:800;background:#fff;color:#164b70;border:1px solid #9ab1c2;cursor:pointer">Periksa kembali status</button>
-      <div style="font-size:11px;color:#718096;margin-top:18px">Login ditahan sampai status blokir dinonaktifkan melalui prosedur resmi KA IPSRS.</div>
+      <div style="font-size:48px">🔒</div>
+      <div style="font-size:12px;font-weight:850;letter-spacing:.12em;color:#9d2720">PEMBERITAHUAN OTOMATIS SERVER IPSRS</div>
+      <h1 style="font-size:clamp(22px,4vw,30px);color:#9d1c17;margin:12px 0">AKSES APLIKASI DIBATASI OTOMATIS</h1>
+      <p style="font-size:15px;line-height:1.6;font-weight:700">${safeMessage}</p>
+      <div style="background:#fff4f2;border:1px solid #f1c7c3;border-radius:12px;padding:14px;text-align:left;font-size:14px;line-height:1.55">
+        Server mencatat petugas berikut masih memiliki kewajiban Laporan Harian IPSRS (LHI) yang belum diselesaikan:
+        <ul style="margin:10px 0 0;padding-left:0;list-style:none">${staffRows}</ul>
+        <div style="margin-top:10px;font-weight:800">Total kewajiban LHI belum selesai: ${count}</div>
+      </div>
+      <p style="font-size:13px;line-height:1.55;text-align:left;margin-top:14px">Pembatasan akses berlaku untuk seluruh pengguna aplikasi sampai status pembatasan dinonaktifkan melalui prosedur resmi KA IPSRS. Nama dan jumlah kewajiban di atas dimuat langsung dari data server.</p>
+      <button type="button" id="lhiGlobalBlockRetry" style="margin-top:12px;min-height:46px;border-radius:10px;padding:10px 18px;font-weight:800;background:#fff;color:#164b70;border:1px solid #9ab1c2;cursor:pointer">Periksa kembali status</button>
+      <div style="font-size:11px;color:#718096;margin-top:18px">Pemberitahuan dibuat otomatis oleh server berdasarkan catatan LHI.</div>
     </section>`;
     const retry=document.getElementById('lhiGlobalBlockRetry');
     if(retry) retry.addEventListener('click',()=>checkAuthAndInit());
@@ -6211,7 +6221,7 @@
         renderLhiGlobalBlockScreen_((status&&status.message)||'Status blokir belum dapat diverifikasi. Login ditahan sementara.');
         return;
       }
-      if(status.blocked){renderLhiGlobalBlockScreen_(status.message);return;}
+      if(status.blocked){renderLhiGlobalBlockScreen_(status.message,status);return;}
       showLoginScreen();
     }catch(_error){
       renderLhiGlobalBlockScreen_('Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara. Silakan hubungi KA IPSRS.');
