@@ -593,6 +593,15 @@
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
+      // Mode reset hanya membuka layar login; autentikasi tetap wajib dan hanya KA IPSRS yang diterima.
+      let resetAuthMode=false;
+      try{resetAuthMode=sessionStorage.getItem('IPSRS_LHI_RESET_AUTH_MODE')==='KA_ONLY';}catch(_e){}
+      if(resetAuthMode && String(whoJson.role||'')!=='KA_IPSRS'){
+        await client.auth.signOut().catch(()=>{});
+        if(msgEl)msgEl.innerText='Reset hanya mengizinkan akun KA IPSRS. Akun ini tidak memiliki kewenangan tersebut.';
+        return false;
+      }
+      if(resetAuthMode){try{sessionStorage.removeItem('IPSRS_LHI_RESET_AUTH_MODE');}catch(_e){}}
       // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
       // bukan terhadap backend GAS lama.
