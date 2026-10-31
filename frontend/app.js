@@ -511,6 +511,10 @@
     return json;
   }
 
+  // Dipakai modul login-fast.js untuk mengambil peringatan disiplin setelah login.
+  // gsRun sebelumnya hanya berada dalam scope lokal app.js sehingga window.gsRun tidak tersedia.
+  window.gsRun = gsRun;
+
   function resetLaporanUnfinishedState(){
     // Kembali ke keadaan normal: semua laporan, tanpa filter drill-down.
     clearDashboardCategoryTarget_();
