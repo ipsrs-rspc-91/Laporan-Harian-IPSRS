@@ -219,7 +219,7 @@ async function staff(ctx:any,req?:Request){
        .from("staff")
        .update({status:"DIBLOKIR_LHI_LEBIH_10_HARI"})
        .eq("staff_id",data.staff_id)
-        .eq("status","Aktif");
+       .eq("status",data.status);
      if(blockError)throw blockError;
      await ctx.supabaseAdmin.from("audit_log").insert({
        username:"SYSTEM",
@@ -232,6 +232,28 @@ async function staff(ctx:any,req?:Request){
        new_value:"DIBLOKIR_LHI_LEBIH_10_HARI"
      });
      data.status="DIBLOKIR_LHI_LEBIH_10_HARI";
+   }else if(["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI"].includes(String(data.status).toUpperCase())){
+     // Migrate accounts blocked by the previous 7/10-day policy.
+     // Under the revised policy, they must be released when the current streak is 10 days or fewer.
+     const previousStatus=data.status;
+     const {error:releaseError}=await ctx.supabaseAdmin
+       .from("staff")
+       .update({status:"Aktif",lhi_manual_unblock_until:null})
+       .eq("staff_id",data.staff_id)
+       .eq("status",previousStatus);
+     if(releaseError)throw releaseError;
+     await ctx.supabaseAdmin.from("audit_log").insert({
+       username:"SYSTEM",
+       staff_id:data.staff_id,
+       action:"RELEASE_LEGACY_LHI_BLOCK_POLICY_UPDATE",
+       report_id:null,
+       keterangan:"Blokir LHI lama dilepas karena kebijakan baru hanya memblokir setelah lebih dari 10 hari berturut-turut.",
+       field_changed:"status",
+       old_value:previousStatus,
+       new_value:"Aktif"
+     });
+     data.status="Aktif";
+     data.lhi_manual_unblock_until=null;
    }
  }
  if(!disciplineExempt&&["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"].includes(String(data.status).toUpperCase())&&!manualUnblockActive){
