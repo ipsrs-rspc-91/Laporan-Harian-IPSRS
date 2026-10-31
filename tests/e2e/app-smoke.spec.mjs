@@ -217,7 +217,13 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
 
   const appShell = page.locator('#appShell');
   await expect(appShell).toBeAttached();
-  await appShell.evaluate(el => el.classList.remove('hidden'));
+  // This test covers the authenticated app-shell keyboard layout, not the
+  // global LHI lock overlay. Remove startup-only overlays in this isolated UI test.
+  await page.evaluate(() => {
+    document.getElementById('authLoading')?.classList.add('hidden');
+    document.getElementById('loginScreen')?.classList.add('hidden');
+    document.getElementById('appShell')?.classList.remove('hidden');
+  });
 
   const content = page.locator('main.content');
   const ruang = page.locator('#Ruang');
