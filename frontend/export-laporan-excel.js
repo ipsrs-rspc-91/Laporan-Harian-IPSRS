@@ -181,20 +181,8 @@
   }
 
   function decorateRenderedReports() {
-    // Daftar Laporan berbentuk tabel hanya memakai satu tombol ekspor utama
-    // (btnDownloadLaporanExcel). Jangan menambahkan tombol Excel per baris
-    // di samping Edit karena ekspor seluruh hasil filter sudah tersedia di toolbar.
-
-    const cards = document.getElementById('reportCardList');
-    if (cards) {
-      const rows = currentDisplayedRows();
-      Array.from(cards.children).forEach((card, index) => {
-        if (rows[index]) {
-          card.dataset.reportId = String(rows[index].ID ?? rows[index].report_id ?? rows[index].ReportID ?? rows[index].id ?? '');
-          addSingleButton(card, rows[index], false);
-        }
-      });
-    }
+    // Ekspor seluruh laporan menggunakan tombol utama di toolbar.
+    // Jangan menambahkan tombol Excel tambahan pada setiap kartu laporan.
   }
 
   function installRendererHook() {
