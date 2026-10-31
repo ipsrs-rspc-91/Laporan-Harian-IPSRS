@@ -259,7 +259,8 @@ async function staff(ctx:any,req?:Request){
  if(!disciplineExempt&&["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"].includes(String(data.status).toUpperCase())&&!manualUnblockActive){
    throw Error("Akun diblokir karena tidak mengisi laporan LHI lebih dari 10 hari berturut-turut. Hubungi KA IPSRS.");
  }
- if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
+ const lhiBlockedStatuses=["DIBLOKIR_LHI_7_HARI","DIBLOKIR_LHI_10_HARI","DIBLOKIR_LHI_LEBIH_10_HARI"];
+ if(String(data.status).toLowerCase()!=="aktif"&&!(disciplineExempt&&lhiBlockedStatuses.includes(String(data.status).toUpperCase())))throw Error("Akun petugas tidak aktif.");
  return data
 }
 async function audit(db:any,s:any,a:string,id:string|null,k:string,v:any={}){
