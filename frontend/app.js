@@ -6232,7 +6232,7 @@
         #loginScreen .lhi-person-days .lhi-person-copy span{margin:0 0 4px}
         #loginScreen .lhi-person-days .lhi-person-copy strong{color:#cf0000;font-size:clamp(21px,4.8vw,36px)}
         #loginScreen .lhi-server-notice{width:100%;margin:clamp(8px,1.5vh,14px) 0 0;padding:10px 13px;border:1px solid #f2b8b8;border-left:4px solid #c90000;border-radius:12px;background:#fff5f5;text-align:left;color:#c00000}
-        #loginScreen .lhi-server-notice strong{display:block;margin-bottom:6px;color:#c00000;font-size:clamp(12px,2.4vw,15px);font-weight:900;letter-spacing:.04em;text-align:left}
+        #loginScreen .lhi-server-notice > strong{display:block;margin-bottom:6px;color:#c00000;font-size:clamp(12px,2.4vw,15px);font-weight:900;letter-spacing:.04em;text-align:left}
         #loginScreen .lhi-server-notice p{display:block;width:100%;margin:0;color:#c00000;font-size:clamp(12px,2.5vw,15px);line-height:1.5;font-weight:600;text-align:justify;text-align-last:left;text-justify:inter-word;word-break:normal;overflow-wrap:normal}
         #loginScreen .lhi-server-notice p + p{margin-top:5px}
         @media(max-width:520px){
@@ -6256,7 +6256,7 @@
           #loginScreen .lhi-lock-banner{padding:7px 7px;margin-bottom:clamp(8px,1.4vh,12px);font-size:clamp(11px,3vw,13px)}
           #loginScreen .lhi-lock-intro{font-size:clamp(12px,3.5vw,15px);margin-bottom:clamp(7px,1.3vh,11px)}
           #loginScreen .lhi-server-notice{margin:clamp(8px,1.5vh,14px) 0 0;padding:10px 13px;border:1px solid #f2b8b8;border-left:4px solid #c90000;border-radius:12px;background:#fff5f5;text-align:left;color:#c00000}
-         #loginScreen .lhi-server-notice strong{display:block;margin-bottom:6px;color:#c00000;font-size:clamp(12px,2.4vw,15px);font-weight:900;letter-spacing:.04em;text-align:left}
+         #loginScreen .lhi-server-notice > strong{display:block;margin-bottom:6px;color:#c00000;font-size:clamp(12px,2.4vw,15px);font-weight:900;letter-spacing:.04em;text-align:left}
          #loginScreen .lhi-server-notice p{margin:0;color:#c00000;font-size:clamp(12px,2.5vw,15px);line-height:1.4;font-weight:600;text-align:justify;text-justify:inter-word;}
          #loginScreen .lhi-person-box{padding:7px 7px;border-radius:16px}
           #loginScreen .lhi-person-row{grid-template-columns:clamp(42px,8vh,58px) 2px minmax(0,1fr);gap:8px;min-height:clamp(54px,9vh,72px)}
