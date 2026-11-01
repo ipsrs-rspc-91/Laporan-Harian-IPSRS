@@ -6234,7 +6234,7 @@
         #loginScreen .lhi-server-notice{width:100%;margin:clamp(8px,1.5vh,14px) 0 0;padding:10px 13px;border:1px solid #f2b8b8;border-left:4px solid #c90000;border-radius:12px;background:#fff5f5;text-align:left;color:#c00000}
         #loginScreen .lhi-server-notice strong{display:block;margin-bottom:6px;color:#c00000;font-size:clamp(12px,2.4vw,15px);font-weight:900;letter-spacing:.04em;text-align:left}
         #loginScreen .lhi-server-notice p{display:block;width:100%;margin:0;color:#c00000;font-size:clamp(12px,2.5vw,15px);line-height:1.5;font-weight:600;text-align:justify;text-align-last:left;text-justify:inter-word;word-break:normal;overflow-wrap:normal}
-        #loginScreen .lhi-server-notice p + p{margin-top:6px}
+        #loginScreen .lhi-server-notice p + p{margin-top:5px}
         @media(max-width:520px){
           #loginScreen .lhi-lock-card{width:calc(100% - 22px);padding:clamp(72px,11vh,96px) 12px clamp(12px,2.5vh,20px);border-radius:21px}
         #loginScreen .lhi-lock-reset{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 21px;border:0;border-radius:14px;background:linear-gradient(180deg,#079c16,#00750b);color:#fff;font-size:clamp(13px,2.6vw,19.5px);font-weight:900;box-shadow:0 5px 12px rgba(0,95,8,.2);cursor:pointer}
