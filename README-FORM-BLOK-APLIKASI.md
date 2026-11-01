@@ -6,10 +6,14 @@
 Menerapkan pengingat bertahap atas keterlambatan pengisian Laporan Harian IPSRS (LHI), mendorong saling mengingatkan antarpetugas, dan menerapkan Mode Blok Aplikasi jika kewajiban LHI tidak dipenuhi.
 
 ## 2. Aturan penghitungan
-- Menggunakan **hari kalender berturut-turut**.
-- **Sabtu, Minggu, dan hari libur tetap dihitung.**
-- Streak petugas terputus/reset setelah petugas mengisi LHI yang sah.
-- Batas pergantian hari dan zona waktu operasional harus konsisten menggunakan WIB.
+- Sumber acuan pengisian adalah waktu data LHI benar-benar disimpan, yaitu kolom **`created_at`**, bukan tanggal pekerjaan/tanggal yang dipilih pada formulir.
+- Semua waktu `created_at` wajib dikonversi ke zona waktu operasional **WIB (`Asia/Jakarta`)** sebelum menentukan tanggal input.
+- Penghitungan menggunakan **hari kalender penuh yang telah terlewati** sejak tanggal input LHI terakhir. Secara konsep: `hari_tidak_mengisi = tanggal_WIB_hari_ini - tanggal_WIB_input_terakhir`, dengan hari berjalan yang belum berakhir tidak dimasukkan sebagai satu hari tambahan.
+- Hari berjalan **tidak dihitung sebelum pukul 00.00 WIB pada hari berikutnya**. Dengan demikian, angka bertambah ketika satu tanggal kalender penuh telah terlewati; bukan berdasarkan pembulatan durasi jam atau kelipatan 24 jam dari jam input.
+- Contoh: input terakhir 22 Oktober 2026 pukul 08.37 WIB menghasilkan 9 hari tidak mengisi pada 1 November 2026 sepanjang tanggal 1 November masih berjalan. Jika belum ada input sampai pergantian ke 2 November 2026 pukul 00.00 WIB, hitungan menjadi 10 hari.
+- **Sabtu, Minggu, dan hari libur tetap dihitung** sebagai hari kalender.
+- Streak petugas terputus/reset setelah petugas menginput LHI baru yang sah. Penghitungan berikutnya dimulai dari tanggal input terbaru tersebut.
+- Perhitungan harus konsisten di backend/server untuk seluruh petugas, notifikasi, rekap kedisiplinan, penonaktifan individual, dan Mode Blok Aplikasi. Frontend hanya menampilkan angka hasil perhitungan server dan tidak menghitung ulang dengan aturan berbeda.
 - Notifikasi setiap tahap tidak boleh terkirim berulang kali untuk kejadian/tahap yang sama.
 
 ## 3. Tahapan peringatan dan tindakan
