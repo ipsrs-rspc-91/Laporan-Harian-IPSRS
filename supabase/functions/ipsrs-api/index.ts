@@ -475,17 +475,26 @@ if(a==="apiTambahItem"){
  const norm=normalizeItem(n);if(!norm)return{ok:false,msg:"Nama item tidak valid."};
  const {data:a1,error:ae}=await db.from("master_data").select("id,name,is_active").eq("data_type","AREA").ilike("name",ar).maybeSingle();
  if(ae)throw ae;if(!a1||!a1.is_active)return{ok:false,msg:"Area kerja tidak ditemukan atau tidak aktif."};
- const {data:rows,error:re}=await db.from("master_data").select("id,name,is_active").eq("data_type","ITEM").eq("parent_id",a1.id).eq("is_active",true).order("name").limit(2000);
- if(re)throw re;
- const existingItemsForArea=Array.isArray(d.existingItemsForArea)?d.existingItemsForArea.filter((x:any)=>typeof x==="string").slice(0,2000):[];
- const combined:any[]=[...(rows||[])];const known=new Set(combined.map((x:any)=>normalizeItem(x.name)));
- for(const name of existingItemsForArea){const nn=normalizeItem(name);if(nn&&!known.has(nn)){combined.push({name,is_active:true});known.add(nn);}}
+ // Global scan: active ITEM records from every AREA/SUBAREA, not just the selected parent.
+ const rows=await fetchAllPages(()=>db.from("master_data").select("id,name,parent_id,is_active").eq("data_type","ITEM").eq("is_active",true).order("id"),1000);
+ const {data:parents,error:pe}=await db.from("master_data").select("id,name,parent_id,data_type,is_active").in("data_type",["AREA","SUBAREA"]).eq("is_active",true).limit(5000);
+ if(pe)throw pe;
+ const parentById=new Map((parents||[]).map((x:any)=>[Number(x.id),x]));
+ const locationOf=(parentId:any)=>{
+  const p=parentById.get(Number(parentId));if(!p)return "Lokasi tidak diketahui";
+  if(p.data_type==="SUBAREA"){
+   const a=parentById.get(Number(p.parent_id));
+   return a?String(a.name)+" / "+String(p.name):String(p.name);
+  }
+  return String(p.name);
+ };
+ const combined:any[]=(rows||[]).map((r:any)=>({...r,area:locationOf(r.parent_id)}));
  const levenshtein=(x:string,y:string)=>{if(x===y)return 0;if(!x.length)return y.length;if(!y.length)return x.length;let prev=Array.from({length:y.length+1},(_,i)=>i);for(let i=1;i<=x.length;i++){const cur=[i];for(let j=1;j<=y.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(x[i-1]===y[j-1]?0:1));prev=cur;}return prev[y.length];};
  const tokenScore=(x:string,y:string)=>{const X=new Set(x.split(" ").filter(Boolean)),Y=new Set(y.split(" ").filter(Boolean));if(!X.size||!Y.size)return 0;let overlap=0;for(const t of X)if(Y.has(t))overlap++;return overlap/(X.size+Y.size-overlap)};
- const scored=combined.map((r:any)=>{const rn=normalizeItem(r.name);const lev=1-levenshtein(norm,rn)/Math.max(norm.length,rn.length,1);const tok=tokenScore(norm,rn);return{name:r.name,score:Math.max(lev,tok),normalized:rn};});
+ const scored=combined.map((r:any)=>{const rn=normalizeItem(r.name);const lev=1-levenshtein(norm,rn)/Math.max(norm.length,rn.length,1);const tok=tokenScore(norm,rn);return{name:r.name,area:r.area,score:Math.max(lev,tok),normalized:rn};});
  const exact=scored.find((x:any)=>x.normalized===norm);
- if(exact)return{ok:false,msg:"Nama item sama dengan data yang sudah ada. Gunakan item yang tersedia: "+exact.name,candidates:[{name:exact.name,score:1}],exact:true};
- const candidates=scored.filter((x:any)=>x.score>=0.58&&(x.normalized.includes(norm)||norm.includes(x.normalized)||tokenScore(norm,x.normalized)>=0.5||x.score>=0.68)).sort((x:any,y:any)=>y.score-x.score).slice(0,5).map((x:any)=>({name:x.name,score:Number(x.score.toFixed(2))}));
+ if(exact)return{ok:false,msg:"ITEM SUDAH TERDAFTAR secara global pada lokasi: "+exact.area+". Penambahan ulang di area berbeda diblokir.",candidates:[{name:exact.name,area:exact.area,score:1}],exact:true};
+ const candidates=scored.filter((x:any)=>x.score>=0.58&&(x.normalized.includes(norm)||norm.includes(x.normalized)||tokenScore(norm,x.normalized)>=0.5||x.score>=0.68)).sort((x:any,y:any)=>y.score-x.score).slice(0,5).map((x:any)=>({name:x.name,area:x.area,score:Number(x.score.toFixed(2))}));
  if(candidates.length&&!allowSimilar)return{ok:false,needs_choice:true,msg:"Ditemukan item yang mirip. Periksa kandidat terlebih dahulu.",candidates};
  const {data,error}=await db.from("master_data").insert({data_type:"ITEM",parent_id:a1.id,name:n,sort_order:999,is_active:true,created_by:ctx.userClaims.sub}).select("id,name").single();
  if(error){if(String(error.code||"")==="23505"||/duplicate|sudah ada|already exists/i.test(String(error.message||"")))return{ok:false,msg:"Item sama sudah ditambahkan oleh pengguna lain. Muat ulang daftar item dan pilih data yang sudah ada."};throw error;}
