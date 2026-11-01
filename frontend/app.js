@@ -6284,7 +6284,7 @@
             <p>Kelalaian satu user name akan terdeteksi sistem dan dapat menyebabkan akses aplikasi LHI terblokir.</p>
           </section>
           <div class="lhi-lock-actions">
-            <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M26 12a11 11 0 0 0-19-4L4 11M4 5v6h6M6 20a11 11 0 0 0 19 4l3-3m0 6v-6h-6"/></svg>Tombol Reset Manual</button>
+            <button type="button" class="lhi-lock-reset" id="lhiGlobalBlockReset"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M26 12a11 11 0 0 0-19-4L4 11M4 5v6h6M6 20a11 11 0 0 0 19 4l3-3m0 6v-6h-6"/></svg>Reset Manual</button>
             <button type="button" class="lhi-lock-retry" id="lhiGlobalBlockRetry">Periksa Kembali</button>
           </div>
         </main>
