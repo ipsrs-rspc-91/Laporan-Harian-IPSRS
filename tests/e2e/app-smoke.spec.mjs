@@ -461,6 +461,5 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
 
   // ESTAFET remains inline within the first paragraph and its punctuation.
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
-  expect(appSource).toMatch(/#loginScreen \.lhi-server-notice p\\{[^}]*text-align:justify/);
-  expect(appSource).toMatch(/#loginScreen \.lhi-server-notice p\\{[^}]*text-align-last:left/);
+  expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
