@@ -3686,8 +3686,8 @@
     const chooseExisting=(index)=>{
       const candidate=candidates[index];if(!candidate)return;
       const currentArea=String(document.getElementById('AreaKerja')?.value||'');
-      if(candidate.exact && !(candidate.areas||[]).includes(currentArea)){
-        setMsg('itemBaruMsg','ITEM SUDAH TERDAFTAR di lokasi: '+(candidate.areas||[]).join(', ')+'. Penambahan ulang di lokasi berbeda diblokir.',true);
+      if(!(candidate.areas||[]).includes(currentArea)){
+        setMsg('itemBaruMsg',(candidate.exact?'ITEM SUDAH TERDAFTAR':'ITEM SERUPA DITEMUKAN')+' di lokasi: '+(candidate.areas||[]).join(', ')+'. Item lintas area tidak dapat dipilih sebagai item area ini. Pastikan bukan data duplikat.',true);
         return;
       }
       const sel=document.getElementById('Item');
@@ -3707,8 +3707,9 @@
     const p=itemSimilarityPanel_();if(!p)return;
     _itemSimilarityCandidates=Array.isArray(candidates)?candidates:[];
     const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const currentArea=String(document.getElementById('AreaKerja')?.value||'');
     p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Ditemukan item yang sama atau mirip secara global. Periksa lokasi sebelum melanjutkan:</div>'+
-      '<div style="display:grid;gap:6px" id="itemSimilarityList">'+_itemSimilarityCandidates.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+' <small style="color:#64748b">('+Math.round(Number(x.score||0)*100)+'% mirip)</small><br><small>Lokasi: '+esc(x.area||'Tidak diketahui')+'</small></span><button type="button" data-similar-index="'+i+'" class="btn" style="padding:5px 9px">Gunakan item ini</button></div>').join('')+'</div>'+
+      '<div style="display:grid;gap:6px" id="itemSimilarityList">'+_itemSimilarityCandidates.map((x,i)=>{const sameArea=String(x.area||'')===currentArea;return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+' <small style="color:#64748b">('+Math.round(Number(x.score||0)*100)+'% mirip)</small><br><small>Lokasi: '+esc(x.area||'Tidak diketahui')+'</small></span><button type="button" data-similar-index="'+i+'" class="btn" style="padding:5px 9px" '+(sameArea?'':'disabled')+'>'+(sameArea?'Gunakan item ini':'Terdaftar di area lain')+'</button></div>';}).join('')+'</div>'+
       (exact?'':'<div style="margin-top:8px">Jika kandidat berbeda spesifikasi, lanjutkan hanya setelah dipastikan bukan item yang sama.</div><button type="button" id="itemSimilarityContinue" class="btn" style="margin-top:8px;width:100%">Kandidat berbeda spesifikasi — lanjutkan</button>');
     p.style.display='block';
     p.querySelectorAll('[data-similar-index]').forEach(btn=>btn.addEventListener('click',()=>{
