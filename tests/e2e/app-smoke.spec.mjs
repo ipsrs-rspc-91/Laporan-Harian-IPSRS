@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
@@ -448,4 +449,17 @@ test('direct Area Kerja group selection is retained for Item Baru', async ({ pag
   await expect(page.locator('#itemModalBg')).toBeVisible({ timeout: 2500 });
   await expect(page.locator('#itemBaruAreaLabel')).toHaveText('Rapat/Pertemuan');
   expect(runtimeErrors, 'No runtime errors for direct group selection').toEqual([]);
+});
+
+
+test('server notice keeps ESTAFET inline and paragraph text justified', async () => {
+  const appSource = await readFile(new URL('../../frontend/app.js', import.meta.url), 'utf8');
+
+  // Only the heading (direct child strong) may be rendered as a block.
+  expect(appSource).toContain('#loginScreen .lhi-server-notice > strong{display:block;');
+  expect(appSource).not.toContain('#loginScreen .lhi-server-notice strong{display:block;');
+
+  // ESTAFET remains inline within the first paragraph and its punctuation.
+  expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
+  expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
