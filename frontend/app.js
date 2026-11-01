@@ -3646,18 +3646,30 @@
     if(!p)return;
     if(query.length<2){p.style.display='none';p.innerHTML='';return;}
     const area=areaEl.value;
-    const all=(MASTER_ITEMS_BY_AREA[area]||[]).concat(CUSTOM_ITEMS_BY_AREA[area]||[]);
-    const unique=[],seen=new Set();
-    for(const value of all){
-      const name=String(value||'').trim(),norm=normalizeLiveItem_(name);
-      if(!name||!norm||seen.has(norm))continue;
-      seen.add(norm);
-      const tokens=new Set(query.split(' ').filter(Boolean)),other=new Set(norm.split(' ').filter(Boolean));
+    // GLOBAL duplicate guard: compare against every work area, not only the selected area.
+    const globalItems=[];
+    for(const [areaName,items] of Object.entries(MASTER_ITEMS_BY_AREA||{})){
+      for(const value of (items||[]))globalItems.push({name:String(value||'').trim(),area:String(areaName||'')});
+    }
+    for(const [areaName,items] of Object.entries(CUSTOM_ITEMS_BY_AREA||{})){
+      for(const value of (items||[]))globalItems.push({name:String(value||'').trim(),area:String(areaName||'')});
+    }
+    const uniqueByName=new Map();
+    for(const row of globalItems){
+      const name=String(row.name||'').trim(),norm=normalizeLiveItem_(name);
+      if(!name||!norm)continue;
+      if(!uniqueByName.has(norm))uniqueByName.set(norm,{name,areas:[]});
+      const entry=uniqueByName.get(norm);
+      if(row.area&&!entry.areas.includes(row.area))entry.areas.push(row.area);
+    }
+    const unique=[],tokens=new Set(query.split(' ').filter(Boolean));
+    for(const [norm,row] of uniqueByName.entries()){
+      const other=new Set(norm.split(' ').filter(Boolean));
       let overlap=0;for(const token of tokens)if(other.has(token))overlap++;
       const tokenScore=tokens.size&&other.size?overlap/(tokens.size+other.size-overlap):0;
       const score=Math.max(liveLevenshteinScore_(query,norm),tokenScore);
       const isPrefix=norm.includes(query)||query.includes(norm);
-      if(norm===query||isPrefix||score>=0.58||tokenScore>=0.5)unique.push({name,score:norm===query?1:score,exact:norm===query});
+      if(norm===query||isPrefix||score>=0.58||tokenScore>=0.5)unique.push({name:row.name,areas:row.areas,score:norm===query?1:score,exact:norm===query});
     }
     unique.sort((a,b)=>Number(b.exact)-Number(a.exact)||b.score-a.score||a.name.localeCompare(b.name,'id'));
     const candidates=unique.slice(0,8);
@@ -3673,6 +3685,11 @@
     p.style.display='block';
     const chooseExisting=(index)=>{
       const candidate=candidates[index];if(!candidate)return;
+      const currentArea=String(document.getElementById('AreaKerja')?.value||'');
+      if(candidate.exact && !(candidate.areas||[]).includes(currentArea)){
+        setMsg('itemBaruMsg','ITEM SUDAH TERDAFTAR di lokasi: '+(candidate.areas||[]).join(', ')+'. Penambahan ulang di lokasi berbeda diblokir.',true);
+        return;
+      }
       const sel=document.getElementById('Item');
       if(sel){refreshItemOptions();sel.value=candidate.name;}
       _liveSelectedExistingItem_='';
@@ -3690,9 +3707,9 @@
     const p=itemSimilarityPanel_();if(!p)return;
     _itemSimilarityCandidates=Array.isArray(candidates)?candidates:[];
     const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Ditemukan item yang mirip. Periksa sebelum membuat item baru:</div>'+
-      '<div style="display:grid;gap:6px" id="itemSimilarityList">'+_itemSimilarityCandidates.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+' <small style="color:#64748b">('+Math.round(Number(x.score||0)*100)+'% mirip)</small></span><button type="button" data-similar-index="'+i+'" class="btn" style="padding:5px 9px">Gunakan item ini</button></div>').join('')+'</div>'+
-      (exact?'':'<div style="margin-top:8px">Jika semua kandidat berbeda spesifikasi dan memang item baru, Anda dapat melanjutkan setelah memeriksa daftar.</div><button type="button" id="itemSimilarityContinue" class="btn" style="margin-top:8px;width:100%">Kandidat tidak sesuai — lanjut tambah item baru</button>');
+    p.innerHTML='<div style="font-weight:700;margin-bottom:6px">Ditemukan item yang sama atau mirip secara global. Periksa lokasi sebelum melanjutkan:</div>'+
+      '<div style="display:grid;gap:6px" id="itemSimilarityList">'+_itemSimilarityCandidates.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px;background:#fff;border:1px solid #fde68a;border-radius:7px"><span>'+esc(x.name)+' <small style="color:#64748b">('+Math.round(Number(x.score||0)*100)+'% mirip)</small><br><small>Lokasi: '+esc(x.area||'Tidak diketahui')+'</small></span><button type="button" data-similar-index="'+i+'" class="btn" style="padding:5px 9px">Gunakan item ini</button></div>').join('')+'</div>'+
+      (exact?'':'<div style="margin-top:8px">Jika kandidat berbeda spesifikasi, lanjutkan hanya setelah dipastikan bukan item yang sama.</div><button type="button" id="itemSimilarityContinue" class="btn" style="margin-top:8px;width:100%">Kandidat berbeda spesifikasi — lanjutkan</button>');
     p.style.display='block';
     p.querySelectorAll('[data-similar-index]').forEach(btn=>btn.addEventListener('click',()=>{
       const x=_itemSimilarityCandidates[Number(btn.getAttribute('data-similar-index'))];if(!x)return;
