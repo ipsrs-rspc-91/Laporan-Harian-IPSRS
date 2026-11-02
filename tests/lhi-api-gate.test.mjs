@@ -46,3 +46,10 @@ test("main operational API retains gateway JWT verification", () => {
   assert.match(config, /\[functions\.ipsrs-api\]\s*verify_jwt = true/);
   assert.match(config, /\[functions\.lhi-block-status\]\s*verify_jwt = false/);
 });
+
+test("global lock is checked before staff lookup or auth mapping fallback", () => {
+  const lockCheck = api.indexOf("const globalLockState=");
+  const staffLookup = api.indexOf("from(\"staff\").select(staffFields)");
+  const fallbackWrite = api.indexOf(".update({auth_user_id:uid})");
+  assert.ok(lockCheck >= 0 && staffLookup > lockCheck && fallbackWrite > lockCheck);
+});
