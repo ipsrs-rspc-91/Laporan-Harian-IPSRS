@@ -14,6 +14,7 @@ test("atomic Reset RPC is review-only and transaction wrapped", () => {
 });
 
 test("Reset revalidates the recovery capability and exact allowed action", () => {
+  assert.match(sql, /pg_advisory_xact_lock/);
   assert.match(sql, /validate_lhi_recovery_session/);
   assert.match(sql, /'apiStartLhiGrace'/);
   assert.match(sql, /Sesi pemulihan tidak valid atau tidak memiliki kewenangan/);
