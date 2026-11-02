@@ -60,7 +60,12 @@ for start, end in monitoring_checks:
     assert 'created_at' in section, f"{start} must use created_at"
     assert "wibDate(" in section, f"{start} must group by WIB input date"
     assert "active_since" in section and "addWibDays(" in section, f"{start} must honor the employee activation baseline"
-    assert "wajib_hari_ini" in section or start.startswith('if(a==="apiGetStaffDailyStatus"'), f"{start} must expose daily due status"
+    if start == 'if(a==="apiGetStaffMonitoring"){':
+        assert "wajib_hari_ini" in section
+    elif start == 'if(a==="apiGetStaffDailyStatus"){':
+        assert "wajib:" in section
+    else:
+        assert "hari_wajib_terhitung" in section
 
 dashboard_start = api.index("const monitoringStart=")
 dashboard_end = api.index("const sortCount=", dashboard_start)
