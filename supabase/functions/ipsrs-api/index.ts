@@ -161,7 +161,7 @@ async function reportPolicyBatch(db:any,s:any,rows:any[]){
  return{visible,editable};
 }
 function dbp(p:any){const n=(v:any)=>v===""||v==null?null:Number(v);const unitComplete=!!(p.UnitStatus&&p.UnitName&&p.UnitType&&String(p.UnitJumlah??"").trim());const spareComplete=!!(p.SparePartMaterialStatus&&p.SparePartMaterial&&p.SparePartMaterialType&&String(p.SparePartMaterialJumlah??"").trim());const legacyKind=unitComplete&&!spareComplete?"UNIT":spareComplete&&!unitComplete?"SPARE PART / MATERIAL":"";const legacy=legacyKind==="UNIT"?{status:p.UnitStatus,name:p.UnitName,type:p.UnitType,qty:p.UnitJumlah}:legacyKind==="SPARE PART / MATERIAL"?{status:p.SparePartMaterialStatus,name:p.SparePartMaterial,type:p.SparePartMaterialType,qty:p.SparePartMaterialJumlah}:null;return{tanggal:p.Tanggal||null,pelapor:p.Pelapor||null,pukul:p.Pukul||null,nolk:p.NoLK||null,ruang:p.Ruang||null,masalah_kegiatan:p.MasalahKegiatan||null,tindakan:p.Tindakan||null,status:p.Status||null,keterangan:p.Keterangan||null,kategori:p.Kategori||null,area_kerja:p.AreaKerja||null,item:p.Item||null,spare_part_unit_kind:legacyKind||null,spare_part_unit_status:legacy?.status||null,spare_part_unit:legacy?.name||null,type:legacy?.type||null,jumlah:n(legacy?.qty),unit_status:unitComplete?p.UnitStatus:null,unit_name:unitComplete?p.UnitName:null,unit_type:unitComplete?p.UnitType:null,unit_jumlah:n(unitComplete?p.UnitJumlah:null),spare_part_material_status:spareComplete?p.SparePartMaterialStatus:null,spare_part_material:spareComplete?p.SparePartMaterial:null,spare_part_material_type:spareComplete?p.SparePartMaterialType:null,spare_part_material_jumlah:n(spareComplete?p.SparePartMaterialJumlah:null),jadwal_kerja:p.JadwalKerja||null,rencana_kegiatan:p.RencanaKegiatan||null,target_pekerjaan:p.TargetPekerjaan||null,realisasi_pekerjaan:p.RealisasiPekerjaan||null,hasil_pencapaian:p.HasilPencapaian||null,status_pencapaian:p.StatusPencapaian||null,kendala:p.Kendala||null,tindak_lanjut:p.TindakLanjut||null,waktu_mulai:p.WaktuMulai||null,waktu_selesai:p.WaktuSelesai||null}}
-async function staff(ctx:any,req?:Request,allowKaRecovery=false){
+async function staff(ctx:any,req?:Request,allowKaRecovery=false,skipLegacyWhenGlobalBlocked=false){
  let uid=ctx.userClaims?.sub;
  let email=String(ctx.userClaims?.email||"").toLowerCase();
  if(!uid&&req){
@@ -188,7 +188,7 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false){
  const statusUpper=String(data.status||"").toUpperCase();
  const isKa=String(data.role||"").toUpperCase()==="KA_IPSRS";
  const kaRecoveryAllowed=allowKaRecovery&&isKa&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(statusUpper);
- if(!kaRecoveryAllowed){
+ if(!kaRecoveryAllowed&&!skipLegacyWhenGlobalBlocked){
    // Stage 2 bridge: legacy individual blocks are temporarily bypassed only
    // while the database confirms an active GRACE window. Stage 3 replaces
    // this legacy reports.tanggal discipline calculation completely.
@@ -277,11 +277,12 @@ async function act(ctx:any,a:string,d:any,req?:Request){
  const blockMode=String(blockSetting.value||"").toUpperCase();
  if(blockMode!=="AKTIF"&&blockMode!=="NONAKTIF")throw Error("Nilai Mode Blok Aplikasi tidak valid. Seluruh akses ditahan sampai status diperbaiki.");
  const globalBlocked=blockMode==="AKTIF";
- const s=await staff(ctx,req,globalBlocked&&recoveryActions.has(a));
+ const s=await staff(ctx,req,globalBlocked&&recoveryActions.has(a),globalBlocked);
  if(globalBlocked){
    if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
    if(!recoveryActions.has(a))return{ok:false,msg:"MODE FORM BLOK APLIKASI AKTIF. Akses operasional ditutup oleh server."};
    if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menggunakan jalur pemulihan."};
+   if(!["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(String(s.status||"").toUpperCase()))return{ok:false,msg:"Status kepegawaian KA IPSRS tidak aktif. Pemulihan ditolak."};
    if(!await recoveryTokenValid(db,String(d.recoveryToken||""),s.staff_id))return{ok:false,msg:"Token pemulihan tidak valid atau sudah kedaluwarsa. Silakan ulangi Reset."};
    if(a==="apiWhoAmI"){
      await db.from("staff").update({last_seen_at:new Date().toISOString()}).eq("staff_id",s.staff_id);
