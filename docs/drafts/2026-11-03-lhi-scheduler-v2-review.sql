@@ -159,25 +159,52 @@ BEGIN
 
     -- Recompute completion from current non-deleted reports. This reverses a
     -- completion if its only qualifying report was deleted/cancelled.
-    UPDATE public.lhi_discipline_snapshot_members m
-    SET obligation_status = CASE WHEN q.report_id IS NULL THEN 'PENDING' ELSE 'COMPLETED' END,
-        completed_at = CASE WHEN q.report_id IS NULL THEN NULL ELSE q.created_at END,
-        qualifying_report_id = q.report_id
-    FROM public.staff s
-    LEFT JOIN LATERAL (
-      SELECT r.report_id, r.created_at
-      FROM public.reports r
-      WHERE r.staff_id = s.staff_id
-        AND r.deleted_at IS NULL
-        AND r.created_at >= v_grace.started_at
-        AND r.created_at < v_grace.deadline_at
-      ORDER BY r.created_at DESC, r.report_id DESC
-      LIMIT 1
-    ) q ON TRUE
-    WHERE m.staff_id = s.staff_id
-      AND m.incident_id = v_grace.incident_id
-      AND s.status = 'Aktif'
-      AND m.obligation_status IN ('PENDING', 'COMPLETED');
+    WITH current_state AS MATERIALIZED (
+      SELECT m.member_id, m.obligation_status AS old_status,
+             q.report_id, q.created_at
+      FROM public.lhi_discipline_snapshot_members m
+      JOIN public.staff s ON s.staff_id = m.staff_id
+      LEFT JOIN LATERAL (
+        SELECT r.report_id, r.created_at
+        FROM public.reports r
+        WHERE r.staff_id = s.staff_id
+          AND r.deleted_at IS NULL
+          AND r.created_at >= v_grace.started_at
+          AND r.created_at < v_grace.deadline_at
+        ORDER BY r.created_at DESC, r.report_id DESC
+        LIMIT 1
+      ) q ON TRUE
+      WHERE m.incident_id = v_grace.incident_id
+        AND s.status = 'Aktif'
+        AND m.obligation_status IN ('PENDING', 'COMPLETED')
+      FOR UPDATE OF m
+    ),
+    changed AS (
+      UPDATE public.lhi_discipline_snapshot_members m
+      SET obligation_status = CASE WHEN c.report_id IS NULL THEN 'PENDING' ELSE 'COMPLETED' END,
+          completed_at = CASE WHEN c.report_id IS NULL THEN NULL ELSE c.created_at END,
+          qualifying_report_id = c.report_id
+      FROM current_state c
+      WHERE m.member_id = c.member_id
+        AND (
+          m.obligation_status IS DISTINCT FROM
+            CASE WHEN c.report_id IS NULL THEN 'PENDING' ELSE 'COMPLETED' END
+          OR m.qualifying_report_id IS DISTINCT FROM c.report_id
+        )
+      RETURNING m.member_id, c.old_status, m.obligation_status AS new_status,
+                c.report_id
+    )
+    INSERT INTO public.lhi_discipline_obligation_events
+      (member_id, event_type, event_at, report_id, old_status, new_status, details)
+    SELECT c.member_id,
+      CASE
+        WHEN c.new_status = 'COMPLETED' THEN 'REPORT_QUALIFIED'
+        WHEN c.old_status = 'COMPLETED' THEN 'REPORT_CANCELLED'
+        ELSE 'OBLIGATION_REOPENED'
+      END,
+      v_now, c.report_id, c.old_status, c.new_status,
+      jsonb_build_object('incident_id', v_grace.incident_id)
+    FROM changed c;
 
     IF v_now < v_grace.deadline_at THEN
       RETURN jsonb_build_object(
