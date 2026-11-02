@@ -119,7 +119,7 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 7. Saat Mode Blok aktif, tampilan awal aplikasi berubah menjadi Form Blok Aplikasi; form login normal tidak ditampilkan kepada seluruh pengguna.
 8. Form Blok Aplikasi menampilkan keterangan blokir global dan tautan Reset.
 9. Reset salah tidak membuka form autentikasi maupun akses aplikasi.
-10. Reset benar hanya menampilkan form autentikasi untuk melanjutkan login; hanya akun KA IPSRS yang berhasil masuk dan akun petugas biasa tetap ditolak.
+10. Reset benar menampilkan kembali form login normal yang sama (tanpa membuat form autentikasi baru); pengguna tetap memasukkan username dan password, server memvalidasi role KA IPSRS, hanya akun KA IPSRS yang berhasil masuk, dan akun petugas biasa tetap ditolak meskipun mengetahui angka Reset.
 11. KA membuka kelonggaran 12 jam; waktu mulai dan tenggat tercatat.
 12. Semua petugas dalam daftar kewajiban melengkapi LHI sebelum tenggat: Mode Blok menjadi nonaktif.
 13. Masih ada satu petugas belum melengkapi kewajiban saat 12 jam habis: Mode Blok aktif kembali.
