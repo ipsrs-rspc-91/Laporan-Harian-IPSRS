@@ -159,6 +159,10 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         cur.execute("SELECT public.run_lhi_daily_monitoring()")
         assert scalar(cur, """SELECT individual_blocked_at IS NOT NULL
                               FROM public.lhi_staff_monitoring_state WHERE staff_id='D8'""") is True
+        assert scalar(cur, """SELECT last_calculated_days
+                              FROM public.lhi_staff_monitoring_state WHERE staff_id='D8'""") == 8
+        assert scalar(cur, """SELECT last_calculated_days
+                              FROM public.lhi_staff_monitoring_state WHERE staff_id='FRESH'""") == 1
         assert scalar(cur, """SELECT individual_blocked_at IS NULL
                               FROM public.lhi_staff_monitoring_state WHERE staff_id='MANUAL'""") is True
         assert scalar(cur, "SELECT status FROM public.staff WHERE staff_id='D8'") == "Aktif"
@@ -217,6 +221,8 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         # Reactivate this employee, include the snapshot row, then deactivate during grace.
         # The row must remain in the snapshot but be excluded from the deadline count.
         cur.execute("UPDATE public.staff SET status='Aktif' WHERE staff_id='INACTIVE'")
+        assert scalar(cur, """SELECT active_since >= clock_timestamp()-interval '1 minute'
+                              FROM public.lhi_staff_monitoring_state WHERE staff_id='INACTIVE'""") is True
         cur.execute(
             """INSERT INTO public.lhi_discipline_obligations(incident_id,staff_id,required_date)
                VALUES (%s,'INACTIVE',%s)""",
@@ -254,18 +260,19 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         assert scalar(cur, """SELECT obligation_status FROM public.lhi_discipline_obligations
                               WHERE incident_id=%s AND staff_id='D10'""", (second_incident,)) == "FULFILLED"
 
+        # Let the deadline pass before cancellation. The report trigger must not
+        # restart normal streak monitoring while the GRACE incident is unresolved.
+        cur.execute(
+            "UPDATE public.lhi_discipline_incidents SET deadline_at=clock_timestamp()-interval '1 second' WHERE incident_id=%s",
+            (second_incident,),
+        )
         cur.execute("UPDATE public.reports SET deleted_at=clock_timestamp() WHERE report_id='R-D10-GRACE-CANCEL'")
+        assert scalar(cur, "SELECT status FROM public.lhi_discipline_incidents WHERE incident_id=%s", (second_incident,)) == "GRACE"
         cur.execute("SELECT public.run_lhi_discipline_scheduler()")
         assert scalar(cur, """SELECT obligation_status FROM public.lhi_discipline_obligations
                               WHERE incident_id=%s AND staff_id='D10'""", (second_incident,)) == "PENDING"
         assert scalar(cur, """SELECT count(*) FROM public.lhi_obligation_audit
                               WHERE incident_id=%s AND cause='LHI_CANCELLED_OR_INVALIDATED'""", (second_incident,)) == 1
-
-        cur.execute(
-            "UPDATE public.lhi_discipline_incidents SET deadline_at=clock_timestamp()-interval '1 second' WHERE incident_id=%s",
-            (second_incident,),
-        )
-        cur.execute("SELECT public.run_lhi_discipline_scheduler()")
         assert scalar(cur, "SELECT status FROM public.lhi_discipline_incidents WHERE incident_id=%s", (second_incident,)) == "EXPIRED"
         assert scalar(cur, "SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK'") == "AKTIF"
         print("PASS grace-period cancellation restores PENDING and reactivates global block at deadline")
