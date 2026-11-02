@@ -103,3 +103,17 @@ Jangan menambahkan kode Reset yang sudah ada di README ke source code. Jangan me
 - Sesi terbatas hanya dapat membaca status pemulihan dan menjalankan RPC pemulihan.
 - Retry tidak menggandakan snapshot atau menggeser deadline.
 - Kegagalan transaksi tidak mengubah blokir global maupun individual.
+
+
+## 8. Hasil inspeksi kode frontend/backend saat ini
+
+Inspeksi branch perbaikan terhadap frontend/app.js dan ipsrs-api/index.ts menemukan:
+
+1. performLogin() melakukan Supabase Auth lalu langsung memanggil apiWhoAmI sebelum membaca IPSRS_LHI_RESET_AUTH_MODE. Dengan global lock aktif, apiWhoAmI ditolak lebih dahulu sehingga flag reset tidak pernah dapat membuka jalur KA.
+2. IPSRS_LHI_RESET_AUTH_MODE hanya disimpan/dibaca di sessionStorage dan pemeriksaan role di frontend. Flag ini bukan bukti server-side dan tidak memberi sesi terbatas.
+3. Setelah whoAmI sukses, performLogin() selalu menjalankan setSession(), afterAuthReady(), hideLoginScreen(), lalu goPage('input'). Belum ada mode recovery-only yang mencegah masuk ke halaman operasional.
+4. Backend staff() memblokir lhi_access_status selain NORMAL sebelum act() memproses action. Ini termasuk KA IPSRS yang perlu menjalankan recovery.
+5. apiStartLhiGrace saat ini hanya dapat dicapai melalui sesi normal dan memanggil RPC lama. Tidak ada recovery capability khusus.
+6. Pada frontend/index.html yang diperiksa, loginScreen adalah container kosong yang diisi oleh app.js. Belum ditemukan komponen form blokir/reset yang terhubung dengan gate server-side; komponen render login dinamis perlu ditelusuri sebelum mengubah UI agar tidak membuat form login kedua.
+
+Kesimpulan: jangan menganggap flag sessionStorage yang ada sebagai implementasi Reset. Jangan sekadar memindahkan pemeriksaan role ke bagian sebelum apiWhoAmI; backend harus terlebih dahulu menyediakan endpoint gate, exchange, capability terbatas, dan RPC atomik. Implementasi UI dilakukan setelah kontrak server siap.
