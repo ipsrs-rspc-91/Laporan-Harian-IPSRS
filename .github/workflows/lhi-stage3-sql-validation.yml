@@ -32,3 +32,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check pglast
       - name: Validate migrations and monitoring contract
         run: python scripts/validate-lhi-stage3.py
+      - name: Validate Edge Function TypeScript syntax
+        run: npx --yes esbuild supabase/functions/ipsrs-api/index.ts --bundle --format=esm --external:npm:* --outfile=/tmp/ipsrs-api-stage3.js
+      - name: Validate frontend JavaScript syntax
+        run: node --check frontend/app.js
