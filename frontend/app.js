@@ -5270,6 +5270,7 @@
     const belum = _monData.filter(s => s.wajib_hari_ini === true && s.status_hari_ini === 'BELUM_ISI').length;
     const belumWajib = _monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB' || s.status_hari_ini === 'TIDAK_WAJIB').length;
     const belumTerjadi = _monData.filter(s => s.status_hari_ini === 'BELUM_TERJADI').length;
+    const baselineReviewCount = _monData.filter(s => s.baseline_review_required).length;
     const persen = wajib > 0 ? Math.round((sudahWajib / wajib) * 100) : 0;
 
     const grid = document.getElementById('monSummaryGrid');
@@ -5304,6 +5305,7 @@
       </div>
       ${belumWajib > 0 ? `<div class="smallnote" style="grid-column:1/-1;">${belumWajib} petugas belum wajib mengisi pada tanggal ini karena belum melewati satu hari kalender sejak aktivasi atau sedang NONAKTIF.</div>` : ''}
       ${belumTerjadi > 0 ? `<div class="smallnote" style="grid-column:1/-1;">Tanggal monitoring yang dipilih belum terjadi.</div>` : ''}
+      ${baselineReviewCount > 0 ? `<div class="smallnote" style="grid-column:1/-1;color:var(--warning);">${baselineReviewCount} petugas memiliki tanggal aktivasi lama yang belum dapat dipastikan. Perlu verifikasi sebelum penerapan kebijakan produksi.</div>` : ''}
     `;
 
     const container = document.getElementById('monStaffGrid');
@@ -5331,10 +5333,12 @@
       const bidang = s.bidang || '-';
       const sdmBadge = s.status !== 'Aktif'
         ? `<span class="pill muted" style="margin-left:6px;">${escapeHtml(s.status)}</span>` : '';
+      const baselineReviewBadge = s.baseline_review_required
+        ? '<span class="pill warning" style="margin-left:6px;">Verifikasi aktivasi</span>' : '';
       card.innerHTML = `
         <div class="smc-top">
           <div>
-            <div class="smc-name">${escapeHtml(s.nama)}${sdmBadge}</div>
+            <div class="smc-name">${escapeHtml(s.nama)}${sdmBadge}${baselineReviewBadge}</div>
             <div class="smc-jabatan">${escapeHtml(s.jabatan || s.role_label)}</div>
           </div>
           <span class="pill ${s.status_hari_ini==='SUDAH_ISI'?'success':(s.status_hari_ini==='BELUM_ISI'?'warning':'muted')}">
@@ -6135,6 +6139,7 @@
         const belum = monData.filter(s => s.wajib_hari_ini === true && s.status_hari_ini === 'BELUM_ISI').length;
         const belumWajib = monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB' || s.status_hari_ini === 'TIDAK_WAJIB').length;
         const belumTerjadi = monData.filter(s => s.status_hari_ini === 'BELUM_TERJADI').length;
+        const baselineReviewCount = monData.filter(s => s.baseline_review_required).length;
         const persen = wajib > 0 ? Math.round((sudahWajib/wajib)*100) : 0;
         document.getElementById('statPetugasAktif').innerText = total;
         document.getElementById('statSudahIsiHariIni').innerText = sudah;
@@ -6147,6 +6152,9 @@
             : (belumWajib > 0
               ? belumWajib + ' petugas belum wajib mengisi karena belum melewati satu hari kalender sejak aktivasi atau sedang NONAKTIF.'
               : (total > 0 ? 'Semua petugas yang sudah wajib mengisi telah mengirim laporan hari ini.' : 'Master staf belum tersedia.')));
+        if(baselineReviewCount > 0){
+          document.getElementById('dashComplianceNote').innerText += ' ' + baselineReviewCount + ' petugas perlu verifikasi tanggal aktivasi lama.';
+        }
       }
 
       if(!statsJson || !statsJson.ok){
