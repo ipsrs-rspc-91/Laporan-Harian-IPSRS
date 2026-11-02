@@ -333,3 +333,52 @@ test("grace recovery is exactly 12 hours and retries preserve the original incid
   assert.equal(planGraceRecovery({ incident: { incident_id: "INC-2", status: "COMPLETED" }, now: "2026-11-03T05:00:00Z" }).allowed, false);
   assert.throws(() => planGraceRecovery({ incident: { incident_id: "INC-3", status: "LOCKED" }, now: "2026-11-03T05:00:00Z", graceHours: 24 }));
 });
+
+
+test("restricted recovery SQL keeps challenges and sessions private to server-side functions", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const path = fileURLToPath(new URL("../supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql", import.meta.url));
+  const sql = await readFile(path, "utf8");
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS private\.lhi_recovery_challenges/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS private\.lhi_recovery_sessions/);
+  assert.match(sql, /ALTER TABLE private\.lhi_recovery_challenges ENABLE ROW LEVEL SECURITY/);
+  assert.match(sql, /ALTER TABLE private\.lhi_recovery_sessions ENABLE ROW LEVEL SECURITY/);
+  assert.match(sql, /REVOKE ALL ON private\.lhi_recovery_challenges FROM PUBLIC, anon, authenticated, service_role/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.consume_lhi_recovery_challenge\(text, uuid, text\) TO service_role/);
+  assert.match(sql, /v_staff\.role IS DISTINCT FROM 'KA_IPSRS'/);
+  assert.match(sql, /v_staff\.status, ''\) <> 'aktif'/);
+  assert.match(sql, /v_challenge\.expires_at <= v_now/);
+  assert.match(sql, /v_challenge\.consumed_at IS NOT NULL/);
+  assert.match(sql, /p_action NOT IN \('apiRecoveryStatus', 'apiStartLhiGrace'\)/);
+  assert.match(sql, /interval '5 minutes'/);
+  assert.match(sql, /interval '10 minutes'/);
+  assert.doesNotMatch(sql, /GRANT EXECUTE ON FUNCTION public\.(register_lhi_reset_attempt|create_lhi_recovery_challenge|consume_lhi_recovery_challenge|validate_lhi_recovery_session)[^;]* TO authenticated/i);
+});
+
+test("recovery capability contract permits blocked KA recovery but not normal operations", async () => {
+  const { recoveryCapabilityAllows } = await import("../supabase/functions/ipsrs-api/recovery-policy.mjs");
+  const capability = {
+    subject: "AUTH-KA",
+    scope: "lhi.recovery",
+    incident_id: "INC-LOCKED",
+    expires_at: "2026-11-03T06:00:00Z",
+  };
+  const valid = recoveryCapabilityAllows({
+    capability,
+    authUserId: "AUTH-KA",
+    action: "apiStartLhiGrace",
+    now: "2026-11-03T05:00:00Z",
+    incidentId: "INC-LOCKED",
+  });
+  assert.deepEqual(valid, { allowed: true, reason: "OK" });
+  for (const action of ["apiGetReports", "apiGetDashboard", "apiCreateReport", "apiGetMasterData", "apiChangePassword"]) {
+    assert.equal(recoveryCapabilityAllows({
+      capability,
+      authUserId: "AUTH-KA",
+      action,
+      now: "2026-11-03T05:00:00Z",
+      incidentId: "INC-LOCKED",
+    }).allowed, false, action);
+  }
+});
