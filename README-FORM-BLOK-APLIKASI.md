@@ -135,7 +135,9 @@ Daftar petugas dalam snapshot dikunci saat kelonggaran dimulai. Pergantian tangg
 - **Tidak ada pengecualian berdasarkan jabatan. Seluruh petugas aktif, termasuk KA IPSRS, wajib mengisi LHI dan mengikuti tahapan peringatan serta pemblokiran individual yang sama.** Jika petugas mana pun tidak memiliki LHI sah selama tujuh hari kalender berturut-turut, hak akses aplikasi petugas tersebut diblokir pada hari ke-8.
 - Jika petugas mana pun, termasuk KA IPSRS, tetap tidak memiliki LHI sah hingga hari ke-10, kondisi tersebut menjadi pemicu aktivasi Mode Blok Aplikasi global untuk seluruh pengguna. Saat blokir global aktif, hanya KA IPSRS yang berwenang menjalankan prosedur Reset dan pemulihan; kewenangan pemulihan ini **bukan pengecualian dari kewajiban LHI atau pemblokiran individual**.
 - Hanya KA IPSRS yang boleh membuka kelonggaran melalui menu Hak Akses.
-- Pembukaan blokir individual akibat ketidakpatuhan LHI hanya dilakukan bersamaan dengan pembukaan blokir global oleh KA IPSRS melalui perintah pemulihan terpadu. Tidak ada pembukaan blokir individual otomatis pada hari ke-10 sebelum KA IPSRS melakukan Reset dan memulai kelonggaran.
+- **Ketentuan umum:** pembukaan blokir individual akibat ketidakpatuhan LHI dilakukan bersamaan dengan pembukaan blokir global oleh KA IPSRS melalui perintah pemulihan terpadu.
+- **Pengecualian reaktivasi kepegawaian:** jika petugas berstatus NONAKTIF kemudian diaktifkan kembali menjadi AKTIF, blokir hak akses individual akibat ketidakpatuhan LHI otomatis dibuka pada saat aktivasi kembali, sesuai Bagian 2. Pembukaan otomatis ini tidak membuka, menonaktifkan, atau melewati Mode Blok Aplikasi global yang masih AKTIF.
+- Tidak ada pembukaan blokir individual otomatis hanya karena pergantian hari atau tercapainya hari ke-10; selain pengecualian reaktivasi kepegawaian tersebut, pemulihan mengikuti prosedur KA IPSRS.
 
 ## 10. Data dan audit
 Sistem perlu mencatat:
