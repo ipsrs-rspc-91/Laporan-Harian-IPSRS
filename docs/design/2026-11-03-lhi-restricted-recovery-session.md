@@ -105,7 +105,7 @@ Jangan menambahkan kode Reset yang sudah ada di README ke source code. Jangan me
 - Kegagalan transaksi tidak mengubah blokir global maupun individual.
 
 
-## 8. Hasil inspeksi kode frontend/backend saat ini
+## 8. Hasil inspeksi kode frontend/backend sebelum patch tahap integrasi
 
 Inspeksi branch perbaikan terhadap frontend/app.js dan ipsrs-api/index.ts menemukan:
 
@@ -152,6 +152,27 @@ Dua Edge Function kini tersedia pada branch perbaikan:
 - Gate memerlukan secret `LHI_RATE_LIMIT_SALT` minimal 32 karakter untuk hashing identitas jaringan sebelum rate-limit. Alamat IP mentah tidak disimpan.
 - `supabase/config.toml` mengatur `verify_jwt = false` hanya untuk kedua endpoint ini karena keduanya melakukan pemeriksaan proof sendiri. `ipsrs-api` tetap `verify_jwt = true`.
 
-**Batas integrasi saat ini:** frontend lama masih hanya membaca boolean `valid` dan menyimpan flag `IPSRS_LHI_RESET_AUTH_MODE`; belum mengirim challenge ke endpoint exchange. Recovery-action endpoint, tampilan recovery-only, dan RPC pemulihan final belum terhubung. Oleh sebab itu perubahan ini belum siap deploy dan tidak boleh diaktifkan pada project produksi.
+**Status integrasi terbaru pada branch perbaikan (3 November 2026):**
+
+1. Frontend menyimpan challenge Reset hanya di memori, lalu melakukan Supabase Auth login dengan form yang sama.
+2. Jika challenge tersedia, frontend memanggil `lhi-recovery-exchange` sebelum `apiWhoAmI`; alur recovery tidak menjalankan `setSession()`, `afterAuthReady()`, `goPage()`, atau menu operasional.
+3. Capability opaque disimpan di `sessionStorage` untuk pemulihan layar terbatas setelah refresh tab yang sama. Server tetap memvalidasi hash, expiry, identitas KA, role, status kepegawaian, dan incident.
+4. Tampilan recovery-only hanya menyediakan `apiRecoveryStatus` dan `apiStartLhiGrace`; permintaan diteruskan ke `lhi-recovery-action`.
+5. `ipsrs-api.staff()` sekarang menolak semua request normal saat global lock AKTIF dan menolak KA IPSRS selama incident GRACE. Jalur `apiStartLhiGrace` lama tidak lagi memanggil RPC legacy.
+6. `lhi-block-status` ditambahkan sebagai endpoint GET fail-closed untuk membaca global lock sebelum layar login normal ditampilkan.
+7. SQL RPC atomik `open_lhi_global_grace_v2` tersedia sebagai draft review. Snapshot dibuat saat Reset, bukan saat scheduler pertama kali mengaktifkan LOCKED. Capability diperpanjang hanya sampai deadline grace.
+
+**Batas yang masih tersisa:** semua SQL migration/RPC masih draft dan belum dijalankan pada database nonproduksi; integrasi belum diuji end-to-end dengan Supabase Auth, Edge Functions, RLS, dan concurrency. CI hanya memverifikasi kontrak statis, unit test helper, serta sintaks JavaScript frontend. Karena itu perubahan belum siap deploy dan tidak boleh diaktifkan pada project produksi.
 
 CI menjalankan kontrak statis untuk kedua endpoint, konfigurasi JWT, skema challenge, dan kebijakan akses. Pengujian statis tidak menggantikan pengujian integrasi pada project Supabase nonproduksi.
+
+
+## 16. Endpoint dan pengamanan tambahan pada tahap integrasi
+
+- `supabase/functions/lhi-block-status/index.ts`: GET-only, CORS allowlist, `Cache-Control: no-store`, dan fail-closed bila setting global tidak tersedia atau nilainya bukan AKTIF/NONAKTIF.
+- `supabase/functions/lhi-recovery-action/index.ts`: menerima hanya capability opaque dan dua action yang diizinkan; tidak menjadi proxy ke `ipsrs-api`.
+- `ipsrs-api.staff()`: global lock diverifikasi sebelum lookup staff atau fallback update `auth_user_id`, sehingga API tidak dapat dipanggil langsung untuk melewati Form Blok Aplikasi.
+- Selama GRACE, KA IPSRS tidak dapat masuk ke API operasional meskipun global lock sudah NONAKTIF. Akses KA ke endpoint recovery tetap melalui capability terbatas.
+- Rate limit Reset hanya menggunakan header `cf-connecting-ip` yang disediakan edge; fallback `x-forwarded-for` yang dapat dipengaruhi klien tidak digunakan.
+
+Semua butir di atas masih berada di branch perbaikan. Tidak ada deployment atau perubahan database produksi.
