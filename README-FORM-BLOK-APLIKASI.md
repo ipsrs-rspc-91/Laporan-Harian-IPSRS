@@ -111,6 +111,10 @@ LHI untuk hari berjalan tidak menjadi kewajiban tambahan yang terpisah. Namun, s
 Daftar petugas dalam snapshot dikunci saat kelonggaran dimulai. Pergantian tanggal selama 12 jam tidak menambah petugas atau kewajiban baru ke dalam snapshot. Snapshot tetap menjadi acuan evaluasi ketika masa kelonggaran berakhir, termasuk jika Mode Blok Aplikasi harus diaktifkan kembali.
 
 ## 9. Pengecualian dan kewenangan
+- **Petugas yang cuti, sakit, izin, atau tidak masuk kerja tidak memiliki status pengecualian khusus dalam penghitungan kepatuhan LHI.** Kondisi tersebut tidak otomatis menghentikan, menunda, atau mengatur ulang hitungan hari tanpa input.
+- Selama petugas belum mencapai tahapan pelanggaran dan akun tidak sedang diblokir, status akun tetap **NORMAL** dan petugas dapat menggunakan aplikasi seperti biasa. Tidak ada pemblokiran hanya karena petugas berstatus cuti, sakit, izin, atau tidak masuk kerja.
+- Jika setelah itu petugas tetap tidak memiliki input LHI yang sah selama tujuh hari kalender berturut-turut, tahapan peringatan dan pemblokiran berjalan sesuai Bagian 2 dan 3: peringatan ketiga pada hari ke-7, penonaktifan akun individual pada hari ke-8, masa tunggu pada hari ke-9, dan Mode Blok global pada hari ke-10.
+- Penormalan akun yang sudah diblokir tetap mengikuti prosedur pemulihan terpadu sebelumnya: Reset oleh KA IPSRS, autentikasi role KA IPSRS di server, lalu perintah **Buka Blokir dan Mulai Kelonggaran 12 Jam**. Tidak ada jalur normalisasi khusus hanya karena alasan cuti, sakit, izin, atau tidak masuk kerja.
 - KA IPSRS dikecualikan dari penonaktifan individual karena tidak mengisi LHI, kecuali kebijakan organisasi menentukan lain.
 - Mode Blok global tetap membatasi semua akun selain KA IPSRS.
 - Hanya KA IPSRS yang boleh membuka kelonggaran melalui menu Hak Akses.
@@ -146,9 +150,10 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 13. Setiap petugas pelanggar dalam snapshot wajib menginput minimal 1 (satu) laporan LHI yang sah selama kelonggaran 12 jam. Satu laporan saja sudah cukup; petugas tidak diwajibkan mengganti seluruh hari tanpa input atau menginput sebanyak jumlah pekerjaan/tunggakannya.
 14. Semua petugas dalam snapshot telah melakukan input LHI sah sebelum tenggat: blokir global tetap nonaktif dan aplikasi kembali normal.
 15. Masih ada satu petugas dalam snapshot yang belum melakukan input LHI sah saat 12 jam habis: blokir global aktif kembali untuk seluruh pengguna; blokir individual tidak diterapkan ulang satu per satu.
-16. Sabtu, Minggu, dan hari libur tetap dihitung.
-17. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
-18. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
+16. Petugas yang cuti, sakit, izin, atau tidak masuk kerja tetap berstatus normal selama belum mencapai tahapan pelanggaran dan akun belum diblokir; kondisi tersebut tidak menghentikan hitungan hari tanpa input. Jika mencapai tujuh hari berturut-turut tanpa input, tahapan peringatan dan pemblokiran mengikuti ketentuan yang sama.
+17. Sabtu, Minggu, dan hari libur tetap dihitung.
+18. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
+19. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
 
 ## 12. Tata kelola implementasi
 Dokumen ini hanya acuan konsep. **Jangan mengubah script, database, konfigurasi, atau melakukan deployment sebelum audit dan persetujuan.**
