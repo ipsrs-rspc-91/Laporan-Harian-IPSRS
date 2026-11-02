@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS private.lhi_recovery_tokens (
   expires_at timestamptz NOT NULL,
   consumed_at timestamptz,
   consumed_by_staff_id text,
+  incident_id bigint REFERENCES public.lhi_discipline_incidents(incident_id),
   CHECK (expires_at > issued_at)
 );
 
@@ -74,10 +75,12 @@ BEGIN
     SELECT 1
     FROM private.lhi_recovery_tokens t
     JOIN public.lhi_discipline_incidents i
-      ON i.status = 'GRACE'
+      ON i.incident_id = t.incident_id
+     AND i.status = 'GRACE'
     WHERE t.token_hash = p_token_hash
       AND t.consumed_by_staff_id = p_staff_id
       AND t.consumed_at IS NOT NULL
+      AND t.incident_id IS NOT NULL
       AND i.deadline_at > clock_timestamp()
   );
 END;
@@ -130,10 +133,9 @@ BEGIN
 
     SELECT * INTO v_incident
     FROM public.lhi_discipline_incidents
-    WHERE status = 'GRACE'
-      AND deadline_at > clock_timestamp()
-    ORDER BY incident_id DESC
-    LIMIT 1;
+    WHERE incident_id = v_token.incident_id
+      AND status = 'GRACE'
+      AND deadline_at > clock_timestamp();
 
     IF NOT FOUND THEN
       RAISE EXCEPTION 'recovery_token_already_consumed';
@@ -161,13 +163,16 @@ BEGIN
   -- This existing RPC performs the unblock + grace start atomically.
   -- If it fails, this function's transaction also rolls back token use.
   v_result := public.open_lhi_global_grace(p_staff_id, p_staff_name);
-  IF COALESCE((v_result->>'ok')::boolean, false) IS NOT TRUE THEN
+  IF COALESCE((v_result->>'ok')::boolean, false) IS NOT TRUE
+     OR NULLIF(v_result->>'incident_id', '') IS NULL
+     OR NULLIF(v_result->>'deadline_at', '')::timestamptz <= clock_timestamp() THEN
     RAISE EXCEPTION 'grace_recovery_failed';
   END IF;
 
   UPDATE private.lhi_recovery_tokens
   SET consumed_at = clock_timestamp(),
-      consumed_by_staff_id = p_staff_id
+      consumed_by_staff_id = p_staff_id,
+      incident_id = (v_result->>'incident_id')::bigint
   WHERE recovery_token_id = v_token.recovery_token_id;
 
   RETURN v_result;
