@@ -394,7 +394,7 @@ if(a==="apiGetStaffMonitoring"){
   const z=wibMonthBounds(d.bulan);
   const today=wibDate(new Date());
   let tanggal=String(d.tanggal||today);
-  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(tanggal)||!tanggal.startsWith(z.month))tanggal=z.month===today.slice(0,7)?today:z.start;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)||!tanggal.startsWith(z.month))tanggal=z.month===today.slice(0,7)?today:z.start;
   const requiredDays=z.month<today.slice(0,7)
     ? Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1
     : z.month===today.slice(0,7)
