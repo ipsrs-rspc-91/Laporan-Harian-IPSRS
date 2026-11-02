@@ -6,6 +6,10 @@ const source = await readFile(
   new URL("../supabase/functions/lhi-recovery-action/index.ts", import.meta.url),
   "utf8",
 );
+const resetVerify = await readFile(
+  new URL("../supabase/functions/lhi-reset-verify/index.ts", import.meta.url),
+  "utf8",
+);
 const config = await readFile(
   new URL("../supabase/config.toml", import.meta.url),
   "utf8",
@@ -45,4 +49,9 @@ test("recovery action does not call normal app API or expose a general proxy", (
 test("JWT gateway is bypassed only for recovery endpoints that verify their own proof", () => {
   assert.match(config, /\[functions\.lhi-recovery-action\]\s*verify_jwt = false/);
   assert.match(config, /\[functions\.ipsrs-api\]\s*verify_jwt = true/);
+});
+
+test("Reset rate limit trusts only edge-overwritten client IP header", () => {
+  assert.match(resetVerify, /cf-connecting-ip/);
+  assert.doesNotMatch(resetVerify, /x-forwarded-for/);
 });
