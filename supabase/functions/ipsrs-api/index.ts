@@ -16,6 +16,13 @@ function wibMonthKey(value:any){
  const month=parts.find(x=>x.type==="month")?.value||"";
  return year+"-"+month;
 }
+function addWibDays(dateValue:string,days:number){
+ return new Date(Date.parse(dateValue+"T00:00:00Z")+days*86400000).toISOString().slice(0,10);
+}
+function wibDaysInclusive(start:string,end:string){
+ if(!start||!end||end<start)return 0;
+ return Math.floor((Date.parse(end+"T00:00:00Z")-Date.parse(start+"T00:00:00Z"))/86400000)+1;
+}
 function range(month:string){const m=/^\d{4}-\d{2}$/.test(String(month||""))?month:wibMonthKey(new Date());const [y,mo]=m.split("-").map(Number);return{month:m,start:m+"-01",end:new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)}}
 function wibMonthBounds(month:string){
  const z=range(month);
@@ -478,14 +485,11 @@ if(a==="apiGetAuditLog"){
 if(a==="apiGetStaffMonitoring"){
   const z=wibMonthBounds(d.bulan);
   const today=wibDate(new Date());
+  const todayMonth=today.slice(0,7);
+  const effectiveEnd=z.month<todayMonth?z.end:(z.month===todayMonth?today:addWibDays(z.start,-1));
   let tanggal=String(d.tanggal||today);
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)||!tanggal.startsWith(z.month))tanggal=z.month===today.slice(0,7)?today:z.start;
-  const requiredDays=z.month<today.slice(0,7)
-    ? Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1
-    : z.month===today.slice(0,7)
-      ? Math.floor((Date.parse(today)-Date.parse(z.start))/86400000)+1
-      : 0;
-  let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("nama");
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(tanggal)||!tanggal.startsWith(z.month))tanggal=z.month===todayMonth?today:z.start;
+  let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status,created_at").eq("status","Aktif").order("nama");
   if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);
   const {data:ss,error:se}=await staffQ;if(se)throw se;
   let reportQ=db.from("reports").select("staff_id,created_at").is("deleted_at",null)
@@ -493,7 +497,7 @@ if(a==="apiGetStaffMonitoring"){
   if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);
   const rawReports=await fetchAllPages(()=>reportQ.order("created_at",{ascending:true}));
   const {data:states,error:stateError}=await db.from("lhi_staff_monitoring_state")
-    .select("staff_id,last_valid_input_at,individual_blocked_at,last_calculated_days");
+    .select("staff_id,active_since,last_valid_input_at,individual_blocked_at,last_calculated_days");
   if(stateError)throw stateError;
   const stateById=new Map((states||[]).map((x:any)=>[String(x.staff_id),x]));
   const by:any={},todayCount:any={},total:any={};
@@ -503,29 +507,45 @@ if(a==="apiGetStaffMonitoring"){
     total[r.staff_id]=(total[r.staff_id]||0)+1;
     if(inputDate===tanggal)todayCount[r.staff_id]=(todayCount[r.staff_id]||0)+1;
   }
-  const result={ok:true,bulan:z.month,tanggal,bulan_berjalan:z.month===today.slice(0,7),
-    hari_wajib_terhitung:requiredDays,
-    data:(ss||[]).map((x:any)=>{
-      const set=by[x.staff_id]||new Set();
-      const done=[...set].filter((day:any)=>day>=z.start&&day<=z.end&&(z.month<today.slice(0,7)||day<=today)).length;
-      const state:any=stateById.get(String(x.staff_id))||{};
-      let statusHari="BELUM_ISI";
-      if(tanggal>today)statusHari="BELUM_TERJADI";
-      else if(todayCount[x.staff_id])statusHari="SUDAH_ISI";
-      return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
-        bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
-        laporan_hari_ini:todayCount[x.staff_id]||0,sudah_isi_hari_bulan_ini:done,
-        belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),
-        total_transaksi_bulan_ini:total[x.staff_id]||0,
-        hari_tanpa_lhi:Number(state.last_calculated_days||0),
-        status_akses_lhi:state.individual_blocked_at?"DIBLOKIR":"NORMAL",
-        last_valid_input_at:state.last_valid_input_at||null};
-    })};
-  return cacheSet("monitor:"+s.staff_id+":"+z.month+":"+tanggal+":"+(d.staffIdFilter||""),result);
+  let totalRequiredDays=0;
+  const data=(ss||[]).map((x:any)=>{
+    const state:any=stateById.get(String(x.staff_id))||{};
+    const activeDate=wibDate(state.active_since||x.created_at);
+    const requiredStart=addWibDays(activeDate,1);
+    const requiredEnd=effectiveEnd;
+    const requiredStartInMonth=requiredStart>z.start?requiredStart:z.start;
+    const requiredDays=wibDaysInclusive(requiredStartInMonth,requiredEnd);
+    const set=by[x.staff_id]||new Set();
+    const done=[...set].filter((day:any)=>day>=requiredStartInMonth&&day<=requiredEnd).length;
+    totalRequiredDays+=requiredDays;
+    let statusHari="BELUM_ISI";
+    if(tanggal>today)statusHari="BELUM_TERJADI";
+    else if(todayCount[x.staff_id])statusHari="SUDAH_ISI";
+    else if(tanggal<requiredStart)statusHari="BELUM_WAJIB";
+    return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
+      bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
+      laporan_hari_ini:todayCount[x.staff_id]||0,sudah_isi_hari_bulan_ini:done,
+      belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),hari_wajib_terhitung:requiredDays,
+      total_transaksi_bulan_ini:total[x.staff_id]||0,
+      hari_tanpa_lhi:Number(state.last_calculated_days||0),
+      status_akses_lhi:state.individual_blocked_at?"DIBLOKIR":"NORMAL",
+      last_valid_input_at:state.last_valid_input_at||null};
+  });
+  return cacheSet("monitor:"+s.staff_id+":"+z.month+":"+tanggal+":"+(d.staffIdFilter||""),{
+    ok:true,bulan:z.month,tanggal,bulan_berjalan:z.month===todayMonth,
+    hari_wajib_terhitung:totalRequiredDays,data
+  });
  }
-
  if(a==="apiGetStaffDailyStatus"){
   const z=wibMonthBounds(d.bulan),today=wibDate(new Date());
+  const {data:targetStaff,error:staffError}=await db.from("staff")
+    .select("staff_id,status,created_at").eq("staff_id",d.staffId).maybeSingle();
+  if(staffError)throw staffError;
+  const {data:state,error:stateError}=await db.from("lhi_staff_monitoring_state")
+    .select("active_since").eq("staff_id",d.staffId).maybeSingle();
+  if(stateError)throw stateError;
+  const active=targetStaff?.status==="Aktif";
+  const requiredStart=active?addWibDays(wibDate(state?.active_since||targetStaff.created_at),1):null;
   const raw=await fetchAllPages(()=>db.from("reports").select("*").is("deleted_at",null)
     .eq("staff_id",d.staffId).gte("created_at",z.startCreatedAt)
     .lt("created_at",z.endCreatedAtExclusive).order("created_at",{ascending:true}));
@@ -533,44 +553,64 @@ if(a==="apiGetStaffMonitoring"){
   for(const r of raw||[]){if(await canViewReport(db,s,r))rr.push(r);}
   const n=Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1,cal:any[]=[];
   for(let i=0;i<n;i++){
-    const day=new Date(Date.parse(z.start)+i*86400000).toISOString().slice(0,10);
+    const day=addWibDays(z.start,i);
     const c=rr.filter((r:any)=>wibDate(r.created_at)===day).length;
-    cal.push({tanggal:day,status:c?"SUDAH_ISI":day>today?"BELUM_TERJADI":"BELUM_ISI",jumlah:c});
+    const status=c?"SUDAH_ISI":day>today?"BELUM_TERJADI":!requiredStart||day<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
+    cal.push({tanggal:day,status,jumlah:c});
   }
   return{ok:true,kalender:cal,laporan:await Promise.all(rr.map(async(r:any)=>map(r,(await canEditReport(db,s,r)).ok)))};
  }
-
  if(a==="apiGetMonthlyRecap"){
-  const z=wibMonthBounds(d.bulan),today=wibDate(new Date());
-  const eff=z.month===today.slice(0,7)?today:(z.month<today.slice(0,7)?z.end:new Date(Date.parse(z.start)-86400000).toISOString().slice(0,10));
-  let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("staff_id");
+  const z=wibMonthBounds(d.bulan),today=wibDate(new Date()),todayMonth=today.slice(0,7);
+  const effectiveEnd=z.month<todayMonth?z.end:(z.month===todayMonth?today:addWibDays(z.start,-1));
+  let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status,created_at").eq("status","Aktif").order("staff_id");
   if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);
   const {data:ss,error:se}=await staffQ;if(se)throw se;
   let reportQ=db.from("reports").select("staff_id,created_at").is("deleted_at",null)
     .gte("created_at",z.startCreatedAt).lt("created_at",z.endCreatedAtExclusive);
   if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);
   const visibleReports=await fetchAllPages(()=>reportQ.order("created_at",{ascending:true}));
-  const req=eff<z.start?0:Math.floor((Date.parse(eff)-Date.parse(z.start))/86400000)+1;
-  const sets:any={},tx:any={};
-  for(const x of ss||[])sets[x.staff_id]=new Set();
-  for(const r of visibleReports){(sets[r.staff_id]??=new Set()).add(wibDate(r.created_at));tx[r.staff_id]=(tx[r.staff_id]||0)+1;}
+  const {data:states,error:stateError}=await db.from("lhi_staff_monitoring_state").select("staff_id,active_since");
+  if(stateError)throw stateError;
+  const stateById=new Map((states||[]).map((x:any)=>[String(x.staff_id),x]));
+  const sets:any={},tx:any={},requiredByStaff:any={};
+  for(const x of ss||[]){
+    sets[x.staff_id]=new Set();
+    const state:any=stateById.get(String(x.staff_id))||{};
+    const requiredStart=addWibDays(wibDate(state.active_since||x.created_at),1);
+    requiredByStaff[x.staff_id]=wibDaysInclusive(requiredStart,effectiveEnd>z.end?z.end:effectiveEnd);
+  }
+  for(const r of visibleReports){
+    const inputDate=wibDate(r.created_at);
+    const staffRow=(ss||[]).find((x:any)=>String(x.staff_id)===String(r.staff_id));
+    if(!staffRow)continue;
+    const state:any=stateById.get(String(r.staff_id))||{};
+    const requiredStart=addWibDays(wibDate(state.active_since||staffRow.created_at),1);
+    if(inputDate>=requiredStart&&inputDate<=effectiveEnd){
+      (sets[r.staff_id]??=new Set()).add(inputDate);
+      tx[r.staff_id]=(tx[r.staff_id]||0)+1;
+    }
+  }
   const bm:any={},per=(ss||[]).map((x:any)=>{
-    const n=(sets[x.staff_id]||new Set()).size,k=x.bidang||"-";
-    (bm[k]??={bidang:k,jumlah_staf:0,hari_isi:0,total_transaksi:0});
-    bm[k].jumlah_staf++;bm[k].hari_isi+=n;bm[k].total_transaksi+=tx[x.staff_id]||0;
-    return{...x,role_label:label(x.role),sudah_isi_hari_bulan_ini:n,
-      belum_isi_hari_bulan_ini:Math.max(0,req-n),total_transaksi_bulan_ini:tx[x.staff_id]||0};
+    const n=(sets[x.staff_id]||new Set()).size,k=x.bidang||"-",requiredDays=requiredByStaff[x.staff_id]||0;
+    (bm[k]??={bidang:k,jumlah_staf:0,hari_wajib:0,hari_isi:0,hari_belum_isi:0,total_transaksi:0});
+    bm[k].jumlah_staf++;bm[k].hari_wajib+=requiredDays;bm[k].hari_isi+=n;
+    bm[k].hari_belum_isi+=Math.max(0,requiredDays-n);bm[k].total_transaksi+=tx[x.staff_id]||0;
+    return{...x,role_label:label(x.role),hari_wajib_terhitung:requiredDays,
+      sudah_isi_hari_bulan_ini:n,belum_isi_hari_bulan_ini:Math.max(0,requiredDays-n),
+      total_transaksi_bulan_ini:tx[x.staff_id]||0};
   });
-  const tot=per.reduce((a:number,x:any)=>a+x.sudah_isi_hari_bulan_ini,0),required=(ss||[]).length*req;
+  const totalRequired=per.reduce((a:number,x:any)=>a+x.hari_wajib_terhitung,0);
+  const totalDone=per.reduce((a:number,x:any)=>a+x.sudah_isi_hari_bulan_ini,0);
   return cacheSet("monthly:"+s.staff_id+":"+z.month+":"+(d.staffIdFilter||""),{
     ok:true,bulan:z.month,per_staff:per,
     per_bidang:Object.values(bm).sort((a:any,b:any)=>String(a.bidang).localeCompare(String(b.bidang))),
-    ringkasan:{total_staff:(ss||[]).length,total_hari_wajib:required,total_staff_days_wajib:required,
-      total_staff_days_sudah_isi:tot,total_staff_days_belum_isi:Math.max(0,required-tot),
-      persentase_kepatuhan:required?Math.round((tot/required)*1000)/10:0,total_transaksi:(visibleReports||[]).length}
+    ringkasan:{total_staff:(ss||[]).length,total_hari_wajib:totalRequired,total_staff_days_wajib:totalRequired,
+      total_staff_days_sudah_isi:totalDone,total_staff_days_belum_isi:Math.max(0,totalRequired-totalDone),
+      persentase_kepatuhan:totalRequired?Math.round((totalDone/totalRequired)*1000)/10:0,
+      total_transaksi:Object.values(tx).reduce((a:number,x:any)=>a+Number(x||0),0)}
   });
  }
-
  if(a==="apiDashboardStats"){
  const z=range(d.bulan),ck=`dash:v3-createdat:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
