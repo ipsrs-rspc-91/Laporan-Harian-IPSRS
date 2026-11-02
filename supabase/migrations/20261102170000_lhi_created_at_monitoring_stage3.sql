@@ -34,6 +34,18 @@ REVOKE ALL PRIVILEGES ON TABLE public.lhi_staff_monitoring_state
   FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.lhi_staff_monitoring_state TO service_role;
 
+CREATE INDEX IF NOT EXISTS idx_lhi_staff_monitoring_blocked
+  ON public.lhi_staff_monitoring_state (individual_blocked_at)
+  WHERE individual_blocked_at IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_reports_active_created_at_staff
+  ON public.reports (created_at DESC, staff_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_reports_active_staff_created_at
+  ON public.reports (staff_id, created_at DESC)
+  WHERE deleted_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS public.staff_employment_status_history (
   history_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   staff_id text NOT NULL,
@@ -62,10 +74,16 @@ CREATE TABLE IF NOT EXISTS public.lhi_obligation_audit (
   actor_user_id uuid
 );
 
+CREATE INDEX IF NOT EXISTS idx_staff_employment_status_history_staff_time
+  ON public.staff_employment_status_history (staff_id, changed_at DESC);
+
 ALTER TABLE public.lhi_obligation_audit ENABLE ROW LEVEL SECURITY;
 REVOKE ALL PRIVILEGES ON TABLE public.lhi_obligation_audit
   FROM PUBLIC, anon, authenticated, service_role;
 GRANT SELECT ON TABLE public.lhi_obligation_audit TO service_role;
+CREATE INDEX IF NOT EXISTS idx_lhi_obligation_audit_incident_time
+  ON public.lhi_obligation_audit (incident_id, changed_at DESC);
+
 
 -- Existing active staff have no historical activation log. Use staff.created_at
 -- as a clearly-labelled legacy fallback; every future reactivation is timestamped.
