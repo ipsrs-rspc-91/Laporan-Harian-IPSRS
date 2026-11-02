@@ -7,6 +7,11 @@ on:
     paths:
       - "supabase/functions/ipsrs-api/lhi-discipline.mjs"
       - "tests/lhi-discipline.test.mjs"
+      - "supabase/functions/ipsrs-api/recovery-policy.mjs"
+      - "supabase/functions/lhi-reset-verify/index.ts"
+      - "supabase/functions/lhi-recovery-exchange/index.ts"
+      - "supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql"
+      - "supabase/config.toml"
       - ".github/workflows/lhi-discipline-tests.yml"
   pull_request:
     branches:
