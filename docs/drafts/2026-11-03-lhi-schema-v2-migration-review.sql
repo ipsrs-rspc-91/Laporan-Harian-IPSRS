@@ -121,9 +121,9 @@ ALTER TABLE public.staff_employment_status_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lhi_discipline_snapshot_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lhi_discipline_obligation_events ENABLE ROW LEVEL SECURITY;
 
-REVOKE ALL ON public.staff_employment_status_events FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON public.lhi_discipline_snapshot_members FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON public.lhi_discipline_obligation_events FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.staff_employment_status_events FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON public.lhi_discipline_snapshot_members FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON public.lhi_discipline_obligation_events FROM PUBLIC, anon, authenticated, service_role;
 
 -- Append-only event history: application roles cannot rewrite past events.
 CREATE OR REPLACE FUNCTION public.prevent_lhi_obligation_event_mutation()
