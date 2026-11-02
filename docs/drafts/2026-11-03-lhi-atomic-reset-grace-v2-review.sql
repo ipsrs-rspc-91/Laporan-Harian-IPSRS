@@ -28,6 +28,9 @@ DECLARE
   v_snapshot_count integer := 0;
   v_unblocked_count integer := 0;
 BEGIN
+  -- Match scheduler lock ordering so recovery and cron cannot deadlock.
+  PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
+
   IF p_recovery_session_token_hash IS NULL
      OR p_recovery_session_token_hash !~ '^[0-9a-f]{64}$' THEN
     RAISE EXCEPTION 'Sesi pemulihan tidak valid.';
