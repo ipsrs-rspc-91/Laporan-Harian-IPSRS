@@ -371,6 +371,7 @@ BEGIN
     WHERE st.staff_id = v_staff.staff_id
     FOR UPDATE;
 
+    v_manual_unblock_until := v_staff.lhi_manual_unblock_until;
     IF v_active_since IS NULL THEN
       v_active_since := v_staff.created_at;
       UPDATE public.lhi_staff_monitoring_state
@@ -677,7 +678,6 @@ GRANT EXECUTE ON FUNCTION public.run_lhi_discipline_scheduler() TO service_role;
 -- Run the heavier streak calculation once daily at 00:05 WIB (17:05 UTC).
 DO $block$
 DECLARE
-  v_job_id bigint;
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM cron.job WHERE jobname = 'lhi-daily-monitoring-wib'
