@@ -24,7 +24,7 @@ Menerapkan pengingat bertahap atas keterlambatan pengisian Laporan Harian IPSRS 
 | Hari ke-4 (>3 hari) | Peringatan 1 kepada petugas yang lalai dan seluruh petugas. |
 | Hari ke-6 (>5 hari) | Peringatan 2 kepada petugas yang lalai dan seluruh petugas. |
 | Hari ke-7 | Peringatan 3 kepada petugas yang lalai dan seluruh petugas. Sampaikan bahwa jika besok belum mengisi, statusnya akan dinonaktifkan. Notifikasi kepada seluruh petugas wajib mencantumkan nama petugas yang lalai agar rekan kerja dapat mengingatkan orang yang bersangkutan secara langsung. |
-| Hari ke-8 | Status akun setiap petugas yang belum mengisi dinonaktifkan. Pada saat penonaktifan dilakukan, sistem wajib mengirim notifikasi kepada **seluruh petugas**, termasuk petugas yang dinonaktifkan, dengan mencantumkan nama petugas yang dinonaktifkan dan informasi bahwa status akunnya telah dinonaktifkan. |
+| Hari ke-8 | Status akun setiap petugas yang belum mengisi dinonaktifkan. Pada saat penonaktifan dilakukan, sistem mengirim notifikasi kepada **seluruh petugas lainnya** dengan mencantumkan nama petugas yang dinonaktifkan dan informasi penonaktifan. Petugas yang akunnya dinonaktifkan menerima pemberitahuan **ketika mencoba login**: setelah identitas akunnya dikenali dan status nonaktif dikonfirmasi oleh server, aplikasi menampilkan pesan bahwa akunnya dinonaktifkan karena belum mengisi LHI selama 8 hari. |
 | Hari ke-9 | Masa tunggu setelah penonaktifan individu. Mode Blok Aplikasi global belum diaktifkan pada hari ini. |
 | Hari ke-10 | Status petugas yang dinonaktifkan diaktifkan kembali sesuai konsep, tetapi Mode Blok Aplikasi global diaktifkan. |
 
@@ -41,7 +41,7 @@ Peringatan 1, 2, dan 3 dikirim kepada:
 - Jika terdapat lebih dari satu petugas yang belum mengisi, cantumkan seluruh nama petugas yang memenuhi kondisi peringatan pada tahap tersebut.
 - Nama harus disertai tahap peringatan dan jumlah hari tanpa LHI agar rekan kerja mengetahui siapa yang perlu diingatkan dan dapat menghubungi orang tersebut secara langsung.
 - Pada Peringatan 3 (hari ke-7), pesan kepada seluruh petugas wajib menyebutkan bahwa nama-nama yang tercantum berisiko dinonaktifkan pada hari ke-8 apabila belum melengkapi LHI.
-- Notifikasi penonaktifan hari ke-8 juga disampaikan kepada seluruh petugas dengan mencantumkan nama petugas yang dinonaktifkan.
+- Notifikasi penonaktifan hari ke-8 disampaikan kepada seluruh petugas lainnya dengan mencantumkan nama petugas yang dinonaktifkan. Petugas yang dinonaktifkan diberi tahu secara langsung saat mencoba login; sistem menampilkan pemberitahuan status nonaktif setelah server memverifikasi akun dan alasan penonaktifannya.
 
 Tujuannya agar rekan kerja/tim dapat mengingatkan petugas yang bersangkutan secara langsung. Notifikasi harus menyebut nama petugas, tahap peringatan, jumlah hari tanpa LHI, dan tindakan yang harus dilakukan. Notifikasi setiap tahap tidak boleh terkirim berulang kali untuk kejadian/tahap yang sama.
 
@@ -111,7 +111,7 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 1. Empat hari kalender tanpa LHI: Peringatan 1 diterima petugas terkait dan seluruh tim; notifikasi seluruh tim mencantumkan nama petugas yang lalai.
 2. Enam hari tanpa LHI: Peringatan 2 diterima petugas terkait dan seluruh tim; notifikasi seluruh tim mencantumkan nama petugas yang lalai.
 3. Tujuh hari tanpa LHI: Peringatan 3 dan ancaman penonaktifan hari berikutnya diterima petugas terkait dan seluruh tim; notifikasi seluruh tim mencantumkan nama setiap petugas yang lalai agar dapat diingatkan langsung.
-4. Delapan hari tanpa LHI: status akun petugas yang bersangkutan dinonaktifkan. Sistem wajib mengirim notifikasi kepada seluruh petugas, termasuk petugas yang dinonaktifkan, dengan mencantumkan nama petugas dan informasi penonaktifan akunnya.
+4. Delapan hari tanpa LHI: status akun petugas yang bersangkutan dinonaktifkan. Seluruh petugas lainnya menerima notifikasi yang mencantumkan nama petugas tersebut dan informasi penonaktifan. Ketika petugas yang dinonaktifkan mencoba login, aplikasi menampilkan pemberitahuan bahwa akunnya dinonaktifkan karena belum mengisi LHI selama 8 hari.
 5. Hari ke-9: masa tunggu setelah penonaktifan individu; Mode Blok global belum aktif.
 6. Hari ke-10: status petugas tersebut diaktifkan kembali sesuai konsep dan Mode Blok global aktif.
 7. Saat Mode Blok aktif, tampilan awal aplikasi berubah menjadi Form Blok Aplikasi; form login normal tidak ditampilkan kepada seluruh pengguna.
@@ -137,4 +137,4 @@ Sebelum implementasi:
 7. Uji seluruh skenario penerimaan dan verifikasi log sebelum menyatakan selesai.
 
 ---
-**Prinsip utama:** peringatan bertahap kepada individu dan seluruh tim dengan mencantumkan nama petugas yang lalai; penonaktifan individual pada hari ke-8 yang wajib diberitahukan kepada seluruh petugas dengan menyebut nama petugas yang dinonaktifkan; masa tunggu hari ke-9; Mode Blok global pada hari ke-10; pemulihan global hanya setelah semua petugas dalam daftar kewajiban melengkapi LHI.
+**Prinsip utama:** peringatan bertahap kepada individu dan seluruh tim dengan mencantumkan nama petugas yang lalai; penonaktifan individual pada hari ke-8 yang diberitahukan kepada seluruh petugas lainnya, sedangkan petugas yang dinonaktifkan menerima pesan status nonaktif saat mencoba login; masa tunggu hari ke-9; Mode Blok global pada hari ke-10; pemulihan global hanya setelah semua petugas dalam daftar kewajiban melengkapi LHI.
