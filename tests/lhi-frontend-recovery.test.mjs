@@ -48,3 +48,11 @@ test("opaque capability is session-scoped and revalidated on same-tab refresh", 
 test("recovery action endpoint rejects anything beyond status and start-grace", () => {
   assert.match(recoveryAction, /\["apiRecoveryStatus", "apiStartLhiGrace"\]/);
 });
+
+test("KA can resume restricted recovery from a fresh tab during grace", () => {
+  assert.match(app, /function renderLhiRecoveryResumeUi_\(/);
+  assert.match(app, /LANJUTKAN PEMULIHAN KA IPSRS/);
+  assert.match(app, /lhi-reset-verify/);
+  assert.match(app, /pendingLhiRecoveryChallenge_=String\(result\.challenge\|\|''\)/);
+  assert.match(app, /status\.grace_active/);
+});
