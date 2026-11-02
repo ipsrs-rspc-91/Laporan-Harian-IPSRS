@@ -248,7 +248,8 @@ async function act(ctx:any,a:string,d:any,req?:Request){
  const s=await staff(ctx,req,recoveryActions.has(a));
  const {data:blockSetting,error:blockError}=await db.from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
  if(blockError)throw blockError;
- const globalBlocked=String(blockSetting?.value||"").toUpperCase()==="AKTIF";
+ if(!blockSetting)throw Error("Status Mode Blok Aplikasi tidak ditemukan. Seluruh akses ditahan sampai status dapat diverifikasi.");
+ const globalBlocked=String(blockSetting.value||"").toUpperCase()==="AKTIF";
  if(globalBlocked){
    if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
    if(!recoveryActions.has(a))return{ok:false,msg:"MODE FORM BLOK APLIKASI AKTIF. Akses operasional ditutup oleh server."};
