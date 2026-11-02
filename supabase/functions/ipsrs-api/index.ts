@@ -209,20 +209,64 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false,skipLegacyWhenGl
    throw Error("Status kepegawaian Anda NONAKTIF. Hubungi KA IPSRS untuk pemeriksaan data kepegawaian.");
  }
 
- // During a global lock, only the KA recovery route may proceed. The act()
- // allowlist below still restricts this session to recovery-only operations.
+ // During a global lock, only the KA recovery route may proceed. For normal
+ // operation, compute the day-8 threshold from WIB calendar dates as a
+ // server-side backstop; the daily scheduler also performs the same calculation.
  if(!(skipLegacyWhenGlobalBlocked&&kaRecoveryAllowed)){
    const manualUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
    const manualUnblockActive=manualUntil>Date.now();
    if(!manualUnblockActive){
      const {data:monitorState,error:monitorError}=await ctx.supabaseAdmin
        .from("lhi_staff_monitoring_state")
-       .select("individual_blocked_at")
+       .select("active_since,last_valid_input_at,individual_blocked_at,last_calculated_days")
        .eq("staff_id",data.staff_id)
        .maybeSingle();
      if(monitorError)throw monitorError;
-     if(monitorState?.individual_blocked_at){
-       throw Error("Akun Anda diblokir secara individual karena tidak mengisi LHI selama 8 hari kalender. Tunggu pemulihan oleh KA IPSRS.");
+
+     const todayWib=wibDate(new Date());
+     const activeSince=monitorState?.active_since||data.created_at;
+     const activeDate=activeSince?wibDate(activeSince):todayWib;
+     const lastInputDate=monitorState?.last_valid_input_at?wibDate(monitorState.last_valid_input_at):activeDate;
+     const baselineDate=lastInputDate>activeDate?lastInputDate:activeDate;
+     const daysWithout=Math.max(0,Math.floor(
+       (Date.parse(todayWib+"T00:00:00Z")-Date.parse(baselineDate+"T00:00:00Z"))/86400000
+     ));
+     const isIndividuallyBlocked=!!monitorState?.individual_blocked_at||daysWithout>=8;
+
+     if(isIndividuallyBlocked){
+       const {data:graceIncident,error:graceError}=await ctx.supabaseAdmin
+         .from("lhi_discipline_incidents")
+         .select("incident_id")
+         .eq("status","GRACE")
+         .gt("deadline_at",new Date().toISOString())
+         .order("incident_id",{ascending:false})
+         .limit(1)
+         .maybeSingle();
+       if(graceError)throw graceError;
+
+       if(!graceIncident){
+         const blockedAt=monitorState?.individual_blocked_at||new Date().toISOString();
+         const {error:blockError}=await ctx.supabaseAdmin.from("lhi_staff_monitoring_state")
+           .upsert({
+             staff_id:data.staff_id,
+             active_since:activeSince,
+             baseline_source:monitorState?.active_since?"STATUS_HISTORY":"LEGACY_CREATED_AT_FALLBACK",
+             individual_blocked_at:blockedAt,
+             last_calculated_days:daysWithout,
+             updated_at:new Date().toISOString()
+           },{onConflict:"staff_id"});
+         if(blockError)throw blockError;
+         if(!monitorState?.individual_blocked_at){
+           await ctx.supabaseAdmin.from("audit_log").insert({
+             username:"SYSTEM",staff_id:data.staff_id,action:"BLOCK_LHI_DAY_8",
+             report_id:null,
+             keterangan:"Akses LHI diblokir individual pada hari ke-8 berdasarkan created_at WIB. Status kepegawaian tetap Aktif.",
+             field_changed:"lhi_staff_monitoring_state.individual_blocked_at",
+             old_value:null,new_value:blockedAt
+           });
+         }
+         throw Error("Akun Anda diblokir secara individual karena tidak mengisi LHI selama 8 hari kalender. Status kepegawaian tetap Aktif. Tunggu pemulihan oleh KA IPSRS.");
+       }
      }
    }
  }
