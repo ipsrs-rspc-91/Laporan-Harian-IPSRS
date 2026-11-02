@@ -125,9 +125,6 @@ def scalar(cur, sql, params=()):
 with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
     with conn.cursor() as cur:
         cur.execute(BOOTSTRAP)
-        cur.execute(MIGRATION.read_text(encoding="utf-8"))
-        print("PASS Stage 3 migration applied to isolated PostgreSQL 17 test database")
-
         now = datetime.now(timezone.utc)
         def add_staff(staff_id, age_days, last_input_days=None, manual_days=None, status="Aktif"):
             created = now - timedelta(days=age_days)
@@ -146,10 +143,14 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
                     ("R-" + staff_id, staff_id, (now - timedelta(days=25)).date(), created_input),
                 )
 
+        # Seed legacy staff before the migration so fallback baseline is exercised.
         add_staff("D8", 8, 8)
         add_staff("MANUAL", 8, 8, manual_days=2)
         add_staff("FRESH", 12, 1)
         add_staff("INACTIVE", 30, None, status="Nonaktif")
+
+        cur.execute(MIGRATION.read_text(encoding="utf-8"))
+        print("PASS Stage 3 migration applied to isolated PostgreSQL 17 test database")
 
         # Initial baseline uses created_at only for legacy rows, explicitly tagged.
         assert scalar(cur, """SELECT count(*) FROM public.lhi_staff_monitoring_state
