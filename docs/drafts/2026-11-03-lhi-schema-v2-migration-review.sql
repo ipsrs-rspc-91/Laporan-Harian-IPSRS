@@ -163,7 +163,7 @@ DECLARE
   v_actor_staff_id text;
 BEGIN
   IF NEW.status IS DISTINCT FROM OLD.status THEN
-    IF NEW.status NOT IN ('Aktif', 'Nonaktif') THEN
+    IF NEW.status IS NULL OR NEW.status NOT IN ('Aktif', 'Nonaktif') THEN
       RAISE EXCEPTION 'Status kepegawaian hanya boleh Aktif atau Nonaktif. Status akses LHI dikelola terpisah.';
     END IF;
 
