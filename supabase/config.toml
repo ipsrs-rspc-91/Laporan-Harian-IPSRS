@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.lhi-recovery-action]
 verify_jwt = false
+
+[functions.lhi-block-status]
+verify_jwt = false
