@@ -117,3 +117,26 @@ Inspeksi branch perbaikan terhadap frontend/app.js dan ipsrs-api/index.ts menemu
 6. Pada frontend/index.html yang diperiksa, loginScreen adalah container kosong yang diisi oleh app.js. Belum ditemukan komponen form blokir/reset yang terhubung dengan gate server-side; komponen render login dinamis perlu ditelusuri sebelum mengubah UI agar tidak membuat form login kedua.
 
 Kesimpulan: jangan menganggap flag sessionStorage yang ada sebagai implementasi Reset. Jangan sekadar memindahkan pemeriksaan role ke bagian sebelum apiWhoAmI; backend harus terlebih dahulu menyediakan endpoint gate, exchange, capability terbatas, dan RPC atomik. Implementasi UI dilakukan setelah kontrak server siap.
+
+
+## 9. Fondasi challenge dan sesi pemulihan — ditambahkan 3 November 2026
+
+File draft migration:
+`supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql`
+
+Migration ini menambahkan:
+- Tabel privat `private.lhi_reset_rate_limits` untuk pembatasan percobaan secara atomik per hash IP selama jendela 15 menit.
+- Tabel privat `private.lhi_recovery_challenges` untuk hash nonce, insiden yang dikunci, waktu kedaluwarsa 5 menit, dan status sekali pakai.
+- Tabel privat `private.lhi_recovery_sessions` untuk hash capability, identitas Auth, staff_id, incident binding, kedaluwarsa 10 menit, dan pencabutan.
+- RPC server-only untuk mencatat percobaan, menerbitkan challenge hanya saat global lock aktif dan incident LOCKED tersedia, mengonsumsi challenge sekaligus menerbitkan sesi setelah pemeriksaan Auth-user mapping/role KA_IPSRS/status Aktif, serta memvalidasi setiap action recovery.
+- Action allowlist eksplisit: hanya `apiRecoveryStatus` dan `apiStartLhiGrace`. Nilai action NULL juga harus ditolak.
+
+Seluruh tabel menggunakan RLS dan tidak memberikan akses tabel langsung kepada PUBLIC, anon, authenticated, maupun service_role. RPC hanya dapat dipanggil service_role. Fungsi SECURITY DEFINER menjalankan operasi tabel privat sebagai owner fungsi.
+
+**Status:** draft migration di branch perbaikan; belum diaplikasikan ke database mana pun. Edge Function dan frontend belum terhubung ke RPC ini. Migration belum dianggap lulus sampai dijalankan pada project Supabase nonproduksi dan diuji dengan concurrency, replay nonce, expired nonce, role salah, akun Nonaktif, dan incident yang berubah status.
+
+### Temuan CI dan koreksi
+
+- CI pertama untuk kontrak SQL gagal pada satu assertion test yang pola regex-nya tidak sesuai dengan ekspresi SQL `lower(coalesce(v_staff.status, ''))`.
+- Pemeriksaan SQL sendiri menunjukkan ekspresi tersebut ada; assertion diperbaiki agar mencocokkan bentuk SQL yang sebenarnya.
+- Test ditambah untuk memastikan action NULL ditolak secara eksplisit, karena kondisi SQL `NULL NOT IN (...)` tidak bernilai TRUE dan harus ditangani secara fail-closed.
