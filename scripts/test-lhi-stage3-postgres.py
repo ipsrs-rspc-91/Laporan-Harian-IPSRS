@@ -126,13 +126,13 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
     with conn.cursor() as cur:
         cur.execute(BOOTSTRAP)
         now = datetime.now(timezone.utc)
-        def add_staff(staff_id, age_days, last_input_days=None, manual_days=None, status="Aktif"):
+        def add_staff(staff_id, age_days, last_input_days=None, manual_days=None, status="Aktif", role="STAF"):
             created = now - timedelta(days=age_days)
             manual = now + timedelta(days=manual_days) if manual_days else None
             cur.execute(
                 """INSERT INTO public.staff(staff_id,nama,role,status,created_at,lhi_manual_unblock_until)
-                   VALUES (%s,%s,'STAF',%s,%s,%s)""",
-                (staff_id, staff_id, status, created, manual),
+                   VALUES (%s,%s,%s,%s,%s,%s)""",
+                (staff_id, staff_id, role, status, created, manual),
             )
             if last_input_days is not None:
                 created_input = now - timedelta(days=last_input_days)
@@ -171,6 +171,13 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
                               WHERE event_key LIKE 'D8:%%:DAY_%%'""") == 4
         print("PASS day-8 individual block, warnings, manual-unblock window, and employment-status separation")
 
+        # Manual unblock expiry restores day-8 blocking without changing employment status.
+        cur.execute("UPDATE public.staff SET lhi_manual_unblock_until=clock_timestamp()-interval '1 second' WHERE staff_id='MANUAL'")
+        cur.execute("SELECT public.run_lhi_daily_monitoring()")
+        assert scalar(cur, """SELECT individual_blocked_at IS NOT NULL
+                              FROM public.lhi_staff_monitoring_state WHERE staff_id='MANUAL'""") is True
+        assert scalar(cur, "SELECT status FROM public.staff WHERE staff_id='MANUAL'") == "Aktif"
+
         # A valid server input clears the individual block even if work date is old.
         cur.execute(
             """INSERT INTO public.reports(report_id,staff_id,tanggal,created_at)
@@ -189,6 +196,7 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
 
         # Day 10 triggers the global lock and snapshots only staff already at day 10.
         add_staff("D10", 10, 10)
+        add_staff("KA", 10, 10, role="KA_IPSRS")
         cur.execute("SELECT public.run_lhi_daily_monitoring()")
         assert scalar(cur, "SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK'") == "AKTIF"
         incident_id = scalar(cur, "SELECT max(incident_id) FROM public.lhi_discipline_incidents WHERE status='LOCKED'")
@@ -196,7 +204,9 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
                               WHERE incident_id=%s AND staff_id='D10'""", (incident_id,)) == 1
         assert scalar(cur, """SELECT count(*) FROM public.lhi_discipline_obligations
                               WHERE incident_id=%s AND staff_id='D8'""", (incident_id,)) == 0
-        print("PASS day-10 global lock and delinquent-only snapshot")
+        assert scalar(cur, """SELECT count(*) FROM public.lhi_discipline_obligations
+                              WHERE incident_id=%s AND staff_id='KA'""", (incident_id,)) == 1
+        print("PASS day-10 global lock, KA inclusion, and delinquent-only snapshot")
 
         # Open a simulated grace window that has already reached its deadline.
         grace_start = now - timedelta(hours=13)
@@ -215,6 +225,11 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         cur.execute(
             """INSERT INTO public.reports(report_id,staff_id,tanggal,created_at)
                VALUES ('R-D10-GRACE','D10',%s,%s)""",
+            ((now - timedelta(days=30)).date(), grace_start + timedelta(hours=1)),
+        )
+        cur.execute(
+            """INSERT INTO public.reports(report_id,staff_id,tanggal,created_at)
+               VALUES ('R-KA-GRACE','KA',%s,%s)""",
             ((now - timedelta(days=30)).date(), grace_start + timedelta(hours=1)),
         )
 
@@ -277,7 +292,7 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         assert scalar(cur, "SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK'") == "AKTIF"
         print("PASS grace-period cancellation restores PENDING and reactivates global block at deadline")
 
-        assert scalar(cur, "SELECT count(*) FROM public.staff_employment_status_history") >= 6
+        assert scalar(cur, "SELECT count(*) FROM public.staff_employment_status_history") >= 8
         assert scalar(cur, """SELECT count(*) FROM cron.job WHERE jobname='lhi-daily-monitoring-wib'
                               AND schedule='0 17 * * *'""") == 1
         assert scalar(cur, """SELECT count(*) FROM cron.job WHERE jobname='lhi-discipline-scheduler-every-5-minutes'
