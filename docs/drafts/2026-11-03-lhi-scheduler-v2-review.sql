@@ -12,7 +12,7 @@
 -- * Day 9 (missed_full_days = 8) is WAITING only.
 -- * Global block at missed_full_days >= 9 (day 10).
 -- * All roles included; BLOCKED_LHI staff remain evaluated.
--- * Snapshot only delinquent active staff, one row per staff/incident.
+-- * Snapshot is created atomically by the Reset RPC, one row per delinquent staff/incident.
 -- * Grace evaluated only at/after its exact 12-hour deadline.
 
 BEGIN;
@@ -371,37 +371,19 @@ BEGIN
       RAISE EXCEPTION 'Gagal mengaktifkan LHI_GLOBAL_BLOCK; seluruh transaksi dibatalkan.';
     END IF;
 
+    -- The LOCKED incident is only a gate. README requires the delinquent
+    -- staff snapshot to be created atomically with KA IPSRS Reset, not here.
     INSERT INTO public.lhi_discipline_incidents
       (started_at, deadline_at, status, started_by_staff_id, started_by_name)
     VALUES
-      (v_now, v_now + interval '12 hours', 'LOCKED', 'SYSTEM', 'SYSTEM')
+      (v_now, v_now, 'LOCKED', 'SYSTEM', 'SYSTEM')
     RETURNING incident_id INTO v_incident_id;
-
-    INSERT INTO public.lhi_discipline_snapshot_members
-      (incident_id, staff_id, snapshot_created_at, anchor_input_at,
-       missed_full_days_at_snapshot, employment_status_at_snapshot)
-    SELECT v_incident_id, e.staff_id, v_now, e.anchor_at,
-           e.missed_full_days, e.employment_status
-    FROM public.lhi_discipline_evaluations_v2(v_now) e
-    WHERE e.missed_full_days >= 9
-      AND e.employment_status = 'Aktif'
-    ON CONFLICT (incident_id, staff_id) DO NOTHING;
-
-    INSERT INTO public.lhi_discipline_obligation_events
-      (member_id, event_type, event_at, new_status, details)
-    SELECT m.member_id, 'SNAPSHOT_CREATED', v_now, 'PENDING',
-           jsonb_build_object(
-             'missed_full_days', m.missed_full_days_at_snapshot,
-             'anchor_input_at', m.anchor_input_at
-           )
-    FROM public.lhi_discipline_snapshot_members m
-    WHERE m.incident_id = v_incident_id;
 
     INSERT INTO public.audit_log
       (username, staff_id, action, keterangan, field_changed, old_value, new_value)
     VALUES
       ('SYSTEM', 'SYSTEM', 'ACTIVATE_LHI_GLOBAL_BLOCK_DAY_10',
-       'Mode Blok Aplikasi aktif pada hari ke-10. Snapshot satu kewajiban per petugas Aktif yang mencapai ambang global.',
+       'Mode Blok Aplikasi aktif pada hari ke-10. Snapshot kewajiban akan dibuat atomik saat KA IPSRS menjalankan Reset.',
        'LHI_GLOBAL_BLOCK', 'NONAKTIF', 'AKTIF');
 
     INSERT INTO public.lhi_discipline_notifications
