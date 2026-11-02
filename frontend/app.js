@@ -6522,6 +6522,90 @@
     });
   }
 
+  function removeLhiRecoveryResumeUi_(){
+    const button=document.getElementById('lhiRecoveryResumeBtn');
+    const modal=document.getElementById('lhiRecoveryResumeModal');
+    if(button)button.remove();
+    if(modal)modal.remove();
+  }
+
+  function renderLhiRecoveryResumeUi_(graceDeadline){
+    const screen=document.getElementById('loginScreen');
+    const loginMsg=document.getElementById('loginMsg');
+    if(!screen||!loginMsg)return;
+    let button=document.getElementById('lhiRecoveryResumeBtn');
+    if(!button){
+      button=document.createElement('button');
+      button.id='lhiRecoveryResumeBtn';
+      button.type='button';
+      button.textContent='LANJUTKAN PEMULIHAN KA IPSRS';
+      button.style.cssText='display:block;width:100%;min-height:42px;margin:12px 0 0;border:1px solid #0b6b2a;border-radius:10px;background:#087b28;color:#fff;font-weight:800;cursor:pointer';
+      loginMsg.insertAdjacentElement('afterend',button);
+    }
+    let modal=document.getElementById('lhiRecoveryResumeModal');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='lhiRecoveryResumeModal';
+      modal.style.cssText='position:fixed;inset:0;z-index:100100;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,20,48,.72)';
+      modal.innerHTML=`
+        <section style="width:min(100%,360px);padding:22px;border-radius:16px;background:#fff;color:#102044;box-shadow:0 22px 60px rgba(0,0,0,.3)">
+          <h2 style="margin:0 0 8px;font-size:19px">Lanjutkan Pemulihan</h2>
+          <p style="margin:0 0 14px;font-size:13px;line-height:1.5;color:#53627a">Masukkan kode Reset, kemudian login menggunakan username dan password KA IPSRS. Sesi ini tetap terbatas pada pemulihan.</p>
+          <input id="lhiRecoveryResumeCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 angka kode Reset" style="box-sizing:border-box;width:100%;height:48px;border:1px solid #cbd5e1;border-radius:9px;padding:0 13px;font-size:20px;letter-spacing:.25em;text-align:center;color:#102044;background:#fff">
+          <div id="lhiRecoveryResumeMessage" role="status" style="min-height:20px;margin-top:10px;font-size:12px;color:#b42318"></div>
+          <div style="display:flex;justify-content:flex-end;gap:9px;margin-top:14px">
+            <button type="button" id="lhiRecoveryResumeCancel" style="min-height:40px;padding:0 15px;border:1px solid #cbd5e1;border-radius:9px;background:#f1f5f9;color:#334155;font-weight:800">Batal</button>
+            <button type="button" id="lhiRecoveryResumeVerify" style="min-height:40px;padding:0 15px;border:1px solid #16a34a;border-radius:9px;background:#16a34a;color:#fff;font-weight:800">Verifikasi</button>
+          </div>
+        </section>`;
+      screen.appendChild(modal);
+    }
+    button.onclick=()=>{
+      modal.style.display='flex';
+      const input=document.getElementById('lhiRecoveryResumeCode');
+      const message=document.getElementById('lhiRecoveryResumeMessage');
+      if(input){input.value='';setTimeout(()=>input.focus(),50);}
+      if(message)message.textContent='';
+    };
+    const cancel=document.getElementById('lhiRecoveryResumeCancel');
+    if(cancel)cancel.onclick=()=>{modal.style.display='none';};
+    const verify=document.getElementById('lhiRecoveryResumeVerify');
+    if(verify && verify.dataset.bound!=='1'){
+      verify.dataset.bound='1';
+      verify.addEventListener('click',async()=>{
+        const input=document.getElementById('lhiRecoveryResumeCode');
+        const message=document.getElementById('lhiRecoveryResumeMessage');
+        const code=String(input&&input.value||'').trim();
+        if(!/^\d{6}$/.test(code)){if(message)message.textContent='Masukkan 6 angka kode Reset.';return;}
+        verify.disabled=true;
+        if(message)message.textContent='Memverifikasi kode ke server...';
+        try{
+          const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\/$/,'');
+          const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
+          const response=await fetch(base+'/functions/v1/lhi-reset-verify',{
+            method:'POST',headers:{'Content-Type':'application/json','apikey':key},
+            body:JSON.stringify({code}),cache:'no-store'
+          });
+          const result=await response.json().catch(()=>null);
+          if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode Reset tidak dapat diverifikasi.');
+          pendingLhiRecoveryChallenge_=String(result.challenge||'');
+          setLhiRecoveryCapability_(null);
+          modal.style.display='none';
+          showLoginScreen('Kode Reset diterima. Silakan login menggunakan akun KA IPSRS.');
+        }catch(error){
+          if(message)message.textContent=String(error&&error.message||'Verifikasi Reset gagal.');
+        }finally{verify.disabled=false;}
+      });
+    }
+    const note=document.getElementById('lhiRecoveryResumeDeadline');
+    if(note)note.remove();
+    const deadline=document.createElement('div');
+    deadline.id='lhiRecoveryResumeDeadline';
+    deadline.style.cssText='margin-top:6px;font-size:12px;color:#64748b;text-align:center';
+    deadline.textContent='Batas masa pemulihan: '+formatLhiRecoveryDate_(graceDeadline);
+    button.insertAdjacentElement('afterend',deadline);
+  }
+
   async function checkAuthAndInit(){
     clearSession();
     const screen=document.getElementById('loginScreen');
@@ -6554,7 +6638,13 @@
         renderLhiGlobalBlockScreen_((status&&status.message)||'Status blokir belum dapat diverifikasi. Login ditahan sementara.');
         return;
       }
-      if(status.blocked){renderLhiGlobalBlockScreen_(status.message,status);return;}
+      if(status.blocked){removeLhiRecoveryResumeUi_();renderLhiGlobalBlockScreen_(status.message,status);return;}
+      if(status.grace_active){
+        showLoginScreen(status.message);
+        renderLhiRecoveryResumeUi_(status.grace_deadline_at);
+        return;
+      }
+      removeLhiRecoveryResumeUi_();
       showLoginScreen();
     }catch(_error){
       renderLhiGlobalBlockScreen_('Status blokir aplikasi belum dapat diverifikasi. Login ditahan sementara. Silakan hubungi KA IPSRS.');
