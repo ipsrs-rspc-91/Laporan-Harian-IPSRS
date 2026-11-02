@@ -93,7 +93,7 @@ CREATE OR REPLACE FUNCTION public.consume_lhi_recovery_token_and_open_grace(
 ) RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = 'public', 'private', 'pg_temp'
+SET search_path = ''
 AS $function$
 DECLARE
   v_token private.lhi_recovery_tokens%ROWTYPE;
