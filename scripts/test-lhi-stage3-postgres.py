@@ -214,7 +214,9 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
             ((now - timedelta(days=30)).date(), grace_start + timedelta(hours=1)),
         )
 
-        # A snapshot member becoming NONAKTIF is excluded, but its snapshot row remains.
+        # Reactivate this employee, include the snapshot row, then deactivate during grace.
+        # The row must remain in the snapshot but be excluded from the deadline count.
+        cur.execute("UPDATE public.staff SET status='Aktif' WHERE staff_id='INACTIVE'")
         cur.execute(
             """INSERT INTO public.lhi_discipline_obligations(incident_id,staff_id,required_date)
                VALUES (%s,'INACTIVE',%s)""",
