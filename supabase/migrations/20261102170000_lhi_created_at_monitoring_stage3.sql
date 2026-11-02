@@ -122,7 +122,6 @@ legacy_baseline AS (
       WHEN s.status <> 'Aktif' THEN NULL
       WHEN m.manual_unblock_at IS NOT NULL
        AND (b.blocked_at IS NULL OR m.manual_unblock_at > b.blocked_at)
-       AND (r.reactivated_at IS NULL OR m.manual_unblock_at >= r.reactivated_at)
         THEN m.manual_unblock_at
       WHEN r.reactivated_at IS NOT NULL THEN r.reactivated_at
       WHEN b.blocked_at IS NOT NULL THEN clock_timestamp()
@@ -132,7 +131,6 @@ legacy_baseline AS (
       WHEN s.status <> 'Aktif' THEN 'INACTIVE'
       WHEN m.manual_unblock_at IS NOT NULL
        AND (b.blocked_at IS NULL OR m.manual_unblock_at > b.blocked_at)
-       AND (r.reactivated_at IS NULL OR m.manual_unblock_at >= r.reactivated_at)
         THEN 'LEGACY_MANUAL_UNBLOCK_AUDIT'
       WHEN r.reactivated_at IS NOT NULL THEN 'LEGACY_REPORT_REACTIVATION_INFERRED'
       WHEN b.blocked_at IS NOT NULL THEN 'LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED'
