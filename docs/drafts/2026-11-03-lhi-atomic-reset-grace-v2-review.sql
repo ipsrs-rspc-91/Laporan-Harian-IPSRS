@@ -177,6 +177,19 @@ BEGIN
     RAISE EXCEPTION 'Blokir global gagal dinonaktifkan; seluruh perubahan dibatalkan.';
   END IF;
 
+  -- Keep this narrowly scoped capability valid only through the current grace
+  -- deadline, so a page refresh can re-authenticate KA and resume status checks.
+  UPDATE private.lhi_recovery_sessions
+  SET expires_at = v_now + interval '12 hours'
+  WHERE token_hash = p_recovery_session_token_hash
+    AND staff_id = v_staff_id
+    AND incident_id = v_incident.incident_id::text
+    AND revoked_at IS NULL;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Sesi pemulihan gagal diperpanjang sampai tenggat grace; seluruh perubahan dibatalkan.';
+  END IF;
+
   INSERT INTO public.audit_log (
     username, staff_id, action, report_id, keterangan,
     field_changed, old_value, new_value
