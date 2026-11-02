@@ -74,11 +74,10 @@ BEGIN
     SELECT 1
     FROM private.lhi_recovery_tokens t
     JOIN public.lhi_discipline_incidents i
-      ON i.started_by_staff_id = t.consumed_by_staff_id
+      ON i.status = 'GRACE'
     WHERE t.token_hash = p_token_hash
       AND t.consumed_by_staff_id = p_staff_id
       AND t.consumed_at IS NOT NULL
-      AND i.status = 'GRACE'
   );
 END;
 $function$;
@@ -131,7 +130,6 @@ BEGIN
     SELECT * INTO v_incident
     FROM public.lhi_discipline_incidents
     WHERE status = 'GRACE'
-      AND started_by_staff_id = p_staff_id
     ORDER BY incident_id DESC
     LIMIT 1;
 
