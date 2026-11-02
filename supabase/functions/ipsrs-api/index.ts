@@ -531,7 +531,7 @@ if(a==="apiGetStaffMonitoring"){
  }
 
  if(a==="apiDashboardStats"){
- const z=range(d.bulan),ck=`dash:v2:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;
+ const z=range(d.bulan),ck=`dash:v3-createdat:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
  const dashboardTanggal=z.month===today.slice(0,7)?today:z.start;
  let staffQ=db.from("staff").select("staff_id,nama,role,bidang,status").eq("status","Aktif").order("nama");if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);if(d.bidangFilter)staffQ=staffQ.eq("bidang",d.bidangFilter);const {data:activeStaff,error:staffErr}=await staffQ;if(staffErr)throw staffErr;
