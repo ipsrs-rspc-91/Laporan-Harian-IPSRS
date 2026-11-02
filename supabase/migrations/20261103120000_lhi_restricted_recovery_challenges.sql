@@ -105,6 +105,7 @@ AS $function$
 DECLARE
   v_lock text;
   v_incident_id text;
+  v_incident_status text;
   v_now timestamptz := clock_timestamp();
   v_expires timestamptz;
 BEGIN
@@ -122,15 +123,18 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'reason', 'GLOBAL_LOCK_NOT_ACTIVE');
   END IF;
 
-  SELECT incident_id::text INTO v_incident_id
+  SELECT incident_id::text, status INTO v_incident_id, v_incident_status
   FROM public.lhi_discipline_incidents
-  WHERE status = 'LOCKED'
+  WHERE status IN ('LOCKED', 'GRACE')
   ORDER BY incident_id DESC
   LIMIT 1
   FOR UPDATE;
 
-  IF v_incident_id IS NULL THEN
-    RETURN jsonb_build_object('ok', false, 'reason', 'LOCKED_INCIDENT_NOT_FOUND');
+  IF v_incident_id IS NULL OR NOT (
+    (v_lock = 'AKTIF' AND v_incident_status = 'LOCKED') OR
+    (v_lock = 'NONAKTIF' AND v_incident_status = 'GRACE')
+  ) THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'RECOVERY_INCIDENT_NOT_AVAILABLE');
   END IF;
 
   v_expires := v_now + interval '5 minutes';
@@ -164,6 +168,7 @@ DECLARE
   v_challenge private.lhi_recovery_challenges%ROWTYPE;
   v_staff public.staff%ROWTYPE;
   v_lock text;
+  v_incident_status text;
   v_now timestamptz := clock_timestamp();
   v_expires timestamptz;
 BEGIN
@@ -203,17 +208,15 @@ BEGIN
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR UPDATE;
 
-  IF v_lock IS DISTINCT FROM 'AKTIF' THEN
-    RETURN jsonb_build_object('ok', false, 'reason', 'GLOBAL_LOCK_CHANGED');
-  END IF;
-
-  PERFORM 1
+  SELECT status INTO v_incident_status
   FROM public.lhi_discipline_incidents
   WHERE incident_id::text = v_challenge.incident_id
-    AND status = 'LOCKED'
   FOR UPDATE;
 
-  IF NOT FOUND THEN
+  IF NOT FOUND OR NOT (
+    (v_lock = 'AKTIF' AND v_incident_status = 'LOCKED') OR
+    (v_lock = 'NONAKTIF' AND v_incident_status = 'GRACE')
+  ) THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INCIDENT_CHANGED');
   END IF;
 
