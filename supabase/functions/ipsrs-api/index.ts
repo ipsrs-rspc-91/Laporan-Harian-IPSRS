@@ -173,6 +173,19 @@ async function staff(ctx:any,req?:Request){
    }
  }
  if(!uid)throw Error("Sesi tidak valid.");
+ // Enforce global lock at the API boundary as well as in the login screen.
+ // Direct API calls must not bypass the Form Blok Aplikasi frontend gate.
+ const {data:globalSetting,error:globalError}=await ctx.supabaseAdmin
+   .from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
+ if(globalError)throw globalError;
+ const globalLockState=String(globalSetting?.value||"").toUpperCase();
+ if(globalLockState==="AKTIF"){
+   throw Error("MODE FORM BLOK APLIKASI AKTIF. Login normal ditutup. Hanya KA IPSRS dapat melanjutkan melalui prosedur Reset.");
+ }
+ if(globalLockState!=="NONAKTIF"){
+   throw Error("Status blokir global tidak dapat diverifikasi. Login ditahan sementara.");
+ }
+
  const staffFields="staff_id,nama,jabatan,role,bidang,status,lhi_access_status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_manual_unblock_until";
  let {data,error}=await ctx.supabaseAdmin.from("staff").select(staffFields).eq("auth_user_id",uid).maybeSingle();
  if(error)throw error;
@@ -194,19 +207,6 @@ async function staff(ctx:any,req?:Request){
  const accessStatus=String(data.lhi_access_status||"NORMAL").trim().toUpperCase();
  if(accessStatus!=="NORMAL"){
    throw Error("Hak akses aplikasi Anda diblokir karena kewajiban Laporan Harian IPSRS belum dipenuhi. Silakan hubungi KA IPSRS untuk prosedur pemulihan.");
- }
-
- // Enforce global lock at the API boundary as well as in the login screen.
- // Direct API calls must not bypass the Form Blok Aplikasi frontend gate.
- const {data:globalSetting,error:globalError}=await ctx.supabaseAdmin
-   .from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
- if(globalError)throw globalError;
- const globalLockState=String(globalSetting?.value||"").toUpperCase();
- if(globalLockState==="AKTIF"){
-   throw Error("MODE FORM BLOK APLIKASI AKTIF. Login normal ditutup. Hanya KA IPSRS dapat melanjutkan melalui prosedur Reset.");
- }
- if(globalLockState!=="NONAKTIF"){
-   throw Error("Status blokir global tidak dapat diverifikasi. Login ditahan sementara.");
  }
 
  // KA IPSRS is intentionally kept out of the operational API while a grace
