@@ -185,13 +185,37 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false){
  }
  if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");
 
+ const statusUpper=String(data.status||"").toUpperCase();
  const isKa=String(data.role||"").toUpperCase()==="KA_IPSRS";
- const kaRecoveryAllowed=allowKaRecovery&&isKa&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(String(data.status||"").toUpperCase());
+ const kaRecoveryAllowed=allowKaRecovery&&isKa&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(statusUpper);
  if(!kaRecoveryAllowed){
-   // Legacy discipline check remains temporarily until Stage 3 replaces it.
+   // Stage 2 bridge: legacy individual blocks are temporarily bypassed only
+   // while the database confirms an active GRACE window. Stage 3 replaces
+   // this legacy reports.tanggal discipline calculation completely.
    const manualUnblockUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
    const manualUnblockActive=manualUnblockUntil>0&&manualUnblockUntil>Date.now();
-   if((String(data.status).toLowerCase()==="aktif"||String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI")&&!manualUnblockActive){
+   const activeStatus=statusUpper==="AKTIF";
+   const blockedStatus=["DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(statusUpper);
+   let graceChecked=false;
+   let graceActive=false;
+   const isGraceActive=async()=>{
+     if(!graceChecked){
+       const {data:incident,error:graceError}=await ctx.supabaseAdmin
+         .from("lhi_discipline_incidents")
+         .select("incident_id")
+         .eq("status","GRACE")
+         .gt("deadline_at",new Date().toISOString())
+         .order("incident_id",{ascending:false})
+         .limit(1)
+         .maybeSingle();
+       if(graceError)throw graceError;
+       graceActive=!!incident;
+       graceChecked=true;
+     }
+     return graceActive;
+   };
+
+   if((activeStatus||blockedStatus)&&!manualUnblockActive){
      const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
      const today=new Date(todayStr+"T00:00:00Z");
      const dates:string[]=[];
@@ -201,7 +225,7 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false){
      if(lhiError)throw lhiError;
      const filled=new Set((lhis||[]).map((r:any)=>String(r.tanggal||"").slice(0,10)));
      const missed=dates.filter(x=>!filled.has(x));
-     if(missed.length===7){
+     if(missed.length===7&&!await isGraceActive()){
        const previousStatus=data.status;
        const {error:blockError}=await ctx.supabaseAdmin.from("staff").update({status:"DIBLOKIR_LHI_7_HARI"}).eq("staff_id",data.staff_id).eq("status","Aktif");
        if(blockError)throw blockError;
@@ -209,8 +233,10 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false){
        data.status="DIBLOKIR_LHI_7_HARI";
      }
    }
-   if(String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI"&&!manualUnblockActive)throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
-   if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
+
+   if(blockedStatus&&!manualUnblockActive&&!await isGraceActive())throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
+   const graceBypass=await isGraceActive()&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(String(data.status||"").toUpperCase());
+   if(String(data.status).toLowerCase()!=="aktif"&&!graceBypass)throw Error("Akun petugas tidak aktif.");
  }
  return data;
 }
