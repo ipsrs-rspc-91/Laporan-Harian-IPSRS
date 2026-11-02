@@ -527,6 +527,7 @@ if(a==="apiGetStaffMonitoring"){
     else if(tanggal<requiredStart)statusHari="BELUM_WAJIB";
     return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
       bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
+      wajib_hari_ini:tanggal>=requiredStart&&tanggal<=today,
       laporan_hari_ini:todayCount[x.staff_id]||0,sudah_isi_hari_bulan_ini:done,
       belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),hari_wajib_terhitung:requiredDays,
       total_transaksi_bulan_ini:total[x.staff_id]||0,
@@ -559,7 +560,7 @@ if(a==="apiGetStaffMonitoring"){
     const day=addWibDays(z.start,i);
     const c=rr.filter((r:any)=>wibDate(r.created_at)===day).length;
     const status=c?"SUDAH_ISI":day>today?"BELUM_TERJADI":!active?"TIDAK_WAJIB":day<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
-    cal.push({tanggal:day,status,jumlah:c});
+    cal.push({tanggal:day,status,jumlah:c,wajib:!!active&&day>=requiredStart&&day<=today});
   }
   return{ok:true,kalender:cal,laporan:await Promise.all(rr.map(async(r:any)=>map(r,(await canEditReport(db,s,r)).ok)))};
  }
@@ -722,6 +723,7 @@ if(a==="apiGetStaffMonitoring"){
    const statusHari=dashboardTanggal>today?"BELUM_TERJADI":todayCount[x.staff_id]?"SUDAH_ISI":dashboardTanggal<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
    return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
      bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
+     wajib_hari_ini:dashboardTanggal>=requiredStart&&dashboardTanggal<=today,
      laporan_hari_ini:todayCount[x.staff_id]||0};
  });
  const sortCount=(a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.label||"").localeCompare(String(b.label||""),"id");const kategori=Object.entries(cat).map(([label,value])=>({label,value})).sort(sortCount);const area=Object.entries(ar).map(([label,value])=>({label,value})).sort(sortCount);const staff=Object.values(sm).sort((a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.nama||a.staff_id||"").localeCompare(String(b.nama||b.staff_id||""),"id"));const sparePartStats=Object.values(newPartGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);const unitBaruStats=Object.values(newUnitGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);return cacheSet(ck,{ok:true,data:{total,selesai:sel,belum:bel,persen:total?Math.round(sel/total*100):0,kategori,area,staff,recent,pencapaian:pc,spare_part_baru:spare,unit_baru:unit,spare_part_total_quantity:spareQty,unit_baru_total_quantity:unitQty,spare_part_stats:sparePartStats,unit_baru_stats:unitBaruStats,monitoring_today:{tanggal:dashboardTanggal,data:monitoringToday}}})
