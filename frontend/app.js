@@ -5266,7 +5266,8 @@
     const totalStaf = _monData.filter(s => s.status === 'Aktif').length;
     const sudah = _monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
     const belum = _monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
-    const belumWajib = _monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB').length;
+    const belumWajib = _monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB' || s.status_hari_ini === 'TIDAK_WAJIB').length;
+    const belumTerjadi = _monData.filter(s => s.status_hari_ini === 'BELUM_TERJADI').length;
     const wajib = sudah + belum;
     const persen = wajib > 0 ? Math.round((sudah / wajib) * 100) : 0;
 
@@ -5300,7 +5301,8 @@
         <div class="s-value">${persen}%</div>
         <div class="s-label">Tingkat Kepatuhan</div>
       </div>
-      ${belumWajib > 0 ? `<div class="smallnote" style="grid-column:1/-1;">${belumWajib} petugas belum wajib mengisi pada tanggal ini karena baru diaktifkan.</div>` : ''}
+      ${belumWajib > 0 ? `<div class="smallnote" style="grid-column:1/-1;">${belumWajib} petugas belum wajib mengisi pada tanggal ini karena belum melewati satu hari kalender sejak aktivasi atau sedang NONAKTIF.</div>` : ''}
+      ${belumTerjadi > 0 ? `<div class="smallnote" style="grid-column:1/-1;">Tanggal monitoring yang dipilih belum terjadi.</div>` : ''}
     `;
 
     const container = document.getElementById('monStaffGrid');
@@ -6128,7 +6130,8 @@
         const total = monData.length;
         const sudah = monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
         const belum = monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
-        const belumWajib = monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB').length;
+        const belumWajib = monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB' || s.status_hari_ini === 'TIDAK_WAJIB').length;
+        const belumTerjadi = monData.filter(s => s.status_hari_ini === 'BELUM_TERJADI').length;
         const wajib = sudah + belum;
         const persen = wajib > 0 ? Math.round((sudah/wajib)*100) : 0;
         document.getElementById('statPetugasAktif').innerText = total;
@@ -6137,9 +6140,11 @@
         document.getElementById('statComplianceHariIni').innerText = persen + '%';
         document.getElementById('dashComplianceNote').innerText = belum > 0
           ? belum + ' petugas belum mengisi laporan hari ini -- lihat halaman Laporan > Monitoring Harian untuk daftarnya.'
-          : (belumWajib > 0
-            ? belumWajib + ' petugas belum wajib mengisi karena tanggal aktivasi belum melewati satu hari kalender.'
-            : (total > 0 ? 'Semua petugas yang sudah wajib mengisi telah mengirim laporan hari ini.' : 'Master staf belum tersedia.'));
+          : (belumTerjadi > 0
+            ? 'Tanggal monitoring yang dipilih belum terjadi.'
+            : (belumWajib > 0
+              ? belumWajib + ' petugas belum wajib mengisi karena belum melewati satu hari kalender sejak aktivasi atau sedang NONAKTIF.'
+              : (total > 0 ? 'Semua petugas yang sudah wajib mengisi telah mengirim laporan hari ini.' : 'Master staf belum tersedia.')));
       }
 
       if(!statsJson || !statsJson.ok){
