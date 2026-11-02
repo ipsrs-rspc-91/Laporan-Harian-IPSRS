@@ -146,7 +146,7 @@ test("grace completion requires valid non-deleted report inside 12-hour window",
     ],
     B: [
       { id: "cancelled", created_at: "2026-11-03T05:00:00Z", deleted_at: "2026-11-03T06:00:00Z" },
-      { id: "late", created_at: "2026-11-03T13:00:00Z", deleted_at: null },
+      { id: "late", created_at: "2026-11-03T17:00:00Z", deleted_at: null },
     ],
   };
   const result = evaluateGraceSnapshot(snapshot, staff, reports, "2026-11-03T04:00:00Z", "2026-11-03T16:00:00Z");
