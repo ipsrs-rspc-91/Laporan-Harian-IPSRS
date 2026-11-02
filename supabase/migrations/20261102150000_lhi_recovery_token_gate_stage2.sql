@@ -182,3 +182,218 @@ FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.issue_lhi_recovery_token(text, timestamptz) TO service_role;
 GRANT EXECUTE ON FUNCTION public.validate_lhi_recovery_token(text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.consume_lhi_recovery_token_and_open_grace(text, text, text) TO service_role;
+
+-- Database-level operational lock: direct Data API requests must obey the
+-- same global block as ipsrs-api. The function returns only a boolean.
+CREATE OR REPLACE FUNCTION public.lhi_operational_access_allowed()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT auth.uid() IS NOT NULL
+     AND COALESCE((
+       SELECT upper(value) = 'NONAKTIF'
+       FROM public.access_settings
+       WHERE key = 'LHI_GLOBAL_BLOCK'
+       LIMIT 1
+     ), false);
+$function$;
+
+REVOKE ALL ON FUNCTION public.lhi_operational_access_allowed()
+FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.lhi_operational_access_allowed()
+TO authenticated;
+
+-- Access settings: KA may manage ordinary settings only while the application
+-- is unlocked. Security/reset control keys remain server-owned at all times.
+DROP POLICY IF EXISTS access_settings_read_ka ON public.access_settings;
+CREATE POLICY access_settings_read_ka
+ON public.access_settings
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+  AND key NOT IN ('LHI_RESET_CODE_HASH', 'LHI_GLOBAL_BLOCK', 'LHI_RESET_LAST_ATTEMPT')
+);
+
+DROP POLICY IF EXISTS access_settings_insert_ka ON public.access_settings;
+CREATE POLICY access_settings_insert_ka
+ON public.access_settings
+FOR INSERT TO authenticated
+WITH CHECK (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+  AND key NOT IN ('LHI_RESET_CODE_HASH', 'LHI_GLOBAL_BLOCK', 'LHI_RESET_LAST_ATTEMPT')
+);
+
+DROP POLICY IF EXISTS access_settings_update_ka ON public.access_settings;
+CREATE POLICY access_settings_update_ka
+ON public.access_settings
+FOR UPDATE TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+  AND key NOT IN ('LHI_RESET_CODE_HASH', 'LHI_GLOBAL_BLOCK', 'LHI_RESET_LAST_ATTEMPT')
+)
+WITH CHECK (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+  AND key NOT IN ('LHI_RESET_CODE_HASH', 'LHI_GLOBAL_BLOCK', 'LHI_RESET_LAST_ATTEMPT')
+);
+
+DROP POLICY IF EXISTS access_settings_delete_ka ON public.access_settings;
+CREATE POLICY access_settings_delete_ka
+ON public.access_settings
+FOR DELETE TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+  AND key NOT IN ('LHI_RESET_CODE_HASH', 'LHI_GLOBAL_BLOCK', 'LHI_RESET_LAST_ATTEMPT')
+);
+
+-- Reports and report history: prevent direct PostgREST reads/writes during the
+-- global block, even if a caller bypasses the frontend and calls Data API.
+DROP POLICY IF EXISTS reports_select_authorized ON public.reports;
+CREATE POLICY reports_select_authorized
+ON public.reports
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND deleted_at IS NULL
+  AND (SELECT private.can_view_report(reports.staff_id, reports.role_snapshot))
+);
+
+DROP POLICY IF EXISTS reports_insert_own ON public.reports;
+CREATE POLICY reports_insert_own
+ON public.reports
+FOR INSERT TO authenticated
+WITH CHECK (
+  (SELECT public.lhi_operational_access_allowed())
+  AND staff_id = (SELECT private.current_staff_id())
+);
+
+DROP POLICY IF EXISTS reports_update_authorized ON public.reports;
+CREATE POLICY reports_update_authorized
+ON public.reports
+FOR UPDATE TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND deleted_at IS NULL
+  AND (SELECT private.can_edit_report(reports.staff_id, reports.role_snapshot))
+)
+WITH CHECK (
+  (SELECT public.lhi_operational_access_allowed())
+  AND deleted_at IS NULL
+  AND (SELECT private.can_edit_report(reports.staff_id, reports.role_snapshot))
+);
+
+DROP POLICY IF EXISTS report_history_select_authorized ON public.report_history;
+CREATE POLICY report_history_select_authorized
+ON public.report_history
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = ANY (ARRAY['KA_IPSRS', 'ADMINISTRASI'])
+  AND EXISTS (
+    SELECT 1
+    FROM public.reports r
+    WHERE r.report_id = report_history.report_id
+      AND (SELECT private.can_view_report(r.staff_id, r.role_snapshot))
+  )
+);
+
+-- Other operational/admin data is also hidden from authenticated Data API
+-- callers while the global block is active.
+DROP POLICY IF EXISTS audit_log_select_authorized ON public.audit_log;
+CREATE POLICY audit_log_select_authorized
+ON public.audit_log
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (
+    (SELECT private.current_staff_role()) = 'KA_IPSRS'
+    OR (
+      (SELECT private.current_staff_role()) = 'ADMINISTRASI'
+      AND (
+        report_id IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM public.reports r
+          WHERE r.report_id = audit_log.report_id
+            AND (SELECT private.can_view_report(r.staff_id, r.role_snapshot))
+        )
+      )
+    )
+  )
+);
+
+DROP POLICY IF EXISTS edit_permissions_read_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_read_ka
+ON public.edit_permissions
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+);
+
+DROP POLICY IF EXISTS edit_permissions_insert_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_insert_ka
+ON public.edit_permissions
+FOR INSERT TO authenticated
+WITH CHECK (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+);
+
+DROP POLICY IF EXISTS edit_permissions_update_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_update_ka
+ON public.edit_permissions
+FOR UPDATE TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+)
+WITH CHECK (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+);
+
+DROP POLICY IF EXISTS edit_permissions_delete_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_delete_ka
+ON public.edit_permissions
+FOR DELETE TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = 'KA_IPSRS'
+);
+
+DROP POLICY IF EXISTS authenticated_read_master_data ON public.master_data;
+CREATE POLICY authenticated_read_master_data
+ON public.master_data
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND is_active = true
+);
+
+DROP POLICY IF EXISTS migration_errors_read_admins ON public.migration_errors;
+CREATE POLICY migration_errors_read_admins
+ON public.migration_errors
+FOR SELECT TO authenticated
+USING (
+  (SELECT public.lhi_operational_access_allowed())
+  AND (SELECT private.current_staff_role()) = ANY (ARRAY['KA_IPSRS', 'ADMINISTRASI'])
+);
+
+-- These SECURITY DEFINER trigger functions are callable only as triggers;
+-- revoke direct RPC execution from client roles.
+REVOKE ALL ON FUNCTION public.protect_lhi_manual_unblock_status()
+FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.reactivate_lhi_staff_after_report()
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.protect_lhi_manual_unblock_status()
+TO service_role;
+GRANT EXECUTE ON FUNCTION public.reactivate_lhi_staff_after_report()
+TO service_role;
