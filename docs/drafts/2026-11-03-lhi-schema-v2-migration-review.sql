@@ -114,6 +114,17 @@ CREATE TABLE IF NOT EXISTS public.lhi_discipline_obligation_events (
 CREATE INDEX IF NOT EXISTS lhi_obligation_events_member_time_idx
   ON public.lhi_discipline_obligation_events (member_id, event_at);
 
+-- New history/snapshot tables are server-managed. RLS is enabled and direct
+-- table access is revoked; later SECURITY DEFINER RPCs will be the only
+-- supported write/read surface for application sessions.
+ALTER TABLE public.staff_employment_status_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lhi_discipline_snapshot_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lhi_discipline_obligation_events ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON public.staff_employment_status_events FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.lhi_discipline_snapshot_members FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.lhi_discipline_obligation_events FROM PUBLIC, anon, authenticated;
+
 -- Append-only event history: application roles cannot rewrite past events.
 CREATE OR REPLACE FUNCTION public.prevent_lhi_obligation_event_mutation()
 RETURNS trigger
