@@ -165,7 +165,10 @@ BEGIN
   v_result := public.open_lhi_global_grace(p_staff_id, p_staff_name);
   IF COALESCE((v_result->>'ok')::boolean, false) IS NOT TRUE
      OR NULLIF(v_result->>'incident_id', '') IS NULL
-     OR NULLIF(v_result->>'deadline_at', '')::timestamptz <= clock_timestamp() THEN
+     OR COALESCE(
+          NULLIF(v_result->>'deadline_at', '')::timestamptz > clock_timestamp(),
+          false
+        ) IS NOT TRUE THEN
     RAISE EXCEPTION 'grace_recovery_failed';
   END IF;
 
