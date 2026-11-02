@@ -104,7 +104,7 @@ Pada saat KA IPSRS menjalankan perintah **Buka Blokir dan Mulai Kelonggaran 12 J
 
 **Snapshot tidak berisi daftar tanggal kejadian pekerjaan atau daftar laporan yang harus dilengkapi satu per satu.** Tanggal kejadian pada formulir tidak digunakan untuk menentukan kewajiban maupun keberhasilan pemenuhan.
 
-Petugas dalam snapshot dinyatakan memenuhi kewajiban apabila selama periode 12 jam ia berhasil menyimpan **sekurang-kurangnya satu LHI yang sah** ke sistem. Keberhasilan tersebut dibuktikan oleh `created_at` yang tercatat selama periode kelonggaran. Beberapa LHI yang disimpan oleh petugas yang sama pada tanggal input yang sama tetap dihitung sebagai satu hari aktif input; jumlah laporan tidak mengubah aturan tersebut.
+**Setiap petugas pelanggar yang tercantum dalam snapshot wajib menginput minimal 1 (satu) laporan LHI yang sah selama periode kelonggaran 12 jam. Satu laporan yang berhasil disimpan sudah cukup untuk memenuhi kewajiban pemulihan petugas tersebut.** Petugas tidak diwajibkan menginput sebanyak jumlah hari ia tidak aktif, sebanyak jumlah hari keterlambatan, atau sebanyak jumlah pekerjaan yang pernah dilakukan. Keberhasilan input dibuktikan oleh `created_at` yang tercatat selama periode kelonggaran. Tanggal kejadian pekerjaan pada laporan tidak memengaruhi penilaian ini.
 
 LHI untuk hari berjalan tidak menjadi kewajiban tambahan yang terpisah. Namun, setiap input LHI yang sah selama masa kelonggaran tetap dicatat sebagai aktivitas input sesuai tanggal `created_at` dalam WIB.
 
@@ -143,7 +143,7 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 10. Reset benar menampilkan kembali form login normal yang sama (tanpa membuat form autentikasi baru); pengguna tetap memasukkan username dan password, server memvalidasi role KA IPSRS, hanya akun KA IPSRS yang berhasil masuk, dan akun petugas biasa tetap ditolak meskipun mengetahui angka Reset.
 11. Setelah Reset dan autentikasi role KA IPSRS, KA menjalankan perintah pemulihan terpadu. Sistem membuka blokir global dan seluruh blokir individual akibat ketidakpatuhan LHI secara bersamaan, lalu mencatat waktu mulai serta tenggat kelonggaran 12 jam.
 12. Petugas yang sebelumnya diblokir individual dapat login selama kelonggaran 12 jam dan melakukan input LHI yang sah; riwayat pelanggarannya tetap tersimpan.
-13. Petugas dalam snapshot yang berhasil menyimpan minimal satu LHI sah selama kelonggaran dinyatakan memenuhi kewajiban input untuk kejadian blokir tersebut, tanpa bergantung pada tanggal kejadian pekerjaan atau jumlah LHI yang diinput.
+13. Setiap petugas pelanggar dalam snapshot wajib menginput minimal 1 (satu) laporan LHI yang sah selama kelonggaran 12 jam. Satu laporan saja sudah cukup; petugas tidak diwajibkan mengganti seluruh hari tanpa input atau menginput sebanyak jumlah pekerjaan/tunggakannya.
 14. Semua petugas dalam snapshot telah melakukan input LHI sah sebelum tenggat: blokir global tetap nonaktif dan aplikasi kembali normal.
 15. Masih ada satu petugas dalam snapshot yang belum melakukan input LHI sah saat 12 jam habis: blokir global aktif kembali untuk seluruh pengguna; blokir individual tidak diterapkan ulang satu per satu.
 16. Sabtu, Minggu, dan hari libur tetap dihitung.
