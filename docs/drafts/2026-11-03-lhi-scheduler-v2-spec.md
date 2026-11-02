@@ -161,7 +161,8 @@ Minimal harus ada test untuk:
 
 - Helper hitung murni dan evaluasi petugas sudah tersedia di `supabase/functions/ipsrs-api/lhi-discipline.mjs`.
 - Test helper dan evaluasi ditambahkan di `tests/lhi-discipline.test.mjs`.
-- Test lokal sebelumnya: 6/6 lulus. Test tambahan yang baru ditambahkan belum dijalankan ulang pada environment project.
+- GitHub Actions run `41530914302` pada commit `aad08f65e734da15563f33ab12e31d9e48a8e15c` berstatus **completed / success**; step `node --test tests/lhi-discipline.test.mjs` berhasil.
+- Satu test awal gagal karena timestamp laporan uji ternyata masih sebelum tenggat. Timestamp dikoreksi menjadi setelah tenggat dan workflow berikutnya lulus.
 - Scheduler produksi belum diubah dan belum di-deploy.
 - Spesifikasi ini belum menjadi SQL migration atau fungsi aktif.
 
