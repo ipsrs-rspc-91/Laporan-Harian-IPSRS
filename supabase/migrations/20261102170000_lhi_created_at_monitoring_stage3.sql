@@ -395,7 +395,6 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM public.lhi_discipline_incidents i
     WHERE i.status = 'GRACE'
-      AND i.deadline_at > clock_timestamp()
   ) THEN
     RETURN jsonb_build_object('ok', true, 'skipped', true, 'reason', 'GRACE_WINDOW_ACTIVE');
   END IF;
