@@ -54,7 +54,6 @@ Tujuannya agar rekan kerja/tim dapat mengingatkan petugas yang bersangkutan seca
 
 Pada hari ke-10:
 - Jika **minimal satu petugas** mencapai hari ke-10 tanpa LHI sah, Mode Blok Aplikasi menjadi **AKTIF untuk seluruh pengguna**. Sistem tidak menunggu seluruh petugas yang lalai mencapai hari ke-10.
-- Mode Blok Aplikasi menjadi **AKTIF**.
 - Tampilan awal aplikasi secara otomatis berubah menjadi **Form Blok Aplikasi**.
 - Form login normal disembunyikan sepenuhnya dan tidak ditampilkan selama Mode Blok Aplikasi aktif.
 - Form Blok Aplikasi menggantikan tampilan form login untuk seluruh pengguna.
