@@ -106,3 +106,52 @@ export function disciplineStage(missedDays) {
   if (days === 3) return { stageDay: 4, action: "WARNING_1" };
   return { stageDay, action: "MONITOR" };
 }
+
+
+/**
+ * Evaluate active staff using one deterministic date rule.
+ * Employment status is the monitoring gate; individual access status is
+ * deliberately ignored so a blocked staff member can still trigger day 10.
+ */
+export function evaluateDiscipline(staffRows, reportsByStaff, todayWib) {
+  parseDateKey(todayWib, "Tanggal hari ini");
+  const evaluations = [];
+
+  for (const staff of Array.isArray(staffRows) ? staffRows : []) {
+    if (String(staff?.status || "").toLowerCase() !== "aktif") continue;
+    if (!staff?.staff_id || !staff?.lhi_active_since) {
+      throw new TypeError("Petugas aktif wajib memiliki staff_id dan lhi_active_since.");
+    }
+
+    const reports = reportsByStaff instanceof Map
+      ? reportsByStaff.get(staff.staff_id) || []
+      : reportsByStaff?.[staff.staff_id] || [];
+    const anchorWib = complianceAnchorWibDate(reports, staff.lhi_active_since);
+    const missedDays = missedFullCalendarDays(todayWib, anchorWib);
+    const stage = disciplineStage(missedDays);
+
+    evaluations.push({
+      staff_id: staff.staff_id,
+      nama: staff.nama || staff.staff_id,
+      role: staff.role || null,
+      employment_status: staff.status,
+      access_status: staff.lhi_access_status || "NORMAL",
+      anchor_wib: anchorWib,
+      missed_full_days: missedDays,
+      stage_day: stage.stageDay,
+      action: stage.action,
+    });
+  }
+
+  const warnings = {};
+  for (const action of ["WARNING_1", "WARNING_2", "WARNING_3"]) {
+    warnings[action] = evaluations.filter((row) => row.action === action);
+  }
+
+  return {
+    evaluations,
+    warnings,
+    individualBlocks: evaluations.filter((row) => row.action === "BLOCK_INDIVIDUAL_ACCESS"),
+    globalBlockTriggers: evaluations.filter((row) => row.action === "GLOBAL_BLOCK"),
+  };
+}
