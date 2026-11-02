@@ -6513,7 +6513,8 @@
         });
         const result=await response.json().catch(()=>null);
         if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
-        try{sessionStorage.setItem('IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY');}catch(_e){}
+        pendingLhiRecoveryChallenge_=String(result.challenge||'');
+        setLhiRecoveryCapability_(null);
         if(backdrop)backdrop.classList.remove('show');
         showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
       }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
@@ -6531,6 +6532,22 @@
       const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\/$/,'');
       const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
       if(!base||!key) throw new Error('Konfigurasi server tidak tersedia.');
+
+      // Resume the restricted recovery-only screen after a same-tab refresh.
+      // The capability is opaque, session-scoped and server-validated on use.
+      let savedRecoveryCapability='';
+      try{savedRecoveryCapability=sessionStorage.getItem('IPSRS_LHI_RECOVERY_CAPABILITY')||'';}catch(_e){}
+      if(savedRecoveryCapability){
+        setLhiRecoveryCapability_(savedRecoveryCapability);
+        try{
+          const recoveryStatus=await lhiRecoveryAction_('apiRecoveryStatus');
+          renderLhiRecoveryOnlyScreen_(recoveryStatus);
+          return;
+        }catch(_recoveryResumeError){
+          setLhiRecoveryCapability_(null);
+        }
+      }
+
       const response=await fetch(base+'/functions/v1/lhi-block-status',{method:'GET',headers:{'apikey':key},cache:'no-store'});
       const status=await response.json().catch(()=>null);
       if(!response.ok||!status||status.ok!==true){
