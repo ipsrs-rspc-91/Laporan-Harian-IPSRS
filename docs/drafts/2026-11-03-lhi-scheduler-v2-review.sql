@@ -374,9 +374,9 @@ BEGIN
     -- The LOCKED incident is only a gate. README requires the delinquent
     -- staff snapshot to be created atomically with KA IPSRS Reset, not here.
     INSERT INTO public.lhi_discipline_incidents
-      (started_at, deadline_at, status, started_by_staff_id, started_by_name)
+      (started_at, deadline_at, locked_at, status, started_by_staff_id, started_by_name)
     VALUES
-      (v_now, v_now, 'LOCKED', 'SYSTEM', 'SYSTEM')
+      (v_now, v_now, v_now, 'LOCKED', 'SYSTEM', 'SYSTEM')
     RETURNING incident_id INTO v_incident_id;
 
     INSERT INTO public.audit_log
