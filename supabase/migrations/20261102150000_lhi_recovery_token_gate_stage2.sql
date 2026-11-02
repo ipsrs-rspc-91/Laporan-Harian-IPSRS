@@ -23,7 +23,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 BEGIN
-  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+  IF (auth.jwt()->>'role') IS DISTINCT FROM 'service_role' THEN
     RAISE EXCEPTION 'not_authorized';
   END IF;
   IF p_token_hash IS NULL
@@ -52,7 +52,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 BEGIN
-  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+  IF (auth.jwt()->>'role') IS DISTINCT FROM 'service_role' THEN
     RAISE EXCEPTION 'not_authorized';
   END IF;
   IF p_token_hash IS NULL
@@ -98,7 +98,7 @@ DECLARE
   v_incident public.lhi_discipline_incidents%ROWTYPE;
   v_total integer := 0;
 BEGIN
-  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+  IF (auth.jwt()->>'role') IS DISTINCT FROM 'service_role' THEN
     RAISE EXCEPTION 'not_authorized';
   END IF;
 
