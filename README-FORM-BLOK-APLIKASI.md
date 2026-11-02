@@ -29,7 +29,7 @@ Menerapkan pengingat bertahap atas keterlambatan pengisian Laporan Harian IPSRS 
 | Hari ke-7 | Peringatan 3 kepada petugas yang lalai dan seluruh petugas. Sampaikan bahwa jika besok belum mengisi, statusnya akan dinonaktifkan. Notifikasi kepada seluruh petugas wajib mencantumkan nama petugas yang lalai agar rekan kerja dapat mengingatkan orang yang bersangkutan secara langsung. |
 | Hari ke-8 | Status akun petugas yang belum mengisi dinonaktifkan. Petugas yang akunnya dinonaktifkan menerima peringatan ketika mencoba login dan menekan tombol **Masuk**; setelah server memverifikasi status nonaktif, aplikasi menampilkan alasan penonaktifan. **Petugas lain yang akunnya tetap aktif juga menerima notifikasi di dalam aplikasi** setelah berhasil login/ketika sudah berada di aplikasi, yang menyebutkan nama petugas yang dinonaktifkan. |
 | Hari ke-9 | Masa tunggu setelah penonaktifan individu. Mode Blok Aplikasi global belum diaktifkan pada hari ini. |
-| Hari ke-10 | Status petugas yang dinonaktifkan diaktifkan kembali sesuai konsep, tetapi Mode Blok Aplikasi global diaktifkan. |
+| Hari ke-10 | Mode Blok Aplikasi global diaktifkan. Status blokir individual yang sudah terjadi pada hari ke-8 tetap tercatat dan baru dibuka bersamaan dengan blokir global ketika KA IPSRS berhasil melakukan Reset dan memulai kelonggaran 12 jam. |
 
 Hari ke-4, ke-6, dan seterusnya berarti jumlah hari kalender berturut-turut tanpa LHI yang sah.
 
@@ -76,27 +76,33 @@ Mode ini bersifat global, bukan hanya memblokir petugas yang terlambat mengisi.
 **Ketentuan keamanan:** angka Reset tidak boleh menjadi jalan pintas untuk melewati autentikasi. Sebelum implementasi, mekanisme penyimpanan dan validasinya harus diaudit agar angka tidak tertanam terbuka di frontend. Keputusan menampilkan form login setelah Reset tidak mengubah kewajiban autentikasi username/password dan validasi role KA IPSRS di server.
 
 ## 7. Kewenangan KA IPSRS dan kelonggaran 12 jam
-Setelah login, KA IPSRS membuka menu **Hak Akses** dan menonaktifkan sementara Mode Blok Aplikasi selama **12 jam**.
+Setelah berhasil melewati prosedur Reset dan autentikasi role KA IPSRS, KA IPSRS membuka menu **Hak Akses** dan menjalankan perintah **Buka Blokir dan Mulai Kelonggaran 12 Jam**. Perintah ini merupakan satu tindakan pemulihan terpadu: sistem membuka Mode Blok Aplikasi global **sekaligus mengaktifkan kembali seluruh akun yang berstatus diblokir individual karena ketidakpatuhan LHI**. Kedua jenis blokir harus dibuka dalam satu proses yang sama; tidak boleh hanya blokir global yang dibuka sementara blokir individual masih menghalangi petugas masuk.
 
-Selama kelonggaran:
-- Petugas dapat login kembali untuk melengkapi LHI.
-- Sistem memantau semua petugas yang masih memiliki kewajiban LHI dalam kejadian blokir tersebut.
-- Mode Blok hanya menjadi **NONAKTIF** jika **semua petugas yang wajib melengkapi LHI sudah menyelesaikan kewajibannya**.
-- Jika masih ada setidaknya satu petugas belum melengkapi LHI saat 12 jam berakhir, Mode Blok Aplikasi kembali **AKTIF**.
-- Jika semua kewajiban dipenuhi sebelum 12 jam berakhir, Mode Blok Aplikasi menjadi **NONAKTIF** dan sistem kembali normal.
+Saat perintah tersebut berhasil dijalankan, sistem mencatat waktu mulai dan tenggat 12 jam serta membuat snapshot kewajiban LHI sebagaimana dijelaskan pada Bagian 8.
 
-KA IPSRS perlu melihat waktu mulai, tenggat 12 jam, daftar petugas yang belum melengkapi LHI, dan status pemenuhan masing-masing.
+Selama kelonggaran 12 jam:
+- Semua petugas dapat login, termasuk petugas yang sebelumnya dinonaktifkan secara individual pada hari ke-8.
+- Seluruh petugas mendapat kesempatan melengkapi kewajiban LHI yang tercantum dalam snapshot.
+- Sistem memantau pemenuhan kewajiban setiap petugas dalam snapshot.
+- Pembukaan blokir individual tidak menghapus riwayat pelanggaran maupun kewajiban LHI yang masih tertunggak.
+
+Ketika 12 jam berakhir:
+- Jika seluruh kewajiban dalam snapshot telah dipenuhi, Mode Blok global tetap **NONAKTIF** dan aplikasi beroperasi normal.
+- Jika masih ada setidaknya satu kewajiban dalam snapshot yang belum dipenuhi, Mode Blok Aplikasi global kembali **AKTIF** dan seluruh pengguna kembali tidak dapat mengakses aplikasi normal.
+- Jika blokir global aktif kembali, blokir individual tidak perlu diterapkan kembali satu per satu. Blokir global menjadi pengunci akses bagi seluruh petugas sampai KA IPSRS melakukan prosedur Reset dan pemulihan terpadu berikutnya.
+
+KA IPSRS harus dapat melihat waktu mulai, tenggat 12 jam, daftar petugas dan kewajiban dalam snapshot, serta status pemenuhan masing-masing.
 
 ## 8. Definisi semua petugas wajib mengisi
 Syarat pemulihan global adalah **semua petugas dalam daftar kewajiban LHI pada kejadian blokir harus melengkapi LHI**. Satu petugas yang belum menyelesaikan kewajibannya menyebabkan Mode Blok tetap/menjadi aktif kembali setelah masa kelonggaran.
 
-Ketentuan snapshot yang telah ditetapkan: saat KA IPSRS memulai kelonggaran 12 jam, sistem menyimpan snapshot tetap yang hanya mencakup petugas dan tanggal LHI yang sudah tertunggak pada saat snapshot dibuat. **LHI untuk hari berjalan tidak dimasukkan** ke dalam snapshot dan tidak menjadi kewajiban tambahan dalam kejadian blokir tersebut. Daftar petugas dan tanggal tunggakan dalam snapshot dikunci sebagai acuan pemulihan selama periode 12 jam; pergantian tanggal selama periode tersebut tidak boleh menambah atau mengubah kewajiban snapshot. Petugas dinyatakan memenuhi kewajiban snapshot setelah seluruh LHI tertunggak yang tercatat untuknya telah dilengkapi secara sah.
+Ketentuan snapshot: pada saat KA IPSRS menjalankan perintah **Buka Blokir dan Mulai Kelonggaran 12 Jam**, sistem menyimpan snapshot tetap yang hanya mencakup petugas dan tanggal LHI yang sudah tertunggak pada saat perintah dijalankan. **LHI untuk hari berjalan tidak dimasukkan** ke dalam snapshot dan tidak menjadi kewajiban tambahan dalam kejadian blokir tersebut. Daftar petugas dan tanggal tunggakan dalam snapshot dikunci sebagai acuan pemulihan selama periode 12 jam; pergantian tanggal selama periode tersebut tidak boleh menambah atau mengubah kewajiban snapshot. Petugas dinyatakan memenuhi kewajiban snapshot setelah seluruh LHI tertunggak yang tercatat untuknya telah dilengkapi secara sah. Snapshot ini tetap menjadi acuan meskipun blokir global aktif kembali setelah 12 jam.
 
 ## 9. Pengecualian dan kewenangan
 - KA IPSRS dikecualikan dari penonaktifan individual karena tidak mengisi LHI, kecuali kebijakan organisasi menentukan lain.
 - Mode Blok global tetap membatasi semua akun selain KA IPSRS.
 - Hanya KA IPSRS yang boleh membuka kelonggaran melalui menu Hak Akses.
-- Pengaktifan kembali status petugas pada hari ke-10 tidak berarti seluruh sistem dibuka.
+- Pembukaan blokir individual akibat ketidakpatuhan LHI hanya dilakukan bersamaan dengan pembukaan blokir global oleh KA IPSRS melalui perintah pemulihan terpadu. Tidak ada pembukaan blokir individual otomatis pada hari ke-10 sebelum KA IPSRS melakukan Reset dan memulai kelonggaran.
 
 ## 10. Data dan audit
 Sistem perlu mencatat:
@@ -118,17 +124,18 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 3. Tujuh hari tanpa LHI: Peringatan 3 dan ancaman penonaktifan hari berikutnya diterima petugas terkait dan seluruh tim; notifikasi seluruh tim mencantumkan nama setiap petugas yang lalai agar dapat diingatkan langsung.
 4. Delapan hari tanpa LHI: status akun petugas yang bersangkutan dinonaktifkan. Ketika petugas tersebut mencoba login dan menekan tombol **Masuk**, aplikasi menampilkan peringatan bahwa akunnya dinonaktifkan karena belum mengisi LHI selama 8 hari. Petugas lain yang akunnya tetap aktif menerima notifikasi di dalam aplikasi setelah berhasil login atau ketika sudah berada di aplikasi, dengan mencantumkan nama petugas yang dinonaktifkan.
 5. Hari ke-9: masa tunggu setelah penonaktifan individu; Mode Blok global belum aktif.
-6. Hari ke-10: status petugas tersebut diaktifkan kembali sesuai konsep dan Mode Blok global aktif.
+6. Hari ke-10: Mode Blok Aplikasi global aktif; akun yang sebelumnya diblokir individual masih berstatus diblokir sampai KA IPSRS berhasil melakukan Reset dan menjalankan perintah pemulihan terpadu.
 7. Saat Mode Blok aktif, tampilan awal aplikasi berubah menjadi Form Blok Aplikasi; form login normal tidak ditampilkan kepada seluruh pengguna.
 8. Form Blok Aplikasi menampilkan keterangan blokir global dan tautan Reset.
 9. Reset salah tidak membuka form autentikasi maupun akses aplikasi.
 10. Reset benar menampilkan kembali form login normal yang sama (tanpa membuat form autentikasi baru); pengguna tetap memasukkan username dan password, server memvalidasi role KA IPSRS, hanya akun KA IPSRS yang berhasil masuk, dan akun petugas biasa tetap ditolak meskipun mengetahui angka Reset.
-11. KA membuka kelonggaran 12 jam; waktu mulai dan tenggat tercatat.
-12. Semua petugas dalam daftar kewajiban melengkapi LHI sebelum tenggat: Mode Blok menjadi nonaktif.
-13. Masih ada satu petugas belum melengkapi kewajiban saat 12 jam habis: Mode Blok aktif kembali.
-14. Sabtu, Minggu, dan hari libur tetap dihitung.
-15. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
-16. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
+11. Setelah Reset dan autentikasi role KA IPSRS, KA menjalankan perintah pemulihan terpadu. Sistem membuka blokir global dan seluruh blokir individual akibat ketidakpatuhan LHI secara bersamaan, lalu mencatat waktu mulai serta tenggat kelonggaran 12 jam.
+12. Petugas yang sebelumnya diblokir individual dapat login selama kelonggaran 12 jam dan melengkapi LHI; riwayat pelanggarannya tetap tersimpan.
+13. Semua kewajiban dalam snapshot dipenuhi sebelum tenggat: blokir global tetap nonaktif dan aplikasi kembali normal.
+14. Masih ada satu kewajiban dalam snapshot yang belum dipenuhi saat 12 jam habis: blokir global aktif kembali untuk seluruh pengguna; blokir individual tidak diterapkan ulang satu per satu.
+15. Sabtu, Minggu, dan hari libur tetap dihitung.
+16. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
+17. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
 
 ## 12. Tata kelola implementasi
 Dokumen ini hanya acuan konsep. **Jangan mengubah script, database, konfigurasi, atau melakukan deployment sebelum audit dan persetujuan.**
@@ -143,4 +150,4 @@ Sebelum implementasi:
 7. Uji seluruh skenario penerimaan dan verifikasi log sebelum menyatakan selesai.
 
 ---
-**Prinsip utama:** kepatuhan dihitung dari tanggal input LHI (`created_at`) dalam WIB, bukan tanggal kejadian pekerjaan; beberapa LHI dengan tanggal kejadian sama tetap dihitung menurut tanggal input masing-masing, sedangkan beberapa LHI pada tanggal input yang sama dihitung sebagai satu hari aktif; peringatan bertahap pada hari ke-4, ke-6, dan ke-7 disampaikan kepada petugas yang lalai dan seluruh tim dengan mencantumkan nama petugas; pada hari ke-8 petugas yang dinonaktifkan menerima peringatan saat mencoba login dan menekan tombol Masuk, sedangkan petugas lain yang akunnya tetap aktif menerima notifikasi di dalam aplikasi setelah berhasil login atau ketika sudah berada di aplikasi, dengan mencantumkan nama petugas yang dinonaktifkan; masa tunggu hari ke-9; Mode Blok global pada hari ke-10; pemulihan global hanya setelah semua petugas dalam daftar kewajiban melengkapi LHI.
+**Prinsip utama:** kepatuhan dihitung dari tanggal input LHI (`created_at`) dalam WIB, bukan tanggal kejadian pekerjaan; beberapa LHI dengan tanggal kejadian sama tetap dihitung menurut tanggal input masing-masing, sedangkan beberapa LHI pada tanggal input yang sama dihitung sebagai satu hari aktif; peringatan bertahap pada hari ke-4, ke-6, dan ke-7 disampaikan kepada petugas yang lalai dan seluruh tim dengan mencantumkan nama petugas; pada hari ke-8 petugas yang dinonaktifkan menerima peringatan saat mencoba login dan menekan tombol Masuk, sedangkan petugas lain yang akunnya tetap aktif menerima notifikasi di dalam aplikasi setelah berhasil login atau ketika sudah berada di aplikasi, dengan mencantumkan nama petugas yang dinonaktifkan; hari ke-9 merupakan masa tunggu; pada hari ke-10 Mode Blok global aktif; setelah KA IPSRS berhasil melakukan Reset, satu perintah pemulihan terpadu membuka blokir global dan seluruh blokir individual akibat ketidakpatuhan LHI sekaligus serta memulai kelonggaran 12 jam; jika seluruh kewajiban snapshot dipenuhi aplikasi tetap normal, sedangkan jika masih ada kewajiban yang belum dipenuhi blokir global aktif kembali untuk seluruh pengguna.
