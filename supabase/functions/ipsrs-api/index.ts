@@ -6,6 +6,13 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 const cors={...corsHeaders,"Access-Control-Max-Age":"600"};
 function out(b:any,s=200){return new Response(JSON.stringify(b),{status:s,headers:{...cors,"Content-Type":"application/json"}})}
 function range(month:string){const m=/^\d{4}-\d{2}$/.test(String(month||""))?month:new Date().toISOString().slice(0,7);const [y,mo]=m.split("-").map(Number);return{month:m,start:m+"-01",end:new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)}}
+function wibDate(value:any){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date(value));}
+function wibMonthBounds(month:string){
+ const z=range(month);
+ const start=new Date(z.start+"T00:00:00+07:00").toISOString();
+ const endExclusive=new Date(Date.parse(z.end+"T00:00:00+07:00")+86400000).toISOString();
+ return{...z,startCreatedAt:start,endCreatedAtExclusive:endExclusive};
+}
 function label(r:string){return({KA_IPSRS:"KA IPSRS",ADMINISTRASI:"Administrasi IPSRS",KASIE:"Kasie",STAF:"Staf",PETUGAS_SHIFT:"Petugas Shift"} as any)[r]||r}
 const SPARE_PART_NEW_CATEGORIES=new Set(["PEMELIHARAAN RUTIN SESUAI JADWAL DENGAN PENGGANTIAN SPARE PART BARU","PEMELIHARAAN DILUAR JADWAL RUTIN DENGAN PENGGANTIAN SPARE PART BARU","PERBAIKAN DENGAN PENGGANTIAN SPARE PART BARU"]);
 const UNIT_NEW_CATEGORIES=new Set(["PENGGANTIAN ATAU PEMASANGAN UNIT /ALAT BARU (PERBAIKAN ATAU PASANG BARU)"]);
@@ -365,10 +372,104 @@ if(a==="apiGetAuditLog"){
  }
  return{ok:true,data:(logs||[]).filter((x:any)=>!x.report_id||!kaIds.has(String(x.report_id)))};
 }
-if(a==="apiGetStaffMonitoring"){const z=range(d.bulan),ck=`monitor:${s.staff_id}:${z.month}:${d.tanggal||""}:${d.staffIdFilter||""}`,hit=cacheGet(ck);if(hit)return hit;const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());let tanggal=String(d.tanggal||today);if(!tanggal.startsWith(z.month))tanggal=z.month===today.slice(0,7)?today:z.start;let requiredDays=0;if(z.month<today.slice(0,7))requiredDays=Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1;else if(z.month===today.slice(0,7))requiredDays=Math.floor((Date.parse(today)-Date.parse(z.start))/86400000)+1;let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("nama");if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);const {data:ss,error:se}=await staffQ;if(se)throw se;let reportQ=db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",z.start).lte("tanggal",z.end);if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);const {data:rawReports,error:re}=await reportQ;if(re)throw re;const by:any={},todayCount:any={},total:any={};for(const r of rawReports||[]){(by[r.staff_id]??=new Set()).add(r.tanggal);total[r.staff_id]=(total[r.staff_id]||0)+1;if(r.tanggal===tanggal)todayCount[r.staff_id]=(todayCount[r.staff_id]||0)+1}const result={ok:true,bulan:z.month,tanggal,bulan_berjalan:z.month===today.slice(0,7),hari_wajib_terhitung:requiredDays,data:(ss||[]).map((x:any)=>{const set=by[x.staff_id]||new Set(),done=[...set].filter((day:any)=>day>=z.start&&day<=z.end&&(z.month<today.slice(0,7)||day<=today)).length;let statusHari="BELUM_ISI";if(tanggal>today)statusHari="BELUM_TERJADI";else if(todayCount[x.staff_id])statusHari="SUDAH_ISI";return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,laporan_hari_ini:todayCount[x.staff_id]||0,sudah_isi_hari_bulan_ini:done,belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),total_transaksi_bulan_ini:total[x.staff_id]||0}})};return cacheSet(ck,result)}
-if(a==="apiGetStaffDailyStatus"){const z=range(d.bulan),today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());const {data:raw,error}=await db.from("reports").select("*").is("deleted_at",null).eq("staff_id",d.staffId).gte("tanggal",z.start).lte("tanggal",z.end).order("tanggal");if(error)throw error;const rr:any[]=[];for(const r of raw||[]){if(String(r.role_snapshot||"").toUpperCase()==="KA_IPSRS"||String(r.staff_id||"")==="KAIPSRS")continue;if(await canViewReport(db,s,r))rr.push(r);}const n=Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1,cal=[];for(let i=0;i<n;i++){const day=new Date(Date.parse(z.start)+i*86400000).toISOString().slice(0,10),c=(rr||[]).filter((r:any)=>r.tanggal===day).length;cal.push({tanggal:day,status:c?"SUDAH_ISI":day>today?"BELUM_TERJADI":"BELUM_ISI",jumlah:c})}return{ok:true,kalender:cal,laporan:await Promise.all((rr||[]).map(async(r:any)=>map(r,(await canEditReport(db,s,r)).ok)))}}
-if(a==="apiGetMonthlyRecap"){const z=range(d.bulan),ck=`monthly:${s.staff_id}:${z.month}:${d.staffIdFilter||""}`,hit=cacheGet(ck);if(hit)return hit;const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),eff=z.month===today.slice(0,7)?today:z.end;let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("staff_id");if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);const {data:ss,error:se}=await staffQ;if(se)throw se;let reportQ=db.from("reports").select("staff_id,tanggal").is("deleted_at",null).gte("tanggal",z.start).lte("tanggal",eff);if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);const visibleReports=await fetchAllPages(()=>reportQ.order("report_id",{ascending:true}));const req=Math.floor((Date.parse(eff)-Date.parse(z.start))/86400000)+1,sets:any={},tx:any={};for(const x of ss||[])sets[x.staff_id]=new Set();for(const r of visibleReports){(sets[r.staff_id]??=new Set()).add(r.tanggal);tx[r.staff_id]=(tx[r.staff_id]||0)+1}const bm:any={},per=(ss||[]).map((x:any)=>{const n=(sets[x.staff_id]||new Set()).size,k=x.bidang||"-";(bm[k]??={bidang:k,jumlah_staf:0,hari_isi:0,total_transaksi:0});bm[k].jumlah_staf++;bm[k].hari_isi+=n;bm[k].total_transaksi+=tx[x.staff_id]||0;return{...x,role_label:label(x.role),sudah_isi_hari_bulan_ini:n,belum_isi_hari_bulan_ini:Math.max(0,req-n),total_transaksi_bulan_ini:tx[x.staff_id]||0}}),tot=per.reduce((a:number,x:any)=>a+x.sudah_isi_hari_bulan_ini,0),required=(ss||[]).length*req;return cacheSet(ck,{ok:true,bulan:z.month,per_staff:per,per_bidang:Object.values(bm).sort((a:any,b:any)=>String(a.bidang).localeCompare(String(b.bidang))),ringkasan:{total_staff:(ss||[]).length,total_hari_wajib:required,total_staff_days_wajib:required,total_staff_days_sudah_isi:tot,total_staff_days_belum_isi:Math.max(0,required-tot),persentase_kepatuhan:required?Math.round((tot/required)*1000)/10:0,total_transaksi:(visibleReports||[]).length}})}
-if(a==="apiDashboardStats"){
+if(a==="apiGetStaffMonitoring"){
+  const z=wibMonthBounds(d.bulan);
+  const today=wibDate(new Date());
+  let tanggal=String(d.tanggal||today);
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(tanggal)||!tanggal.startsWith(z.month))tanggal=z.month===today.slice(0,7)?today:z.start;
+  const requiredDays=z.month<today.slice(0,7)
+    ? Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1
+    : z.month===today.slice(0,7)
+      ? Math.floor((Date.parse(today)-Date.parse(z.start))/86400000)+1
+      : 0;
+  let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("nama");
+  if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);
+  const {data:ss,error:se}=await staffQ;if(se)throw se;
+  let reportQ=db.from("reports").select("staff_id,created_at").is("deleted_at",null)
+    .gte("created_at",z.startCreatedAt).lt("created_at",z.endCreatedAtExclusive);
+  if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);
+  const rawReports=await fetchAllPages(()=>reportQ.order("created_at",{ascending:true}));
+  const {data:states,error:stateError}=await db.from("lhi_staff_monitoring_state")
+    .select("staff_id,last_valid_input_at,individual_blocked_at,last_calculated_days");
+  if(stateError)throw stateError;
+  const stateById=new Map((states||[]).map((x:any)=>[String(x.staff_id),x]));
+  const by:any={},todayCount:any={},total:any={};
+  for(const r of rawReports||[]){
+    const inputDate=wibDate(r.created_at);
+    (by[r.staff_id]??=new Set()).add(inputDate);
+    total[r.staff_id]=(total[r.staff_id]||0)+1;
+    if(inputDate===tanggal)todayCount[r.staff_id]=(todayCount[r.staff_id]||0)+1;
+  }
+  const result={ok:true,bulan:z.month,tanggal,bulan_berjalan:z.month===today.slice(0,7),
+    hari_wajib_terhitung:requiredDays,
+    data:(ss||[]).map((x:any)=>{
+      const set=by[x.staff_id]||new Set();
+      const done=[...set].filter((day:any)=>day>=z.start&&day<=z.end&&(z.month<today.slice(0,7)||day<=today)).length;
+      const state:any=stateById.get(String(x.staff_id))||{};
+      let statusHari="BELUM_ISI";
+      if(tanggal>today)statusHari="BELUM_TERJADI";
+      else if(todayCount[x.staff_id])statusHari="SUDAH_ISI";
+      return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
+        bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
+        laporan_hari_ini:todayCount[x.staff_id]||0,sudah_isi_hari_bulan_ini:done,
+        belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),
+        total_transaksi_bulan_ini:total[x.staff_id]||0,
+        hari_tanpa_lhi:Number(state.last_calculated_days||0),
+        status_akses_lhi:state.individual_blocked_at?"DIBLOKIR":"NORMAL",
+        last_valid_input_at:state.last_valid_input_at||null};
+    })};
+  return cacheSet("monitor:"+s.staff_id+":"+z.month+":"+tanggal+":"+(d.staffIdFilter||""),result);
+ }
+
+ if(a==="apiGetStaffDailyStatus"){
+  const z=wibMonthBounds(d.bulan),today=wibDate(new Date());
+  const {data:raw,error}=await db.from("reports").select("*").is("deleted_at",null)
+    .eq("staff_id",d.staffId).gte("created_at",z.startCreatedAt)
+    .lt("created_at",z.endCreatedAtExclusive).order("created_at");
+  if(error)throw error;
+  const rr:any[]=[];
+  for(const r of raw||[]){if(await canViewReport(db,s,r))rr.push(r);}
+  const n=Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1,cal:any[]=[];
+  for(let i=0;i<n;i++){
+    const day=new Date(Date.parse(z.start)+i*86400000).toISOString().slice(0,10);
+    const c=rr.filter((r:any)=>wibDate(r.created_at)===day).length;
+    cal.push({tanggal:day,status:c?"SUDAH_ISI":day>today?"BELUM_TERJADI":"BELUM_ISI",jumlah:c});
+  }
+  return{ok:true,kalender:cal,laporan:await Promise.all(rr.map(async(r:any)=>map(r,(await canEditReport(db,s,r)).ok)))};
+ }
+
+ if(a==="apiGetMonthlyRecap"){
+  const z=wibMonthBounds(d.bulan),today=wibDate(new Date());
+  const eff=z.month===today.slice(0,7)?today:z.end;
+  let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("staff_id");
+  if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);
+  const {data:ss,error:se}=await staffQ;if(se)throw se;
+  let reportQ=db.from("reports").select("staff_id,created_at").is("deleted_at",null)
+    .gte("created_at",z.startCreatedAt).lt("created_at",z.endCreatedAtExclusive);
+  if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);
+  const visibleReports=await fetchAllPages(()=>reportQ.order("created_at",{ascending:true}));
+  const req=eff<z.start?0:Math.floor((Date.parse(eff)-Date.parse(z.start))/86400000)+1;
+  const sets:any={},tx:any={};
+  for(const x of ss||[])sets[x.staff_id]=new Set();
+  for(const r of visibleReports){(sets[r.staff_id]??=new Set()).add(wibDate(r.created_at));tx[r.staff_id]=(tx[r.staff_id]||0)+1;}
+  const bm:any={},per=(ss||[]).map((x:any)=>{
+    const n=(sets[x.staff_id]||new Set()).size,k=x.bidang||"-";
+    (bm[k]??={bidang:k,jumlah_staf:0,hari_isi:0,total_transaksi:0});
+    bm[k].jumlah_staf++;bm[k].hari_isi+=n;bm[k].total_transaksi+=tx[x.staff_id]||0;
+    return{...x,role_label:label(x.role),sudah_isi_hari_bulan_ini:n,
+      belum_isi_hari_bulan_ini:Math.max(0,req-n),total_transaksi_bulan_ini:tx[x.staff_id]||0};
+  });
+  const tot=per.reduce((a:number,x:any)=>a+x.sudah_isi_hari_bulan_ini,0),required=(ss||[]).length*req;
+  return cacheSet("monthly:"+s.staff_id+":"+z.month+":"+(d.staffIdFilter||""),{
+    ok:true,bulan:z.month,per_staff:per,
+    per_bidang:Object.values(bm).sort((a:any,b:any)=>String(a.bidang).localeCompare(String(b.bidang))),
+    ringkasan:{total_staff:(ss||[]).length,total_hari_wajib:required,total_staff_days_wajib:required,
+      total_staff_days_sudah_isi:tot,total_staff_days_belum_isi:Math.max(0,required-tot),
+      persentase_kepatuhan:required?Math.round((tot/required)*1000)/10:0,total_transaksi:(visibleReports||[]).length}
+  });
+ }
+
+ if(a==="apiDashboardStats"){
  const z=range(d.bulan),ck=`dash:v2:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
  const dashboardTanggal=z.month===today.slice(0,7)?today:z.start;
