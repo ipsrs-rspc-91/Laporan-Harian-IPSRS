@@ -426,8 +426,11 @@
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
       case 'apiListEditPermissions':
+      case 'apiGetLhiGraceStatus':
       case 'apiGetSystemInfo':
         payload.token=token; break;
+      case 'apiStartLhiGrace':
+        payload.token=token; payload.recoveryToken=(function(){try{return sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'';}catch(_e){return '';}})(); break;
       case 'apiChangePassword':
         payload.token=token; payload.oldPassword=args[0]||''; payload.newPassword=args[1]||''; break;
       case 'apiGetReportHistory':
@@ -589,19 +592,23 @@
       const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},
-        body:JSON.stringify({action:'apiWhoAmI',data:{token:session.access_token}})
+        body:JSON.stringify({action:'apiWhoAmI',data:{token:session.access_token,recoveryToken:(()=>{try{return sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'';}catch(_e){return '';}})()}})
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
-      // Mode reset hanya membuka layar login; autentikasi tetap wajib dan hanya KA IPSRS yang diterima.
-      let resetAuthMode=false;
-      try{resetAuthMode=sessionStorage.getItem('IPSRS_LHI_RESET_AUTH_MODE')==='KA_ONLY';}catch(_e){}
-      if(resetAuthMode && String(whoJson.role||'')!=='KA_IPSRS'){
-        await client.auth.signOut().catch(()=>{});
-        if(msgEl)msgEl.innerText='Reset hanya mengizinkan akun KA IPSRS. Akun ini tidak memiliki kewenangan tersebut.';
-        return false;
+      // Keputusan sesi pemulihan berasal dari backend. Penanda browser bukan otorisasi.
+      if(whoJson.recovery_only===true){
+        if(String(whoJson.role||'')!=='KA_IPSRS'){
+          await client.auth.signOut().catch(()=>{});
+          throw new Error('Hanya KA IPSRS yang dapat menggunakan sesi pemulihan.');
+        }
+        setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token,recovery_only:true}));
+        if(msgEl)msgEl.innerText='';
+        renderLhiRecoveryOnlyScreen_();
+        return true;
       }
-      if(resetAuthMode){try{sessionStorage.removeItem('IPSRS_LHI_RESET_AUTH_MODE');}catch(_e){}}
+      try{sessionStorage.removeItem('IPSRS_LHI_RECOVERY_TOKEN');}catch(_e){}
+      try{sessionStorage.removeItem('IPSRS_LHI_RESET_AUTH_MODE');}catch(_e){}
       // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
       // bukan terhadap backend GAS lama.
@@ -6352,12 +6359,62 @@
           body:JSON.stringify({code}),cache:'no-store'
         });
         const result=await response.json().catch(()=>null);
-        if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
-        try{sessionStorage.setItem('IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY');}catch(_e){}
+        if(!response.ok||!result||result.valid!==true||!result.recovery_token)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
+        try{sessionStorage.setItem('IPSRS_LHI_RECOVERY_TOKEN',String(result.recovery_token));}catch(_e){throw new Error('Browser tidak dapat menyimpan token pemulihan sementara.');}
         if(backdrop)backdrop.classList.remove('show');
         showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
       }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
       finally{if(submit){submit.disabled=false;submit.textContent='OK';}}
+    });
+  }
+
+  function renderLhiRecoveryOnlyScreen_(){
+    const screen=document.getElementById('loginScreen');
+    const shell=document.getElementById('appShell');
+    const loading=document.getElementById('authLoading');
+    if(!screen)return;
+    if(loading)loading.classList.add('hidden');
+    if(shell)shell.classList.add('hidden');
+    screen.classList.remove('hidden');
+    screen.innerHTML=`
+      <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#071b3d,#164a78);font-family:Arial,sans-serif">
+        <section style="width:min(100%,520px);padding:28px;border-radius:18px;background:#fff;box-shadow:0 18px 50px rgba(0,0,0,.25);color:#102044">
+          <h1 style="margin:0 0 12px;font-size:25px">Sesi Pemulihan KA IPSRS</h1>
+          <p style="line-height:1.6;margin:0 0 18px">Akses dibatasi hanya untuk pemulihan blokir aplikasi. Dashboard, laporan LHI, rekap, dan menu operasional tidak tersedia pada sesi ini.</p>
+          <div id="lhiRecoveryMessage" role="status" style="min-height:22px;margin-bottom:14px;color:#475569">Gunakan tombol berikut untuk membuka blokir global dan memulai kelonggaran 12 jam.</div>
+          <button type="button" id="lhiRecoveryStart" style="width:100%;min-height:48px;border:0;border-radius:10px;background:#087b27;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Buka Blokir dan Mulai Kelonggaran 12 Jam</button>
+          <button type="button" id="lhiRecoveryLogout" style="width:100%;min-height:42px;margin-top:10px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;color:#334155;font-weight:700;cursor:pointer">Keluar</button>
+        </section>
+      </div>`;
+    const start=document.getElementById('lhiRecoveryStart');
+    const msg=document.getElementById('lhiRecoveryMessage');
+    const logout=document.getElementById('lhiRecoveryLogout');
+    if(start)start.addEventListener('click',async()=>{
+      start.disabled=true;
+      start.textContent='Memproses pemulihan...';
+      if(msg)msg.textContent='Server sedang memvalidasi token dan menjalankan transaksi pemulihan.';
+      try{
+        const result=await authRun('apiStartLhiGrace');
+        if(!result||result.ok!==true)throw new Error((result&&result.msg)||'Pemulihan belum berhasil.');
+        try{sessionStorage.removeItem('IPSRS_LHI_RECOVERY_TOKEN');}catch(_e){}
+        const who=await authRun('apiWhoAmI');
+        if(!who||who.ok!==true||who.recovery_only===true)throw new Error('Blokir telah diproses, tetapi sesi normal belum dapat diverifikasi. Silakan masuk kembali.');
+        const current=getSession()||{};
+        setSession(Object.assign({},who,{token:current.token,refresh_token:current.refresh_token,recovery_only:false}));
+        await afterAuthReady();
+        hideLoginScreen();
+        goPage('input');
+      }catch(error){
+        if(msg)msg.textContent=String(error&&error.message||'Pemulihan gagal. Blokir tetap berlaku.');
+        start.disabled=false;
+        start.textContent='Coba Pemulihan Kembali';
+      }
+    });
+    if(logout)logout.addEventListener('click',async()=>{
+      try{await getSupabaseClient_().auth.signOut();}catch(_e){}
+      clearSession();
+      try{sessionStorage.removeItem('IPSRS_LHI_RECOVERY_TOKEN');}catch(_e){}
+      checkAuthAndInit();
     });
   }
 
