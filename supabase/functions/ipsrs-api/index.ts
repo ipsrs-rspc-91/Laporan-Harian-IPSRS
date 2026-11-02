@@ -201,8 +201,12 @@ async function staff(ctx:any,req?:Request){
  const {data:globalSetting,error:globalError}=await ctx.supabaseAdmin
    .from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
  if(globalError)throw globalError;
- if(String(globalSetting?.value||"").toUpperCase()==="AKTIF"){
+ const globalLockState=String(globalSetting?.value||"").toUpperCase();
+ if(globalLockState==="AKTIF"){
    throw Error("MODE FORM BLOK APLIKASI AKTIF. Login normal ditutup. Hanya KA IPSRS dapat melanjutkan melalui prosedur Reset.");
+ }
+ if(globalLockState!=="NONAKTIF"){
+   throw Error("Status blokir global tidak dapat diverifikasi. Login ditahan sementara.");
  }
 
  // KA IPSRS is intentionally kept out of the operational API while a grace
