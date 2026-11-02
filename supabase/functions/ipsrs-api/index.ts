@@ -803,7 +803,34 @@ if(a==="apiReviewMasterItem"){
  return{ok:true,data:updated};
 }
 if(a==="apiGetAccessControl"){if(s.role!=="KA_IPSRS"&&s.role!=="ADMINISTRASI")return{ok:false,msg:"Tidak memiliki akses pengaturan."};const {data,error}=await db.from("access_settings").select("key,value");if(error)throw error;const o:any={};for(const x of data||[])o[String(x.key).toLowerCase()]=x.value;const {data:ep,error:ee}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(ee)throw ee;return{ok:true,laporan_tim:o.laporan_tim||"AKTIF",administrasi_edit:o.administrasi_edit||"NONAKTIF",lhi_global_block:o.lhi_global_block||"NONAKTIF",has_edit_permission:!!ep}}
-if(a==="apiGetLhiGraceStatus"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status kelonggaran LHI."};const {data:incident,error:ie}=await db.from("lhi_discipline_incidents").select("incident_id,started_at,deadline_at,status").order("incident_id",{ascending:false}).limit(1).maybeSingle();if(ie)throw ie;if(!incident)return{ok:true,data:null};const {data:rows,error:oe}=await db.from("lhi_discipline_obligations").select("staff_id,completed_at").eq("incident_id",incident.incident_id);if(oe)throw oe;const grouped=new Map<string,{completed:boolean}>();for(const row of rows||[]){const id=String(row.staff_id||"");if(!id)continue;const current=grouped.get(id);if(!current)grouped.set(id,{completed:!!row.completed_at});else if(!row.completed_at)current.completed=false;}const values=[...grouped.values()];const completed=values.filter(x=>x.completed).length;return{ok:true,data:{incident_id:incident.incident_id,status:incident.status,started_at:incident.started_at,deadline_at:incident.deadline_at,total:values.length,completed,pending:values.length-completed}}}
+if(a==="apiGetLhiGraceStatus"){
+  if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status kelonggaran LHI."};
+  const {data:incident,error:ie}=await db.from("lhi_discipline_incidents")
+    .select("incident_id,started_at,deadline_at,status").order("incident_id",{ascending:false})
+    .limit(1).maybeSingle();
+  if(ie)throw ie;
+  if(!incident)return{ok:true,data:null};
+  const {data:rows,error:oe}=await db.from("lhi_discipline_obligations")
+    .select("staff_id,completed_at,obligation_status").eq("incident_id",incident.incident_id);
+  if(oe)throw oe;
+  const grouped=new Map<string,{status:string}>();
+  for(const row of rows||[]){
+    const id=String(row.staff_id||"");if(!id)continue;
+    const status=String(row.obligation_status|| (row.completed_at?"FULFILLED":"PENDING"));
+    const current=grouped.get(id);
+    if(!current||status==="PENDING"||current.status==="PENDING")grouped.set(id,{status:status==="PENDING"?"PENDING":current?.status==="PENDING"?"PENDING":status});
+  }
+  const obligations=[...grouped.entries()].map(([staff_id,x])=>({staff_id,status:x.status}));
+  const completed=obligations.filter(x=>x.status!=="PENDING").length;
+  const pending=obligations.length-completed;
+  const {data:audit,error:ae}=await db.from("lhi_obligation_audit")
+    .select("audit_id,obligation_id,staff_id,old_status,new_status,changed_at,cause")
+    .eq("incident_id",incident.incident_id).order("changed_at",{ascending:false}).limit(200);
+  if(ae)throw ae;
+  return{ok:true,data:{incident_id:incident.incident_id,status:incident.status,
+    started_at:incident.started_at,deadline_at:incident.deadline_at,
+    total:obligations.length,completed,pending,obligations,audit:audit||[]}};
+}
 if(a==="apiListEditPermissions"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat izin edit."};const {data,error}=await db.from("edit_permissions").select("*").order("created_at",{ascending:false});if(error)throw error;return{ok:true,data:data||[]}}
 if(a==="apiStartLhiGrace"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat membuka blokir dan memulai kelonggaran 12 jam."};const tokenHash=await hashRecoveryToken(String(d.recoveryToken||""));if(!tokenHash)return{ok:false,msg:"Token pemulihan tidak valid."};const {data,error}=await db.rpc("consume_lhi_recovery_token_and_open_grace",{p_token_hash:tokenHash,p_staff_id:s.staff_id,p_staff_name:s.nama});if(error)throw error;if(!data||data.ok!==true)return{ok:false,msg:data?.msg||"Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif."};return{ok:true,data,msg:data.already_open?"Kelonggaran 12 jam sudah berjalan.":"Blokir global dan seluruh blokir individual berhasil dibuka. Kelonggaran 12 jam dimulai."}}
 if(a==="apiSetAccessSetting"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengubah pengaturan."};const key=String(d.key||"").trim(),value=String(d.value||"").trim();if(!["LAPORAN_TIM","ADMINISTRASI_EDIT"].includes(key)||!["AKTIF","NONAKTIF"].includes(value))return{ok:false,msg:"Pengaturan tidak valid."};const {error}=await db.from("access_settings").upsert({key,value,updated_at:new Date().toISOString(),updated_by_staff_id:s.staff_id,updated_by_name:s.nama},{onConflict:"key"});if(error)throw error;return{ok:true}}
