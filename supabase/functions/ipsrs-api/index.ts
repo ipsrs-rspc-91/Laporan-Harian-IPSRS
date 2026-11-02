@@ -235,7 +235,7 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false){
    }
 
    if(blockedStatus&&!manualUnblockActive&&!await isGraceActive())throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
-   const graceBypass=await isGraceActive()&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(String(data.status||"").toUpperCase());
+   const graceBypass=graceActive&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(String(data.status||"").toUpperCase());
    if(String(data.status).toLowerCase()!=="aktif"&&!graceBypass)throw Error("Akun petugas tidak aktif.");
  }
  return data;
