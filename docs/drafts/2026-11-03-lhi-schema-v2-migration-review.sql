@@ -18,6 +18,13 @@
 
 BEGIN;
 
+ALTER TABLE public.lhi_discipline_incidents
+  ADD COLUMN IF NOT EXISTS locked_at timestamptz;
+
+UPDATE public.lhi_discipline_incidents
+SET locked_at = COALESCE(locked_at, started_at)
+WHERE status = 'LOCKED' AND locked_at IS NULL;
+
 ALTER TABLE public.staff
   ADD COLUMN IF NOT EXISTS lhi_access_status text NOT NULL DEFAULT 'NORMAL',
   ADD COLUMN IF NOT EXISTS lhi_active_since timestamptz,
