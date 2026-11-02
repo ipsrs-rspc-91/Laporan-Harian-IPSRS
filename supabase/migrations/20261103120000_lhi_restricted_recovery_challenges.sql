@@ -266,6 +266,7 @@ DECLARE
   v_session private.lhi_recovery_sessions%ROWTYPE;
   v_staff public.staff%ROWTYPE;
   v_incident public.lhi_discipline_incidents%ROWTYPE;
+  v_lock text;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
 
@@ -297,12 +298,20 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'reason', 'KA_IDENTITY_NO_LONGER_VALID');
   END IF;
 
+  SELECT value INTO v_lock
+  FROM public.access_settings
+  WHERE key = 'LHI_GLOBAL_BLOCK'
+  FOR SHARE;
+
   SELECT * INTO v_incident
   FROM public.lhi_discipline_incidents
   WHERE incident_id::text = v_session.incident_id
   FOR SHARE;
 
-  IF NOT FOUND OR v_incident.status NOT IN ('LOCKED', 'GRACE') THEN
+  IF NOT FOUND OR NOT (
+    (v_incident.status = 'LOCKED' AND v_lock = 'AKTIF') OR
+    (v_incident.status = 'GRACE' AND v_lock = 'NONAKTIF')
+  ) THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INCIDENT_NO_LONGER_RECOVERABLE');
   END IF;
 
