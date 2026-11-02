@@ -194,8 +194,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $function$
-  SELECT auth.uid() IS NOT NULL
-     AND COALESCE((
+  SELECT COALESCE((
        SELECT upper(value) = 'NONAKTIF'
        FROM public.access_settings
        WHERE key = 'LHI_GLOBAL_BLOCK'
@@ -206,7 +205,7 @@ $function$;
 REVOKE ALL ON FUNCTION public.lhi_operational_access_allowed()
 FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.lhi_operational_access_allowed()
-TO authenticated;
+TO authenticated, service_role;
 
 -- Access settings: KA may manage ordinary settings only while the application
 -- is unlocked. Security/reset control keys remain server-owned at all times.
@@ -405,3 +404,13 @@ GRANT EXECUTE ON FUNCTION public.protect_lhi_manual_unblock_status()
 TO service_role;
 GRANT EXECUTE ON FUNCTION public.reactivate_lhi_staff_after_report()
 TO service_role;
+
+-- The staff dropdown view is a public Data API surface too. Hide its staff
+-- directory while the global block is active, including direct REST requests.
+CREATE OR REPLACE VIEW public.staff_dropdown AS
+SELECT staff_id, nama, jabatan, role, bidang, status
+FROM public.staff
+WHERE lower(trim(status)) = 'aktif'
+  AND upper(trim(role)) <> 'KA_IPSRS'
+  AND (SELECT public.lhi_operational_access_allowed())
+ORDER BY nama;
