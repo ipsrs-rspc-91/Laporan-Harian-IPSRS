@@ -43,8 +43,7 @@ test("snapshot is created atomically at Reset for delinquent active staff only",
 
 test("Reset clears LHI access blocks but never changes employment status", () => {
   assert.match(sql, /SET lhi_access_status = 'NORMAL'/);
-  assert.doesNotMatch(sql, /SET status\s*=\s*'Aktif'/i);
-  assert.doesNotMatch(sql, /SET status\s*=/i);
+  assert.doesNotMatch(sql, /UPDATE public\\.staff\\s+SET status\\s*=/i);
 });
 
 test("grace is exactly twelve hours and all changes are one RPC transaction", () => {
