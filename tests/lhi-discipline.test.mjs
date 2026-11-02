@@ -167,3 +167,82 @@ test("an inactive-excluded grace obligation stays excluded after later reactivat
   assert.equal(result.members[0].obligation_status, "EXCLUDED_INACTIVE");
   assert.equal(result.allSatisfied, true);
 });
+
+
+test("day-8 block notice names every blocked employee and excludes blocked recipients", async () => {
+  const { buildIndividualBlockNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const notices = buildIndividualBlockNotifications([
+    { staff_id: "A", nama: "Agung", action: "BLOCK_INDIVIDUAL_ACCESS" },
+    { staff_id: "B", nama: "Budi", action: "BLOCK_INDIVIDUAL_ACCESS" },
+    { staff_id: "C", nama: "Citra", action: "WARNING_3" },
+  ], [
+    { staff_id: "A", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+    { staff_id: "B", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+    { staff_id: "C", status: "Aktif", lhi_access_status: "NORMAL" },
+    { staff_id: "D", status: "Aktif", lhi_access_status: "NORMAL" },
+    { staff_id: "E", status: "Nonaktif", lhi_access_status: "NORMAL" },
+  ], "2026-11-03");
+  assert.equal(notices.length, 1);
+  assert.match(notices[0].message, /Agung, Budi/);
+  assert.match(notices[0].message, /hari ke-8/);
+  assert.deepEqual(notices[0].recipients.map((row) => row.recipient_staff_id), ["C", "D"]);
+  assert.deepEqual(notices[0].blocked_staff_ids, ["A", "B"]);
+  assert.equal(new Set(notices[0].recipients.map((row) => row.event_key)).size, 2);
+});
+
+test("day-8 notice is absent when nobody reaches individual block stage", async () => {
+  const { buildIndividualBlockNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  assert.deepEqual(buildIndividualBlockNotifications(
+    [{ staff_id: "A", action: "WARNING_3" }],
+    [{ staff_id: "B", status: "Aktif" }],
+    "2026-11-03",
+  ), []);
+});
+
+test("grace report at exact start is valid and report at exact deadline is late", async () => {
+  const { evaluateGraceSnapshot } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const result = evaluateGraceSnapshot(
+    [
+      { staff_id: "START", obligation_status: "PENDING" },
+      { staff_id: "END", obligation_status: "PENDING" },
+    ],
+    { START: { status: "Aktif" }, END: { status: "Aktif" } },
+    {
+      START: [{ id: "at-start", created_at: "2026-11-03T04:00:00Z", deleted_at: null }],
+      END: [{ id: "at-end", created_at: "2026-11-03T16:00:00Z", deleted_at: null }],
+    },
+    "2026-11-03T04:00:00Z",
+    "2026-11-03T16:00:00Z",
+  );
+  assert.deepEqual(result.members.map((row) => row.obligation_status), ["COMPLETED", "PENDING"]);
+});
+
+test("deleting the only qualifying grace report reopens the obligation", async () => {
+  const { evaluateGraceSnapshot } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const snapshot = [{ staff_id: "A", obligation_status: "COMPLETED", qualifying_report_id: "R1" }];
+  const result = evaluateGraceSnapshot(
+    snapshot,
+    { A: { status: "Aktif" } },
+    { A: [{ id: "R1", created_at: "2026-11-03T05:00:00Z", deleted_at: "2026-11-03T06:00:00Z" }] },
+    "2026-11-03T04:00:00Z",
+    "2026-11-03T16:00:00Z",
+  );
+  assert.equal(result.members[0].obligation_status, "PENDING");
+  assert.equal(result.shouldReactivateGlobalBlock, true);
+});
+
+test("deleting one grace report does not reopen obligation when another valid report remains", async () => {
+  const { evaluateGraceSnapshot } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const result = evaluateGraceSnapshot(
+    [{ staff_id: "A", obligation_status: "COMPLETED", qualifying_report_id: "R1" }],
+    { A: { status: "Aktif" } },
+    { A: [
+      { id: "R1", created_at: "2026-11-03T05:00:00Z", deleted_at: "2026-11-03T06:00:00Z" },
+      { id: "R2", created_at: "2026-11-03T07:00:00Z", deleted_at: null },
+    ] },
+    "2026-11-03T04:00:00Z",
+    "2026-11-03T16:00:00Z",
+  );
+  assert.equal(result.members[0].obligation_status, "COMPLETED");
+  assert.equal(result.shouldReactivateGlobalBlock, false);
+});
