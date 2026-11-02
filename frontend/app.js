@@ -651,12 +651,14 @@
       const rawMsg=String(err&&err.message?err.message:err);
       if(msgEl){
         msgEl.innerText=/MODE FORM BLOK APLIKASI AKTIF|tidak dapat login|blokir aplikasi/i.test(rawMsg)
-          ? 'FORM BLOK APLIKASI AKTIF. Login sementara ditutup oleh KA IPSRS.'
-          : (/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
-              ? 'Anda tidak disiplin mengisi laporan selama 8 hari.'
-              : (/invalid login credentials/i.test(rawMsg)
-                  ? 'Username atau password salah.'
-                  : 'Error: '+rawMsg));
+          ? 'FORM BLOK APLIKASI AKTIF. Login normal ditutup. Hanya KA IPSRS dapat melanjutkan melalui prosedur Reset.'
+          : (/hak akses aplikasi anda diblokir/i.test(rawMsg)
+              ? 'HAK AKSES APLIKASI DIBLOKIR. '+rawMsg
+              : (/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
+                  ? 'HAK AKSES APLIKASI DIBLOKIR. '+rawMsg
+                  : (/invalid login credentials/i.test(rawMsg)
+                      ? 'Username atau password salah.'
+                      : 'Error: '+rawMsg)));
       }
       return false;
     }
