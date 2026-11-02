@@ -57,3 +57,39 @@ test("README stage boundaries are exact", () => {
   assert.deepEqual(disciplineStage(9), { stageDay: 10, action: "GLOBAL_BLOCK" });
   assert.deepEqual(disciplineStage(12), { stageDay: 10, action: "GLOBAL_BLOCK" });
 });
+
+
+test("evaluation monitors every active role and keeps blocked staff in day-10 trigger set", async () => {
+  const { evaluateDiscipline } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const staff = [
+    { staff_id: "A", nama: "Agung", role: "STAFF", status: "Aktif", lhi_access_status: "BLOCKED_LHI", lhi_active_since: "2026-10-20T00:00:00Z" },
+    { staff_id: "K", nama: "KA IPSRS", role: "KA_IPSRS", status: "Aktif", lhi_access_status: "NORMAL", lhi_active_since: "2026-10-20T00:00:00Z" },
+    { staff_id: "N", nama: "Nonaktif", role: "STAFF", status: "Nonaktif", lhi_active_since: "2026-10-01T00:00:00Z" },
+  ];
+  const result = evaluateDiscipline(staff, {}, "2026-10-30");
+  assert.deepEqual(result.evaluations.map((row) => row.staff_id), ["A", "K"]);
+  assert.deepEqual(result.globalBlockTriggers.map((row) => row.staff_id), ["A", "K"]);
+  assert.equal(result.evaluations[0].access_status, "BLOCKED_LHI");
+});
+
+test("discipline evaluation produces warning stages and day-8 block from the same anchor", async () => {
+  const { evaluateDiscipline } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const staff = [3, 5, 6, 7, 8, 9].map((missed) => ({
+    staff_id: String(missed),
+    status: "Aktif",
+    lhi_active_since: "2026-10-01T00:00:00Z",
+  }));
+  const today = "2026-10-20";
+  const reports = Object.fromEntries(staff.map((row) => {
+    const missed = Number(row.staff_id);
+    const anchorDay = new Date(Date.UTC(2026, 9, 20 - missed - 1)).toISOString();
+    return [row.staff_id, [{ created_at: anchorDay, deleted_at: null }]];
+  }));
+  const result = evaluateDiscipline(staff, reports, today);
+  assert.deepEqual(result.warnings.WARNING_1.map((row) => row.staff_id), ["3"]);
+  assert.deepEqual(result.warnings.WARNING_2.map((row) => row.staff_id), ["5"]);
+  assert.deepEqual(result.warnings.WARNING_3.map((row) => row.staff_id), ["6"]);
+  assert.deepEqual(result.individualBlocks.map((row) => row.staff_id), ["7"]);
+  assert.deepEqual(result.evaluations.filter((row) => row.action === "WAITING").map((row) => row.staff_id), ["8"]);
+  assert.deepEqual(result.globalBlockTriggers.map((row) => row.staff_id), ["9"]);
+});
