@@ -69,12 +69,34 @@ Deno.serve(async (req: Request) => {
       }, 503, cors);
     }
     const blocked = lockState === "AKTIF";
+    let graceIncident: { incident_id: number; deadline_at: string } | null = null;
+    if (!blocked) {
+      const { data: grace, error: graceError } = await db
+        .from("lhi_discipline_incidents")
+        .select("incident_id,deadline_at")
+        .eq("status", "GRACE")
+        .order("incident_id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (graceError) {
+        return response({
+          ok: false,
+          blocked: true,
+          message: "Status masa pemulihan belum dapat diverifikasi. Login ditahan sementara.",
+        }, 503, cors);
+      }
+      graceIncident = grace || null;
+    }
     return response({
       ok: true,
       blocked,
+      grace_active: Boolean(graceIncident),
+      grace_deadline_at: graceIncident?.deadline_at || null,
       message: blocked
         ? "Mode Blok Aplikasi aktif. Login normal ditutup. KA IPSRS harus melalui prosedur Reset."
-        : "Mode Blok Aplikasi tidak aktif.",
+        : (graceIncident
+          ? "Masa pemulihan LHI sedang berlangsung. KA IPSRS dapat melanjutkan sesi pemulihan terbatas."
+          : "Mode Blok Aplikasi tidak aktif."),
       noncompliant_staff: [],
     }, 200, cors);
   } catch {
