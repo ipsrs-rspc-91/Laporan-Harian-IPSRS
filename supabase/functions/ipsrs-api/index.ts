@@ -195,6 +195,29 @@ async function staff(ctx:any,req?:Request){
  if(accessStatus!=="NORMAL"){
    throw Error("Hak akses aplikasi Anda diblokir karena kewajiban Laporan Harian IPSRS belum dipenuhi. Silakan hubungi KA IPSRS untuk prosedur pemulihan.");
  }
+
+ // Enforce global lock at the API boundary as well as in the login screen.
+ // Direct API calls must not bypass the Form Blok Aplikasi frontend gate.
+ const {data:globalSetting,error:globalError}=await ctx.supabaseAdmin
+   .from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
+ if(globalError)throw globalError;
+ if(String(globalSetting?.value||"").toUpperCase()==="AKTIF"){
+   throw Error("MODE FORM BLOK APLIKASI AKTIF. Login normal ditutup. Hanya KA IPSRS dapat melanjutkan melalui prosedur Reset.");
+ }
+
+ // KA IPSRS is intentionally kept out of the operational API while a grace
+ // recovery session is active. Recovery actions use the separate capability
+ // endpoint; this prevents refresh/login from turning the restricted session
+ // into a normal dashboard session.
+ if(String(data.role||"")==="KA_IPSRS"){
+   const {data:graceIncident,error:graceError}=await ctx.supabaseAdmin
+     .from("lhi_discipline_incidents").select("incident_id")
+     .eq("status","GRACE").order("incident_id",{ascending:false}).limit(1).maybeSingle();
+   if(graceError)throw graceError;
+   if(graceIncident){
+     throw Error("Sesi pemulihan KA IPSRS sedang dibatasi. Dashboard dan menu operasional tidak tersedia selama masa grace.");
+   }
+ }
  return data
 }
 async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){
@@ -576,7 +599,7 @@ if(a==="apiReviewMasterItem"){
 if(a==="apiGetAccessControl"){if(s.role!=="KA_IPSRS"&&s.role!=="ADMINISTRASI")return{ok:false,msg:"Tidak memiliki akses pengaturan."};const {data,error}=await db.from("access_settings").select("key,value");if(error)throw error;const o:any={};for(const x of data||[])o[String(x.key).toLowerCase()]=x.value;const {data:ep,error:ee}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(ee)throw ee;return{ok:true,laporan_tim:o.laporan_tim||"AKTIF",administrasi_edit:o.administrasi_edit||"NONAKTIF",lhi_global_block:o.lhi_global_block||"NONAKTIF",has_edit_permission:!!ep}}
 if(a==="apiGetLhiGraceStatus"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status kelonggaran LHI."};const {data:incident,error:ie}=await db.from("lhi_discipline_incidents").select("incident_id,started_at,deadline_at,status").order("incident_id",{ascending:false}).limit(1).maybeSingle();if(ie)throw ie;if(!incident)return{ok:true,data:null};const {data:rows,error:oe}=await db.from("lhi_discipline_obligations").select("staff_id,completed_at").eq("incident_id",incident.incident_id);if(oe)throw oe;const grouped=new Map<string,{completed:boolean}>();for(const row of rows||[]){const id=String(row.staff_id||"");if(!id)continue;const current=grouped.get(id);if(!current)grouped.set(id,{completed:!!row.completed_at});else if(!row.completed_at)current.completed=false;}const values=[...grouped.values()];const completed=values.filter(x=>x.completed).length;return{ok:true,data:{incident_id:incident.incident_id,status:incident.status,started_at:incident.started_at,deadline_at:incident.deadline_at,total:values.length,completed,pending:values.length-completed}}}
 if(a==="apiListEditPermissions"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat izin edit."};const {data,error}=await db.from("edit_permissions").select("*").order("created_at",{ascending:false});if(error)throw error;return{ok:true,data:data||[]}}
-if(a==="apiStartLhiGrace"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat membuka blokir dan memulai kelonggaran 12 jam."};const {data,error}=await db.rpc("open_lhi_global_grace",{p_staff_id:s.staff_id,p_staff_name:s.nama});if(error)throw error;if(!data||data.ok!==true)return{ok:false,msg:data?.msg||"Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif."};return{ok:true,data,msg:data.already_open?"Kelonggaran 12 jam sudah berjalan.":"Blokir global dan seluruh blokir individual berhasil dibuka. Kelonggaran 12 jam dimulai."}}
+if(a==="apiStartLhiGrace"){return{ok:false,msg:"Jalur Reset lama dinonaktifkan. Gunakan restricted recovery session melalui prosedur Reset."}}
 if(a==="apiSetAccessSetting"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengubah pengaturan."};const key=String(d.key||"").trim(),value=String(d.value||"").trim();if(!["LAPORAN_TIM","ADMINISTRASI_EDIT"].includes(key)||!["AKTIF","NONAKTIF"].includes(value))return{ok:false,msg:"Pengaturan tidak valid."};const {error}=await db.from("access_settings").upsert({key,value,updated_at:new Date().toISOString(),updated_by_staff_id:s.staff_id,updated_by_name:s.nama},{onConflict:"key"});if(error)throw error;return{ok:true}}
 if(a==="apiSetEditPermission"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengubah izin."};const g=String(d.grantedToStaffId||"").trim(),t=String(d.targetStaffId||"").trim(),active=!!d.isActive;if(!g||!t||g===t)return{ok:false,msg:"Pemberi dan target harus berbeda."};const {data:target}=await db.from("staff").select("staff_id,nama,role").eq("staff_id",t).maybeSingle();if(!target)return{ok:false,msg:"Target petugas tidak ditemukan."};if(target.role==="KA_IPSRS")return{ok:false,msg:"Laporan KA IPSRS tidak dapat diberi izin edit."};const {data:grant}=await db.from("staff").select("staff_id,nama").eq("staff_id",g).maybeSingle();if(!grant)return{ok:false,msg:"Pemberi izin tidak ditemukan."};const {data:existing,error:existingError}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",g).eq("target_staff_id",t).limit(1).maybeSingle();if(existingError)throw existingError;const now=new Date().toISOString();if(existing?.permission_id){const {error}=await db.from("edit_permissions").update({granted_to_staff_name:grant.nama,target_staff_name:target.nama,is_active:active,granted_by_staff_id:s.staff_id,granted_by_name:s.nama,updated_at:now}).eq("permission_id",existing.permission_id);if(error)throw error;}else{const permission_id="PERM-"+crypto.randomUUID().replaceAll("-","").slice(0,8).toUpperCase();const {error}=await db.from("edit_permissions").insert({permission_id,granted_to_staff_id:g,granted_to_staff_name:grant.nama,target_staff_id:t,target_staff_name:target.nama,is_active:active,granted_by_staff_id:s.staff_id,granted_by_name:s.nama,created_at:now,updated_at:now});if(error)throw error;}return{ok:true}}
 if(a==="apiAdminUnblockLhi"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menjalankan pemulihan LHI."};return{ok:false,msg:"Pembukaan blokir individual tidak dapat dilakukan secara manual. Gunakan prosedur Reset dan perintah Buka Blokir dan Mulai Kelonggaran 12 Jam agar blokir global dan individual dipulihkan dalam satu transaksi."}}
