@@ -33,3 +33,9 @@ test("recovery capability remains bounded by the active grace deadline", () => {
   assert.match(resetRpc, /WHERE token_hash = p_recovery_session_token_hash/);
   assert.match(resetRpc, /AND incident_id = v_incident\.incident_id::text/);
 });
+
+test("recovery capability validation rejects mismatched global lock and incident state", () => {
+  assert.match(migration, /v_incident\.status = 'LOCKED' AND v_lock = 'AKTIF'/);
+  assert.match(migration, /v_incident\.status = 'GRACE' AND v_lock = 'NONAKTIF'/);
+  assert.match(migration, /INCIDENT_NO_LONGER_RECOVERABLE/);
+});
