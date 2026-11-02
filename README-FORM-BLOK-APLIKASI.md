@@ -49,18 +49,24 @@ Tujuannya agar rekan kerja/tim dapat mengingatkan petugas yang bersangkutan seca
 
 Pada hari ke-10:
 - Mode Blok Aplikasi menjadi **AKTIF**.
-- Semua petugas tidak dapat login, termasuk petugas yang sudah mengisi LHI.
-- Hanya KA IPSRS yang dapat masuk melalui prosedur reset.
-- Halaman blokir menampilkan keterangan Mode Blok Aplikasi aktif dan tautan **Reset**.
+- Tampilan awal aplikasi secara otomatis berubah menjadi **Form Blok Aplikasi**.
+- Form login normal disembunyikan sepenuhnya dan tidak ditampilkan selama Mode Blok Aplikasi aktif.
+- Form Blok Aplikasi menggantikan tampilan form login untuk seluruh pengguna.
+- Form Blok Aplikasi menampilkan keterangan bahwa aplikasi sedang diblokir secara global dan menyediakan tautan **Reset**.
+- Semua petugas tidak dapat mengakses aplikasi melalui form login normal, termasuk petugas yang sudah memenuhi kewajiban LHI.
+- Hanya KA IPSRS yang dapat melanjutkan melalui prosedur Reset dan autentikasi akun KA IPSRS.
 
 Mode ini bersifat global, bukan hanya memblokir petugas yang terlambat mengisi.
 
 ## 6. Prosedur Reset
-1. Pengguna menekan tautan **Reset** pada layar blokir.
-2. Sistem menampilkan modal untuk memasukkan angka reset.
-3. Angka reset sesuai konsep adalah **192645**.
-4. Jika angka benar dan pengguna menekan **OK**, sistem menampilkan form login.
-5. Hanya akun dengan peran KA IPSRS yang boleh berhasil login. Akun petugas lainnya tetap ditolak.
+1. Saat Mode Blok Aplikasi aktif, seluruh pengguna melihat **Form Blok Aplikasi**, bukan form login normal.
+2. KA IPSRS menekan tautan **Reset** pada Form Blok Aplikasi.
+3. Sistem menampilkan modal untuk memasukkan angka reset.
+4. Angka reset sesuai konsep adalah **192645**.
+5. Jika angka salah, sistem tidak membuka form autentikasi dan akses tetap diblokir.
+6. Jika angka benar dan pengguna menekan **OK**, sistem menampilkan form autentikasi/login khusus untuk melanjutkan proses masuk KA IPSRS.
+7. Pengguna tetap wajib memasukkan kredensial akun. Hanya akun dengan peran KA IPSRS yang boleh berhasil login; akun petugas lainnya tetap ditolak.
+8. Keberhasilan memasukkan angka reset saja tidak boleh membuka aplikasi atau memberikan akses kepada pengguna.
 
 **Catatan keamanan:** angka reset tidak boleh menjadi jalan pintas untuk melewati autentikasi. Sebelum implementasi, mekanisme harus ditinjau agar angka tidak tertanam terbuka di frontend; autentikasi akun KA IPSRS tetap wajib.
 
@@ -108,13 +114,15 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 4. Delapan hari tanpa LHI: status petugas nonaktif dan seluruh tim diberi notifikasi yang mencantumkan nama petugas tersebut.
 5. Hari ke-9: masa tunggu setelah penonaktifan individu; Mode Blok global belum aktif.
 6. Hari ke-10: status petugas tersebut diaktifkan kembali sesuai konsep dan Mode Blok global aktif.
-7. Saat Mode Blok aktif, semua petugas ditolak login; hanya KA IPSRS dapat masuk setelah reset benar dan autentikasi KA berhasil.
-8. Reset salah tidak membuka akses login.
-9. KA membuka kelonggaran 12 jam; waktu mulai dan tenggat tercatat.
-10. Semua petugas dalam daftar kewajiban melengkapi LHI sebelum tenggat: Mode Blok menjadi nonaktif.
-11. Masih ada satu petugas belum melengkapi kewajiban saat 12 jam habis: Mode Blok aktif kembali.
-12. Sabtu, Minggu, dan hari libur tetap dihitung.
-13. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
+7. Saat Mode Blok aktif, tampilan awal aplikasi berubah menjadi Form Blok Aplikasi; form login normal tidak ditampilkan kepada seluruh pengguna.
+8. Form Blok Aplikasi menampilkan keterangan blokir global dan tautan Reset.
+9. Reset salah tidak membuka form autentikasi maupun akses aplikasi.
+10. Reset benar hanya menampilkan form autentikasi untuk melanjutkan login; hanya akun KA IPSRS yang berhasil masuk dan akun petugas biasa tetap ditolak.
+11. KA membuka kelonggaran 12 jam; waktu mulai dan tenggat tercatat.
+12. Semua petugas dalam daftar kewajiban melengkapi LHI sebelum tenggat: Mode Blok menjadi nonaktif.
+13. Masih ada satu petugas belum melengkapi kewajiban saat 12 jam habis: Mode Blok aktif kembali.
+14. Sabtu, Minggu, dan hari libur tetap dihitung.
+15. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
 
 ## 12. Tata kelola implementasi
 Dokumen ini hanya acuan konsep. **Jangan mengubah script, database, konfigurasi, atau melakukan deployment sebelum audit dan persetujuan.**
