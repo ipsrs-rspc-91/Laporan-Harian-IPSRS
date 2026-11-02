@@ -85,7 +85,7 @@ KA IPSRS perlu melihat waktu mulai, tenggat 12 jam, daftar petugas yang belum me
 ## 8. Definisi semua petugas wajib mengisi
 Syarat pemulihan global adalah **semua petugas dalam daftar kewajiban LHI pada kejadian blokir harus melengkapi LHI**. Satu petugas yang belum menyelesaikan kewajibannya menyebabkan Mode Blok tetap/menjadi aktif kembali setelah masa kelonggaran.
 
-Rekomendasi teknis: saat blokir dimulai, simpan daftar petugas dan tanggal LHI yang wajib dilengkapi sebagai snapshot. Dengan demikian syarat pemulihan tidak berubah karena pergantian hari. Cakupan tanggal kewajiban (tunggakan saja atau termasuk LHI hari berjalan) harus ditetapkan sebelum implementasi.
+Ketentuan snapshot yang telah ditetapkan: saat KA IPSRS memulai kelonggaran 12 jam, sistem menyimpan snapshot tetap yang hanya mencakup petugas dan tanggal LHI yang sudah tertunggak pada saat snapshot dibuat. **LHI untuk hari berjalan tidak dimasukkan** ke dalam snapshot dan tidak menjadi kewajiban tambahan dalam kejadian blokir tersebut. Daftar petugas dan tanggal tunggakan dalam snapshot dikunci sebagai acuan pemulihan selama periode 12 jam; pergantian tanggal selama periode tersebut tidak boleh menambah atau mengubah kewajiban snapshot. Petugas dinyatakan memenuhi kewajiban snapshot setelah seluruh LHI tertunggak yang tercatat untuknya telah dilengkapi secara sah.
 
 ## 9. Pengecualian dan kewenangan
 - KA IPSRS dikecualikan dari penonaktifan individual karena tidak mengisi LHI, kecuali kebijakan organisasi menentukan lain.
