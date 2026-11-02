@@ -115,6 +115,17 @@ BEGIN
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR UPDATE;
 
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Konfigurasi LHI_GLOBAL_BLOCK tidak ditemukan; scheduler dihentikan.';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.lhi_discipline_incidents WHERE status = 'LOCKED') THEN
+    IF v_lock <> 'AKTIF' THEN
+      RAISE EXCEPTION 'Insiden LOCKED ditemukan tetapi LHI_GLOBAL_BLOCK tidak AKTIF; perlu rekonsiliasi manual.';
+    END IF;
+    RETURN jsonb_build_object('ok', true, 'mode', 'GLOBAL_LOCKED');
+  END IF;
+
   -- A GRACE incident suspends normal discipline evaluation. Evaluate only its
   -- immutable snapshot and only at/after the 12-hour deadline.
   SELECT * INTO v_grace
@@ -290,15 +301,23 @@ BEGIN
       SELECT 1 FROM public.lhi_discipline_evaluations_v2(v_now) e
       WHERE e.staff_id = s.staff_id
         AND e.missed_full_days >= 7
-        AND e.missed_full_days < 9
     );
   GET DIAGNOSTICS v_blocked = ROW_COUNT;
 
   IF v_blocked > 0 THEN
+    INSERT INTO public.audit_log
+      (username, staff_id, action, keterangan, field_changed, old_value, new_value)
+    SELECT 'SYSTEM', s.staff_id, 'BLOCK_LHI_INDIVIDUAL_DAY_8',
+      'Hak akses aplikasi diblokir karena mencapai ambang hari ke-8 tanpa LHI sah.',
+      'lhi_access_status', 'NORMAL', 'BLOCKED_LHI'
+    FROM public.staff s
+    WHERE s.lhi_access_status = 'BLOCKED_LHI'
+      AND s.lhi_access_blocked_at = v_now;
+
     SELECT string_agg(s.nama, ', ' ORDER BY s.nama) INTO v_names
     FROM public.staff s
     JOIN public.lhi_discipline_evaluations_v2(v_now) e ON e.staff_id = s.staff_id
-    WHERE e.missed_full_days >= 7 AND e.missed_full_days < 9
+    WHERE e.missed_full_days >= 7
       AND s.lhi_access_status = 'BLOCKED_LHI';
 
     INSERT INTO public.lhi_discipline_notifications
@@ -321,6 +340,9 @@ BEGIN
     SET value = 'AKTIF', updated_at = v_now,
         updated_by_staff_id = 'SYSTEM', updated_by_name = 'SYSTEM'
     WHERE key = 'LHI_GLOBAL_BLOCK';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Gagal mengaktifkan LHI_GLOBAL_BLOCK; seluruh transaksi dibatalkan.';
+    END IF;
 
     INSERT INTO public.lhi_discipline_incidents
       (started_at, deadline_at, status, started_by_staff_id, started_by_name)
