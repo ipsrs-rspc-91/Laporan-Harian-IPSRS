@@ -701,7 +701,7 @@ BEGIN
   ) THEN
     PERFORM cron.schedule(
       'lhi-daily-monitoring-wib',
-      '5 17 * * *',
+      '0 17 * * *',
       'select public.run_lhi_daily_monitoring();'
     );
   END IF;
