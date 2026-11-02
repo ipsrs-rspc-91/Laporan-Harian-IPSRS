@@ -63,12 +63,14 @@ Mode ini bersifat global, bukan hanya memblokir petugas yang terlambat mengisi.
 2. KA IPSRS menekan tautan **Reset** pada Form Blok Aplikasi.
 3. Sistem menampilkan modal untuk memasukkan angka reset.
 4. Angka reset sesuai konsep adalah **192645**.
-5. Jika angka salah, sistem tidak membuka form autentikasi dan akses tetap diblokir.
-6. Jika angka benar dan pengguna menekan **OK**, sistem menampilkan form autentikasi/login khusus untuk melanjutkan proses masuk KA IPSRS.
-7. Pengguna tetap wajib memasukkan kredensial akun. Hanya akun dengan peran KA IPSRS yang boleh berhasil login; akun petugas lainnya tetap ditolak.
-8. Keberhasilan memasukkan angka reset saja tidak boleh membuka aplikasi atau memberikan akses kepada pengguna.
+5. Jika angka salah, sistem tidak membuka form login dan akses tetap diblokir.
+6. Jika angka benar dan pengguna menekan **OK**, sistem menampilkan **form login yang sama dengan form login normal**. Sistem menggunakan kembali komponen/form login yang sudah ada; **tidak membuat form autentikasi atau form login baru**.
+7. Pada alur login setelah Reset, pengguna tetap wajib memasukkan username dan password melalui form login yang sama. Alur ini hanya mengizinkan akun dengan role **KA IPSRS** untuk berhasil masuk.
+8. **Validasi role KA IPSRS wajib dilakukan di server/backend** berdasarkan identitas dan role akun yang terautentikasi. Pembatasan di frontend saja tidak cukup dan tidak boleh menjadi dasar pemberian akses.
+9. Jika akun yang terautentikasi bukan KA IPSRS, server harus menolak akses dan aplikasi tetap dalam kondisi blokir. Petugas biasa tetap ditolak meskipun mengetahui angka Reset dan berhasil memasukkannya dengan benar.
+10. Angka Reset yang benar hanya mengizinkan form login yang sama ditampilkan untuk proses autentikasi KA IPSRS; angka tersebut **tidak** membuktikan identitas, tidak memberikan sesi login, tidak membuka aplikasi, dan tidak melewati pemeriksaan kredensial maupun role.
 
-**Catatan keamanan:** angka reset tidak boleh menjadi jalan pintas untuk melewati autentikasi. Sebelum implementasi, mekanisme harus ditinjau agar angka tidak tertanam terbuka di frontend; autentikasi akun KA IPSRS tetap wajib.
+**Ketentuan keamanan:** angka Reset tidak boleh menjadi jalan pintas untuk melewati autentikasi. Sebelum implementasi, mekanisme penyimpanan dan validasinya harus diaudit agar angka tidak tertanam terbuka di frontend. Keputusan menampilkan form login setelah Reset tidak mengubah kewajiban autentikasi username/password dan validasi role KA IPSRS di server.
 
 ## 7. Kewenangan KA IPSRS dan kelonggaran 12 jam
 Setelah login, KA IPSRS membuka menu **Hak Akses** dan menonaktifkan sementara Mode Blok Aplikasi selama **12 jam**.
