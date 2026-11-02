@@ -50,11 +50,14 @@ for start, end in monitoring_checks:
     section = api[api.index(start):api.index(end, api.index(start) + len(start))]
     assert 'created_at' in section, f"{start} must use created_at"
     assert "wibDate(" in section, f"{start} must group by WIB input date"
+    assert "active_since" in section and "addWibDays(" in section, f"{start} must honor the employee activation baseline"
 
 dashboard_start = api.index("const monitoringStart=")
 dashboard_end = api.index("const sortCount=", dashboard_start)
 dashboard_monitoring = api[dashboard_start:dashboard_end]
 assert "created_at" in dashboard_monitoring and "wibDate(" in dashboard_monitoring
+assert "active_since" in dashboard_monitoring and "addWibDays(" in dashboard_monitoring
+assert "wajib_hari_ini" in dashboard_monitoring
 assert "r.tanggal" not in dashboard_monitoring
 
 print("PASS Stage 3 semantic regression guards")
