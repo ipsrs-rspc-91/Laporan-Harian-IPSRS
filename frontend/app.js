@@ -5266,7 +5266,9 @@
     const totalStaf = _monData.filter(s => s.status === 'Aktif').length;
     const sudah = _monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
     const belum = _monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
-    const persen = totalStaf > 0 ? Math.round((sudah / totalStaf) * 100) : 0;
+    const belumWajib = _monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB').length;
+    const wajib = sudah + belum;
+    const persen = wajib > 0 ? Math.round((sudah / wajib) * 100) : 0;
 
     const grid = document.getElementById('monSummaryGrid');
     grid.innerHTML = `
@@ -5298,6 +5300,7 @@
         <div class="s-value">${persen}%</div>
         <div class="s-label">Tingkat Kepatuhan</div>
       </div>
+      ${belumWajib > 0 ? `<div class="smallnote" style="grid-column:1/-1;">${belumWajib} petugas belum wajib mengisi pada tanggal ini karena baru diaktifkan.</div>` : ''}
     `;
 
     const container = document.getElementById('monStaffGrid');
@@ -6125,14 +6128,18 @@
         const total = monData.length;
         const sudah = monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
         const belum = monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
-        const persen = total > 0 ? Math.round((sudah/total)*100) : 0;
+        const belumWajib = monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB').length;
+        const wajib = sudah + belum;
+        const persen = wajib > 0 ? Math.round((sudah/wajib)*100) : 0;
         document.getElementById('statPetugasAktif').innerText = total;
         document.getElementById('statSudahIsiHariIni').innerText = sudah;
         document.getElementById('statBelumIsiHariIni').innerText = belum;
         document.getElementById('statComplianceHariIni').innerText = persen + '%';
         document.getElementById('dashComplianceNote').innerText = belum > 0
           ? belum + ' petugas belum mengisi laporan hari ini -- lihat halaman Laporan > Monitoring Harian untuk daftarnya.'
-          : (total > 0 ? 'Semua petugas aktif sudah mengisi laporan hari ini.' : 'Master staf belum tersedia.');
+          : (belumWajib > 0
+            ? belumWajib + ' petugas belum wajib mengisi karena tanggal aktivasi belum melewati satu hari kalender.'
+            : (total > 0 ? 'Semua petugas yang sudah wajib mengisi telah mengirim laporan hari ini.' : 'Master staf belum tersedia.'));
       }
 
       if(!statsJson || !statsJson.ok){
