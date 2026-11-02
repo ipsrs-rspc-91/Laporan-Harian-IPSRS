@@ -45,7 +45,6 @@ CREATE OR REPLACE FUNCTION public.validate_lhi_recovery_token(
   p_token_hash text
 ) RETURNS boolean
 LANGUAGE plpgsql
-STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $function$
