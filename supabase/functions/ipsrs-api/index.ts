@@ -234,15 +234,26 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false,skipLegacyWhenGl
      const isIndividuallyBlocked=!!monitorState?.individual_blocked_at||daysWithout>=8;
 
      if(isIndividuallyBlocked){
-       const {data:graceIncident,error:graceError}=await ctx.supabaseAdmin
+       let {data:graceIncident,error:graceError}=await ctx.supabaseAdmin
          .from("lhi_discipline_incidents")
-         .select("incident_id")
+         .select("incident_id,deadline_at")
          .eq("status","GRACE")
-         .gt("deadline_at",new Date().toISOString())
          .order("incident_id",{ascending:false})
          .limit(1)
          .maybeSingle();
        if(graceError)throw graceError;
+
+       if(graceIncident&&new Date(graceIncident.deadline_at).getTime()<=Date.now()){
+         const {error:schedulerError}=await ctx.supabaseAdmin.rpc("run_lhi_discipline_scheduler");
+         if(schedulerError)throw schedulerError;
+         const {data:lockSetting,error:lockError}=await ctx.supabaseAdmin
+           .from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
+         if(lockError)throw lockError;
+         if(String(lockSetting?.value||"").toUpperCase()==="AKTIF"){
+           throw Error("Masa kelonggaran 12 jam telah berakhir. Mode Blok Aplikasi kembali AKTIF.");
+         }
+         graceIncident=null;
+       }
 
        if(!graceIncident){
          const blockedAt=monitorState?.individual_blocked_at||new Date().toISOString();
