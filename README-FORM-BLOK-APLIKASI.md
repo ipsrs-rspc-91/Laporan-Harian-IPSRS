@@ -146,9 +146,9 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 13. Petugas dalam snapshot yang berhasil menyimpan minimal satu LHI sah selama kelonggaran dinyatakan memenuhi kewajiban input untuk kejadian blokir tersebut, tanpa bergantung pada tanggal kejadian pekerjaan atau jumlah LHI yang diinput.
 14. Semua petugas dalam snapshot telah melakukan input LHI sah sebelum tenggat: blokir global tetap nonaktif dan aplikasi kembali normal.
 15. Masih ada satu petugas dalam snapshot yang belum melakukan input LHI sah saat 12 jam habis: blokir global aktif kembali untuk seluruh pengguna; blokir individual tidak diterapkan ulang satu per satu.
-15. Sabtu, Minggu, dan hari libur tetap dihitung.
-16. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
-17. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
+16. Sabtu, Minggu, dan hari libur tetap dihitung.
+17. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
+18. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
 
 ## 12. Tata kelola implementasi
 Dokumen ini hanya acuan konsep. **Jangan mengubah script, database, konfigurasi, atau melakukan deployment sebelum audit dan persetujuan.**
