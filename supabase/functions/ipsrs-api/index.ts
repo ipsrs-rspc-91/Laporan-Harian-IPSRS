@@ -221,10 +221,10 @@ async function hashRecoveryToken(token:string){
  const digest=await crypto.subtle.digest("SHA-256",bytes);
  return [...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,"0")).join("");
 }
-async function recoveryTokenValid(db:any,token:string){
+async function recoveryTokenValid(db:any,token:string,staffId:string){
  const hash=await hashRecoveryToken(token);
  if(!hash)return false;
- const {data,error}=await db.rpc("validate_lhi_recovery_token",{p_token_hash:hash});
+ const {data,error}=await db.rpc("validate_lhi_recovery_token",{p_token_hash:hash,p_staff_id:staffId});
  if(error)throw error;
  return data===true;
 }
@@ -254,7 +254,7 @@ async function act(ctx:any,a:string,d:any,req?:Request){
    if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
    if(!recoveryActions.has(a))return{ok:false,msg:"MODE FORM BLOK APLIKASI AKTIF. Akses operasional ditutup oleh server."};
    if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menggunakan jalur pemulihan."};
-   if(!await recoveryTokenValid(db,String(d.recoveryToken||"")))return{ok:false,msg:"Token pemulihan tidak valid atau sudah kedaluwarsa. Silakan ulangi Reset."};
+   if(!await recoveryTokenValid(db,String(d.recoveryToken||""),s.staff_id))return{ok:false,msg:"Token pemulihan tidak valid atau sudah kedaluwarsa. Silakan ulangi Reset."};
    if(a==="apiWhoAmI"){
      await db.from("staff").update({last_seen_at:new Date().toISOString()}).eq("staff_id",s.staff_id);
      return{ok:true,token:d.token||"",username:s.staff_id,staff_id:s.staff_id,nama:s.nama,role:s.role,bidang:s.bidang,status:s.status,role_label:label(s.role),recovery_only:true};
