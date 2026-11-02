@@ -1,0 +1,48 @@
+name: LHI Stage 3 PostgreSQL Integration
+
+on:
+  pull_request:
+    branches: [main, stage2-backend-recovery-security]
+    paths:
+      - "supabase/migrations/20261102170000_lhi_created_at_monitoring_stage3.sql"
+      - "scripts/test-lhi-stage3-postgres.py"
+      - ".github/workflows/lhi-stage3-postgres-test.yml"
+  push:
+    branches: [stage3-created-at-monitoring]
+    paths:
+      - "supabase/migrations/20261102170000_lhi_created_at_monitoring_stage3.sql"
+      - "scripts/test-lhi-stage3-postgres.py"
+      - ".github/workflows/lhi-stage3-postgres-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-integration:
+    name: PostgreSQL 17 isolated integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: lhi_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lhi_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL client driver
+        run: python -m pip install --disable-pip-version-check "psycopg[binary]"
+      - name: Apply Stage 3 migration and run acceptance tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lhi_test
+        run: python scripts/test-lhi-stage3-postgres.py
