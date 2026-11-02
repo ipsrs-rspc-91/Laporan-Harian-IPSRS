@@ -568,6 +568,149 @@
     document.getElementById('appShell').classList.remove('hidden');
   }
 
+  // Restricted LHI recovery state. The opaque capability is session-scoped,
+  // stored only in sessionStorage, and accepted only by lhi-recovery-action.
+  let pendingLhiRecoveryChallenge_ = null;
+  let lhiRecoveryCapability_ = null;
+
+  function setLhiRecoveryCapability_(value){
+    lhiRecoveryCapability_=String(value||'');
+    try{
+      if(lhiRecoveryCapability_) sessionStorage.setItem('IPSRS_LHI_RECOVERY_CAPABILITY',lhiRecoveryCapability_);
+      else sessionStorage.removeItem('IPSRS_LHI_RECOVERY_CAPABILITY');
+    }catch(_e){}
+  }
+
+  async function lhiRecoveryAction_(action){
+    const capability=lhiRecoveryCapability_;
+    if(!capability) throw new Error('Sesi pemulihan tidak ditemukan.');
+    const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\/$/,'');
+    const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
+    const response=await fetch(base+'/functions/v1/lhi-recovery-action',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':key,
+        'Authorization':'Bearer '+capability
+      },
+      body:JSON.stringify({action}),
+      cache:'no-store'
+    });
+    const result=await response.json().catch(()=>null);
+    if(!response.ok||!result||result.ok!==true){
+      throw new Error((result&&result.message)||'Permintaan sesi pemulihan ditolak.');
+    }
+    return result;
+  }
+
+  async function exchangeLhiRecoveryChallenge_(authAccessToken,challenge){
+    const base=String(window.IPSRS_SUPABASE_URL||'').replace(/\/$/,'');
+    const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
+    const response=await fetch(base+'/functions/v1/lhi-recovery-exchange',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':key,
+        'Authorization':'Bearer '+authAccessToken
+      },
+      body:JSON.stringify({challenge}),
+      cache:'no-store'
+    });
+    const result=await response.json().catch(()=>null);
+    if(!response.ok||!result||result.ok!==true||!result.recovery_capability){
+      throw new Error((result&&result.message)||'Autentikasi pemulihan KA IPSRS gagal.');
+    }
+    return result;
+  }
+
+  function formatLhiRecoveryDate_(value){
+    if(!value) return '-';
+    const date=new Date(value);
+    if(!Number.isFinite(date.getTime())) return '-';
+    return new Intl.DateTimeFormat('id-ID',{
+      dateStyle:'long',timeStyle:'medium',timeZone:'Asia/Jakarta'
+    }).format(date)+' WIB';
+  }
+
+  function renderLhiRecoveryOnlyScreen_(status){
+    const screen=document.getElementById('loginScreen');
+    const shell=document.getElementById('appShell');
+    const loading=document.getElementById('authLoading');
+    if(!screen) return;
+    if(loading) loading.classList.add('hidden');
+    if(shell) shell.classList.add('hidden');
+    screen.classList.remove('hidden');
+
+    const state=String(status&&status.incident_status||'UNKNOWN').toUpperCase();
+    const isLocked=state==='LOCKED';
+    const isGrace=state==='GRACE';
+    const title=isGrace?'Masa Pemulihan Berjalan':(isLocked?'Reset Blokir Aplikasi':'Status Pemulihan');
+    const detail=isGrace
+      ? 'Akses operasional KA IPSRS tetap dibatasi selama masa grace. Petugas lain dapat menggunakan aplikasi sesuai hak aksesnya.'
+      : (isLocked
+        ? 'Identitas KA IPSRS telah diverifikasi. Tekan tombol di bawah untuk memulai masa pemulihan 12 jam.'
+        : 'Status insiden belum dapat dibaca. Periksa kembali melalui tombol Periksa Status.');
+    screen.innerHTML=`
+      <style>
+        #loginScreen{position:fixed!important;inset:0!important;z-index:99990!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;background:linear-gradient(135deg,#071b3b,#164b78)!important;font-family:Arial,sans-serif!important}
+        #loginScreen .lhi-recovery-card{width:min(100%,520px);padding:26px;border-radius:20px;background:#fff;box-shadow:0 18px 48px rgba(0,0,0,.25);color:#102044}
+        #loginScreen .lhi-recovery-card h1{font-size:25px;margin:0 0 12px;color:#102044}
+        #loginScreen .lhi-recovery-card p{font-size:14px;line-height:1.6;color:#475569;margin:8px 0}
+        #loginScreen .lhi-recovery-status{margin:16px 0;padding:14px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe}
+        #loginScreen .lhi-recovery-status strong{display:block;color:#123b67;margin-bottom:6px}
+        #loginScreen .lhi-recovery-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+        #loginScreen .lhi-recovery-actions button{min-height:44px;padding:0 16px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
+        #loginScreen #lhiRecoveryStart{background:#087b28;color:#fff}
+        #loginScreen #lhiRecoveryRefresh{background:#e2e8f0;color:#1e293b}
+        #loginScreen .lhi-recovery-note{font-size:12px;color:#64748b;margin-top:16px}
+      </style>
+      <section class="lhi-recovery-card" role="region" aria-label="Pemulihan akses LHI">
+        <h1>${title}</h1>
+        <p>Mode pemulihan terbatas KA IPSRS. Halaman ini tidak menyediakan Dashboard, Form LHI, Rekap, atau menu operasional.</p>
+        <div class="lhi-recovery-status">
+          <strong>${isGrace?'GRACE 12 JAM':(isLocked?'GLOBAL LOCK AKTIF':'STATUS BELUM TERSEDIA')}</strong>
+          <p>${detail}</p>
+          <p>Mulai: ${formatLhiRecoveryDate_(status&&status.started_at)}</p>
+          <p>Batas waktu: ${formatLhiRecoveryDate_(status&&status.deadline_at)}</p>
+        </div>
+        <div class="lhi-recovery-actions">
+          ${isLocked?'<button type="button" id="lhiRecoveryStart">MULAI GRACE 12 JAM</button>':''}
+          <button type="button" id="lhiRecoveryRefresh">PERIKSA STATUS</button>
+        </div>
+        <p class="lhi-recovery-note">Sesi ini hanya memiliki kewenangan membaca status pemulihan dan memulai Reset. Hak akses operasional KA IPSRS kembali setelah proses grace selesai dan server menyatakan blokir tidak aktif.</p>
+        <div id="lhiRecoveryMessage" role="status" aria-live="polite" style="margin-top:12px;color:#b42318;font-size:13px"></div>
+      </section>`;
+
+    const message=document.getElementById('lhiRecoveryMessage');
+    const refresh=document.getElementById('lhiRecoveryRefresh');
+    if(refresh) refresh.addEventListener('click',async()=>{
+      refresh.disabled=true;
+      if(message)message.textContent='Memeriksa status ke server...';
+      try{
+        const next=await lhiRecoveryAction_('apiRecoveryStatus');
+        renderLhiRecoveryOnlyScreen_(next);
+      }catch(error){if(message)message.textContent=String(error&&error.message||'Status belum dapat dibaca.');}
+      finally{refresh.disabled=false;}
+    });
+    const start=document.getElementById('lhiRecoveryStart');
+    if(start) start.addEventListener('click',async()=>{
+      start.disabled=true;
+      if(message)message.textContent='Memproses Reset secara atomik...';
+      try{
+        const result=await lhiRecoveryAction_('apiStartLhiGrace');
+        renderLhiRecoveryOnlyScreen_({
+          incident_status:result.status,
+          incident_id:result.incident_id,
+          started_at:result.started_at,
+          deadline_at:result.deadline_at
+        });
+      }catch(error){
+        if(message)message.textContent=String(error&&error.message||'Reset gagal. Blokir global tetap dipertahankan.');
+        start.disabled=false;
+      }
+    });
+  }
+
   async function performLogin(username,password,remember,msgEl,autoMode){
     if(!username || !password){
       if(msgEl) msgEl.innerText='Username dan password wajib diisi.';
