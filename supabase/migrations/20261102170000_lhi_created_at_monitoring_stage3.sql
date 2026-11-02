@@ -176,6 +176,19 @@ WHERE NOT EXISTS (
 )
 ON CONFLICT DO NOTHING;
 
+-- Preserve the latest recoverable legacy activation event as a marked inference.
+INSERT INTO public.staff_employment_status_history(
+  staff_id, old_status, new_status, changed_at, actor_user_id,
+  change_source, is_legacy_baseline
+)
+SELECT st.staff_id, 'DIBLOKIR_LHI_7_HARI', 'Aktif', st.active_since, NULL,
+       st.baseline_source, true
+FROM public.lhi_staff_monitoring_state st
+WHERE st.baseline_source IN (
+  'LEGACY_MANUAL_UNBLOCK_AUDIT',
+  'LEGACY_REPORT_REACTIVATION_INFERRED'
+);
+
 CREATE OR REPLACE FUNCTION public.capture_staff_employment_status_change()
 RETURNS trigger
 LANGUAGE plpgsql
