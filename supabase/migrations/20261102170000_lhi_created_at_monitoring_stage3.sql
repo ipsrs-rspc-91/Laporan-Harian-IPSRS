@@ -328,6 +328,7 @@ DECLARE
   v_today date := (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date;
   v_mode text;
   v_staff record;
+  v_manual_unblock_until timestamptz;
   v_active_since timestamptz;
   v_last_valid timestamptz;
   v_baseline_date date;
@@ -352,7 +353,7 @@ BEGIN
   END IF;
 
   FOR v_staff IN
-    SELECT s.staff_id, s.nama, s.created_at
+    SELECT s.staff_id, s.nama, s.created_at, s.lhi_manual_unblock_until
     FROM public.staff s
     WHERE s.status = 'Aktif'
     ORDER BY s.staff_id
@@ -425,7 +426,8 @@ BEGIN
       END IF;
     END LOOP;
 
-    IF v_days >= 8 AND v_blocked_at IS NULL THEN
+    IF v_days >= 8 AND v_blocked_at IS NULL
+       AND (v_manual_unblock_until IS NULL OR v_manual_unblock_until <= clock_timestamp()) THEN
       UPDATE public.lhi_staff_monitoring_state
       SET individual_blocked_at = clock_timestamp(),
           updated_at = clock_timestamp()
