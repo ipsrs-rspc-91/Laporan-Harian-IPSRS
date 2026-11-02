@@ -12,6 +12,8 @@ on:
       - "tests/lhi-atomic-reset-draft.test.mjs"
       - "tests/lhi-recovery-action.test.mjs"
       - "tests/lhi-api-gate.test.mjs"
+      - "tests/lhi-frontend-recovery.test.mjs"
+      - "frontend/app.js"
       - "supabase/functions/lhi-block-status/index.ts"
       - "supabase/functions/ipsrs-api/index.ts"
       - "supabase/functions/lhi-recovery-action/index.ts"
@@ -46,5 +48,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Check frontend JavaScript syntax
+        run: node --check frontend/app.js && node --check frontend/login-fast.js
       - name: Run LHI discipline unit tests
-        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs tests/lhi-recovery-action.test.mjs tests/lhi-api-gate.test.mjs
+        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs tests/lhi-recovery-action.test.mjs tests/lhi-api-gate.test.mjs tests/lhi-frontend-recovery.test.mjs
