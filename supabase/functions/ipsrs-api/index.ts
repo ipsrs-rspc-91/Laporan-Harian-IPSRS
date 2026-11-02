@@ -5,8 +5,18 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 // Stage 1 CORS preflight: pass the same cache header to withSupabase, which answers OPTIONS before this handler.
 const cors={...corsHeaders,"Access-Control-Max-Age":"600"};
 function out(b:any,s=200){return new Response(JSON.stringify(b),{status:s,headers:{...cors,"Content-Type":"application/json"}})}
-function range(month:string){const m=/^\d{4}-\d{2}$/.test(String(month||""))?month:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit"}).format(new Date()).slice(0,7);const [y,mo]=m.split("-").map(Number);return{month:m,start:m+"-01",end:new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)}}
-function wibDate(value:any){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date(value));}
+function wibDate(value:any){
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(value));
+ const part=(type:string)=>parts.find(x=>x.type===type)?.value||"";
+ return part("year")+"-"+part("month")+"-"+part("day");
+}
+function wibMonthKey(value:any){
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit"}).formatToParts(new Date(value));
+ const year=parts.find(x=>x.type==="year")?.value||"";
+ const month=parts.find(x=>x.type==="month")?.value||"";
+ return year+"-"+month;
+}
+function range(month:string){const m=/^\d{4}-\d{2}$/.test(String(month||""))?month:wibMonthKey(new Date());const [y,mo]=m.split("-").map(Number);return{month:m,start:m+"-01",end:new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)}}
 function wibMonthBounds(month:string){
  const z=range(month);
  const start=new Date(z.start+"T00:00:00+07:00").toISOString();
