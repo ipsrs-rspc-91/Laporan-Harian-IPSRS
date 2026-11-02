@@ -39,8 +39,9 @@ test("new snapshot and event tables deny direct client access", () => {
 });
 
 test("reactivation only clears an LHI-caused individual block", () => {
-  assert.match(sql, /COALESCE\(OLD\.status, ''\)\) = 'nonaktif'/i);
+  assert.match(sql, /COALESCE\(OLD\.status, ''\)\) IN \('nonaktif', 'nonaktif_lhi_hari_8', 'diblokir_lhi_7_hari'\)/i);
   assert.match(sql, /COALESCE\(NEW\.status, ''\)\) = 'aktif'/i);
+  assert.match(sql, /NEW\.status NOT IN \('Aktif', 'Nonaktif'\)/);
   assert.match(sql, /OLD\.lhi_access_status = 'BLOCKED_LHI'/);
   assert.match(sql, /OLD\.lhi_access_block_reason = 'LHI_NONCOMPLIANCE'/);
   assert.doesNotMatch(sql, /UPDATE public\.access_settings/i);
