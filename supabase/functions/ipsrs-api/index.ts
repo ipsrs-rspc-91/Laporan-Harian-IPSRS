@@ -828,9 +828,19 @@ if(a==="apiGetLhiGraceStatus"){
     .select("audit_id,obligation_id,staff_id,old_status,new_status,changed_at,cause")
     .eq("incident_id",incident.incident_id).order("changed_at",{ascending:false}).limit(200);
   if(ae)throw ae;
+  let employmentStatusHistory:any[]=[];
+  const obligationStaffIds=obligations.map(x=>x.staff_id);
+  if(obligationStaffIds.length){
+    const {data:history,error:historyError}=await db.from("staff_employment_status_history")
+      .select("history_id,staff_id,old_status,new_status,changed_at,actor_user_id,change_source,is_legacy_baseline")
+      .in("staff_id",obligationStaffIds).order("changed_at",{ascending:false}).limit(200);
+    if(historyError)throw historyError;
+    employmentStatusHistory=history||[];
+  }
   return{ok:true,data:{incident_id:incident.incident_id,status:incident.status,
     started_at:incident.started_at,deadline_at:incident.deadline_at,
-    total:obligations.length,completed,pending,obligations,audit:audit||[]}};
+    total:obligations.length,completed,pending,obligations,audit:audit||[],
+    employment_status_history:employmentStatusHistory}};
 }
 if(a==="apiListEditPermissions"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat izin edit."};const {data,error}=await db.from("edit_permissions").select("*").order("created_at",{ascending:false});if(error)throw error;return{ok:true,data:data||[]}}
 if(a==="apiStartLhiGrace"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat membuka blokir dan memulai kelonggaran 12 jam."};const tokenHash=await hashRecoveryToken(String(d.recoveryToken||""));if(!tokenHash)return{ok:false,msg:"Token pemulihan tidak valid."};const {data,error}=await db.rpc("consume_lhi_recovery_token_and_open_grace",{p_token_hash:tokenHash,p_staff_id:s.staff_id,p_staff_name:s.nama});if(error)throw error;if(!data||data.ok!==true)return{ok:false,msg:data?.msg||"Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif."};return{ok:true,data,msg:data.already_open?"Kelonggaran 12 jam sudah berjalan.":"Blokir global dan seluruh blokir individual berhasil dibuka. Kelonggaran 12 jam dimulai."}}
