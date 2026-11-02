@@ -53,5 +53,5 @@ test("JWT gateway is bypassed only for recovery endpoints that verify their own 
 
 test("Reset rate limit trusts only edge-overwritten client IP header", () => {
   assert.match(resetVerify, /cf-connecting-ip/);
-  assert.doesNotMatch(resetVerify, /headers\\.get\\(\\"x-forwarded-for\\"\\)/i);
+  assert.doesNotMatch(resetVerify, /headers\.get\(\"x-forwarded-for\"\)/i);
 });
