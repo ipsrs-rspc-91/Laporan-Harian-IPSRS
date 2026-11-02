@@ -282,6 +282,15 @@ BEGIN
       END,
       updated_at = clock_timestamp();
 
+  -- A cancellation can itself create an eighth missed calendar day.
+  -- Re-run the lightweight 22-staff calculation immediately; it exits during
+  -- global lock or the 12-hour grace window.
+  IF TG_OP = 'UPDATE'
+     AND OLD.deleted_at IS NULL
+     AND NEW.deleted_at IS NOT NULL THEN
+    PERFORM public.run_lhi_daily_monitoring();
+  END IF;
+
   IF TG_OP = 'DELETE' THEN
     RETURN OLD;
   END IF;
@@ -350,6 +359,14 @@ BEGIN
 
   IF v_mode IS DISTINCT FROM 'NONAKTIF' THEN
     RETURN jsonb_build_object('ok', true, 'skipped', true, 'reason', 'GLOBAL_BLOCK_ACTIVE_OR_UNAVAILABLE');
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.lhi_discipline_incidents i
+    WHERE i.status = 'GRACE'
+      AND i.deadline_at > clock_timestamp()
+  ) THEN
+    RETURN jsonb_build_object('ok', true, 'skipped', true, 'reason', 'GRACE_WINDOW_ACTIVE');
   END IF;
 
   FOR v_staff IN
