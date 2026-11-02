@@ -5265,11 +5265,12 @@
 
     const totalStaf = _monData.filter(s => s.status === 'Aktif').length;
     const sudah = _monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
-    const belum = _monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
+    const wajib = _monData.filter(s => s.wajib_hari_ini === true).length;
+    const sudahWajib = _monData.filter(s => s.wajib_hari_ini === true && s.status_hari_ini === 'SUDAH_ISI').length;
+    const belum = _monData.filter(s => s.wajib_hari_ini === true && s.status_hari_ini === 'BELUM_ISI').length;
     const belumWajib = _monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB' || s.status_hari_ini === 'TIDAK_WAJIB').length;
     const belumTerjadi = _monData.filter(s => s.status_hari_ini === 'BELUM_TERJADI').length;
-    const wajib = sudah + belum;
-    const persen = wajib > 0 ? Math.round((sudah / wajib) * 100) : 0;
+    const persen = wajib > 0 ? Math.round((sudahWajib / wajib) * 100) : 0;
 
     const grid = document.getElementById('monSummaryGrid');
     grid.innerHTML = `
@@ -6129,11 +6130,12 @@
           : [];
         const total = monData.length;
         const sudah = monData.filter(s => s.status_hari_ini === 'SUDAH_ISI').length;
-        const belum = monData.filter(s => s.status_hari_ini === 'BELUM_ISI').length;
+        const wajib = monData.filter(s => s.wajib_hari_ini === true).length;
+        const sudahWajib = monData.filter(s => s.wajib_hari_ini === true && s.status_hari_ini === 'SUDAH_ISI').length;
+        const belum = monData.filter(s => s.wajib_hari_ini === true && s.status_hari_ini === 'BELUM_ISI').length;
         const belumWajib = monData.filter(s => s.status_hari_ini === 'BELUM_WAJIB' || s.status_hari_ini === 'TIDAK_WAJIB').length;
         const belumTerjadi = monData.filter(s => s.status_hari_ini === 'BELUM_TERJADI').length;
-        const wajib = sudah + belum;
-        const persen = wajib > 0 ? Math.round((sudah/wajib)*100) : 0;
+        const persen = wajib > 0 ? Math.round((sudahWajib/wajib)*100) : 0;
         document.getElementById('statPetugasAktif').innerText = total;
         document.getElementById('statSudahIsiHariIni').innerText = sudah;
         document.getElementById('statBelumIsiHariIni').innerText = belum;
