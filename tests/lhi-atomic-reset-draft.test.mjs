@@ -1,0 +1,60 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const sql = await readFile(
+  new URL("../docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql", import.meta.url),
+  "utf8",
+);
+
+test("atomic Reset RPC is review-only and transaction wrapped", () => {
+  assert.match(sql, /REVIEW DRAFT ONLY — NOT A DEPLOYABLE MIGRATION/);
+  assert.match(sql, /^BEGIN;/m);
+  assert.match(sql, /^COMMIT;/m);
+});
+
+test("Reset revalidates the recovery capability and exact allowed action", () => {
+  assert.match(sql, /validate_lhi_recovery_session/);
+  assert.match(sql, /'apiStartLhiGrace'/);
+  assert.match(sql, /Sesi pemulihan tidak valid atau tidak memiliki kewenangan/);
+});
+
+test("Reset is incident-bound and accepts only LOCKED or idempotent GRACE", () => {
+  assert.match(sql, /v_incident_id := \(v_validation ->> 'incident_id'\)::bigint/);
+  assert.match(sql, /v_incident\.status = 'GRACE'/);
+  assert.match(sql, /v_incident\.status <> 'LOCKED' OR v_lock <> 'AKTIF'/);
+});
+
+test("retry returns original grace timestamps without shifting deadline", () => {
+  assert.match(sql, /Idempotency:[\s\S]*never creates a second snapshot or shifts 12h/);
+  assert.match(sql, /'already_open', true/);
+  assert.match(sql, /'started_at', v_incident\.started_at/);
+  assert.match(sql, /'deadline_at', v_incident\.deadline_at/);
+});
+
+test("snapshot is created atomically at Reset for delinquent active staff only", () => {
+  assert.match(sql, /INSERT INTO public\.lhi_discipline_snapshot_members/);
+  assert.match(sql, /e\.employment_status = 'Aktif'/);
+  assert.match(sql, /e\.missed_full_days >= 9/);
+  assert.match(sql, /GET DIAGNOSTICS v_snapshot_count = ROW_COUNT/);
+  assert.match(sql, /v_snapshot_count < 1/);
+  assert.match(sql, /SNAPSHOT_CREATED/);
+});
+
+test("Reset clears LHI access blocks but never changes employment status", () => {
+  assert.match(sql, /SET lhi_access_status = 'NORMAL'/);
+  assert.doesNotMatch(sql, /SET status\s*=\s*'Aktif'/i);
+  assert.doesNotMatch(sql, /SET status\s*=/i);
+});
+
+test("grace is exactly twelve hours and all changes are one RPC transaction", () => {
+  assert.match(sql, /deadline_at = v_now \+ interval '12 hours'/);
+  assert.match(sql, /SET status = 'GRACE'/);
+  assert.match(sql, /SET value = 'NONAKTIF'/);
+  assert.match(sql, /RAISE EXCEPTION[\s\S]*seluruh perubahan dibatalkan/);
+});
+
+test("only service_role can execute the atomic Reset RPC", () => {
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.open_lhi_global_grace_v2\(text\)[\s\S]*FROM PUBLIC, anon, authenticated/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.open_lhi_global_grace_v2\(text\)[\s\S]*TO service_role/);
+});
