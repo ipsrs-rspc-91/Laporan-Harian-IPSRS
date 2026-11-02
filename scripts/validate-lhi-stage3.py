@@ -22,6 +22,9 @@ required_sql = [
     "obligation_status = 'EXCLUDED_NONACTIVE'",
     "lhi_obligation_audit",
     "staff_employment_status_history",
+    "LEGACY_REPORT_REACTIVATION_INFERRED",
+    "LEGACY_MANUAL_UNBLOCK_AUDIT",
+    "LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED",
     "run_lhi_daily_monitoring",
     "'0 17 * * *'",
 ]
