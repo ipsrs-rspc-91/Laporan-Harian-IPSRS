@@ -166,19 +166,27 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false,skipLegacyWhenGl
  let email=String(ctx.userClaims?.email||"").toLowerCase();
  if(!uid&&req){
    const h=req.headers.get("authorization")||"";
-   const m=h.match(/^Bearer\s+(.+)$/i);
+   const m=h.match(/^Bearer\\s+(.+)$/i);
    if(m){
      const g=await ctx.supabaseAdmin.auth.getUser(m[1]);
      if(!g.error&&g.data?.user){uid=g.data.user.id;email=String(g.data.user.email||"").toLowerCase();}
    }
  }
  if(!uid)throw Error("Sesi tidak valid.");
- let {data,error}=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_manual_unblock_until").eq("auth_user_id",uid).maybeSingle();
+
+ let {data,error}=await ctx.supabaseAdmin
+   .from("staff")
+   .select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_manual_unblock_until,created_at")
+   .eq("auth_user_id",uid)
+   .maybeSingle();
  if(error)throw error;
+
  if(!data){
    const local=email.split("@")[0];
    const staffId=local==="kaipsrs"?"KAIPSRS":local;
-   const r=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("staff_id",staffId).maybeSingle();
+   const r=await ctx.supabaseAdmin.from("staff")
+     .select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_manual_unblock_until,created_at")
+     .eq("staff_id",staffId).maybeSingle();
    if(r.error)throw r.error;
    data=r.data;
    if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);
@@ -187,56 +195,29 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false,skipLegacyWhenGl
 
  const statusUpper=String(data.status||"").toUpperCase();
  const isKa=String(data.role||"").toUpperCase()==="KA_IPSRS";
- const kaRecoveryAllowed=allowKaRecovery&&isKa&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(statusUpper);
- if(!kaRecoveryAllowed&&!skipLegacyWhenGlobalBlocked){
-   // Stage 2 bridge: legacy individual blocks are temporarily bypassed only
-   // while the database confirms an active GRACE window. Stage 3 replaces
-   // this legacy reports.tanggal discipline calculation completely.
-   const manualUnblockUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
-   const manualUnblockActive=manualUnblockUntil>0&&manualUnblockUntil>Date.now();
-   const activeStatus=statusUpper==="AKTIF";
-   const blockedStatus=["DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(statusUpper);
-   let graceChecked=false;
-   let graceActive=false;
-   const isGraceActive=async()=>{
-     if(!graceChecked){
-       const {data:incident,error:graceError}=await ctx.supabaseAdmin
-         .from("lhi_discipline_incidents")
-         .select("incident_id")
-         .eq("status","GRACE")
-         .gt("deadline_at",new Date().toISOString())
-         .order("incident_id",{ascending:false})
-         .limit(1)
-         .maybeSingle();
-       if(graceError)throw graceError;
-       graceActive=!!incident;
-       graceChecked=true;
-     }
-     return graceActive;
-   };
+ const kaRecoveryAllowed=allowKaRecovery&&isKa&&statusUpper==="AKTIF";
 
-   if((activeStatus||blockedStatus)&&!manualUnblockActive){
-     const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
-     const today=new Date(todayStr+"T00:00:00Z");
-     const dates:string[]=[];
-     for(let i=1;i<=7;i++){const d=new Date(today);d.setUTCDate(d.getUTCDate()-i);dates.push(d.toISOString().slice(0,10));}
-     const start=dates[dates.length-1],end=dates[0];
-     const {data:lhis,error:lhiError}=await ctx.supabaseAdmin.from("reports").select("tanggal").eq("staff_id",data.staff_id).is("deleted_at",null).gte("tanggal",start).lte("tanggal",end);
-     if(lhiError)throw lhiError;
-     const filled=new Set((lhis||[]).map((r:any)=>String(r.tanggal||"").slice(0,10)));
-     const missed=dates.filter(x=>!filled.has(x));
-     if(missed.length===7&&!await isGraceActive()){
-       const previousStatus=data.status;
-       const {error:blockError}=await ctx.supabaseAdmin.from("staff").update({status:"DIBLOKIR_LHI_7_HARI"}).eq("staff_id",data.staff_id).eq("status","Aktif");
-       if(blockError)throw blockError;
-       await ctx.supabaseAdmin.from("audit_log").insert({username:"SYSTEM",staff_id:data.staff_id,action:"BLOCK_LOGIN_LHI_7_HARI",report_id:null,keterangan:"Akun diblokir otomatis karena tidak mengisi LHI selama 7 hari kalender terakhir.",field_changed:"status",old_value:previousStatus,new_value:"DIBLOKIR_LHI_7_HARI"});
-       data.status="DIBLOKIR_LHI_7_HARI";
+ // status is employment status only. LHI individual blocking is stored separately.
+ if(statusUpper!=="AKTIF"&&!kaRecoveryAllowed){
+   throw Error("Status kepegawaian Anda NONAKTIF. Hubungi KA IPSRS untuk pemeriksaan data kepegawaian.");
+ }
+
+ // During a global lock, only the KA recovery route may proceed. The act()
+ // allowlist below still restricts this session to recovery-only operations.
+ if(!(skipLegacyWhenGlobalBlocked&&kaRecoveryAllowed)){
+   const manualUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
+   const manualUnblockActive=manualUntil>Date.now();
+   if(!manualUnblockActive){
+     const {data:monitorState,error:monitorError}=await ctx.supabaseAdmin
+       .from("lhi_staff_monitoring_state")
+       .select("individual_blocked_at")
+       .eq("staff_id",data.staff_id)
+       .maybeSingle();
+     if(monitorError)throw monitorError;
+     if(monitorState?.individual_blocked_at){
+       throw Error("Akun Anda diblokir secara individual karena tidak mengisi LHI selama 8 hari kalender. Tunggu pemulihan oleh KA IPSRS.");
      }
    }
-
-   if(blockedStatus&&!manualUnblockActive&&!await isGraceActive())throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
-   const graceBypass=graceActive&&["AKTIF","DIBLOKIR_LHI_7_HARI","NONAKTIF_LHI_HARI_8"].includes(String(data.status||"").toUpperCase());
-   if(String(data.status).toLowerCase()!=="aktif"&&!graceBypass)throw Error("Akun petugas tidak aktif.");
  }
  return data;
 }
