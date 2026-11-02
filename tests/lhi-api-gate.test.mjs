@@ -17,7 +17,8 @@ const config = await readFile(
 
 test("normal API rejects every role while global LHI lock is active", () => {
   assert.match(api, /LHI_GLOBAL_BLOCK/);
-  assert.match(api, /globalSetting\?\.value\|\|""\)\.toUpperCase\(\)==="AKTIF"/);
+  assert.match(api, /globalLockState==="AKTIF"/);
+  assert.match(api, /globalLockState!=="NONAKTIF"/);
   assert.match(api, /MODE FORM BLOK APLIKASI AKTIF/);
 });
 
@@ -36,6 +37,7 @@ test("block status endpoint is GET-only and fails closed when setting cannot be 
   assert.match(blockStatus, /req\.method !== "GET"/);
   assert.match(blockStatus, /blocked: true/);
   assert.match(blockStatus, /if \(error \|\| !data\)/);
+  assert.match(blockStatus, /lockState !== "AKTIF" && lockState !== "NONAKTIF"/);
   assert.match(blockStatus, /LHI_ALLOWED_ORIGINS/);
   assert.doesNotMatch(blockStatus, /Access-Control-Allow-Origin.*\*/);
 });
