@@ -199,6 +199,42 @@ export function buildWarningNotifications(evaluations, activeStaff, todayWib) {
   });
 }
 
+/**
+ * Build the day-8 in-app notice for active staff whose access remains NORMAL.
+ * Staff blocked individually are not recipients; they receive the login denial
+ * from the server instead. One team message names every staff member blocked
+ * on the same WIB date, with a stable per-recipient idempotency key.
+ */
+export function buildIndividualBlockNotifications(evaluations, activeStaff, todayWib) {
+  parseDateKey(todayWib, "Tanggal notifikasi");
+  const blocked = (Array.isArray(evaluations) ? evaluations : [])
+    .filter((row) => row.action === "BLOCK_INDIVIDUAL_ACCESS");
+  if (!blocked.length) return [];
+
+  const blockedIds = new Set(blocked.map((row) => row.staff_id));
+  const recipients = (Array.isArray(activeStaff) ? activeStaff : [])
+    .filter((staff) => String(staff?.status || "").toLowerCase() === "aktif")
+    .filter((staff) => !blockedIds.has(staff.staff_id))
+    .filter((staff) => String(staff?.lhi_access_status || "NORMAL").toUpperCase() !== "BLOCKED_LHI")
+    .map((staff) => staff.staff_id)
+    .filter(Boolean);
+
+  if (!recipients.length) return [];
+  const names = blocked.map((row) => row.nama || row.staff_id);
+  const message = `Hak akses aplikasi petugas berikut telah diblokir pada hari ke-8 karena belum mengisi LHI sah selama 7 hari kalender penuh: ${names.join(", ")}. Mohon saling mengingatkan dan membantu petugas yang tercantum untuk melengkapi LHI.`;
+
+  return [{
+    event_key: `LHI:${todayWib}:BLOCK_INDIVIDUAL:TEAM`,
+    subject: "Pemberitahuan blokir hak akses LHI hari ke-8",
+    message,
+    blocked_staff_ids: [...blockedIds],
+    recipients: recipients.map((recipient) => ({
+      recipient_staff_id: recipient,
+      event_key: `LHI:${todayWib}:BLOCK_INDIVIDUAL:${recipient}`,
+    })),
+  }];
+}
+
 /** One grace obligation per delinquent active employee, never per missed day. */
 export function buildGraceSnapshot(evaluations, snapshotAt) {
   if (Number.isNaN(new Date(snapshotAt).getTime())) {
