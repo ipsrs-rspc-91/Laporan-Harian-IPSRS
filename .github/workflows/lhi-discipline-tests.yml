@@ -13,6 +13,7 @@ on:
       - "tests/lhi-recovery-action.test.mjs"
       - "tests/lhi-api-gate.test.mjs"
       - "tests/lhi-frontend-recovery.test.mjs"
+      - "tests/lhi-recovery-challenge.test.mjs"
       - "frontend/app.js"
       - "supabase/functions/lhi-block-status/index.ts"
       - "supabase/functions/ipsrs-api/index.ts"
@@ -25,6 +26,7 @@ on:
       - "supabase/functions/lhi-reset-verify/index.ts"
       - "supabase/functions/lhi-recovery-exchange/index.ts"
       - "supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql"
+      - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
       - "supabase/config.toml"
       - ".github/workflows/lhi-discipline-tests.yml"
   pull_request:
@@ -51,4 +53,4 @@ jobs:
       - name: Check frontend JavaScript syntax
         run: node --check frontend/app.js && node --check frontend/login-fast.js
       - name: Run LHI discipline unit tests
-        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs tests/lhi-recovery-action.test.mjs tests/lhi-api-gate.test.mjs tests/lhi-frontend-recovery.test.mjs
+        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs tests/lhi-recovery-action.test.mjs tests/lhi-api-gate.test.mjs tests/lhi-frontend-recovery.test.mjs tests/lhi-recovery-challenge.test.mjs
