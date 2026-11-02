@@ -6,6 +6,10 @@ const sql = await readFile(
   new URL("../docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql", import.meta.url),
   "utf8",
 );
+const schemaSql = await readFile(
+  new URL("../docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql", import.meta.url),
+  "utf8",
+);
 
 test("scheduler draft is review-only and transaction wrapped", () => {
   assert.match(sql, /REVIEW DRAFT ONLY — NOT A DEPLOYABLE MIGRATION/);
