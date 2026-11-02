@@ -729,6 +729,21 @@
       if(signIn.error) throw signIn.error;
       const session=signIn.data.session;
       if(!session) throw new Error('Sesi Supabase tidak terbentuk.');
+
+      // Recovery challenge path is evaluated before apiWhoAmI. A global lock
+      // intentionally rejects the normal operational API for every user.
+      if(pendingLhiRecoveryChallenge_){
+        const challenge=pendingLhiRecoveryChallenge_;
+        const issued=await exchangeLhiRecoveryChallenge_(session.access_token,challenge);
+        pendingLhiRecoveryChallenge_=null;
+        setLhiRecoveryCapability_(issued.recovery_capability);
+        let recoveryStatus={incident_status:'UNKNOWN'};
+        try{recoveryStatus=await lhiRecoveryAction_('apiRecoveryStatus');}catch(_statusError){}
+        if(msgEl)msgEl.innerText='';
+        renderLhiRecoveryOnlyScreen_(recoveryStatus);
+        return true;
+      }
+
       const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},
@@ -736,15 +751,7 @@
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
-      // Mode reset hanya membuka layar login; autentikasi tetap wajib dan hanya KA IPSRS yang diterima.
-      let resetAuthMode=false;
-      try{resetAuthMode=sessionStorage.getItem('IPSRS_LHI_RESET_AUTH_MODE')==='KA_ONLY';}catch(_e){}
-      if(resetAuthMode && String(whoJson.role||'')!=='KA_IPSRS'){
-        await client.auth.signOut().catch(()=>{});
-        if(msgEl)msgEl.innerText='Reset hanya mengizinkan akun KA IPSRS. Akun ini tidak memiliki kewenangan tersebut.';
-        return false;
-      }
-      if(resetAuthMode){try{sessionStorage.removeItem('IPSRS_LHI_RESET_AUTH_MODE');}catch(_e){}}
+
       // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
       // bukan terhadap backend GAS lama.
@@ -791,6 +798,14 @@
       try{ await client.auth.signOut(); }catch(_signOutError){}
       clearSession();
       try{ resetSupabaseClient_(); }catch(_resetError){}
+      if(pendingLhiRecoveryChallenge_){
+        // A failed password/role/challenge check never leaves a recovery session.
+        pendingLhiRecoveryChallenge_=null;
+        setLhiRecoveryCapability_(null);
+        if(msgEl)msgEl.innerText='Login pemulihan gagal. Blokir aplikasi tetap aktif; silakan ulangi Reset dan gunakan akun KA IPSRS.';
+        setTimeout(()=>checkAuthAndInit(),0);
+        return false;
+      }
       const rawMsg=String(err&&err.message?err.message:err);
       if(msgEl){
         msgEl.innerText=/MODE FORM BLOK APLIKASI AKTIF|tidak dapat login|blokir aplikasi/i.test(rawMsg)
