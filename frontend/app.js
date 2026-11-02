@@ -6227,6 +6227,7 @@
     const triggerName=trigger?escapeHtml(trigger.nama||'Petugas terkait'):'Petugas terkait';
     const triggerRole=trigger?String(trigger.jabatan||'').trim():'';
     const triggerDays=trigger?(Number(trigger.kewajiban_belum_selesai)||0):0;
+    const introText=trigger?'Sistem mendeteksi bahwa petugas berikut:':'Sistem mendeteksi status blokir global pada aplikasi LHI.';
     const triggerNotice=trigger
       ? '<div class="lhi-person-box"><div class="lhi-person-row"><div class="lhi-person-symbol"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="17" r="12" fill="currentColor"/><path d="M7 57c1-15 10-23 25-23s24 8 25 23z" fill="currentColor"/></svg></div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><strong>'+triggerName+'</strong>'+(triggerRole?'<span>'+escapeHtml(triggerRole)+'</span>':'')+'</div></div><div class="lhi-person-separator"></div><div class="lhi-person-row lhi-person-days"><div class="lhi-person-symbol"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="13" width="48" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M8 25h48M20 7v13M44 7v13M19 34h7m12 0h7M19 44h7m12 0h7" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div><div class="lhi-person-divider"></div><div class="lhi-person-copy"><span>Tidak mengisi LHI selama</span><strong>'+triggerDays+' hari berturut-turut</strong></div></div></div>'
       : '<div class="lhi-person-box"><div class="lhi-person-copy"><strong>Status blokir aktif</strong><span>Server telah mengaktifkan blokir aplikasi LHI.</span></div></div>';
@@ -6302,7 +6303,7 @@
           <div class="lhi-lock-emblem" aria-hidden="true"><svg viewBox="0 0 100 100"><rect x="22" y="43" width="56" height="43" rx="7"/><path d="M33 43V30a17 17 0 0 1 34 0v13"/><circle cx="50" cy="62" r="5" fill="#fff" stroke="none"/><path d="M50 67v8"/></svg></div>
           <h1 class="lhi-lock-title">Akses Aplikasi LHI<span>DIBLOKIR</span></h1>
           <div class="lhi-lock-banner">Pemberitahuan Otomatis dari Sistem Server</div>
-          <p class="lhi-lock-intro">Sistem mendeteksi bahwa petugas berikut:</p>
+          <p class="lhi-lock-intro">${introText}</p>
           ${triggerNotice}
           <section class="lhi-server-notice" role="note" aria-label="Notifikasi Server">
             <strong>NOTIFIKASI SERVER</strong>
