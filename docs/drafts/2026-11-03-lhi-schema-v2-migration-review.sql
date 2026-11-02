@@ -152,10 +152,22 @@ SET search_path = public, pg_temp
 AS $function$
 DECLARE
   v_reactivated boolean;
+  v_actor_user_id uuid;
+  v_actor_staff_id text;
 BEGIN
   IF NEW.status IS DISTINCT FROM OLD.status THEN
-    v_reactivated := lower(COALESCE(OLD.status, '')) = 'nonaktif'
+    IF NEW.status NOT IN ('Aktif', 'Nonaktif') THEN
+      RAISE EXCEPTION 'Status kepegawaian hanya boleh Aktif atau Nonaktif. Status akses LHI dikelola terpisah.';
+    END IF;
+
+    v_reactivated := lower(COALESCE(OLD.status, '')) IN ('nonaktif', 'nonaktif_lhi_hari_8', 'diblokir_lhi_7_hari')
       AND lower(COALESCE(NEW.status, '')) = 'aktif';
+
+    v_actor_user_id := NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
+    SELECT s.staff_id INTO v_actor_staff_id
+    FROM public.staff s
+    WHERE s.auth_user_id = v_actor_user_id
+    LIMIT 1;
 
     IF v_reactivated THEN
       NEW.lhi_active_since := clock_timestamp();
@@ -168,10 +180,11 @@ BEGIN
     END IF;
 
     INSERT INTO public.staff_employment_status_events (
-      staff_id, old_status, new_status, changed_at, change_source, reason,
-      lhi_access_before, lhi_access_after
+      staff_id, old_status, new_status, changed_at, changed_by_staff_id,
+      change_source, reason, lhi_access_before, lhi_access_after
     ) VALUES (
-      NEW.staff_id, OLD.status, NEW.status, clock_timestamp(), 'ADMIN_UI',
+      NEW.staff_id, OLD.status, NEW.status, clock_timestamp(), v_actor_staff_id,
+      CASE WHEN v_actor_staff_id IS NULL THEN 'SYSTEM' ELSE 'ADMIN_UI' END,
       CASE WHEN v_reactivated THEN 'Reaktivasi kepegawaian; anchor LHI direset.' ELSE NULL END,
       OLD.lhi_access_status, NEW.lhi_access_status
     );
