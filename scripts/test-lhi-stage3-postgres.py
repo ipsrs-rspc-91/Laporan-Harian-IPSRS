@@ -148,6 +148,30 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         add_staff("MANUAL", 8, 8, manual_days=2)
         add_staff("FRESH", 12, 1)
         add_staff("INACTIVE", 30, None, status="Nonaktif")
+        add_staff("LEGACY_REPORT", 30, None)
+        add_staff("LEGACY_MANUAL", 30, None)
+        add_staff("LEGACY_UNKNOWN", 7, 7)
+
+        # Reconstruct legacy reactivation evidence from old audit and report timestamps.
+        cur.execute(
+            """INSERT INTO public.audit_log(username,staff_id,action,field_changed,old_value,new_value,"timestamp")
+               VALUES
+               ('SYSTEM','LEGACY_REPORT','BLOCK_LOGIN_LHI_7_HARI','status','Aktif','DIBLOKIR_LHI_7_HARI',%s),
+               ('SYSTEM','LEGACY_MANUAL','BLOCK_LOGIN_LHI_7_HARI','status','Aktif','DIBLOKIR_LHI_7_HARI',%s),
+               ('SYSTEM','LEGACY_UNKNOWN','BLOCK_LOGIN_LHI_7_HARI','status','Aktif','DIBLOKIR_LHI_7_HARI',%s),
+               ('KA','LEGACY_MANUAL','ADMIN_UNBLOCK_LHI_7_HARI','status,lhi_manual_unblock_until','DIBLOKIR_LHI_7_HARI','Aktif sampai',%s)""",
+            (now-timedelta(days=13),now-timedelta(days=15),now-timedelta(days=5),now-timedelta(days=10)),
+        )
+        cur.execute(
+            """INSERT INTO public.reports(report_id,staff_id,tanggal,created_at)
+               VALUES
+               ('R-LR-REACT','LEGACY_REPORT',%s,%s),
+               ('R-LR-LAST','LEGACY_REPORT',%s,%s),
+               ('R-LM-LAST','LEGACY_MANUAL',%s,%s)""",
+            ((now-timedelta(days=25)).date(),now-timedelta(days=12),
+             (now-timedelta(days=25)).date(),now-timedelta(days=1),
+             (now-timedelta(days=25)).date(),now-timedelta(days=9)),
+        )
 
         cur.execute(MIGRATION.read_text(encoding="utf-8"))
         print("PASS Stage 3 migration applied to isolated PostgreSQL 17 test database")
@@ -155,6 +179,17 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         # Initial baseline uses created_at only for legacy rows, explicitly tagged.
         assert scalar(cur, """SELECT count(*) FROM public.lhi_staff_monitoring_state
                               WHERE staff_id='D8' AND baseline_source='LEGACY_CREATED_AT_FALLBACK'""") == 1
+        assert scalar(cur, """SELECT baseline_source FROM public.lhi_staff_monitoring_state
+                              WHERE staff_id='LEGACY_REPORT'""") == "LEGACY_REPORT_REACTIVATION_INFERRED"
+        assert scalar(cur, """SELECT active_since >= %s AND active_since < %s
+                              FROM public.lhi_staff_monitoring_state WHERE staff_id='LEGACY_REPORT'""",
+                      (now-timedelta(days=12,seconds=5),now-timedelta(days=12)+timedelta(seconds=5))) is True
+        assert scalar(cur, """SELECT baseline_source FROM public.lhi_staff_monitoring_state
+                              WHERE staff_id='LEGACY_MANUAL'""") == "LEGACY_MANUAL_UNBLOCK_AUDIT"
+        assert scalar(cur, """SELECT baseline_source FROM public.lhi_staff_monitoring_state
+                              WHERE staff_id='LEGACY_UNKNOWN'""") == "LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED"
+        assert scalar(cur, """SELECT active_since >= clock_timestamp()-interval '1 minute'
+                              FROM public.lhi_staff_monitoring_state WHERE staff_id='LEGACY_UNKNOWN'""") is True
 
         cur.execute("SELECT public.run_lhi_daily_monitoring()")
         assert scalar(cur, """SELECT individual_blocked_at IS NOT NULL
@@ -292,7 +327,7 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         assert scalar(cur, "SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK'") == "AKTIF"
         print("PASS grace-period cancellation restores PENDING and reactivates global block at deadline")
 
-        assert scalar(cur, "SELECT count(*) FROM public.staff_employment_status_history") >= 8
+        assert scalar(cur, "SELECT count(*) FROM public.staff_employment_status_history") >= 11
         assert scalar(cur, """SELECT count(*) FROM cron.job WHERE jobname='lhi-daily-monitoring-wib'
                               AND schedule='0 17 * * *'""") == 1
         assert scalar(cur, """SELECT count(*) FROM cron.job WHERE jobname='lhi-discipline-scheduler-every-5-minutes'
