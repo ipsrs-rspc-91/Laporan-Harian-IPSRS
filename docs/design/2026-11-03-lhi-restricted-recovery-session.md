@@ -174,5 +174,6 @@ CI menjalankan kontrak statis untuk kedua endpoint, konfigurasi JWT, skema chall
 - `ipsrs-api.staff()`: global lock diverifikasi sebelum lookup staff atau fallback update `auth_user_id`, sehingga API tidak dapat dipanggil langsung untuk melewati Form Blok Aplikasi.
 - Selama GRACE, KA IPSRS tidak dapat masuk ke API operasional meskipun global lock sudah NONAKTIF. Akses KA ke endpoint recovery tetap melalui capability terbatas.
 - Rate limit Reset hanya menggunakan header `cf-connecting-ip` yang disediakan edge; fallback `x-forwarded-for` yang dapat dipengaruhi klien tidak digunakan.
+- Environment `LHI_ALLOWED_ORIGINS` wajib diisi dengan origin frontend produksi yang benar sebelum endpoint dipasang; origin kosong/tidak dikenal ditolak.
 
 Semua butir di atas masih berada di branch perbaikan. Tidak ada deployment atau perubahan database produksi.
