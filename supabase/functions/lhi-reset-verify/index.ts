@@ -52,11 +52,10 @@ function randomToken(bytes = 32) {
 }
 
 function clientAddress(req: Request) {
-  // Prefer the edge-provided client address. Never store the raw address.
-  const cf = String(req.headers.get("cf-connecting-ip") || "").trim();
-  if (cf) return cf;
-  const forwarded = String(req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
-  return forwarded;
+  // Only trust the edge-overwritten Cloudflare client IP header.
+  // x-forwarded-for is client-influenceable on some proxy paths and must not
+  // be used as the rate-limit identity.
+  return String(req.headers.get("cf-connecting-ip") || "").trim();
 }
 
 Deno.serve(async (req: Request) => {
