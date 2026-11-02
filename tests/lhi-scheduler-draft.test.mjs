@@ -64,12 +64,11 @@ test("grace obligations exclude inactive staff and reverse cancelled reports", (
   assert.match(sql, /obligation_status = CASE WHEN q\.report_id IS NULL THEN 'PENDING' ELSE 'COMPLETED' END/);
 });
 
-test("global snapshot is one row per delinquent active staff", () => {
-  assert.match(sql, /missed_full_days_at_snapshot/);
-  assert.match(sql, /UNIQUE \(incident_id, staff_id\)/);
-  assert.match(sql, /ON CONFLICT \(incident_id, staff_id\) DO NOTHING/);
-  assert.match(sql, /e\.missed_full_days >= 9/);
-  assert.match(sql, /e\.employment_status = 'Aktif'/);
+test("scheduler creates only a LOCKED incident; snapshot waits for atomic Reset", () => {
+  assert.doesNotMatch(sql, /INSERT INTO public\\.lhi_discipline_snapshot_members/i);
+  assert.match(sql, /locked_at/);
+  assert.match(sql, /'LOCKED'/);
+  assert.match(schemaSql, /UNIQUE \\(incident_id, staff_id\\)/);
 });
 
 test("scheduler refuses inconsistent global lock and missing anchor", () => {
