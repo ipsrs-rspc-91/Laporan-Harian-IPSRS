@@ -66,7 +66,9 @@ Hari berjalan tidak dihitung. Tahapan tidak boleh dihitung dengan selisih jam at
 - Jika minimal satu petugas aktif mencapai `missed_full_days >= 9`, aktifkan global lock satu kali.
 - Petugas yang sudah `BLOCKED_LHI` tetap menjadi pemicu.
 - Semua role termasuk KA IPSRS ikut dipantau.
-- Buat snapshot hanya untuk petugas aktif yang pada saat itu memiliki `missed_full_days >= 9`; satu baris per petugas per insiden.
+- Saat hari ke-10, scheduler hanya membuat incident berstatus LOCKED dan mengaktifkan global lock.
+- Snapshot **belum dibuat oleh scheduler**. Sesuai README, snapshot dibuat atomik oleh transaksi Reset KA IPSRS ketika LOCKED berubah menjadi GRACE.
+- Transaksi Reset mengambil petugas Aktif dengan `missed_full_days >= 9` pada saat Reset; satu baris per petugas per insiden.
 - Jangan masukkan seluruh petugas atau satu baris per tanggal yang terlewat.
 - Kunci deduplikasi event global: `LHI:GLOBAL_LOCK:<incident_id>`.
 
@@ -128,7 +130,7 @@ Implementasi final wajib:
 - Mengambil timestamp dan tanggal WIB satu kali per eksekusi.
 - Memproses peringatan dan blokir dengan `INSERT ... ON CONFLICT DO NOTHING` memakai unique key event/recipient.
 - Mengaktifkan global lock hanya jika belum ada incident LOCKED/GRACE yang aktif.
-- Menyimpan snapshot satu baris per petugas menggunakan constraint UNIQUE(`incident_id, staff_id`).
+- Transaksi Reset membuat snapshot satu baris per petugas menggunakan constraint UNIQUE(`incident_id, staff_id`); scheduler hanya membuat incident LOCKED.
 - Tidak membuat atau mengubah status employment.
 - Tidak menyelesaikan grace sebelum tenggat 12 jam; evaluator tenggat hanya menilai kewajiban snapshot yang masih PENDING dan pegawainya tetap Aktif.
 - Menjaga cron tetap setiap 5 menit; perbaiki fungsi, bukan mempercepat frekuensi cron.
@@ -222,3 +224,12 @@ Temuan ini memperkuat keputusan bahwa scheduler lama tidak boleh dijalankan untu
 - Perubahan hanya berada di branch perbaikan.
 - Tidak ada DDL/DML produksi, tidak ada pemanggilan scheduler produksi, tidak ada deploy Edge Function, dan tidak ada perubahan cron.
 - Kolom skema v2 belum tersedia di produksi. Karena itu patch API yang membaca lhi_access_status juga belum aman untuk deployment.
+
+
+## 14. Klarifikasi urutan snapshot berdasarkan README
+
+Implementasi draft terbaru memisahkan dua waktu:
+- **Saat hari ke-10:** scheduler mengaktifkan LHI_GLOBAL_BLOCK dan membuat incident LOCKED. Tidak ada snapshot kewajiban dan belum dimulai masa grace.
+- **Saat KA IPSRS menekan Reset:** RPC atomik membuat snapshot petugas Aktif yang masih mencapai ambang 10 hari, membuka blokir akses LHI individual, mengubah incident menjadi GRACE, menonaktifkan global lock, dan memulai tenggat tepat 12 jam.
+
+Pemisahan ini mencegah masa grace berjalan sebelum Reset dilakukan dan memastikan snapshot, pembukaan akses, serta perubahan incident berhasil atau batal sebagai satu transaksi.
