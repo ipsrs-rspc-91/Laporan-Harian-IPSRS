@@ -78,6 +78,7 @@ BEGIN
     WHERE t.token_hash = p_token_hash
       AND t.consumed_by_staff_id = p_staff_id
       AND t.consumed_at IS NOT NULL
+      AND i.deadline_at > clock_timestamp()
   );
 END;
 $function$;
@@ -130,6 +131,7 @@ BEGIN
     SELECT * INTO v_incident
     FROM public.lhi_discipline_incidents
     WHERE status = 'GRACE'
+      AND deadline_at > clock_timestamp()
     ORDER BY incident_id DESC
     LIMIT 1;
 
