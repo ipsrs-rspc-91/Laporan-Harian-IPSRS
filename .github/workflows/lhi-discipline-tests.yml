@@ -1,0 +1,33 @@
+name: LHI Discipline Unit Tests
+
+on:
+  push:
+    branches:
+      - repair/lhi-status-separation-20261103
+    paths:
+      - "supabase/functions/ipsrs-api/lhi-discipline.mjs"
+      - "tests/lhi-discipline.test.mjs"
+      - ".github/workflows/lhi-discipline-tests.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "supabase/functions/ipsrs-api/lhi-discipline.mjs"
+      - "tests/lhi-discipline.test.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  lhi-discipline-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run LHI discipline unit tests
+        run: node --test tests/lhi-discipline.test.mjs
