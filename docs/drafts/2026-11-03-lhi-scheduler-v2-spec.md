@@ -187,3 +187,38 @@ node --test tests/lhi-discipline.test.mjs
 ```
 
 Jangan menyatakan pengujian lulus hanya karena workflow terpicu. Periksa status run dan kesimpulan job; jika masih `in_progress`, hasil belum final. Semua perubahan berikutnya pada helper dan test harus memicu ulang workflow.
+
+
+## 11. Verifikasi ulang terhadap definisi scheduler produksi (read-only)
+
+Pada 3 November 2026 definisi public.run_lhi_discipline_scheduler() dan public.open_lhi_global_grace(p_staff_id, p_staff_name) dibaca menggunakan pg_get_functiondef. Tidak ada fungsi yang dijalankan dan tidak ada perubahan database.
+
+Temuan yang dikonfirmasi langsung dari definisi fungsi:
+
+1. Scheduler menghitung dengan reports.tanggal, bukan reports.created_at WIB.
+2. Scheduler memulai loop dari tanggal hari ini dan menghitung tanggal kosong termasuk tanggal berjalan; terdapat dua blok penghitungan yang redundan.
+3. Pada nilai hitung 8, scheduler mengubah staff.status menjadi Nonaktif_LHI_HARI_8.
+4. Pada nilai hitung >=9, scheduler mengaktifkan global lock, sehingga global lock terjadi satu hari lebih awal dari ketentuan README.
+5. Loop mengecualikan role = KA_IPSRS.
+6. Snapshot dibuat dengan generate_series per tanggal dan dapat menghasilkan banyak kewajiban untuk satu petugas; scheduler juga menambah kewajiban tanggal berjalan ke incident LOCKED.
+7. Grace menghitung laporan berdasarkan created_at, tetapi tidak mensyaratkan status kepegawaian petugas masih Aktif.
+8. Evaluasi grace dijalankan dua kali dalam satu fungsi; satu jalur dapat menyelesaikan grace sebelum tenggat karena hanya menguji v_pending=0.
+9. Fungsi open_lhi_global_grace mengubah staff.status legacy menjadi Aktif dan memulai ulang started_at/deadline_at pada incident LOCKED. Fungsi lama belum memverifikasi identitas/role KA di dalam database.
+10. Trigger laporan lama yang sudah teridentifikasi masih dapat mengubah staff.status menjadi Aktif saat laporan disimpan. Trigger itu harus diganti dalam migration yang sama dengan skema status terpisah.
+
+Temuan ini memperkuat keputusan bahwa scheduler lama tidak boleh dijalankan untuk pengujian dan tidak boleh di-deploy ulang sebagai solusi sementara.
+
+## 12. Perbaikan helper tambahan pada tahap ini
+
+- Ditambahkan buildIndividualBlockNotifications() untuk notifikasi hari ke-8.
+- Pesan hari ke-8 menyebut seluruh nama petugas yang hak aksesnya diblokir pada tanggal WIB yang sama.
+- Penerima hanya petugas Aktif lain yang aksesnya tidak diblokir. Petugas yang diblokir tidak dikirimi notifikasi dalam aplikasi karena mereka menerima alasan blokir saat mencoba login.
+- Ditambahkan test batas waktu grace: laporan tepat pada started_at diterima, laporan tepat pada deadline_at ditolak.
+- Ditambahkan test pembatalan laporan grace: jika satu-satunya laporan pemenuh dibatalkan, kewajiban kembali PENDING; jika masih ada laporan sah pengganti di dalam jendela grace, kewajiban tetap COMPLETED.
+- Test CI untuk perubahan terbaru menunggu workflow push selesai. Status sukses run sebelumnya tidak boleh dianggap sebagai hasil untuk commit terbaru ini.
+
+## 13. Status keselamatan
+
+- Perubahan hanya berada di branch perbaikan.
+- Tidak ada DDL/DML produksi, tidak ada pemanggilan scheduler produksi, tidak ada deploy Edge Function, dan tidak ada perubahan cron.
+- Kolom skema v2 belum tersedia di produksi. Karena itu patch API yang membaca lhi_access_status juga belum aman untuk deployment.
