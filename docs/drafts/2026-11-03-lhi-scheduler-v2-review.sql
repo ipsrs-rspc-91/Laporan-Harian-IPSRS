@@ -136,6 +136,10 @@ BEGIN
   FOR UPDATE;
 
   IF FOUND THEN
+    IF v_lock <> 'NONAKTIF' THEN
+      RAISE EXCEPTION 'Incident GRACE ditemukan tetapi LHI_GLOBAL_BLOCK bukan NONAKTIF; evaluasi dihentikan.';
+    END IF;
+
     -- Employment becoming NONAKTIF permanently excludes the old snapshot row.
     UPDATE public.lhi_discipline_snapshot_members m
     SET obligation_status = 'EXCLUDED_INACTIVE',
@@ -278,7 +282,7 @@ BEGIN
   -- If a global incident is LOCKED, do not mutate its snapshot or create
   -- duplicate incidents. Recovery is the only path to a GRACE window.
   IF v_lock = 'AKTIF' THEN
-    RETURN jsonb_build_object('ok', true, 'mode', 'GLOBAL_LOCKED');
+    RAISE EXCEPTION 'LHI_GLOBAL_BLOCK AKTIF tetapi incident LOCKED tidak ditemukan; perlu rekonsiliasi sebelum scheduler melanjutkan.';
   END IF;
 
   -- Warning broadcast per stage/date, containing all staff names for that stage.
