@@ -265,7 +265,7 @@ BEGIN
   IF p_session_token_hash IS NULL OR p_session_token_hash !~ '^[0-9a-f]{64}$' THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INVALID_SESSION');
   END IF;
-  IF p_action NOT IN ('apiRecoveryStatus', 'apiStartLhiGrace') THEN
+  IF p_action IS NULL OR p_action NOT IN ('apiRecoveryStatus', 'apiStartLhiGrace') THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'ACTION_FORBIDDEN');
   END IF;
 
