@@ -140,3 +140,18 @@ Seluruh tabel menggunakan RLS dan tidak memberikan akses tabel langsung kepada P
 - CI pertama untuk kontrak SQL gagal pada satu assertion test yang pola regex-nya tidak sesuai dengan ekspresi SQL `lower(coalesce(v_staff.status, ''))`.
 - Pemeriksaan SQL sendiri menunjukkan ekspresi tersebut ada; assertion diperbaiki agar mencocokkan bentuk SQL yang sebenarnya.
 - Test ditambah untuk memastikan action NULL ditolak secara eksplisit, karena kondisi SQL `NULL NOT IN (...)` tidak bernilai TRUE dan harus ditangani secara fail-closed.
+
+
+## 10. Implementasi awal endpoint server — 3 November 2026
+
+Dua Edge Function kini tersedia pada branch perbaikan:
+
+- `lhi-reset-verify`: memeriksa kode reset di server, mencatat percobaan melalui RPC rate-limit atomik, dan menerbitkan challenge acak 256-bit yang disimpan dalam database hanya sebagai SHA-256 hash dengan masa berlaku 5 menit.
+- `lhi-recovery-exchange`: memverifikasi access token menggunakan `auth.getUser()`, tidak mempercayai role/staff_id dari browser, lalu meminta RPC mengonsumsi challenge dan menerbitkan capability acak 256-bit yang disimpan hanya sebagai hash dan berlaku 10 menit.
+- Kedua endpoint menggunakan allowlist origin dari secret `LHI_ALLOWED_ORIGINS`, tidak memakai wildcard CORS, serta mengirim respons `no-store`.
+- Gate memerlukan secret `LHI_RATE_LIMIT_SALT` minimal 32 karakter untuk hashing identitas jaringan sebelum rate-limit. Alamat IP mentah tidak disimpan.
+- `supabase/config.toml` mengatur `verify_jwt = false` hanya untuk kedua endpoint ini karena keduanya melakukan pemeriksaan proof sendiri. `ipsrs-api` tetap `verify_jwt = true`.
+
+**Batas integrasi saat ini:** frontend lama masih hanya membaca boolean `valid` dan menyimpan flag `IPSRS_LHI_RESET_AUTH_MODE`; belum mengirim challenge ke endpoint exchange. Recovery-action endpoint, tampilan recovery-only, dan RPC pemulihan final belum terhubung. Oleh sebab itu perubahan ini belum siap deploy dan tidak boleh diaktifkan pada project produksi.
+
+CI menjalankan kontrak statis untuk kedua endpoint, konfigurasi JWT, skema challenge, dan kebijakan akses. Pengujian statis tidak menggantikan pengujian integrasi pada project Supabase nonproduksi.
