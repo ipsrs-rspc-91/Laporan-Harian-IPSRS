@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.staff_employment_status_history (
 ALTER TABLE public.staff_employment_status_history ENABLE ROW LEVEL SECURITY;
 REVOKE ALL PRIVILEGES ON TABLE public.staff_employment_status_history
   FROM PUBLIC, anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.staff_employment_status_history TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.lhi_obligation_audit (
   audit_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -64,6 +65,7 @@ CREATE TABLE IF NOT EXISTS public.lhi_obligation_audit (
 ALTER TABLE public.lhi_obligation_audit ENABLE ROW LEVEL SECURITY;
 REVOKE ALL PRIVILEGES ON TABLE public.lhi_obligation_audit
   FROM PUBLIC, anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.lhi_obligation_audit TO service_role;
 
 -- Existing active staff have no historical activation log. Use staff.created_at
 -- as a clearly-labelled legacy fallback; every future reactivation is timestamped.
@@ -280,7 +282,10 @@ BEGIN
       END,
       updated_at = clock_timestamp();
 
-  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
 END;
 $function$;
 
@@ -672,19 +677,6 @@ DO $block$
 DECLARE
   v_job_id bigint;
 BEGIN
-  SELECT jobid INTO v_job_id
-  FROM cron.job
-  WHERE jobname = 'lhi-discipline-scheduler-every-5-minutes'
-  LIMIT 1;
-
-  IF v_job_id IS NOT NULL THEN
-    PERFORM cron.alter_job(
-      job_id := v_job_id,
-      schedule := '*/5 * * * *',
-      command := 'select public.run_lhi_discipline_scheduler();'
-    );
-  END IF;
-
   IF NOT EXISTS (
     SELECT 1 FROM cron.job WHERE jobname = 'lhi-daily-monitoring-wib'
   ) THEN
