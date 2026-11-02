@@ -42,7 +42,8 @@ END;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.validate_lhi_recovery_token(
-  p_token_hash text
+  p_token_hash text,
+  p_staff_id text
 ) RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -52,15 +53,119 @@ BEGIN
   IF auth.role() IS DISTINCT FROM 'service_role' THEN
     RAISE EXCEPTION 'not_authorized';
   END IF;
-  IF p_token_hash !~ '^[0-9a-f]{64}$' THEN
+  IF p_token_hash !~ '^[0-9a-f]{64}
+
+CREATE OR REPLACE FUNCTION public.consume_lhi_recovery_token_and_open_grace(
+  p_token_hash text,
+  p_staff_id text,
+  p_staff_name text
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public', 'private', 'pg_temp'
+AS $function$
+DECLARE
+  v_token private.lhi_recovery_tokens%ROWTYPE;
+  v_role text;
+  v_result jsonb;
+  v_incident public.lhi_discipline_incidents%ROWTYPE;
+  v_total integer := 0;
+BEGIN
+  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+    RAISE EXCEPTION 'not_authorized';
+  END IF;
+
+  SELECT * INTO v_token
+  FROM private.lhi_recovery_tokens
+  WHERE token_hash = p_token_hash
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'recovery_token_invalid_or_expired';
+  END IF;
+
+  SELECT role INTO v_role
+  FROM public.staff
+  WHERE staff_id = p_staff_id
+  LIMIT 1;
+
+  IF v_role IS DISTINCT FROM 'KA_IPSRS' THEN
+    RAISE EXCEPTION 'recovery_role_not_authorized';
+  END IF;
+
+  -- Idempotent retry: if the first transaction committed but its HTTP response
+  -- was lost, return the original grace window without extending or reopening it.
+  IF v_token.consumed_at IS NOT NULL THEN
+    IF v_token.consumed_by_staff_id IS DISTINCT FROM p_staff_id THEN
+      RAISE EXCEPTION 'recovery_token_already_consumed';
+    END IF;
+    SELECT * INTO v_incident
+    FROM public.lhi_discipline_incidents
+    WHERE status = 'GRACE'
+      AND started_by_staff_id = p_staff_id
+    ORDER BY incident_id DESC
+    LIMIT 1;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'recovery_token_already_consumed';
+    END IF;
+    SELECT count(DISTINCT staff_id) INTO v_total
+    FROM public.lhi_discipline_obligations
+    WHERE incident_id = v_incident.incident_id;
+    RETURN jsonb_build_object(
+      'ok', true,
+      'already_open', true,
+      'incident_id', v_incident.incident_id,
+      'status', v_incident.status,
+      'started_at', v_incident.started_at,
+      'deadline_at', v_incident.deadline_at,
+      'total', v_total
+    );
+  END IF;
+
+  IF v_token.expires_at <= clock_timestamp() THEN
+    RAISE EXCEPTION 'recovery_token_invalid_or_expired';
+  END IF;
+
+  -- Existing atomic grace RPC performs the actual unblock and starts the
+  -- original fixed 12-hour window. Any error rolls back token consumption too.
+  v_result := public.open_lhi_global_grace(p_staff_id, p_staff_name);
+  IF COALESCE((v_result->>'ok')::boolean, false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'grace_recovery_failed';
+  END IF;
+
+  UPDATE private.lhi_recovery_tokens
+  SET consumed_at = clock_timestamp(),
+      consumed_by_staff_id = p_staff_id
+  WHERE recovery_token_id = v_token.recovery_token_id;
+
+  RETURN v_result;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.issue_lhi_recovery_token(text, timestamptz) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.validate_lhi_recovery_token(text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.consume_lhi_recovery_token_and_open_grace(text, text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.issue_lhi_recovery_token(text, timestamptz) TO service_role;
+GRANT EXECUTE ON FUNCTION public.validate_lhi_recovery_token(text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.consume_lhi_recovery_token_and_open_grace(text, text, text) TO service_role;
+ OR COALESCE(p_staff_id, '') = '' THEN
     RETURN false;
   END IF;
   RETURN EXISTS (
     SELECT 1
     FROM private.lhi_recovery_tokens t
     WHERE t.token_hash = p_token_hash
-      AND t.consumed_at IS NULL
       AND t.expires_at > clock_timestamp()
+      AND t.consumed_at IS NULL
+  ) OR EXISTS (
+    SELECT 1
+    FROM private.lhi_recovery_tokens t
+    JOIN public.lhi_discipline_incidents i
+      ON i.started_by_staff_id = t.consumed_by_staff_id
+    WHERE t.token_hash = p_token_hash
+      AND t.consumed_by_staff_id = p_staff_id
+      AND t.consumed_at IS NOT NULL
+      AND i.status = 'GRACE'
   );
 END;
 $function$;
