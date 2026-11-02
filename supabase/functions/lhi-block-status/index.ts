@@ -60,7 +60,15 @@ Deno.serve(async (req: Request) => {
       }, 503, cors);
     }
 
-    const blocked = String(data.value || "").toUpperCase() === "AKTIF";
+    const lockState = String(data.value || "").toUpperCase();
+    if (lockState !== "AKTIF" && lockState !== "NONAKTIF") {
+      return response({
+        ok: false,
+        blocked: true,
+        message: "Status blokir aplikasi tidak valid. Login ditahan sementara.",
+      }, 503, cors);
+    }
+    const blocked = lockState === "AKTIF";
     return response({
       ok: true,
       blocked,
