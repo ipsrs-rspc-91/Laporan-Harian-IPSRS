@@ -318,8 +318,27 @@ async function act(ctx:any,a:string,d:any,req?:Request){
  const {data:blockSetting,error:blockError}=await db.from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
  if(blockError)throw blockError;
  if(!blockSetting)throw Error("Status Mode Blok Aplikasi tidak ditemukan. Seluruh akses ditahan sampai status dapat diverifikasi.");
- const blockMode=String(blockSetting.value||"").toUpperCase();
+ let blockMode=String(blockSetting.value||"").toUpperCase();
  if(blockMode!=="AKTIF"&&blockMode!=="NONAKTIF")throw Error("Nilai Mode Blok Aplikasi tidak valid. Seluruh akses ditahan sampai status diperbaiki.");
+
+ // Resolve an expired grace deadline synchronously before any operational action.
+ // The five-minute cron remains a fallback; API requests cannot extend the 12-hour window.
+ if(blockMode==="NONAKTIF"){
+   const {data:grace,error:graceError}=await db.from("lhi_discipline_incidents")
+     .select("incident_id,deadline_at").eq("status","GRACE")
+     .order("incident_id",{ascending:false}).limit(1).maybeSingle();
+   if(graceError)throw graceError;
+   if(grace&&new Date(grace.deadline_at).getTime()<=Date.now()){
+     const {error:schedulerError}=await db.rpc("run_lhi_discipline_scheduler");
+     if(schedulerError)throw schedulerError;
+     const {data:refreshed,error:refreshError}=await db.from("access_settings")
+       .select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
+     if(refreshError)throw refreshError;
+     if(!refreshed)throw Error("Status Mode Blok Aplikasi tidak ditemukan setelah evaluasi tenggat pemulihan.");
+     blockMode=String(refreshed.value||"").toUpperCase();
+     if(blockMode!=="AKTIF"&&blockMode!=="NONAKTIF")throw Error("Status Mode Blok Aplikasi tidak valid setelah evaluasi tenggat pemulihan.");
+   }
+ }
  const globalBlocked=blockMode==="AKTIF";
  const s=await staff(ctx,req,globalBlocked&&recoveryActions.has(a),globalBlocked);
  if(globalBlocked){
