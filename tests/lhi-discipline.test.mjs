@@ -347,7 +347,7 @@ test("restricted recovery SQL keeps challenges and sessions private to server-si
   assert.match(sql, /REVOKE ALL ON private\.lhi_recovery_challenges FROM PUBLIC, anon, authenticated, service_role/);
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.consume_lhi_recovery_challenge\(text, uuid, text\) TO service_role/);
   assert.match(sql, /v_staff\.role IS DISTINCT FROM 'KA_IPSRS'/);
-  assert.match(sql, /v_staff\.status, ''\) <> 'aktif'/);
+  assert.match(sql, /lower\(coalesce\(v_staff\.status, ''\)\) <> 'aktif'/);
   assert.match(sql, /v_challenge\.expires_at <= v_now/);
   assert.match(sql, /v_challenge\.consumed_at IS NOT NULL/);
   assert.match(sql, /p_action NOT IN \('apiRecoveryStatus', 'apiStartLhiGrace'\)/);
