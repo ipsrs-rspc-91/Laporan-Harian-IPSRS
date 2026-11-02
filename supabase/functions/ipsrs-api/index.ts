@@ -558,7 +558,7 @@ if(a==="apiGetStaffMonitoring"){
   for(let i=0;i<n;i++){
     const day=addWibDays(z.start,i);
     const c=rr.filter((r:any)=>wibDate(r.created_at)===day).length;
-    const status=c?"SUDAH_ISI":day>today?"BELUM_TERJADI":!requiredStart||day<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
+    const status=c?"SUDAH_ISI":day>today?"BELUM_TERJADI":!active?"TIDAK_WAJIB":day<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
     cal.push({tanggal:day,status,jumlah:c});
   }
   return{ok:true,kalender:cal,laporan:await Promise.all(rr.map(async(r:any)=>map(r,(await canEditReport(db,s,r)).ok)))};
@@ -719,7 +719,7 @@ if(a==="apiGetStaffMonitoring"){
  const monitoringToday=(activeStaff||[]).map((x:any)=>{
    const state:any=monitorStateById.get(String(x.staff_id))||{};
    const requiredStart=addWibDays(wibDate(state.active_since||x.created_at),1);
-   const statusHari=todayCount[x.staff_id]?"SUDAH_ISI":dashboardTanggal<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
+   const statusHari=dashboardTanggal>today?"BELUM_TERJADI":todayCount[x.staff_id]?"SUDAH_ISI":dashboardTanggal<requiredStart?"BELUM_WAJIB":"BELUM_ISI";
    return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
      bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
      laporan_hari_ini:todayCount[x.staff_id]||0};
