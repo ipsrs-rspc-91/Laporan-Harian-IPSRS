@@ -1,0 +1,50 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const app = await readFile(
+  new URL("../frontend/app.js", import.meta.url),
+  "utf8",
+);
+const recoveryAction = await readFile(
+  new URL("../supabase/functions/lhi-recovery-action/index.ts", import.meta.url),
+  "utf8",
+);
+
+test("Reset challenge is kept in memory and exchanged before apiWhoAmI", () => {
+  assert.match(app, /pendingLhiRecoveryChallenge_\s*=\s*String\(result\.challenge\|\|''\)/);
+  assert.match(app, /exchangeLhiRecoveryChallenge_\(session\.access_token,challenge\)/);
+  const recoveryBranch = app.indexOf("if(pendingLhiRecoveryChallenge_){");
+  const whoAmI = app.indexOf("action:'apiWhoAmI'");
+  assert.ok(recoveryBranch >= 0 && whoAmI > recoveryBranch);
+  assert.doesNotMatch(app, /IPSRS_LHI_RESET_AUTH_MODE/);
+});
+
+test("successful recovery login returns before normal session and dashboard initialization", () => {
+  const branch = app.indexOf("if(pendingLhiRecoveryChallenge_){");
+  const branchEnd = app.indexOf("const who=await fetch", branch);
+  const block = app.slice(branch, branchEnd);
+  assert.match(block, /renderLhiRecoveryOnlyScreen_\(recoveryStatus\)/);
+  assert.match(block, /return true/);
+  assert.doesNotMatch(block, /setSession\(|afterAuthReady\(|goPage\(/);
+});
+
+test("restricted recovery UI hides app shell and exposes only recovery actions", () => {
+  const start = app.indexOf("function renderLhiRecoveryOnlyScreen_");
+  const end = app.indexOf("async function performLogin", start);
+  const block = app.slice(start, end);
+  assert.match(block, /appShell/);
+  assert.match(block, /apiRecoveryStatus/);
+  assert.match(block, /apiStartLhiGrace/);
+  assert.doesNotMatch(block, /apiWhoAmI|apiGetReports|apiCreateReport|goPage\(/);
+});
+
+test("opaque capability is session-scoped and revalidated on same-tab refresh", () => {
+  assert.match(app, /IPSRS_LHI_RECOVERY_CAPABILITY/);
+  assert.match(app, /savedRecoveryCapability/);
+  assert.match(app, /lhiRecoveryAction_\('apiRecoveryStatus'\)/);
+});
+
+test("recovery action endpoint rejects anything beyond status and start-grace", () => {
+  assert.match(recoveryAction, /\["apiRecoveryStatus", "apiStartLhiGrace"\]/);
+});
