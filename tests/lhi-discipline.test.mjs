@@ -246,3 +246,90 @@ test("deleting one grace report does not reopen obligation when another valid re
   assert.equal(result.members[0].obligation_status, "COMPLETED");
   assert.equal(result.shouldReactivateGlobalBlock, false);
 });
+
+
+test("recovery role allowlist accepts only KA_IPSRS", async () => {
+  const { isRecoveryRole } = await import("../supabase/functions/ipsrs-api/recovery-policy.mjs");
+  assert.equal(isRecoveryRole("KA_IPSRS"), true);
+  assert.equal(isRecoveryRole("ka_ipsrs"), true);
+  assert.equal(isRecoveryRole("ADMIN"), false);
+  assert.equal(isRecoveryRole("SUPER_ADMIN"), false);
+  assert.equal(isRecoveryRole("STAFF"), false);
+});
+
+test("recovery nonce rejects missing, mismatched, consumed, expired and cross-incident values", async () => {
+  const { validateRecoveryNonce } = await import("../supabase/functions/ipsrs-api/recovery-policy.mjs");
+  const base = {
+    nonceRecord: { incident_id: "I-1", expires_at: "2026-11-03T06:00:00Z", consumed_at: null },
+    submittedNonceHashMatches: true,
+    now: "2026-11-03T05:00:00Z",
+    incidentId: "I-1",
+  };
+  assert.deepEqual(validateRecoveryNonce(base), { valid: true, reason: "OK" });
+  assert.equal(validateRecoveryNonce({ ...base, nonceRecord: null }).reason, "NONCE_NOT_FOUND");
+  assert.equal(validateRecoveryNonce({ ...base, submittedNonceHashMatches: false }).reason, "NONCE_MISMATCH");
+  assert.equal(validateRecoveryNonce({ ...base, nonceRecord: { ...base.nonceRecord, consumed_at: "2026-11-03T04:00:00Z" } }).reason, "NONCE_ALREADY_USED");
+  assert.equal(validateRecoveryNonce({ ...base, now: "2026-11-03T06:00:00Z" }).reason, "NONCE_EXPIRED");
+  assert.equal(validateRecoveryNonce({ ...base, incidentId: "I-2" }).reason, "INCIDENT_MISMATCH");
+});
+
+test("recovery exchange requires authenticated matching KA IPSRS and active employment", async () => {
+  const { evaluateRecoveryExchange } = await import("../supabase/functions/ipsrs-api/recovery-policy.mjs");
+  const input = {
+    authUser: { id: "AUTH-1" },
+    staff: { auth_user_id: "AUTH-1", role: "KA_IPSRS", status: "Aktif" },
+    nonceRecord: { incident_id: "INC-1", expires_at: "2026-11-03T06:00:00Z", consumed_at: null },
+    submittedNonceHashMatches: true,
+    now: "2026-11-03T05:00:00Z",
+    incidentId: "INC-1",
+  };
+  assert.equal(evaluateRecoveryExchange(input).allowed, true);
+  assert.equal(evaluateRecoveryExchange({ ...input, authUser: null }).reason, "AUTH_REQUIRED");
+  assert.equal(evaluateRecoveryExchange({ ...input, staff: { ...input.staff, auth_user_id: "OTHER" } }).reason, "STAFF_AUTH_MISMATCH");
+  assert.equal(evaluateRecoveryExchange({ ...input, staff: { ...input.staff, role: "ADMIN" } }).reason, "ROLE_NOT_ALLOWED");
+  assert.equal(evaluateRecoveryExchange({ ...input, staff: { ...input.staff, status: "Nonaktif" } }).reason, "EMPLOYMENT_INACTIVE");
+});
+
+test("recovery capability is incident-bound, user-bound, short-lived and action-restricted", async () => {
+  const { recoveryCapabilityAllows, recoveryActionAllowed } = await import("../supabase/functions/ipsrs-api/recovery-policy.mjs");
+  const capability = {
+    subject: "AUTH-1",
+    scope: "lhi.recovery",
+    incident_id: "INC-1",
+    expires_at: "2026-11-03T06:00:00Z",
+  };
+  assert.equal(recoveryActionAllowed("apiRecoveryStatus"), true);
+  assert.equal(recoveryActionAllowed("apiStartLhiGrace"), true);
+  assert.equal(recoveryActionAllowed("apiGetReports"), false);
+  assert.equal(recoveryActionAllowed("apiGetDashboard"), false);
+  const args = { capability, authUserId: "AUTH-1", action: "apiRecoveryStatus", now: "2026-11-03T05:00:00Z", incidentId: "INC-1" };
+  assert.equal(recoveryCapabilityAllows(args).allowed, true);
+  assert.equal(recoveryCapabilityAllows({ ...args, action: "apiGetReports" }).reason, "ACTION_FORBIDDEN");
+  assert.equal(recoveryCapabilityAllows({ ...args, authUserId: "AUTH-2" }).reason, "SUBJECT_MISMATCH");
+  assert.equal(recoveryCapabilityAllows({ ...args, incidentId: "INC-2" }).reason, "INCIDENT_MISMATCH");
+  assert.equal(recoveryCapabilityAllows({ ...args, now: "2026-11-03T06:00:00Z" }).reason, "CAPABILITY_EXPIRED");
+  assert.equal(recoveryCapabilityAllows({ ...args, capability: { ...capability, scope: "normal" } }).reason, "SCOPE_INVALID");
+});
+
+test("grace recovery is exactly 12 hours and retries preserve the original incident deadline", async () => {
+  const { planGraceRecovery } = await import("../supabase/functions/ipsrs-api/recovery-policy.mjs");
+  const first = planGraceRecovery({
+    incident: { incident_id: "INC-1", status: "LOCKED" },
+    now: "2026-11-03T05:00:00Z",
+  });
+  assert.equal(first.allowed, true);
+  assert.equal(first.idempotent, false);
+  assert.equal(first.create_snapshot, true);
+  assert.equal(first.deadline_at, "2026-11-03T17:00:00.000Z");
+
+  const retry = planGraceRecovery({
+    incident: { incident_id: "INC-1", status: "GRACE", started_at: first.started_at, deadline_at: first.deadline_at },
+    now: "2026-11-03T08:00:00Z",
+  });
+  assert.equal(retry.idempotent, true);
+  assert.equal(retry.create_snapshot, false);
+  assert.equal(retry.started_at, first.started_at);
+  assert.equal(retry.deadline_at, first.deadline_at);
+  assert.equal(planGraceRecovery({ incident: { incident_id: "INC-2", status: "COMPLETED" }, now: "2026-11-03T05:00:00Z" }).allowed, false);
+  assert.throws(() => planGraceRecovery({ incident: { incident_id: "INC-3", status: "LOCKED" }, now: "2026-11-03T05:00:00Z", graceHours: 24 }));
+});
