@@ -92,7 +92,8 @@ END;
 $function$;
 
 -- Called only after the server has verified the reset code. A challenge is
--- random, opaque, short-lived, single-use, and bound to the currently LOCKED incident.
+-- random, opaque, short-lived, single-use, and bound to a consistent LOCKED
+-- incident or an active GRACE incident (for KA recovery-session resumption).
 CREATE OR REPLACE FUNCTION public.create_lhi_recovery_challenge(
   p_nonce_hash text,
   p_ip_hash text
@@ -149,8 +150,9 @@ BEGIN
 END;
 $function$;
 
--- Consume the challenge and issue a short-lived opaque recovery capability
--- in one transaction. Auth identity comes from auth.getUser() in the Edge
+-- Consume the challenge and issue an opaque recovery capability in one transaction.
+-- Initial LOCKED sessions are short-lived; Reset extends the capability only to
+-- the exact grace deadline. Auth identity comes from auth.getUser() in the Edge
 -- Function; this RPC independently checks the staff mapping and exact role.
 CREATE OR REPLACE FUNCTION public.consume_lhi_recovery_challenge(
   p_nonce_hash text,
