@@ -387,6 +387,12 @@ USING (
   AND (SELECT private.current_staff_role()) = ANY (ARRAY['KA_IPSRS', 'ADMINISTRASI'])
 );
 
+-- Keep the existing grace-opening SECURITY DEFINER RPC server-only.
+REVOKE ALL ON FUNCTION public.open_lhi_global_grace(text, text)
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.open_lhi_global_grace(text, text)
+TO service_role;
+
 -- These SECURITY DEFINER trigger functions are callable only as triggers;
 -- revoke direct RPC execution from client roles.
 REVOKE ALL ON FUNCTION public.protect_lhi_manual_unblock_status()
