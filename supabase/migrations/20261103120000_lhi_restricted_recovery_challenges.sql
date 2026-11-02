@@ -119,10 +119,6 @@ BEGIN
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR UPDATE;
 
-  IF v_lock IS DISTINCT FROM 'AKTIF' THEN
-    RETURN jsonb_build_object('ok', false, 'reason', 'GLOBAL_LOCK_NOT_ACTIVE');
-  END IF;
-
   SELECT incident_id::text, status INTO v_incident_id, v_incident_status
   FROM public.lhi_discipline_incidents
   WHERE status IN ('LOCKED', 'GRACE')
