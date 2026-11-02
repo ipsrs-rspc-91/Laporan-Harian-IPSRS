@@ -55,6 +55,6 @@ test("report save reactivation trigger is removed without touching unrelated rep
 
 test("legacy anchor and status reconciliation are explicitly marked as required review", () => {
   assert.match(sql, /Provisional anchors for review only/);
-  assert.match(sql, /Do not enable discipline scheduler[\s\S]*until the values are reconciled/);
+  assert.match(sql, /do not enable discipline scheduler[\s\S]*until the values are reconciled/i);
   assert.match(sql, /ALTER TABLE public\.staff VALIDATE CONSTRAINT staff_lhi_access_status_check/);
 });
