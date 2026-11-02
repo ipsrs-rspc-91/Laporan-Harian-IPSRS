@@ -441,10 +441,9 @@ if(a==="apiGetStaffMonitoring"){
 
  if(a==="apiGetStaffDailyStatus"){
   const z=wibMonthBounds(d.bulan),today=wibDate(new Date());
-  const {data:raw,error}=await db.from("reports").select("*").is("deleted_at",null)
+  const raw=await fetchAllPages(()=>db.from("reports").select("*").is("deleted_at",null)
     .eq("staff_id",d.staffId).gte("created_at",z.startCreatedAt)
-    .lt("created_at",z.endCreatedAtExclusive).order("created_at");
-  if(error)throw error;
+    .lt("created_at",z.endCreatedAtExclusive).order("created_at",{ascending:true}));
   const rr:any[]=[];
   for(const r of raw||[]){if(await canViewReport(db,s,r))rr.push(r);}
   const n=Math.floor((Date.parse(z.end)-Date.parse(z.start))/86400000)+1,cal:any[]=[];
@@ -458,7 +457,7 @@ if(a==="apiGetStaffMonitoring"){
 
  if(a==="apiGetMonthlyRecap"){
   const z=wibMonthBounds(d.bulan),today=wibDate(new Date());
-  const eff=z.month===today.slice(0,7)?today:z.end;
+  const eff=z.month===today.slice(0,7)?today:(z.month<today.slice(0,7)?z.end:new Date(Date.parse(z.start)-86400000).toISOString().slice(0,10));
   let staffQ=db.from("staff").select("staff_id,nama,jabatan,role,bidang,status").eq("status","Aktif").order("staff_id");
   if(d.staffIdFilter)staffQ=staffQ.eq("staff_id",d.staffIdFilter);
   const {data:ss,error:se}=await staffQ;if(se)throw se;
@@ -577,7 +576,15 @@ if(a==="apiGetStaffMonitoring"){
  for(const r of staffCountReports){const k=r.staff_id;if(sm[k])sm[k].value++;}
  const isKaIpsrs=String(s?.role||"").toUpperCase()==="KA_IPSRS" || String(s?.staff_id||"")==="KAIPSRS";
  const recentSource=isKaIpsrs ? (rr||[]) : (rr||[]).filter((r:any)=>String(r.role_snapshot||"").toUpperCase()!=="KA_IPSRS" && String(r.staff_id||"")!=="KAIPSRS");const recent=recentSource.slice().sort((a:any,b:any)=>{const d=String(b.tanggal||"").localeCompare(String(a.tanggal||""));if(d)return d;const p=String(b.pukul||"").localeCompare(String(a.pukul||""));if(p)return p;return String(b.created_at||"").localeCompare(String(a.created_at||""));}).slice(0,6).map((r:any)=>map(r,dashboardPolicy.editable.has(String(r.report_id))));
- const todayCount:any={};for(const r of staffCountReports)if(r.tanggal===dashboardTanggal)todayCount[r.staff_id]=(todayCount[r.staff_id]||0)+1;
+ const monitoringStart=new Date(dashboardTanggal+"T00:00:00+07:00").toISOString();
+ const monitoringEnd=new Date(Date.parse(monitoringStart)+86400000).toISOString();
+ let monitoringQuery=db.from("reports").select("staff_id,created_at").is("deleted_at",null)
+   .gte("created_at",monitoringStart).lt("created_at",monitoringEnd);
+ if(d.staffIdFilter)monitoringQuery=monitoringQuery.eq("staff_id",d.staffIdFilter);
+ if(d.bidangFilter)monitoringQuery=monitoringQuery.eq("bidang_snapshot",d.bidangFilter);
+ const monitoringReports=await fetchAllPages(()=>monitoringQuery.order("created_at",{ascending:true}));
+ const todayCount:any={};
+ for(const r of monitoringReports)if(wibDate(r.created_at)===dashboardTanggal)todayCount[r.staff_id]=(todayCount[r.staff_id]||0)+1;
  const monitoringToday=(activeStaff||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:todayCount[x.staff_id]?"SUDAH_ISI":"BELUM_ISI",laporan_hari_ini:todayCount[x.staff_id]||0}));
  const sortCount=(a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.label||"").localeCompare(String(b.label||""),"id");const kategori=Object.entries(cat).map(([label,value])=>({label,value})).sort(sortCount);const area=Object.entries(ar).map(([label,value])=>({label,value})).sort(sortCount);const staff=Object.values(sm).sort((a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.nama||a.staff_id||"").localeCompare(String(b.nama||b.staff_id||""),"id"));const sparePartStats=Object.values(newPartGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);const unitBaruStats=Object.values(newUnitGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);return cacheSet(ck,{ok:true,data:{total,selesai:sel,belum:bel,persen:total?Math.round(sel/total*100):0,kategori,area,staff,recent,pencapaian:pc,spare_part_baru:spare,unit_baru:unit,spare_part_total_quantity:spareQty,unit_baru_total_quantity:unitQty,spare_part_stats:sparePartStats,unit_baru_stats:unitBaruStats,monitoring_today:{tanggal:dashboardTanggal,data:monitoringToday}}})
 }
