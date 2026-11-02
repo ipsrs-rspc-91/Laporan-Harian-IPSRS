@@ -391,3 +391,5 @@ test("recovery SQL explicitly rejects a missing action instead of allowing SQL N
   const sql = await readFile(path, "utf8");
   assert.match(sql, /p_action IS NULL OR p_action NOT IN \('apiRecoveryStatus', 'apiStartLhiGrace'\)/);
 });
+
+// CI trigger: recovery schema contract assertions include fail-closed SQL NULL handling.
