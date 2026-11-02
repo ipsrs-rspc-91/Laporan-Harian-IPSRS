@@ -41,6 +41,12 @@ assert 'from("lhi_staff_monitoring_state")' in staff_fn
 assert "wibDate(" in staff_fn
 assert "status kepegawaian tetap aktif" in staff_fn.lower()
 
+act_start = api.index("async function act(")
+act_end = api.index("\nexport default", act_start)
+act_fn = api[act_start:act_end]
+assert 'rpc("run_lhi_discipline_scheduler")' in act_fn
+assert "deadline_at" in act_fn and "getTime()<=Date.now()" in act_fn
+
 monitoring_checks = [
     ('if(a==="apiGetStaffMonitoring"){', 'if(a==="apiGetStaffDailyStatus"){'),
     ('if(a==="apiGetStaffDailyStatus"){', 'if(a==="apiGetMonthlyRecap"){'),
@@ -51,6 +57,7 @@ for start, end in monitoring_checks:
     assert 'created_at' in section, f"{start} must use created_at"
     assert "wibDate(" in section, f"{start} must group by WIB input date"
     assert "active_since" in section and "addWibDays(" in section, f"{start} must honor the employee activation baseline"
+    assert "wajib_hari_ini" in section or start.startswith('if(a==="apiGetStaffDailyStatus"'), f"{start} must expose daily due status"
 
 dashboard_start = api.index("const monitoringStart=")
 dashboard_end = api.index("const sortCount=", dashboard_start)
