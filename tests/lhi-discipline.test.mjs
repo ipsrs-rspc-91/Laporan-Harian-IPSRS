@@ -393,3 +393,43 @@ test("recovery SQL explicitly rejects a missing action instead of allowing SQL N
 });
 
 // CI trigger: recovery schema contract assertions include fail-closed SQL NULL handling.
+
+
+test("reset gate issues a nonce challenge and never uses wildcard CORS", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const path = fileURLToPath(new URL("../supabase/functions/lhi-reset-verify/index.ts", import.meta.url));
+  const source = await readFile(path, "utf8");
+  assert.match(source, /LHI_ALLOWED_ORIGINS/);
+  assert.match(source, /LHI_RATE_LIMIT_SALT/);
+  assert.match(source, /register_lhi_reset_attempt/);
+  assert.match(source, /create_lhi_recovery_challenge/);
+  assert.match(source, /crypto\.getRandomValues/);
+  assert.match(source, /challenge,/);
+  assert.doesNotMatch(source, /Access-Control-Allow-Origin["']?\s*:\s*["']\*["']/);
+  assert.doesNotMatch(source, /console\.(log|error).*code/i);
+});
+
+test("recovery exchange verifies Supabase Auth and consumes challenge server-side", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const path = fileURLToPath(new URL("../supabase/functions/lhi-recovery-exchange/index.ts", import.meta.url));
+  const source = await readFile(path, "utf8");
+  assert.match(source, /LHI_ALLOWED_ORIGINS/);
+  assert.match(source, /db\.auth\.getUser\(bearer\)/);
+  assert.match(source, /consume_lhi_recovery_challenge/);
+  assert.match(source, /crypto\.getRandomValues/);
+  assert.match(source, /recovery_capability: capability/);
+  assert.doesNotMatch(source, /Access-Control-Allow-Origin["']?\s*:\s*["']\*["']/);
+  assert.doesNotMatch(source, /sessionStorage|localStorage/);
+});
+
+test("both reset endpoints explicitly disable gateway JWT because they verify their own proofs", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const path = fileURLToPath(new URL("../supabase/config.toml", import.meta.url));
+  const config = await readFile(path, "utf8");
+  assert.match(config, /\[functions\.lhi-reset-verify\]\s*verify_jwt = false/);
+  assert.match(config, /\[functions\.lhi-recovery-exchange\]\s*verify_jwt = false/);
+  assert.match(config, /\[functions\.ipsrs-api\]\s*verify_jwt = true/);
+});
