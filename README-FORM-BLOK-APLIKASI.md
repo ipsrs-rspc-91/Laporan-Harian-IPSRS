@@ -7,6 +7,8 @@ Menerapkan pengingat bertahap atas keterlambatan pengisian Laporan Harian IPSRS 
 
 ## 2. Aturan penghitungan
 - **Dasar kepatuhan adalah tanggal input LHI**, yaitu tanggal dan waktu ketika data LHI benar-benar berhasil disimpan ke sistem pada kolom **`created_at`**. Bukan tanggal kejadian pekerjaan atau tanggal kejadian yang dipilih pada formulir.
+- **Aturan ini hanya berlaku untuk petugas yang status akunnya AKTIF.** Petugas dengan akun berstatus nonaktif tidak ikut dihitung dalam pemantauan kepatuhan, tahapan peringatan, maupun daftar pemicu blokir berdasarkan ketidakpatuhan LHI selama statusnya nonaktif.
+- Untuk petugas yang akunnya AKTIF tetapi **belum pernah memiliki satu pun LHI sah**, tanggal acuan awal penghitungan adalah **tanggal petugas/akun tersebut mulai diaktifkan di sistem**. Hari aktivasi menjadi tanggal acuan awal, bukan dianggap sebagai tanggal input LHI. Hari tanpa input dihitung dengan aturan tanggal kalender penuh yang sama seperti petugas yang sudah pernah menginput LHI, dimulai setelah tanggal aktivasi. Setelah ada LHI sah, tanggal `created_at` WIB dari LHI sah terakhir menggantikan tanggal aktivasi sebagai acuan penghitungan.
 - Semua waktu `created_at` wajib dikonversi ke zona waktu operasional **WIB (`Asia/Jakarta`)** sebelum menentukan tanggal input.
 - **Tanggal kejadian pekerjaan dan tanggal input LHI adalah dua informasi berbeda.** Tanggal kejadian hanya menjelaskan kapan pekerjaan berlangsung dan tidak digunakan untuk menghitung kepatuhan. Tanggal input menunjukkan kapan petugas benar-benar mengirim/menyimpan laporan dan menjadi dasar penghitungan aktivitas serta hari tanpa input.
 - Jika beberapa pekerjaan memiliki tanggal kejadian yang sama tetapi LHI-nya disimpan pada tanggal input yang berbeda, setiap tanggal penyimpanan tersebut tetap dihitung sebagai hari aktif input. Contohnya, tujuh pekerjaan dengan tanggal kejadian 22 Oktober yang diinput masing-masing pada 22, 23, 24, 25, 26, 27, dan 28 Oktober menunjukkan aktivitas input pada tujuh tanggal kalender.
@@ -137,6 +139,7 @@ Daftar petugas dalam snapshot dikunci saat kelonggaran dimulai. Pergantian tangg
 ## 10. Data dan audit
 Sistem perlu mencatat:
 - Identitas petugas, waktu input LHI terakhir yang sah (`created_at`), serta tanggal input hasil konversi WIB. Tanggal kejadian pekerjaan dicatat sebagai data laporan, tetapi tidak digunakan sebagai dasar hitung kepatuhan.
+- Status akun petugas (aktif/nonaktif) dan tanggal mulai aktif di sistem sebagai tanggal acuan awal bagi petugas aktif yang belum pernah memiliki LHI sah.
 - Status LHI (sah/aktif atau dibatalkan), waktu dan alasan pembatalan, serta dampak pembatalan terhadap tanggal aktivitas input dan penghitungan hari tanpa input. Laporan yang dibatalkan tetap tercatat dalam audit, tetapi tidak dihitung sebagai aktivitas kepatuhan.
 - Jumlah hari kalender berturut-turut tanpa LHI.
 - Tahap peringatan dan waktu pengiriman.
@@ -179,6 +182,7 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 25. Jika perintah **Buka Blokir dan Mulai Kelonggaran 12 Jam** gagal pada salah satu tahap, tidak ada pembukaan blokir sebagian, Mode Blok global tetap aktif, status blokir individual tidak berubah, dan waktu kelonggaran tidak dimulai. KA IPSRS menerima informasi kegagalan dan dapat mencoba kembali.
 26. Jika perintah pemulihan sudah berhasil di server tetapi responsnya hilang, percobaan ulang tidak mengulang atau memperpanjang kelonggaran; sistem tetap menggunakan waktu mulai dan tenggat dari transaksi pertama yang berhasil.
 27. Jika satu-satunya LHI sah yang diinput petugas dalam snapshot selama kelonggaran 12 jam kemudian dibatalkan sebelum tenggat dan tidak ada LHI sah lain sebagai pengganti, input tersebut tidak dihitung sebagai pemenuhan kewajiban; status petugas kembali belum terpenuhi dan Mode Blok Aplikasi global aktif kembali untuk seluruh pengguna ketika tenggat 12 jam berakhir. Jika masih ada LHI sah lain selama periode kelonggaran, kewajiban tetap terpenuhi.
+28. Pemantauan kepatuhan hanya berlaku bagi petugas yang akun/statusnya aktif. Petugas aktif yang belum pernah memiliki LHI sah menggunakan tanggal mulai aktif di sistem sebagai tanggal acuan awal penghitungan hari tanpa input; setelah memiliki LHI sah, acuan berpindah ke tanggal `created_at` WIB LHI sah terakhir. Petugas yang akunnya nonaktif tidak ikut dihitung selama status nonaktif.
 
 ## 12. Tata kelola implementasi
 Dokumen ini hanya acuan konsep. **Jangan mengubah script, database, konfigurasi, atau melakukan deployment sebelum audit dan persetujuan.**
