@@ -497,7 +497,7 @@ if(a==="apiGetStaffMonitoring"){
   if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);
   const rawReports=await fetchAllPages(()=>reportQ.order("created_at",{ascending:true}));
   const {data:states,error:stateError}=await db.from("lhi_staff_monitoring_state")
-    .select("staff_id,active_since,last_valid_input_at,individual_blocked_at,last_calculated_days");
+    .select("staff_id,active_since,baseline_source,last_valid_input_at,individual_blocked_at,last_calculated_days");
   if(stateError)throw stateError;
   const stateById=new Map((states||[]).map((x:any)=>[String(x.staff_id),x]));
   const by:any={},todayCount:any={},total:any={};
@@ -533,6 +533,8 @@ if(a==="apiGetStaffMonitoring"){
       total_transaksi_bulan_ini:total[x.staff_id]||0,
       hari_tanpa_lhi:Number(state.last_calculated_days||0),
       status_akses_lhi:state.individual_blocked_at?"DIBLOKIR":"NORMAL",
+      baseline_source:state.baseline_source||"UNKNOWN",
+      baseline_review_required:state.baseline_source==="LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED",
       last_valid_input_at:state.last_valid_input_at||null};
   });
   return cacheSet("monitor:"+s.staff_id+":"+z.month+":"+tanggal+":"+(d.staffIdFilter||""),{
@@ -574,7 +576,7 @@ if(a==="apiGetStaffMonitoring"){
     .gte("created_at",z.startCreatedAt).lt("created_at",z.endCreatedAtExclusive);
   if(d.staffIdFilter)reportQ=reportQ.eq("staff_id",d.staffIdFilter);
   const visibleReports=await fetchAllPages(()=>reportQ.order("created_at",{ascending:true}));
-  const {data:states,error:stateError}=await db.from("lhi_staff_monitoring_state").select("staff_id,active_since");
+  const {data:states,error:stateError}=await db.from("lhi_staff_monitoring_state").select("staff_id,active_since,baseline_source");
   if(stateError)throw stateError;
   const stateById=new Map((states||[]).map((x:any)=>[String(x.staff_id),x]));
   const sets:any={},tx:any={},requiredByStaff:any={};
@@ -600,7 +602,10 @@ if(a==="apiGetStaffMonitoring"){
     (bm[k]??={bidang:k,jumlah_staf:0,hari_wajib:0,hari_isi:0,hari_belum_isi:0,total_transaksi:0});
     bm[k].jumlah_staf++;bm[k].hari_wajib+=requiredDays;bm[k].hari_isi+=n;
     bm[k].hari_belum_isi+=Math.max(0,requiredDays-n);bm[k].total_transaksi+=tx[x.staff_id]||0;
-    return{...x,role_label:label(x.role),hari_wajib_terhitung:requiredDays,
+    const baselineState:any=stateById.get(String(x.staff_id))||{};
+    return{...x,role_label:label(x.role),baseline_source:baselineState.baseline_source||"UNKNOWN",
+      baseline_review_required:baselineState.baseline_source==="LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED",
+      hari_wajib_terhitung:requiredDays,
       sudah_isi_hari_bulan_ini:n,belum_isi_hari_bulan_ini:Math.max(0,requiredDays-n),
       total_transaksi_bulan_ini:tx[x.staff_id]||0};
   });
@@ -712,7 +717,7 @@ if(a==="apiGetStaffMonitoring"){
  if(d.staffIdFilter)monitoringQuery=monitoringQuery.eq("staff_id",d.staffIdFilter);
  if(d.bidangFilter)monitoringQuery=monitoringQuery.eq("bidang_snapshot",d.bidangFilter);
  const monitoringReports=await fetchAllPages(()=>monitoringQuery.order("created_at",{ascending:true}));
- const {data:monitorStates,error:monitorStateError}=await db.from("lhi_staff_monitoring_state").select("staff_id,active_since");
+ const {data:monitorStates,error:monitorStateError}=await db.from("lhi_staff_monitoring_state").select("staff_id,active_since,baseline_source");
  if(monitorStateError)throw monitorStateError;
  const monitorStateById=new Map((monitorStates||[]).map((x:any)=>[String(x.staff_id),x]));
  const todayCount:any={};
@@ -724,6 +729,7 @@ if(a==="apiGetStaffMonitoring"){
    return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
      bidang:x.bidang||"",status:x.status||"Aktif",status_hari_ini:statusHari,
      wajib_hari_ini:dashboardTanggal>=requiredStart&&dashboardTanggal<=today,
+     baseline_review_required:state.baseline_source==="LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED",
      laporan_hari_ini:todayCount[x.staff_id]||0};
  });
  const sortCount=(a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.label||"").localeCompare(String(b.label||""),"id");const kategori=Object.entries(cat).map(([label,value])=>({label,value})).sort(sortCount);const area=Object.entries(ar).map(([label,value])=>({label,value})).sort(sortCount);const staff=Object.values(sm).sort((a:any,b:any)=>Number(b.value||0)-Number(a.value||0)||String(a.nama||a.staff_id||"").localeCompare(String(b.nama||b.staff_id||""),"id"));const sparePartStats=Object.values(newPartGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);const unitBaruStats=Object.values(newUnitGroups).sort((a:any,b:any)=>Number(b.jumlah||0)-Number(a.jumlah||0)||Number(b.laporan||0)-Number(a.laporan||0)).slice(0,20);return cacheSet(ck,{ok:true,data:{total,selesai:sel,belum:bel,persen:total?Math.round(sel/total*100):0,kategori,area,staff,recent,pencapaian:pc,spare_part_baru:spare,unit_baru:unit,spare_part_total_quantity:spareQty,unit_baru_total_quantity:unitQty,spare_part_stats:sparePartStats,unit_baru_stats:unitBaruStats,monitoring_today:{tanggal:dashboardTanggal,data:monitoringToday}}})
