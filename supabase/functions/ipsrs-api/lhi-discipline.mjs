@@ -155,3 +155,122 @@ export function evaluateDiscipline(staffRows, reportsByStaff, todayWib) {
     globalBlockTriggers: evaluations.filter((row) => row.action === "GLOBAL_BLOCK"),
   };
 }
+
+
+/**
+ * Build one team broadcast per warning stage and date, with every delinquent
+ * name included. Personal notifications are represented separately so the
+ * database writer can apply an idempotency key per recipient.
+ */
+export function buildWarningNotifications(evaluations, activeStaff, todayWib) {
+  parseDateKey(todayWib, "Tanggal notifikasi");
+  const stages = [
+    { action: "WARNING_1", label: "Peringatan 1", day: 4 },
+    { action: "WARNING_2", label: "Peringatan 2", day: 6 },
+    { action: "WARNING_3", label: "Peringatan 3", day: 7 },
+  ];
+  const recipients = (Array.isArray(activeStaff) ? activeStaff : [])
+    .filter((staff) => String(staff?.status || "").toLowerCase() === "aktif")
+    .map((staff) => staff.staff_id)
+    .filter(Boolean);
+
+  return stages.flatMap((stage) => {
+    const delinquents = (Array.isArray(evaluations) ? evaluations : [])
+      .filter((row) => row.action === stage.action);
+    if (!delinquents.length) return [];
+
+    const names = delinquents.map((row) => row.nama || row.staff_id);
+    const warning = stage.action === "WARNING_3"
+      ? "Jika sampai besok belum mengisi LHI sah, hak akses aplikasi akan diblokir pada hari ke-8."
+      : "Mohon segera mengisi LHI sah dan saling mengingatkan rekan yang tercantum.";
+    const message = `${stage.label} (hari ke-${stage.day}; ${stage.day} hari tanpa LHI): ${names.join(", ")}. ${warning}`;
+
+    return [{
+      event_key: `LHI:${todayWib}:${stage.action}:TEAM`,
+      action: stage.action,
+      subject: stage.label,
+      message,
+      delinquent_staff_ids: delinquents.map((row) => row.staff_id),
+      recipients: recipients.map((recipient) => ({
+        recipient_staff_id: recipient,
+        event_key: `LHI:${todayWib}:${stage.action}:${recipient}`,
+      })),
+    }];
+  });
+}
+
+/** One grace obligation per delinquent active employee, never per missed day. */
+export function buildGraceSnapshot(evaluations, snapshotAt) {
+  if (Number.isNaN(new Date(snapshotAt).getTime())) {
+    throw new TypeError("Waktu snapshot tidak valid.");
+  }
+  const unique = new Map();
+  for (const row of Array.isArray(evaluations) ? evaluations : []) {
+    if (row.action !== "GLOBAL_BLOCK" || row.employment_status?.toLowerCase() !== "aktif") continue;
+    if (!row.staff_id) throw new TypeError("staff_id wajib tersedia pada snapshot.");
+    if (!unique.has(row.staff_id)) {
+      unique.set(row.staff_id, {
+        staff_id: row.staff_id,
+        snapshot_created_at: new Date(snapshotAt).toISOString(),
+        anchor_wib: row.anchor_wib,
+        missed_full_days_at_snapshot: row.missed_full_days,
+        obligation_status: "PENDING",
+      });
+    }
+  }
+  return [...unique.values()];
+}
+
+/**
+ * Evaluate a grace snapshot against current employment state and valid LHI
+ * saved inside [startedAt, deadlineAt). EXCLUDED_INACTIVE is terminal: later
+ * reactivation must not revive an old snapshot obligation.
+ */
+export function evaluateGraceSnapshot(snapshotMembers, staffById, reportsByStaff, startedAt, deadlineAt) {
+  const startMs = new Date(startedAt).getTime();
+  const endMs = new Date(deadlineAt).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    throw new TypeError("Rentang kelonggaran 12 jam tidak valid.");
+  }
+
+  const getStaff = (id) => staffById instanceof Map ? staffById.get(id) : staffById?.[id];
+  const getReports = (id) => reportsByStaff instanceof Map
+    ? reportsByStaff.get(id) || []
+    : reportsByStaff?.[id] || [];
+
+  const members = (Array.isArray(snapshotMembers) ? snapshotMembers : []).map((member) => {
+    if (member.obligation_status === "EXCLUDED_INACTIVE") {
+      return { ...member, obligation_status: "EXCLUDED_INACTIVE", qualifying_report_id: null };
+    }
+
+    const staff = getStaff(member.staff_id);
+    if (!staff || String(staff.status || "").toLowerCase() !== "aktif") {
+      return {
+        ...member,
+        obligation_status: "EXCLUDED_INACTIVE",
+        exclusion_reason: "STATUS_NONAKTIF",
+        qualifying_report_id: null,
+      };
+    }
+
+    const qualifying = getReports(member.staff_id)
+      .filter((report) => report && report.deleted_at == null && report.created_at)
+      .filter((report) => {
+        const created = new Date(report.created_at).getTime();
+        return Number.isFinite(created) && created >= startMs && created < endMs;
+      })
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
+
+    return qualifying
+      ? { ...member, obligation_status: "COMPLETED", qualifying_report_id: qualifying.id || qualifying.report_id || null }
+      : { ...member, obligation_status: "PENDING", qualifying_report_id: null };
+  });
+
+  const pendingActive = members.filter((member) => member.obligation_status === "PENDING");
+  return {
+    members,
+    pendingActive,
+    allSatisfied: pendingActive.length === 0,
+    shouldReactivateGlobalBlock: pendingActive.length > 0,
+  };
+}
