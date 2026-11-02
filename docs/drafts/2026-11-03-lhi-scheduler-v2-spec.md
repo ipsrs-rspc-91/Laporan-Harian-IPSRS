@@ -164,3 +164,25 @@ Minimal harus ada test untuk:
 - Test lokal sebelumnya: 6/6 lulus. Test tambahan yang baru ditambahkan belum dijalankan ulang pada environment project.
 - Scheduler produksi belum diubah dan belum di-deploy.
 - Spesifikasi ini belum menjadi SQL migration atau fungsi aktif.
+
+
+## 10. Helper implementasi dan evaluasi grace
+
+Helper murni di `supabase/functions/ipsrs-api/lhi-discipline.mjs` kini juga menyediakan:
+
+- `evaluateDiscipline(staffRows, reportsByStaff, todayWib)`: satu evaluasi untuk semua petugas Aktif tanpa pengecualian role dan tanpa mengeluarkan status akses BLOCKED_LHI dari pemantauan.
+- `buildWarningNotifications(evaluations, activeStaff, todayWib)`: satu broadcast tim per tahap/tanggal yang menyebut seluruh nama petugas lalai, serta daftar penerima dengan event key per penerima.
+- `buildGraceSnapshot(evaluations, snapshotAt)`: hanya petugas Aktif yang menjadi pemicu GLOBAL_BLOCK, satu baris per staff_id.
+- `evaluateGraceSnapshot(snapshotMembers, staffById, reportsByStaff, startedAt, deadlineAt)`: hanya laporan sah non-deleted dalam rentang [mulai, tenggat) yang memenuhi kewajiban; petugas NONAKTIF dikecualikan; status EXCLUDED_INACTIVE bersifat terminal.
+
+Helper tersebut merupakan aturan referensi dan test fixture. Ia belum menggantikan scheduler PostgreSQL, belum menulis notifikasi ke database, belum mengelola transaksi, dan belum boleh dianggap sebagai implementasi produksi.
+
+## 11. Pengujian otomatis
+
+Workflow GitHub Actions `.github/workflows/lhi-discipline-tests.yml` telah ditambahkan. Workflow menjalankan:
+
+```sh
+node --test tests/lhi-discipline.test.mjs
+```
+
+Jangan menyatakan pengujian lulus hanya karena workflow terpicu. Periksa status run dan kesimpulan job; jika masih `in_progress`, hasil belum final. Semua perubahan berikutnya pada helper dan test harus memicu ulang workflow.
