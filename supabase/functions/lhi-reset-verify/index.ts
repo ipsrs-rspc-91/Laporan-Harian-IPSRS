@@ -20,9 +20,14 @@ async function sha256(value: string) {
   return [...new Uint8Array(digest)].map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
+function randomToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return [...bytes].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return response({ ok: false, message: "Method not allowed." }, 405);
+  if (req.method !== "POST") return response({ ok: false, valid: false, message: "Method not allowed." }, 405);
 
   try {
     const url = Deno.env.get("SUPABASE_URL");
@@ -60,7 +65,29 @@ Deno.serve(async (req: Request) => {
     }
     if (diff !== 0) return response({ ok: true, valid: false, message: "Kode reset tidak benar." });
 
-    return response({ ok: true, valid: true, message: "Kode reset diterima. Silakan login menggunakan akun KA IPSRS." });
+    const { data: blockSetting, error: blockError } = await db
+      .from("access_settings").select("value").eq("key", "LHI_GLOBAL_BLOCK").maybeSingle();
+    if (blockError) throw blockError;
+    if (String(blockSetting?.value || "").toUpperCase() !== "AKTIF") {
+      return response({ ok: false, valid: false, message: "Mode Blok Aplikasi tidak sedang aktif. Reset tidak diperlukan." }, 409);
+    }
+
+    const token = randomToken();
+    const tokenHash = await sha256(token);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const { data: issued, error: issueError } = await db.rpc("issue_lhi_recovery_token", {
+      p_token_hash: tokenHash,
+      p_expires_at: expiresAt,
+    });
+    if (issueError || issued !== true) throw issueError || new Error("Recovery token issuance failed.");
+
+    return response({
+      ok: true,
+      valid: true,
+      recovery_token: token,
+      expires_at: expiresAt,
+      message: "Kode reset diterima. Silakan login menggunakan akun KA IPSRS.",
+    });
   } catch {
     return response({ ok: false, valid: false, message: "Reset belum dapat diverifikasi oleh server." }, 503);
   }
