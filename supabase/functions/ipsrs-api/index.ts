@@ -248,7 +248,9 @@ async function act(ctx:any,a:string,d:any,req?:Request){
  const {data:blockSetting,error:blockError}=await db.from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
  if(blockError)throw blockError;
  if(!blockSetting)throw Error("Status Mode Blok Aplikasi tidak ditemukan. Seluruh akses ditahan sampai status dapat diverifikasi.");
- const globalBlocked=String(blockSetting.value||"").toUpperCase()==="AKTIF";
+ const blockMode=String(blockSetting.value||"").toUpperCase();
+ if(blockMode!=="AKTIF"&&blockMode!=="NONAKTIF")throw Error("Nilai Mode Blok Aplikasi tidak valid. Seluruh akses ditahan sampai status diperbaiki.");
+ const globalBlocked=blockMode==="AKTIF";
  const s=await staff(ctx,req,globalBlocked&&recoveryActions.has(a));
  if(globalBlocked){
    if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
