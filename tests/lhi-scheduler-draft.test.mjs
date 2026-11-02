@@ -53,7 +53,7 @@ test("scheduler never changes employment status", () => {
 
 test("grace is not finalized before its deadline", () => {
   assert.match(sql, /IF v_now < v_grace\.deadline_at THEN[\s\S]*?deadline_reached', false/);
-  assert.match(sql, /IF v_pending > 0 THEN[\s\S]*?status = 'EXPIRED'/);
+  assert.match(sql, /IF v_pending > 0 THEN[\s\S]*?status = 'LOCKED'/);
   assert.match(sql, /status = 'COMPLETED'/);
 });
 
