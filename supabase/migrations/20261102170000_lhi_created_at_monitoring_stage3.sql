@@ -312,10 +312,21 @@ SET search_path = ''
 AS $function$
 BEGIN
   IF OLD.status IS DISTINCT FROM 'GRACE' AND NEW.status = 'GRACE' THEN
-    UPDATE public.lhi_staff_monitoring_state
-    SET individual_blocked_at = NULL,
-        updated_at = clock_timestamp()
-    WHERE individual_blocked_at IS NOT NULL;
+    WITH unblocked AS (
+      UPDATE public.lhi_staff_monitoring_state
+      SET individual_blocked_at = NULL,
+          updated_at = clock_timestamp()
+      WHERE individual_blocked_at IS NOT NULL
+      RETURNING staff_id
+    )
+    INSERT INTO public.audit_log(
+      username, staff_id, action, report_id, keterangan,
+      field_changed, old_value, new_value
+    )
+    SELECT 'SYSTEM', u.staff_id, 'UNBLOCK_LHI_GLOBAL_GRACE', NULL,
+      'Blokir individual dibuka bersamaan dengan pembukaan kelonggaran 12 jam.',
+      'lhi_staff_monitoring_state.individual_blocked_at', 'DIBLOKIR', 'NORMAL'
+    FROM unblocked u;
   END IF;
   RETURN NEW;
 END;
@@ -348,6 +359,8 @@ DECLARE
   v_trigger_staff_name text;
   v_incident_id bigint;
   v_count integer := 0;
+  v_notif_count integer := 0;
+  v_blocked_count integer := 0;
   v_threshold integer;
   v_event_key text;
   v_message text;
@@ -441,6 +454,18 @@ BEGIN
         FROM public.staff s
         WHERE s.status = 'Aktif'
         ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
+        GET DIAGNOSTICS v_notif_count = ROW_COUNT;
+        IF v_notif_count > 0 THEN
+          INSERT INTO public.audit_log(
+            username, staff_id, action, report_id, keterangan,
+            field_changed, old_value, new_value
+          ) VALUES (
+            'SYSTEM', v_staff.staff_id, 'LHI_WARNING_DAY_' || v_threshold, NULL,
+            'Peringatan LHI hari ke-' || v_threshold ||
+            ' diterbitkan berdasarkan created_at WIB.',
+            'lhi_discipline_notifications', NULL, v_event_key
+          );
+        END IF;
       END IF;
     END LOOP;
 
@@ -451,6 +476,17 @@ BEGIN
           updated_at = clock_timestamp()
       WHERE staff_id = v_staff.staff_id
         AND individual_blocked_at IS NULL;
+      GET DIAGNOSTICS v_blocked_count = ROW_COUNT;
+      IF v_blocked_count > 0 THEN
+        INSERT INTO public.audit_log(
+          username, staff_id, action, report_id, keterangan,
+          field_changed, old_value, new_value
+        ) VALUES (
+          'SYSTEM', v_staff.staff_id, 'BLOCK_LHI_DAY_8', NULL,
+          'Akses aplikasi diblokir individual pada hari ke-8 tanpa LHI valid; status kepegawaian tetap Aktif.',
+          'lhi_staff_monitoring_state.individual_blocked_at', NULL, clock_timestamp()::text
+        );
+      END IF;
 
       v_event_key := v_staff.staff_id || ':' || v_baseline_date::text || ':DAY_8';
       INSERT INTO public.lhi_discipline_notifications(
