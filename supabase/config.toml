@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.ipsrs-bulk-provision-once]
 verify_jwt = true
+
+[functions.lhi-recovery-exchange]
+verify_jwt = false
