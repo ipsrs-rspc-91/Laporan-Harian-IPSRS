@@ -6,11 +6,14 @@
 Menerapkan pengingat bertahap atas keterlambatan pengisian Laporan Harian IPSRS (LHI), mendorong saling mengingatkan antarpetugas, dan menerapkan Mode Blok Aplikasi jika kewajiban LHI tidak dipenuhi.
 
 ## 2. Aturan penghitungan
-- Sumber acuan pengisian adalah waktu data LHI benar-benar disimpan, yaitu kolom **`created_at`**, bukan tanggal pekerjaan/tanggal yang dipilih pada formulir.
+- **Dasar kepatuhan adalah tanggal input LHI**, yaitu tanggal dan waktu ketika data LHI benar-benar berhasil disimpan ke sistem pada kolom **`created_at`**. Bukan tanggal kejadian pekerjaan atau tanggal kejadian yang dipilih pada formulir.
 - Semua waktu `created_at` wajib dikonversi ke zona waktu operasional **WIB (`Asia/Jakarta`)** sebelum menentukan tanggal input.
-- Penghitungan menggunakan **hari kalender penuh yang telah terlewati** sejak tanggal input LHI terakhir. Secara konsep: `hari_tidak_mengisi = tanggal_WIB_hari_ini - tanggal_WIB_input_terakhir`, dengan hari berjalan yang belum berakhir tidak dimasukkan sebagai satu hari tambahan.
-- Hari berjalan **tidak dihitung sebelum pukul 00.00 WIB pada hari berikutnya**. Dengan demikian, angka bertambah ketika satu tanggal kalender penuh telah terlewati; bukan berdasarkan pembulatan durasi jam atau kelipatan 24 jam dari jam input.
-- Contoh: input terakhir 22 Oktober 2026 pukul 08.37 WIB menghasilkan 9 hari tidak mengisi pada 1 November 2026 sepanjang tanggal 1 November masih berjalan. Jika belum ada input sampai pergantian ke 2 November 2026 pukul 00.00 WIB, hitungan menjadi 10 hari.
+- **Tanggal kejadian pekerjaan dan tanggal input LHI adalah dua informasi berbeda.** Tanggal kejadian hanya menjelaskan kapan pekerjaan berlangsung dan tidak digunakan untuk menghitung kepatuhan. Tanggal input menunjukkan kapan petugas benar-benar mengirim/menyimpan laporan dan menjadi dasar penghitungan aktivitas serta hari tanpa input.
+- Jika beberapa pekerjaan memiliki tanggal kejadian yang sama tetapi LHI-nya disimpan pada tanggal input yang berbeda, setiap tanggal penyimpanan tersebut tetap dihitung sebagai hari aktif input. Contohnya, tujuh pekerjaan dengan tanggal kejadian 22 Oktober yang diinput masing-masing pada 22, 23, 24, 25, 26, 27, dan 28 Oktober menunjukkan aktivitas input pada tujuh tanggal kalender.
+- Jika petugas menyimpan beberapa LHI pada tanggal kalender yang sama, tanggal tersebut dihitung **satu hari aktif input**, bukan sebanyak jumlah LHI yang disimpan. Jumlah laporan tidak menggandakan jumlah hari kepatuhan.
+- Penghitungan menggunakan **jumlah tanggal kalender penuh tanpa input setelah tanggal input terakhir**. Secara konsep: `hari_tidak_mengisi = max(0, tanggal_WIB_hari_ini - tanggal_WIB_input_terakhir - 1 hari)`. Hari tanggal input terakhir tidak dihitung sebagai hari tanpa input, dan tanggal berjalan yang belum selesai juga tidak dihitung.
+- Hari tanpa input bertambah pada pukul **00.00 WIB** setelah satu tanggal kalender tanpa input selesai terlewati. Penghitungan bukan berdasarkan pembulatan durasi jam atau kelipatan 24 jam dari jam input.
+- Contoh: input terakhir 22 Oktober 2026 pukul 08.37 WIB. Pada 1 November 2026, jumlah hari kalender penuh tanpa input adalah 9 hari (23–31 Oktober). Jika belum ada input sampai pergantian ke 2 November 2026 pukul 00.00 WIB, jumlahnya menjadi 10 hari (23 Oktober–1 November).
 - **Sabtu, Minggu, dan hari libur tetap dihitung** sebagai hari kalender.
 - Streak petugas terputus/reset setelah petugas menginput LHI baru yang sah. Penghitungan berikutnya dimulai dari tanggal input terbaru tersebut.
 - Perhitungan harus konsisten di backend/server untuk seluruh petugas, notifikasi, rekap kedisiplinan, penonaktifan individual, dan Mode Blok Aplikasi. Frontend hanya menampilkan angka hasil perhitungan server dan tidak menghitung ulang dengan aturan berbeda.
@@ -97,7 +100,7 @@ Ketentuan snapshot yang telah ditetapkan: saat KA IPSRS memulai kelonggaran 12 j
 
 ## 10. Data dan audit
 Sistem perlu mencatat:
-- Identitas petugas dan tanggal LHI terakhir yang sah.
+- Identitas petugas, waktu input LHI terakhir yang sah (`created_at`), serta tanggal input hasil konversi WIB. Tanggal kejadian pekerjaan dicatat sebagai data laporan, tetapi tidak digunakan sebagai dasar hitung kepatuhan.
 - Jumlah hari kalender berturut-turut tanpa LHI.
 - Tahap peringatan dan waktu pengiriman.
 - Perubahan status aktif/nonaktif, waktu, dan alasan.
@@ -125,6 +128,7 @@ Riwayat audit tidak boleh dihapus atau ditimpa.
 13. Masih ada satu petugas belum melengkapi kewajiban saat 12 jam habis: Mode Blok aktif kembali.
 14. Sabtu, Minggu, dan hari libur tetap dihitung.
 15. Setiap tahap peringatan hanya dikirim sekali per petugas per kejadian/tahap, dan notifikasi ke seluruh tim mencantumkan nama petugas yang benar-benar memenuhi kondisi tahap tersebut.
+16. Tujuh LHI dengan tanggal kejadian pekerjaan yang sama, tetapi disimpan pada tujuh tanggal input berbeda, dihitung sebagai aktivitas input pada tujuh hari tersebut. Beberapa LHI yang disimpan pada satu tanggal input yang sama hanya dihitung sebagai satu hari aktif input.
 
 ## 12. Tata kelola implementasi
 Dokumen ini hanya acuan konsep. **Jangan mengubah script, database, konfigurasi, atau melakukan deployment sebelum audit dan persetujuan.**
@@ -139,4 +143,4 @@ Sebelum implementasi:
 7. Uji seluruh skenario penerimaan dan verifikasi log sebelum menyatakan selesai.
 
 ---
-**Prinsip utama:** peringatan bertahap pada hari ke-4, ke-6, dan ke-7 disampaikan kepada petugas yang lalai dan seluruh tim dengan mencantumkan nama petugas; pada hari ke-8 petugas yang dinonaktifkan menerima peringatan saat mencoba login dan menekan tombol Masuk, sedangkan petugas lain yang akunnya tetap aktif menerima notifikasi di dalam aplikasi setelah berhasil login atau ketika sudah berada di aplikasi, dengan mencantumkan nama petugas yang dinonaktifkan; masa tunggu hari ke-9; Mode Blok global pada hari ke-10; pemulihan global hanya setelah semua petugas dalam daftar kewajiban melengkapi LHI.
+**Prinsip utama:** kepatuhan dihitung dari tanggal input LHI (`created_at`) dalam WIB, bukan tanggal kejadian pekerjaan; beberapa LHI dengan tanggal kejadian sama tetap dihitung menurut tanggal input masing-masing, sedangkan beberapa LHI pada tanggal input yang sama dihitung sebagai satu hari aktif; peringatan bertahap pada hari ke-4, ke-6, dan ke-7 disampaikan kepada petugas yang lalai dan seluruh tim dengan mencantumkan nama petugas; pada hari ke-8 petugas yang dinonaktifkan menerima peringatan saat mencoba login dan menekan tombol Masuk, sedangkan petugas lain yang akunnya tetap aktif menerima notifikasi di dalam aplikasi setelah berhasil login atau ketika sudah berada di aplikasi, dengan mencantumkan nama petugas yang dinonaktifkan; masa tunggu hari ke-9; Mode Blok global pada hari ke-10; pemulihan global hanya setelah semua petugas dalam daftar kewajiban melengkapi LHI.
