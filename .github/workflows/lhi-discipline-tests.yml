@@ -10,6 +10,9 @@ on:
       - "tests/lhi-schema-draft.test.mjs"
       - "tests/lhi-scheduler-draft.test.mjs"
       - "tests/lhi-atomic-reset-draft.test.mjs"
+      - "tests/lhi-recovery-action.test.mjs"
+      - "supabase/functions/lhi-recovery-action/index.ts"
+      - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
       - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
       - "docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql"
       - "docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql"
@@ -41,4 +44,4 @@ jobs:
         with:
           node-version: "22"
       - name: Run LHI discipline unit tests
-        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs
+        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs tests/lhi-recovery-action.test.mjs
