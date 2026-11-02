@@ -257,13 +257,14 @@ async function staff(ctx:any,req?:Request,allowKaRecovery=false,skipLegacyWhenGl
            },{onConflict:"staff_id"});
          if(blockError)throw blockError;
          if(!monitorState?.individual_blocked_at){
-           await ctx.supabaseAdmin.from("audit_log").insert({
+           const {error:auditError}=await ctx.supabaseAdmin.from("audit_log").insert({
              username:"SYSTEM",staff_id:data.staff_id,action:"BLOCK_LHI_DAY_8",
              report_id:null,
              keterangan:"Akses LHI diblokir individual pada hari ke-8 berdasarkan created_at WIB. Status kepegawaian tetap Aktif.",
              field_changed:"lhi_staff_monitoring_state.individual_blocked_at",
              old_value:null,new_value:blockedAt
            });
+           if(auditError)throw auditError;
          }
          throw Error("Akun Anda diblokir secara individual karena tidak mengisi LHI selama 8 hari kalender. Status kepegawaian tetap Aktif. Tunggu pemulihan oleh KA IPSRS.");
        }
