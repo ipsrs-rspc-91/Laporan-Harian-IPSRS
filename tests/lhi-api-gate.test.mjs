@@ -53,3 +53,9 @@ test("global lock is checked before staff lookup or auth mapping fallback", () =
   const fallbackWrite = api.indexOf(".update({auth_user_id:uid})");
   assert.ok(lockCheck >= 0 && staffLookup > lockCheck && fallbackWrite > lockCheck);
 });
+
+test("block status reports active grace deadline without globally blocking normal staff", () => {
+  assert.match(blockStatus, /\.eq\("status", "GRACE"\)/);
+  assert.match(blockStatus, /grace_active: Boolean\(graceIncident\)/);
+  assert.match(blockStatus, /grace_deadline_at/);
+});
