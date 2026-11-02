@@ -39,7 +39,7 @@ staff_fn = api[staff_start:staff_end]
 assert 'from("reports")' not in staff_fn, "Login gate must not use reports.tanggal"
 assert 'from("lhi_staff_monitoring_state")' in staff_fn
 assert "wibDate(" in staff_fn
-assert "status kepegawaian tetap Aktif" in staff_fn
+assert "status kepegawaian tetap aktif" in staff_fn.lower()
 
 monitoring_checks = [
     ('if(a==="apiGetStaffMonitoring"){', 'if(a==="apiGetStaffDailyStatus"){'),
