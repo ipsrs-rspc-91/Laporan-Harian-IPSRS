@@ -39,8 +39,8 @@ test("new snapshot and event tables deny direct client access", () => {
 });
 
 test("reactivation only clears an LHI-caused individual block", () => {
-  assert.match(sql, /OLD\.status, ''\) = 'nonaktif'/i);
-  assert.match(sql, /NEW\.status, ''\) = 'aktif'/i);
+  assert.match(sql, /COALESCE\(OLD\.status, ''\)\) = 'nonaktif'/i);
+  assert.match(sql, /COALESCE\(NEW\.status, ''\)\) = 'aktif'/i);
   assert.match(sql, /OLD\.lhi_access_status = 'BLOCKED_LHI'/);
   assert.match(sql, /OLD\.lhi_access_block_reason = 'LHI_NONCOMPLIANCE'/);
   assert.doesNotMatch(sql, /UPDATE public\.access_settings/i);
@@ -49,11 +49,11 @@ test("reactivation only clears an LHI-caused individual block", () => {
 test("report save reactivation trigger is removed without touching unrelated report triggers", () => {
   assert.match(sql, /DROP TRIGGER IF EXISTS trg_reactivate_lhi_staff_after_report ON public\.reports/);
   assert.match(sql, /DROP TRIGGER IF EXISTS trg_protect_lhi_manual_unblock_status ON public\.staff/);
-  assert.match(sql, /unrelated report identity\/category\/item\/timestamp triggers remain untouched/);
+  assert.match(sql, /unrelated[\s\S]*report identity\/category\/item\/timestamp triggers remain untouched/);
 });
 
 test("legacy anchor and status reconciliation are explicitly marked as required review", () => {
   assert.match(sql, /Provisional anchors for review only/);
-  assert.match(sql, /Do not enable discipline scheduler until the values are reconciled/);
+  assert.match(sql, /Do not enable discipline scheduler[\s\S]*until the values are reconciled/);
   assert.match(sql, /ALTER TABLE public\.staff VALIDATE CONSTRAINT staff_lhi_access_status_check/);
 });
