@@ -109,6 +109,8 @@ DECLARE
   v_now timestamptz := clock_timestamp();
   v_expires timestamptz;
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
+
   IF p_nonce_hash IS NULL OR p_nonce_hash !~ '^[0-9a-f]{64}$'
      OR p_ip_hash IS NULL OR p_ip_hash !~ '^[0-9a-f]{64}$' THEN
     RAISE EXCEPTION 'Invalid recovery challenge input.';
@@ -168,6 +170,8 @@ DECLARE
   v_now timestamptz := clock_timestamp();
   v_expires timestamptz;
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
+
   IF p_nonce_hash IS NULL OR p_nonce_hash !~ '^[0-9a-f]{64}$'
      OR p_session_token_hash IS NULL OR p_session_token_hash !~ '^[0-9a-f]{64}$'
      OR p_auth_user_id IS NULL THEN
@@ -261,6 +265,8 @@ DECLARE
   v_staff public.staff%ROWTYPE;
   v_incident public.lhi_discipline_incidents%ROWTYPE;
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
+
   IF p_session_token_hash IS NULL OR p_session_token_hash !~ '^[0-9a-f]{64}$' THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INVALID_SESSION');
   END IF;
