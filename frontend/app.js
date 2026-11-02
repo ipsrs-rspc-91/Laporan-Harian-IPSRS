@@ -426,9 +426,10 @@
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
       case 'apiListEditPermissions':
-      case 'apiGetLhiGraceStatus':
       case 'apiGetSystemInfo':
         payload.token=token; break;
+      case 'apiGetLhiGraceStatus':
+        payload.token=token; payload.recoveryToken=(function(){try{return sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'';}catch(_e){return '';}})(); break;
       case 'apiStartLhiGrace':
         payload.token=token; payload.recoveryToken=(function(){try{return sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'';}catch(_e){return '';}})(); break;
       case 'apiChangePassword':
