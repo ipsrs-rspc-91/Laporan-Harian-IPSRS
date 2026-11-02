@@ -87,23 +87,80 @@ CREATE INDEX IF NOT EXISTS idx_lhi_obligation_audit_incident_time
 
 -- Existing active staff have no historical activation log. Use staff.created_at
 -- as a clearly-labelled legacy fallback; every future reactivation is timestamped.
+WITH legacy_block AS (
+  SELECT DISTINCT ON (a.staff_id)
+    a.staff_id, a."timestamp" AS blocked_at
+  FROM public.audit_log a
+  WHERE a.action = 'BLOCK_LOGIN_LHI_7_HARI'
+    AND a.old_value = 'Aktif'
+    AND a.new_value = 'DIBLOKIR_LHI_7_HARI'
+  ORDER BY a.staff_id, a."timestamp" DESC
+),
+legacy_manual_unblock AS (
+  SELECT a.staff_id, max(a."timestamp") AS manual_unblock_at
+  FROM public.audit_log a
+  WHERE a.action = 'ADMIN_UNBLOCK_LHI_7_HARI'
+  GROUP BY a.staff_id
+),
+legacy_report_reactivation AS (
+  SELECT b.staff_id, min(r.created_at) AS reactivated_at
+  FROM legacy_block b
+  JOIN public.reports r
+    ON r.staff_id = b.staff_id
+   AND r.created_at > b.blocked_at
+  GROUP BY b.staff_id
+),
+legacy_baseline AS (
+  SELECT
+    s.staff_id,
+    s.status,
+    s.created_at,
+    b.blocked_at,
+    m.manual_unblock_at,
+    r.reactivated_at,
+    CASE
+      WHEN s.status <> 'Aktif' THEN NULL
+      WHEN m.manual_unblock_at IS NOT NULL
+       AND (b.blocked_at IS NULL OR m.manual_unblock_at > b.blocked_at)
+       AND (r.reactivated_at IS NULL OR m.manual_unblock_at >= r.reactivated_at)
+        THEN m.manual_unblock_at
+      WHEN r.reactivated_at IS NOT NULL THEN r.reactivated_at
+      WHEN b.blocked_at IS NOT NULL THEN clock_timestamp()
+      ELSE s.created_at
+    END AS active_since,
+    CASE
+      WHEN s.status <> 'Aktif' THEN 'INACTIVE'
+      WHEN m.manual_unblock_at IS NOT NULL
+       AND (b.blocked_at IS NULL OR m.manual_unblock_at > b.blocked_at)
+       AND (r.reactivated_at IS NULL OR m.manual_unblock_at >= r.reactivated_at)
+        THEN 'LEGACY_MANUAL_UNBLOCK_AUDIT'
+      WHEN r.reactivated_at IS NOT NULL THEN 'LEGACY_REPORT_REACTIVATION_INFERRED'
+      WHEN b.blocked_at IS NOT NULL THEN 'LEGACY_REACTIVATION_UNKNOWN_REVIEW_REQUIRED'
+      ELSE 'LEGACY_CREATED_AT_FALLBACK'
+    END AS baseline_source
+  FROM public.staff s
+  LEFT JOIN legacy_block b ON b.staff_id = s.staff_id
+  LEFT JOIN legacy_manual_unblock m ON m.staff_id = s.staff_id
+  LEFT JOIN legacy_report_reactivation r ON r.staff_id = s.staff_id
+)
 INSERT INTO public.lhi_staff_monitoring_state(
   staff_id, active_since, baseline_source, last_valid_input_at, updated_at
 )
 SELECT
-  s.staff_id,
-  CASE WHEN s.status = 'Aktif' THEN s.created_at ELSE NULL END,
-  CASE WHEN s.status = 'Aktif' THEN 'LEGACY_CREATED_AT_FALLBACK' ELSE 'INACTIVE' END,
+  b.staff_id,
+  b.active_since,
+  b.baseline_source,
   (
     SELECT max(r.created_at)
     FROM public.reports r
-    WHERE r.staff_id = s.staff_id
+    WHERE r.staff_id = b.staff_id
       AND r.deleted_at IS NULL
-      AND s.status = 'Aktif'
-      AND r.created_at >= s.created_at
+      AND b.status = 'Aktif'
+      AND b.active_since IS NOT NULL
+      AND r.created_at >= b.active_since
   ),
   clock_timestamp()
-FROM public.staff s
+FROM legacy_baseline b
 ON CONFLICT (staff_id) DO NOTHING;
 
 INSERT INTO public.staff_employment_status_history(
