@@ -164,7 +164,7 @@ with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
         assert scalar(cur, "SELECT status FROM public.staff WHERE staff_id='D8'") == "Aktif"
         assert scalar(cur, "SELECT status FROM public.staff WHERE staff_id='INACTIVE'") == "Nonaktif"
         assert scalar(cur, """SELECT count(DISTINCT event_key) FROM public.lhi_discipline_notifications
-                              WHERE event_key LIKE 'D8:%:DAY_%'""") == 4
+                              WHERE event_key LIKE 'D8:%%:DAY_%%'""") == 4
         print("PASS day-8 individual block, warnings, manual-unblock window, and employment-status separation")
 
         # A valid server input clears the individual block even if work date is old.
