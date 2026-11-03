@@ -35,6 +35,20 @@
   async function render(){
     const el=document.getElementById('accessContent');if(!el)return;el.innerHTML='<div class="access-muted">Memuat pengaturan...</div>';
     try{
+      const session=typeof getSession==='function'?getSession():null;
+      if(session&&session.recovery_mode){
+        const [ac,grace]=await Promise.all([
+          callAccessRead('apiGetAccessControl'),
+          callAccessRead('apiGetLhiGraceStatus')
+        ]);
+        if(!ac||!ac.ok)throw new Error(ac&&ac.msg||'Gagal memuat status blokir.');
+        const graceActive=!!(grace&&grace.ok&&grace.data&&grace.data.status==='GRACE');
+        const graceText=graceActive
+          ? 'Kelonggaran 12 jam sudah berjalan. Tenggat: '+esc(new Date(grace.data.deadline_at).toLocaleString('id-ID'))
+          : 'Belum ada kelonggaran yang berjalan.';
+        el.innerHTML='<div class="access-card"><h3>Pemulihan Mode Blok Aplikasi</h3><div class="access-muted">Sesi ini dibatasi oleh server. Hanya tindakan pemulihan pada menu Hak Akses yang diizinkan.</div><p><strong>Status blokir global: '+esc(ac.lhi_global_block||'TIDAK DIKETAHUI')+'</strong></p><p class="access-muted">'+graceText+'</p>'+(ac.lhi_global_block==='AKTIF'&&!graceActive?'<button class="access-btn-primary" onclick="deactivateLhiGlobalBlock()">Buka Blokir dan Mulai Kelonggaran 12 Jam</button>':'<div class="access-muted">Tidak ada tindakan pembukaan blokir yang dapat dijalankan pada status ini.</div>')+'</div>';
+        return;
+      }
       const [ac,st,pm,grace]=await Promise.all([callAccessRead('apiGetAccessControl'),callAccessRead('apiListStaff'),callAccessRead('apiListEditPermissions'),callAccessRead('apiGetLhiGraceStatus')]);
       if(!ac.ok)throw new Error(ac.msg||'Gagal memuat pengaturan.');
       staffCache=(st&&st.ok?st.data:[]).filter(x=>x.status!=='Nonaktif');
@@ -44,7 +58,7 @@
     }catch(e){el.innerHTML='<div class="access-muted">Gagal memuat: '+esc(e.message||e)+'</div>';}
   }
   window.toggleAccessSetting=async function(key,current){const next=current==='AKTIF'?'NONAKTIF':'AKTIF';if(!confirm('Ubah '+key+' menjadi '+next+'?'))return;const r=await callAccessApi('apiSetAccessSetting',key,next);if(!r.ok)alert(r.msg||'Gagal mengubah pengaturan.');await render();};
-  window.deactivateLhiGlobalBlock=async function(){if(!confirm("Buka blokir global dan seluruh blokir individual, lalu mulai kelonggaran 12 jam?"))return;try{const r=await callAccessApi("apiStartLhiGrace");if(!r||r.ok!==true){alert((r&&r.msg)||"Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif. Silakan coba kembali.");await render();return;}alert(r.msg||"Blokir berhasil dibuka dan kelonggaran 12 jam dimulai.");await render();}catch(e){alert("Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif. "+String(e&&e.message||e));await render();}};
+  window.deactivateLhiGlobalBlock=async function(){if(!confirm("Buka blokir global dan seluruh blokir akses individual, lalu mulai kelonggaran 12 jam?"))return;try{const r=await callAccessApi("apiStartLhiGrace");if(!r||r.ok!==true){alert((r&&r.msg)||"Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif. Silakan coba kembali.");await render();return;}alert(r.msg||"Blokir berhasil dibuka dan kelonggaran 12 jam dimulai.");if(r.recovery_completed&&typeof window.__ipsrsCompleteLhiRecovery==='function'){await window.__ipsrsCompleteLhiRecovery();return;}await render();}catch(e){alert("Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif. "+String(e&&e.message||e));await render();}};
   window.saveAccessPermission=async function(){const g=document.getElementById('permGrantee').value,t=document.getElementById('permTarget').value;if(g===t){alert('Pemberi izin dan target harus berbeda.');return;}const r=await callAccessApi('apiSetEditPermission',g,t,true);if(!r.ok)alert(r.msg||'Gagal menyimpan izin.');await render();};
   window.togglePermission=async function(g,t,current){const next=current==='AKTIF'?false:true;const r=await callAccessApi('apiSetEditPermission',g,t,next);if(!r.ok)alert(r.msg||'Gagal mengubah izin.');await render();};
   const timer=setInterval(()=>{mount();if(mounted)clearInterval(timer);},500);setTimeout(mount,50);
