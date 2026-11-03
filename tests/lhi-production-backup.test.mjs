@@ -36,3 +36,14 @@ test("backup script never writes database URLs or secrets into its manifest", ()
   assert.doesNotMatch(script, /service_role_key|anon_key|password\s*=/i);
   assert.match(script, /No connection string was written to disk/);
 });
+
+test("backup script changes are included in the LHI CI path filters", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/lhi-discipline-tests.yml", import.meta.url),
+    "utf8",
+  );
+  assert.equal(
+    (workflow.match(/scripts\/lhi-production-backup\.ps1/g) || []).length,
+    2,
+  );
+});
