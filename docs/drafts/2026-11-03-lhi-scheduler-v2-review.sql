@@ -148,6 +148,7 @@ BEGIN
     FROM public.staff s
     WHERE s.staff_id = m.staff_id
       AND m.incident_id = v_grace.incident_id
+      AND m.grace_cycle = v_grace.grace_cycle
       AND m.obligation_status IN ('PENDING', 'COMPLETED')
       AND s.status <> 'Aktif';
 
@@ -158,6 +159,7 @@ BEGIN
            jsonb_build_object('reason', m.exclusion_reason)
     FROM public.lhi_discipline_snapshot_members m
     WHERE m.incident_id = v_grace.incident_id
+    AND m.grace_cycle = v_grace.grace_cycle
       AND m.obligation_status = 'EXCLUDED_INACTIVE'
       AND m.excluded_at = v_now;
 
@@ -179,6 +181,7 @@ BEGIN
         LIMIT 1
       ) q ON TRUE
       WHERE m.incident_id = v_grace.incident_id
+      AND m.grace_cycle = v_grace.grace_cycle
         AND s.status = 'Aktif'
         AND m.obligation_status IN ('PENDING', 'COMPLETED')
       FOR UPDATE OF m
@@ -221,6 +224,7 @@ BEGIN
     FROM public.lhi_discipline_snapshot_members m
     JOIN public.staff s ON s.staff_id = m.staff_id
     WHERE m.incident_id = v_grace.incident_id
+    AND m.grace_cycle = v_grace.grace_cycle
       AND m.obligation_status = 'PENDING'
       AND s.status = 'Aktif';
 
@@ -248,6 +252,7 @@ BEGIN
       FROM public.lhi_discipline_snapshot_members m
       JOIN public.staff s ON s.staff_id = m.staff_id
       WHERE m.incident_id = v_grace.incident_id
+      AND m.grace_cycle = v_grace.grace_cycle
         AND m.obligation_status = 'PENDING'
         AND s.status = 'Aktif';
 
