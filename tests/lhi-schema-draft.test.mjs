@@ -49,8 +49,8 @@ test("grace snapshot is unique per incident, Reset cycle, and staff member", () 
 });
 
 test("legacy snapshot may store NULL only when no valid historical LHI timestamp exists", () => {
-  assert.match(sql, /missed_full_days_at_snapshot integer CHECK \\(missed_full_days_at_snapshot >= 0\\)/);
-  assert.doesNotMatch(sql, /missed_full_days_at_snapshot integer NOT NULL/);
+  assert.ok(sql.includes("missed_full_days_at_snapshot integer CHECK (missed_full_days_at_snapshot >= 0)"));
+  assert.ok(!sql.includes("missed_full_days_at_snapshot integer NOT NULL"));
 });
 
 test("new snapshot and event tables deny direct client access", () => {
