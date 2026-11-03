@@ -30,6 +30,12 @@ test("correct Reset restores the same login form before showing the login screen
   assert.match(app, /if\(loginScreen && !loginScreen\.querySelector\('#ipsrsLoginForm'\)\)[\s\S]*?restoreLhiLoginMarkup_\(loginScreen\)/);
 });
 
+test("legacy Reset endpoint without a challenge gives an explicit server-upgrade message and never opens login", () => {
+  assert.match(app, /if\(challenge\.length<32\) throw new Error\('Kode Reset diterima server, tetapi layanan pemulihan KA IPSRS belum lengkap di server\./);
+  assert.match(app, /const challenge=String\(result\.challenge\|\|''\)\.trim\(\);[\\s\\S]*?if\(challenge\.length<32\) throw new Error/);
+  assert.match(app, /administrator harus menyelesaikan pembaruan layanan pemulihan/);
+});
+
 test("incorrect Reset never restores login or issues a recovery challenge", () => {
   const renderStart = app.indexOf("function renderLhiGlobalBlockScreen_");
   const renderEnd = app.indexOf("function removeLhiRecoveryResumeUi_", renderStart);
