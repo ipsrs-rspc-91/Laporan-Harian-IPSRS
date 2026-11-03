@@ -79,8 +79,11 @@ jobs:
 
           supabase --version
           create_migration lhi_schema_v2 docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
+          sleep 1
           create_migration lhi_restricted_recovery_challenges docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql
+          sleep 1
           create_migration lhi_scheduler_v2 docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
+          sleep 1
           create_migration lhi_atomic_reset_grace_v2 docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
 
           git config user.name "github-actions[bot]"
