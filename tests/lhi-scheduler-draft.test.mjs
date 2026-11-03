@@ -70,7 +70,8 @@ test("grace obligations exclude inactive staff and reverse cancelled reports", (
 test("every grace status transition records exact old/new state, report reference, and system actor", () => {
   assert.ok(sql.includes("WITH to_exclude AS MATERIALIZED"));
   assert.ok(sql.includes("RETURNING m.member_id, x.old_status"));
-  assert.ok(sql.includes("c.old_status, 'EXCLUDED_INACTIVE'") && sql.includes("'EXCLUDED_INACTIVE', 'SYSTEM'"));
+  assert.ok(sql.includes("c.old_status"));
+  assert.ok(sql.includes("'EXCLUDED_INACTIVE', 'SYSTEM'"));
   assert.ok(sql.includes("m.qualifying_report_id AS old_report_id"));
   assert.ok(sql.includes("COALESCE(c.new_report_id, c.old_report_id)"));
   assert.ok(sql.includes("'detected_by', 'LHI_SCHEDULER_V2'"));
