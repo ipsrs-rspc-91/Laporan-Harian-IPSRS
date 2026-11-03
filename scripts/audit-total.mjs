@@ -412,48 +412,9 @@ function hasDirectSupabaseQuery(source) {
   ];
   if (directClientPatterns.some(pattern => pattern.test(source))) return true;
 
+  const compact = source.replace(/\s+/g, '');
   for (const alias of aliases) {
-    const escaped = alias.replace(/\$/g, '\\
-// Delete Report safety contract: UI placement + API authorization + soft-delete/RLS.
-const deleteApi=path.join(root,'supabase','functions','ipsrs-api','index.ts');
-const deletePage=path.join(root,'frontend','pages','Page_Input.html');
-const deleteApp=path.join(root,'frontend','app.js');
-const deleteMigrationFiles=fs.existsSync(migrationDir) ? fs.readdirSync(migrationDir).filter(x=>x.includes('soft_delete_reports') && x.endsWith('.sql')) : [];
-if(fs.existsSync(deleteApi) && fs.existsSync(deletePage) && fs.existsSync(deleteApp)){
-  const api=fs.readFileSync(deleteApi,'utf8'), page=fs.readFileSync(deletePage,'utf8'), app=fs.readFileSync(deleteApp,'utf8');
-  const ok = api.includes('if(a==="apiDeleteReport")') && api.includes('s.role!=="KA_IPSRS"') && api.includes('deleted_at') && api.includes('audit(db,s,"DELETE_REPORT"') &&
-    app.includes("case 'apiDeleteReport'") && app.includes('async function deleteCurrentReport()') &&
-    page.includes('id="btnDeleteReport"') && page.includes('onclick="deleteCurrentReport()"');
-  if(ok) pass('Delete Report safety contract','KA-only API + soft delete + audit + edit-form button contract detected');
-  else fail('Delete Report safety contract','Required KA-only/soft-delete/audit/UI contract is incomplete');
-  if(deleteMigrationFiles.length) pass('Delete Report RLS contract','Soft-delete migration file present: '+deleteMigrationFiles.join(', '));
-  else fail('Delete Report RLS contract','Soft-delete migration file not found');
-}else fail('Delete Report safety contract','Required Delete Report files are missing');
-
-const md = [
-  '# IPSRS Automated Audit Report','',
-  'Generated: '+new Date().toISOString(),
-  'Commit: '+(process.env.GITHUB_SHA || 'local'),'',
-  '## Result: '+(failures.length ? '❌ BLOCKED' : '✅ PASSED'),'',
-  '## Checklist',
-  ...checks.map(c=>'- ['+(c.status==='PASS'?'x':' ')+'] **'+c.status+'** — '+c.name+(c.detail ? '\n  - '+c.detail.replaceAll('\n','\n  - ') : '')),
-  '','## Failures',
-  ...(failures.length ? failures.map(x=>'- ❌ **'+x.name+'**: '+x.detail) : ['- None']),
-  '','## Warnings',
-  ...(warnings.length ? warnings.map(x=>'- ⚠️ **'+x.name+'**: '+x.detail) : ['- None']),
-  '','## Meaning',
-  '- PASS: completed without a blocking finding.',
-  '- WARN: review required, but does not block deployment.',
-  '- FAIL: deployment gate must stop until corrected.'
-].join('\n');
-
-fs.writeFileSync(path.join(reportDir,'audit-report.md'),md);
-fs.writeFileSync(path.join(reportDir,'audit-report.json'),JSON.stringify({generatedAt:new Date().toISOString(),commit:process.env.GITHUB_SHA||null,failures,warnings,checks},null,2));
-console.log(md);
-if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,md+'\n');
-process.exitCode=failures.length ? 1 : 0;
-);
-    if (new RegExp('\\b' + escaped + '\\s*\\.\\s*(?:from|rpc)\\s*\\(', 'i').test(source)) return true;
+    if (compact.includes(alias + '.from(') || compact.includes(alias + '.rpc(')) return true;
   }
   return false;
 }
