@@ -149,6 +149,13 @@ jobs:
               lhi_access_blocked_at = clock_timestamp()
           WHERE staff_id IN ('KA-TEST', 'STAFF-TEST');
 
+          -- Test-only HR reconciliation: the E2E fixture explicitly verifies
+          -- active employment anchors before it exercises the Reset flow.
+          UPDATE public.staff
+          SET lhi_active_since_verified_at = clock_timestamp(),
+              lhi_active_since_source = 'HR_MASTER'
+          WHERE status = 'Aktif';
+
           INSERT INTO public.lhi_discipline_incidents (
             started_at, deadline_at, status, started_by_staff_id,
             started_by_name, locked_at, grace_cycle
