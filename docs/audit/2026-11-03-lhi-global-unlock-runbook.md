@@ -16,8 +16,9 @@ Backend lama mempunyai RPC `open_lhi_global_grace(text,text)`, tetapi jalur lama
 - `LHI_GLOBAL_BLOCK=AKTIF`.
 - Insiden 1 berstatus `LOCKED`; deadline legacy sudah lewat.
 - Cron `lhi-discipline-scheduler-every-5-minutes` aktif, cadence `*/5 * * * *`, command lama `run_lhi_discipline_scheduler()`.
-- Terdapat 156 baris kewajiban legacy untuk 21 petugas unik; 156 baris masih pending.
-- Status petugas yang terhubung ke snapshot legacy: 20 `Aktif` dan 1 `Nonaktif_LHI_HARI_8`. Migrasi hanya menormalkan status legacy tersebut bila audit log membuktikan transisi yang dibuat scheduler LHI.
+- Terdapat 156 baris kewajiban legacy untuk 21 petugas unik; seluruh 156 baris masih pending. Join ulang pada saat audit menunjukkan 147 baris untuk 20 petugas berstatus `Aktif` dan 9 baris untuk 1 petugas berstatus legacy `Nonaktif_LHI_HARI_8`. Satu petugas aktif lainnya tidak memiliki baris kewajiban pending pada incident 1; jangan menambahkannya ke snapshot legacy tanpa bukti evaluasi yang sah.
+- Distribusi seluruh master petugas saat audit: 21 `Aktif`, 18 `Nonaktif`, dan 1 `Nonaktif_LHI_HARI_8`. Angka 21 petugas aktif pada master tidak sama dengan 21 petugas dalam snapshot kewajiban legacy.
+- Pemeriksaan `information_schema.columns` memastikan kolom v2 `staff.lhi_active_since`, `lhi_active_since_source`, `lhi_active_since_verified_at`, dan `lhi_access_status` **belum ada di produksi**. Kolom tersebut baru tersedia setelah batch schema-v2 disetujui dan diterapkan; jangan jalankan kode/endpoint v2 di produksi sebelum itu.
 - Tidak ada perubahan database produksi pada saat audit.
 
 ## 3. Persiapan wajib
