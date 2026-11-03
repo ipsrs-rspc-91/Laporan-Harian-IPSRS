@@ -790,7 +790,7 @@
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
       // bukan terhadap backend GAS lama.
       if(IPSRS_MAINTENANCE_MODE && String(whoJson.role||'')!==IPSRS_MAINTENANCE_TEST_ROLE){
-        await client.auth.signOut().catch(()=>{});
+        await client.auth.signOut({scope:'local'}).catch(()=>{});
         if(msgEl) msgEl.innerText='Sistem sedang maintenance.';
         if(autoMode) clearRememberedCredentials();
         return false;
