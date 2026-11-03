@@ -157,7 +157,7 @@ CREATE OR REPLACE FUNCTION public.track_staff_employment_status_change()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = ''
 AS $function$
 DECLARE
   v_reactivated boolean;
