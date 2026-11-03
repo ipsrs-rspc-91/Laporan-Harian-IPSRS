@@ -50,6 +50,7 @@ AS $function$
       WHERE r.staff_id = s.staff_id
         AND r.deleted_at IS NULL
         AND r.created_at >= s.lhi_active_since
+        AND r.created_at <= p_now
     ) last_valid ON TRUE
   ),
   dated AS (
