@@ -90,7 +90,7 @@ assert.equal(codeOnly.status, 403, "Reset code alone was accepted as a capabilit
 
 const exchangeResponse = await fetch(apiUrl + "/functions/v1/lhi-recovery-exchange", {
   method: "POST",
-  headers: { ...headers(), Authorization: "Bearer " + login.access_token },
+  headers: { ...headers(), Authorization: "Bearer " + login.access_token, "cf-connecting-ip": "127.0.0.1" },
   body: JSON.stringify({ challenge: reset.challenge }),
 });
 const exchange = await readResponse(exchangeResponse);
@@ -100,7 +100,7 @@ assert.ok(exchange.recovery_capability);
 
 const replay = await fetch(apiUrl + "/functions/v1/lhi-recovery-exchange", {
   method: "POST",
-  headers: { ...headers(), Authorization: "Bearer " + login.access_token },
+  headers: { ...headers(), Authorization: "Bearer " + login.access_token, "cf-connecting-ip": "127.0.0.1" },
   body: JSON.stringify({ challenge: reset.challenge }),
 });
 assert.equal(replay.status, 403, "Consumed challenge replay succeeded");
