@@ -71,6 +71,36 @@ CREATE TABLE IF NOT EXISTS public.staff_employment_status_events (
 CREATE INDEX IF NOT EXISTS staff_employment_status_events_staff_time_idx
   ON public.staff_employment_status_events (staff_id, changed_at DESC);
 
+-- Fail closed unless the legacy LHI status is proven to have been
+-- written by the old LHI scheduler. Never infer an employment status from a
+-- status label alone. The audit row must show a transition from Aktif to the
+-- exact current legacy marker; rows without this evidence require HR review.
+DO $legacy_status_guard$
+DECLARE
+  v_unverified text;
+BEGIN
+  SELECT string_agg(s.staff_id || ' [' || s.status || ']', ', ' ORDER BY s.staff_id)
+  INTO v_unverified
+  FROM public.staff s
+  WHERE s.status IN ('Nonaktif_LHI_HARI_8', 'DIBLOKIR_LHI_7_HARI')
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.audit_log a
+      WHERE a.staff_id = s.staff_id
+        AND a.field_changed = 'status'
+        AND a.old_value = 'Aktif'
+        AND a.new_value = s.status
+        AND a.action IN ('BLOCK_LOGIN_LHI_7_HARI', 'DEACTIVATE_LHI_DAY_8')
+    );
+
+  IF v_unverified IS NOT NULL THEN
+    RAISE EXCEPTION
+      'Backfill status LHI dihentikan. Tidak ada bukti audit transisi Aktif untuk: %',
+      v_unverified;
+  END IF;
+END
+$legacy_status_guard$;
+
 -- The old scheduler encoded an LHI access block in staff.status. Normalize
 -- those machine-generated values back to employment status Aktif, retain the
 -- LHI block, and record the migration as an immutable backfill event.
