@@ -104,3 +104,13 @@ test("legacy LOCKED incident reuses pending staff but snapshots real latest vali
   assert.ok(legacyBranch > 0 && fallbackComment > legacyBranch);
   assert.ok(anchorGuard > fallbackComment);
 });
+
+
+test("grace status projection reads protected snapshot tables only through service-role RPC", () => {
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.get_lhi_grace_status_v2\(\)/);
+  assert.match(sql, /RETURNS jsonb[\s\S]*?SECURITY DEFINER[\s\S]*?SET search_path = ''/);
+  assert.match(sql, /FROM public\.lhi_discipline_snapshot_members m/);
+  assert.match(sql, /'excluded', c\.excluded/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.get_lhi_grace_status_v2\(\)[\s\S]*FROM PUBLIC, anon, authenticated, service_role/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.get_lhi_grace_status_v2\(\)[\s\S]*TO service_role/);
+});
