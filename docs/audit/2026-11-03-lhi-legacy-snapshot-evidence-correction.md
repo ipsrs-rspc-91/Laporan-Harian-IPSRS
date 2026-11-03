@@ -46,3 +46,16 @@ Pemeriksaan frontend menemukan komponen notifikasi memanggil `window.authRun`, t
 - Menambahkan pemanggilan loader notifikasi segera setelah login berhasil; polling berkala tetap digunakan saat aplikasi terbuka.
 
 Seluruh perubahan masih di branch. Belum ada deployment ke produksi. Hasil CI terbaru harus diperiksa setelah workflow selesai.
+
+## Temuan lanjutan: konsistensi angka peringatan dengan kalender penuh
+
+Pemeriksaan ulang menemukan teks notifikasi lama menyebut 4/6/7 hari kalender penuh, padahal evaluator sesuai aturan README memicu peringatan pada hari ke-4/6/7 setelah masing-masing 3/5/6 tanggal kalender penuh tanpa input selesai. Karena tanggal berjalan belum selesai dan tidak boleh dihitung sebagai hari penuh, teks lama melebihkan hitungan satu hari.
+
+Koreksi pada branch:
+- Peringatan 1: hari ke-4, setelah 3 hari kalender penuh tanpa LHI.
+- Peringatan 2: hari ke-6, setelah 5 hari kalender penuh tanpa LHI.
+- Peringatan 3: hari ke-7, setelah 6 hari kalender penuh tanpa LHI; tetap memberi tahu bahwa blokir individual berlaku hari ke-8.
+- Helper JavaScript dan SQL scheduler/migration menggunakan angka yang sama.
+- Unit test memeriksa ketiga pasangan hari tahap dan jumlah hari kalender penuh.
+
+Tidak ada perubahan threshold evaluator: WARNING_1=3, WARNING_2=5, WARNING_3=6, blokir individual=7, dan blokir global=9 hari kalender penuh. Ini mempertahankan urutan hari tindakan pada README dan hanya membetulkan teks yang sebelumnya tidak akurat.
