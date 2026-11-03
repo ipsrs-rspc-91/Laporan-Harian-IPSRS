@@ -17,6 +17,12 @@ test("challenge issuance supports only consistent LOCKED or GRACE/global-lock pa
   assert.match(migration, /v_lock = 'NONAKTIF' AND v_incident_status = 'GRACE'/);
 });
 
+test("challenge consumption is bound to the original edge-observed client IP", () => {
+  assert.match(migration, /p_ip_hash text/);
+  assert.match(migration, /v_challenge\\.ip_hash IS DISTINCT FROM p_ip_hash/);
+  assert.match(migration, /CHALLENGE_CLIENT_MISMATCH/);
+});
+
 test("challenge consumption is incident-bound and checks same lock-state pair", () => {
   assert.match(migration, /incident_id::text = v_challenge\.incident_id/);
   assert.match(migration, /v_lock = 'AKTIF' AND v_incident_status = 'LOCKED'/);
