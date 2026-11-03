@@ -282,10 +282,18 @@ DROP TRIGGER IF EXISTS trg_protect_lhi_manual_unblock_status ON public.staff;
 -- removal above. They must not remain callable through PostgREST roles.
 -- The database owner retains implicit control; trigger execution no longer
 -- requires application-role EXECUTE privileges because these triggers are gone.
-REVOKE ALL ON FUNCTION public.protect_lhi_manual_unblock_status()
-  FROM PUBLIC, anon, authenticated, service_role;
-REVOKE ALL ON FUNCTION public.reactivate_lhi_staff_after_report()
-  FROM PUBLIC, anon, authenticated, service_role;
+DO $revoke_legacy_lhi_functions$
+BEGIN
+  -- The disposable integration fixture may not define the legacy functions;
+  -- production does. Revoke only when the exact zero-argument function exists.
+  IF to_regprocedure('public.protect_lhi_manual_unblock_status()') IS NOT NULL THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.protect_lhi_manual_unblock_status() FROM PUBLIC, anon, authenticated, service_role';
+  END IF;
+  IF to_regprocedure('public.reactivate_lhi_staff_after_report()') IS NOT NULL THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.reactivate_lhi_staff_after_report() FROM PUBLIC, anon, authenticated, service_role';
+  END IF;
+END
+$revoke_legacy_lhi_functions$;
 
 -- Constraint validation is deliberately separate from initial legacy mapping.
 -- Run only after reviewing every staff row and normalizing employment statuses.
