@@ -47,3 +47,13 @@ test("backup script changes are included in the LHI CI path filters", async () =
     2,
   );
 });
+
+test("PowerShell backup script is syntax-parsed in CI", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/lhi-discipline-tests.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(workflow, /Parse production backup PowerShell script/);
+  assert.match(workflow, /shell: pwsh/);
+  assert.match(workflow, /Language\]::Parser\]::ParseFile/);
+});
