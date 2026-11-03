@@ -175,4 +175,12 @@ test("production cron cutover pauses and resumes the same single job", async () 
   assert.match(cutover, /active := true/);
   assert.match(cutover, /schedule = '\*\/5 \* \* \* \*'/);
   assert.match(cutover, /count\(\*\)[\s\S]*run_lhi_discipline_scheduler/);
+  const workflow = await readFile(
+    new URL("../.github/workflows/lhi-supabase-local-e2e.yml", import.meta.url),
+    "utf8",
+  );
+  assert.ok(
+    workflow.indexOf("2026-11-03-lhi-cron-pause-v2-review.sql")
+      < workflow.indexOf("2026-11-03-lhi-cron-switch-v2-review.sql"),
+  );
 });
