@@ -5,6 +5,14 @@ import { readFile } from 'node:fs/promises';
 // The production global-lock renderer injects display:block!important into
 // #loginScreen, so toggling only the .hidden class does not isolate the form.
 // Hide that startup-only layer with an inline important rule for these tests.
+async function mockUnblockedLhiStatus(page){
+  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, blocked: false })
+  }));
+}
+
 async function exposeAppShellForIsolatedUiTest(page){
   await page.evaluate(() => {
     const login = document.getElementById('loginScreen');
@@ -247,6 +255,7 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
   page.on('pageerror', error => runtimeErrors.push(error.message));
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockUnblockedLhiStatus(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   const appShell = page.locator('#appShell');
@@ -302,6 +311,7 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
   const runtimeErrors = [];
   page.on('pageerror', error => runtimeErrors.push(error.message));
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockUnblockedLhiStatus(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
   await exposeAppShellForIsolatedUiTest(page);
@@ -355,6 +365,7 @@ test('add-item modal opens from input form when report fields are populated', as
   page.on('pageerror', error => runtimeErrors.push(error.message));
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await mockUnblockedLhiStatus(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await exposeAppShellForIsolatedUiTest(page);
 
