@@ -156,3 +156,22 @@ test("Supabase local E2E pins a fixed CLI release instead of resolving latest at
   assert.match(workflow, /version: "2\.122\.1"/);
   assert.doesNotMatch(workflow, /version: latest/);
 });
+
+test("production cron cutover pauses and resumes the same single job", async () => {
+  const pause = await readFile(
+    new URL("../docs/drafts/2026-11-03-lhi-cron-pause-v2-review.sql", import.meta.url),
+    "utf8",
+  );
+  const cutover = await readFile(
+    new URL("../docs/drafts/2026-11-03-lhi-cron-switch-v2-review.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(pause, /jobname = 'lhi-discipline-scheduler-every-5-minutes'/);
+  assert.match(pause, /status = 'running'/);
+  assert.match(pause, /active := false/);
+  assert.match(cutover, /active IS DISTINCT FROM false/);
+  assert.match(cutover, /command := 'select public\.run_lhi_discipline_scheduler_v2\(\);'/);
+  assert.match(cutover, /active := true/);
+  assert.match(cutover, /schedule = '\*\/5 \* \* \* \*'/);
+  assert.match(cutover, /count\(\*\)[\s\S]*run_lhi_discipline_scheduler/);
+});
