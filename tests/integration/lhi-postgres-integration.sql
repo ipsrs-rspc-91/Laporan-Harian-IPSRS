@@ -247,6 +247,39 @@ BEGIN
     RAISE EXCEPTION 'Global lock was not reactivated after grace timeout.';
   END IF;
 
+  -- The append-only audit must retain the exact qualification and relock
+  -- transitions, including the qualifying report ID and system actor.
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.lhi_discipline_obligation_events e
+    JOIN public.lhi_discipline_snapshot_members m ON m.member_id = e.member_id
+    WHERE m.incident_id = v_incident_id
+      AND m.grace_cycle = 1
+      AND m.staff_id = 'KA-TEST'
+      AND e.event_type = 'REPORT_QUALIFIED'
+      AND e.old_status = 'PENDING'
+      AND e.new_status = 'COMPLETED'
+      AND e.report_id = 'REPORT-KA-GRACE-1'
+      AND e.actor_staff_id = 'SYSTEM'
+  ) THEN
+    RAISE EXCEPTION 'Missing exact REPORT_QUALIFIED transition audit.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.lhi_discipline_obligation_events e
+    JOIN public.lhi_discipline_snapshot_members m ON m.member_id = e.member_id
+    WHERE m.incident_id = v_incident_id
+      AND m.grace_cycle = 1
+      AND m.staff_id = 'STAFF-TEST'
+      AND e.event_type = 'GLOBAL_RELOCKED'
+      AND e.old_status = 'PENDING'
+      AND e.new_status = 'PENDING'
+      AND e.actor_staff_id = 'SYSTEM'
+  ) THEN
+    RAISE EXCEPTION 'Missing exact GLOBAL_RELOCKED audit for the remaining pending member.';
+  END IF;
+
   -- Second Reset must create cycle 2 without colliding with immutable cycle 1.
   SELECT public.create_lhi_recovery_challenge(v_nonce_2, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
@@ -300,6 +333,22 @@ BEGIN
   SELECT value INTO v_lock FROM public.access_settings WHERE key = 'LHI_GLOBAL_BLOCK';
   IF v_lock IS DISTINCT FROM 'NONAKTIF' THEN
     RAISE EXCEPTION 'Global lock remains active after successful grace completion.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.lhi_discipline_obligation_events e
+    JOIN public.lhi_discipline_snapshot_members m ON m.member_id = e.member_id
+    WHERE m.incident_id = v_incident_id
+      AND m.grace_cycle = 2
+      AND m.staff_id = 'STAFF-TEST'
+      AND e.event_type = 'GRACE_COMPLETED'
+      AND e.old_status = 'COMPLETED'
+      AND e.new_status = 'COMPLETED'
+      AND e.actor_staff_id = 'SYSTEM'
+      AND e.details ->> 'detected_by' = 'LHI_SCHEDULER_V2'
+  ) THEN
+    RAISE EXCEPTION 'Missing GRACE_COMPLETED deadline-evaluation audit.';
   END IF;
 
   SELECT count(*) INTO v_count
