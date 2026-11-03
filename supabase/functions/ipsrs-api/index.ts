@@ -165,7 +165,7 @@ async function staff(ctx:any,req?:Request){
  let uid=ctx.userClaims?.sub;
  if(!uid&&req){
    const h=req.headers.get("authorization")||"";
-   const m=h.match(/^Bearer\\s+(.+)$/i);
+   const m=h.match(/^Bearer\s+(.+)$/i);
    if(m){
      const g=await ctx.supabaseAdmin.auth.getUser(m[1]);
      if(!g.error&&g.data?.user)uid=g.data.user.id;
