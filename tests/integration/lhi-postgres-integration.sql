@@ -169,7 +169,8 @@ BEGIN
           clock_timestamp() - interval '12 hours');
 
   UPDATE private.lhi_recovery_sessions
-  SET expires_at = clock_timestamp() - interval '1 second'
+  SET created_at = clock_timestamp() - interval '2 seconds',
+      expires_at = clock_timestamp() - interval '1 second'
   WHERE token_hash = v_token_1;
 
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
@@ -224,7 +225,8 @@ BEGIN
           clock_timestamp() - interval '12 hours');
 
   UPDATE private.lhi_recovery_sessions
-  SET expires_at = clock_timestamp() - interval '1 second'
+  SET created_at = clock_timestamp() - interval '2 seconds',
+      expires_at = clock_timestamp() - interval '1 second'
   WHERE token_hash = v_token_2;
 
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
