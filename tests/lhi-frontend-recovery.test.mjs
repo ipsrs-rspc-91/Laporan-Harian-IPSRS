@@ -119,3 +119,12 @@ test("failed Reset authentication keeps the recovery-specific fail-closed messag
   assert.match(block, /Login pemulihan gagal\. Blokir aplikasi tetap aktif/);
   assert.match(block, /setTimeout\(\(\)=>checkAuthAndInit\(\),0\)/);
 });
+
+
+test("access panel never reports zero unverified anchors when the server read fails", () => {
+  assert.match(accessControl, /anchorReviewAvailable=!!\(anchorReview&&anchorReview\.ok&&Array\.isArray\(anchorReview\.data\)\)/);
+  assert.match(accessControl, /STATUS VERIFIKASI TIDAK TERSEDIA/);
+  assert.match(accessControl, /Jangan menganggap seluruh tanggal aktif telah terverifikasi/);
+  assert.match(accessControl, /STATUS KELONGGARAN TIDAK TERSEDIA/);
+  assert.match(accessControl, /jangan menganggap tidak ada insiden/);
+});
