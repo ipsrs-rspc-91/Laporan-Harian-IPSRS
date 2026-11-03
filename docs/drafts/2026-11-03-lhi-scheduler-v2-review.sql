@@ -119,6 +119,16 @@ BEGIN
     RAISE EXCEPTION 'Konfigurasi LHI_GLOBAL_BLOCK tidak ditemukan; scheduler dihentikan.';
   END IF;
 
+  -- There may be only one active incident at a time. Multiple LOCKED/GRACE
+  -- rows indicate inconsistent legacy state and must never be guessed around.
+  IF (
+    SELECT count(*)
+    FROM public.lhi_discipline_incidents
+    WHERE status IN ('LOCKED', 'GRACE')
+  ) > 1 THEN
+    RAISE EXCEPTION 'Lebih dari satu insiden LHI aktif ditemukan; scheduler dihentikan untuk rekonsiliasi.';
+  END IF;
+
   IF EXISTS (SELECT 1 FROM public.lhi_discipline_incidents WHERE status = 'LOCKED') THEN
     IF v_lock <> 'AKTIF' THEN
       RAISE EXCEPTION 'Insiden LOCKED ditemukan tetapi LHI_GLOBAL_BLOCK tidak AKTIF; perlu rekonsiliasi manual.';
