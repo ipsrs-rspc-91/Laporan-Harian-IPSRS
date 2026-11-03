@@ -89,13 +89,13 @@ test("scheduler refuses inconsistent global lock and missing anchor", () => {
 });
 
 test("existing LOCKED/GRACE recovery is processed before HR-anchor gate", () => {
-  const graceBranch = sql.indexOf("IF FOUND THEN");
-  const anchorGate = sql.indexOf("IF EXISTS (", graceBranch);
-  const normalGate = sql.indexOf("No active incident remains", anchorGate);
-  const lockedBranch = sql.indexOf("IF v_lock = 'AKTIF' THEN", normalGate);
-  assert.ok(graceBranch > 0 && anchorGate > graceBranch && normalGate > anchorGate);
-  assert.ok(lockedBranch > normalGate);
-  assert.match(sql.slice(normalGate, lockedBranch), /lhi_active_since_verified_at/);
+  const graceComment = sql.indexOf("-- A GRACE incident suspends normal discipline evaluation.");
+  const graceDeadlineCheck = sql.indexOf("IF v_now < v_grace.deadline_at THEN", graceComment);
+  const normalCycleGate = sql.indexOf("-- No active incident remains.", graceDeadlineCheck);
+  const anchorGate = sql.indexOf("lhi_active_since_verified_at", normalCycleGate);
+  assert.ok(graceComment > 0 && graceDeadlineCheck > graceComment);
+  assert.ok(normalCycleGate > graceDeadlineCheck && anchorGate > normalCycleGate);
+  assert.match(sql.slice(normalCycleGate, anchorGate), /Before starting a new discipline cycle/);
 });
 
 test("warning team broadcast contains all names and day-7 notice explains day-8 block", () => {
