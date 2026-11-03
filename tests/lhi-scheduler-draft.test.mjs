@@ -227,8 +227,8 @@ test("LHI review migrations are generated only in isolated test staging in depen
   assert.match(workflow, /version: "2\.122\.1"/);
   assert.match(workflow, /supabase migration new/);
   assert.match(workflow, /contents: read/);
-  assert.match(workflow, /working-directory: tests\\/lhi-migration-staging/);
-  assert.match(workflow, /find tests\\/lhi-migration-staging\\/supabase\\/migrations/);
+  assert.match(workflow, /working-directory: tests\/lhi-migration-staging/);
+  assert.match(workflow, /find tests\/lhi-migration-staging\/supabase\/migrations/);
   assert.match(workflow, /never in deployable project migrations/);
   assert.doesNotMatch(workflow, /git push origin/);
   assert.doesNotMatch(workflow, /contents: write/);
