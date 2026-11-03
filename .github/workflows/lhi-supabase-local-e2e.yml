@@ -165,6 +165,23 @@ jobs:
           NOTIFY pgrst, 'reload schema';
           SQL
 
+      - name: Verify existing LHI cron switches to v2 without duplication
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+          CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler()
+          RETURNS void LANGUAGE sql AS $legacy$ SELECT; $legacy$;
+          SELECT cron.schedule(
+            'lhi-discipline-scheduler-every-5-minutes',
+            '*/5 * * * *',
+            'select public.run_lhi_discipline_scheduler();'
+          );
+          SQL
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-cron-switch-v2-review.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c "select cron.unschedule('lhi-discipline-scheduler-every-5-minutes');"
+
       - name: Start local Edge Functions
         working-directory: tests/supabase-local
         shell: bash
