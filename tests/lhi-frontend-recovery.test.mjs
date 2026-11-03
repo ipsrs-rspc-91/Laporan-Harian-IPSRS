@@ -147,3 +147,18 @@ test("maintenance role rejection signs out only the current device", () => {
   assert.match(block, /client\.auth\.signOut\(\{scope:'local'\}\)/);
   assert.doesNotMatch(block, /client\.auth\.signOut\(\)/);
 });
+
+test("KA restricted recovery screen renders the full snapshot without HTML injection", () => {
+  const start = app.indexOf("function renderLhiRecoveryOnlyScreen_");
+  const end = app.indexOf("async function performLogin", start);
+  const block = app.slice(start, end);
+  assert.match(block, /id="lhiRecoveryMembers"/);
+  assert.match(block, /status&&status\.grace_status/);
+  assert.match(block, /Array\.isArray\(grace&&grace\.members\)/);
+  assert.match(block, /current_employment_status/);
+  assert.match(block, /obligation_status==='COMPLETED'/);
+  assert.match(block, /DIKECUALIKAN — STATUS NONAKTIF/);
+  assert.match(block, /td\.textContent=value/);
+  assert.doesNotMatch(block, /innerHTML\s*=\s*[^;]*member\.(?:nama|staff_id)/);
+  assert.match(block, /grace_status:result\.grace_status\|\|null/);
+});
