@@ -107,3 +107,15 @@ test("operational access panel never exposes the obsolete direct global-unlock a
   assert.match(accessControl, /seluruh login normal ditutup/);
   assert.match(accessControl, /grace\.data\.excluded/);
 });
+
+
+test("failed Reset authentication keeps the recovery-specific fail-closed message reachable", () => {
+  const start = app.indexOf("    }catch(err){", app.indexOf("async function performLogin"));
+  const end = app.indexOf("\n  }\n\n  // HARD GUARD LOGIN", start);
+  const block = app.slice(start, end);
+  assert.match(block, /const recoveryAttempt=!!pendingLhiRecoveryChallenge_/);
+  assert.ok(block.indexOf("const recoveryAttempt=!!pendingLhiRecoveryChallenge_") < block.indexOf("clearSession()"));
+  assert.ok(block.indexOf("clearSession()") < block.indexOf("if(recoveryAttempt)"));
+  assert.match(block, /Login pemulihan gagal\. Blokir aplikasi tetap aktif/);
+  assert.match(block, /setTimeout\(\(\)=>checkAuthAndInit\(\),0\)/);
+});
