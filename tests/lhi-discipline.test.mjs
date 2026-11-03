@@ -338,7 +338,7 @@ test("grace recovery is exactly 12 hours and retries preserve the original incid
 test("restricted recovery SQL keeps challenges and sessions private to server-side functions", async () => {
   const { readFile } = await import("node:fs/promises");
   const { fileURLToPath } = await import("node:url");
-  const path = fileURLToPath(new URL("../supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql", import.meta.url));
+  const path = fileURLToPath(new URL("../docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql", import.meta.url));
   const sql = await readFile(path, "utf8");
   assert.match(sql, /CREATE TABLE IF NOT EXISTS private\.lhi_recovery_challenges/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS private\.lhi_recovery_sessions/);
@@ -387,7 +387,7 @@ test("recovery capability contract permits blocked KA recovery but not normal op
 test("recovery SQL explicitly rejects a missing action instead of allowing SQL NULL through", async () => {
   const { readFile } = await import("node:fs/promises");
   const { fileURLToPath } = await import("node:url");
-  const path = fileURLToPath(new URL("../supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql", import.meta.url));
+  const path = fileURLToPath(new URL("../docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql", import.meta.url));
   const sql = await readFile(path, "utf8");
   assert.match(sql, /p_action IS NULL OR p_action NOT IN \('apiRecoveryStatus', 'apiStartLhiGrace'\)/);
 });
