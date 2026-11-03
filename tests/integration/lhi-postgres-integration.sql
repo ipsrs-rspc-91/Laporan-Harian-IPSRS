@@ -422,8 +422,12 @@ BEGIN
         AND anchor_input_at = v_anchor_a
         AND missed_full_days_at_snapshot = GREATEST(
           0,
-          (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date
-            - (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date - 1
+          ((
+            SELECT snapshot_created_at AT TIME ZONE 'Asia/Jakarta'
+            FROM public.lhi_discipline_snapshot_members
+            WHERE incident_id = v_incident AND grace_cycle = 1
+              AND staff_id = 'LEGACY-TEST'
+          )::date - (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date - 1
         ))
       OR
       (staff_id = 'STAFF-TEST'
