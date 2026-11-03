@@ -89,6 +89,21 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- A future-dated report must not reset the discipline anchor before it exists.
+  INSERT INTO public.reports (report_id, staff_id, tanggal, created_at)
+  VALUES ('REPORT-FUTURE-INPUT', 'WARN-4',
+          (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date,
+          clock_timestamp() + interval '2 days');
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.lhi_discipline_evaluations_v2(clock_timestamp())
+    WHERE staff_id = 'WARN-4'
+      AND missed_full_days >= 3
+      AND stage = 'WARNING_1'
+  ) THEN
+    RAISE EXCEPTION 'Future-dated report incorrectly reset the discipline anchor for WARN-4.';
+  END IF;
+
   SELECT count(*) INTO v_count
   FROM public.lhi_active_since_verifications;
   IF v_count <> (SELECT count(*) FROM public.staff WHERE status = 'Aktif') THEN
