@@ -574,6 +574,19 @@
   // never written to localStorage/sessionStorage, and accepted only by lhi-recovery-action.
   let pendingLhiRecoveryChallenge_ = null;
   let lhiRecoveryCapability_ = null;
+  let originalLhiLoginMarkup_ = null;
+
+  function captureLhiLoginMarkup_(screen){
+    if(originalLhiLoginMarkup_===null && screen && screen.querySelector('#ipsrsLoginForm')){
+      originalLhiLoginMarkup_=screen.innerHTML;
+    }
+  }
+
+  function restoreLhiLoginMarkup_(screen){
+    if(!screen || typeof originalLhiLoginMarkup_!=='string' || !originalLhiLoginMarkup_) return false;
+    screen.innerHTML=originalLhiLoginMarkup_;
+    return !!screen.querySelector('#ipsrsLoginForm');
+  }
 
   function setLhiRecoveryCapability_(value){
     lhiRecoveryCapability_=String(value||'');
@@ -6364,6 +6377,9 @@
     const shell=document.getElementById('appShell');
     const loading=document.getElementById('authLoading');
     if(!screen) return;
+    // Keep the original, shared username/password login form before the block
+    // screen replaces loginScreen.innerHTML. Reset must restore this exact form.
+    captureLhiLoginMarkup_(screen);
     if(loading) loading.classList.add('hidden');
     if(shell) shell.classList.add('hidden');
     screen.classList.remove('hidden');
@@ -6511,9 +6527,11 @@
         });
         const result=await response.json().catch(()=>null);
         if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
-        pendingLhiRecoveryChallenge_=String(result.challenge||'');
+        const challenge=String(result.challenge||'').trim();
+        if(challenge.length<32) throw new Error('Challenge Reset dari server tidak valid. Ulangi verifikasi kode.');
+        if(!restoreLhiLoginMarkup_(screen)) throw new Error('Form login normal tidak dapat dipulihkan. Muat ulang halaman dan ulangi Reset.');
+        pendingLhiRecoveryChallenge_=challenge;
         setLhiRecoveryCapability_(null);
-        if(backdrop)backdrop.classList.remove('show');
         showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
       }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
       finally{if(submit){submit.disabled=false;submit.textContent='OK';}}
