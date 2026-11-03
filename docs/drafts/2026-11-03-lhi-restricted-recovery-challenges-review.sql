@@ -154,6 +154,9 @@ BEGIN
 END;
 $function$;
 
+-- Remove the pre-IP-binding signature if this draft is reapplied during review.
+DROP FUNCTION IF EXISTS public.consume_lhi_recovery_challenge(text, uuid, text);
+
 -- Consume the challenge and issue an opaque recovery capability in one transaction.
 -- Initial LOCKED sessions are short-lived; Reset extends the capability only to
 -- the exact grace deadline. Auth identity comes from auth.getUser() in the Edge
