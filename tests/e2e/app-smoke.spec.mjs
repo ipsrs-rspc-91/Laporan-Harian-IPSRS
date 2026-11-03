@@ -482,3 +482,62 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
+
+
+test('global LHI block displays Reset modal and keeps login unavailable for an invalid code', async ({ page }) => {
+  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, blocked: true, message: 'Mode Blok Aplikasi aktif.' })
+  }));
+  await page.route('**/functions/v1/lhi-reset-verify', route => route.fulfill({
+    status: 400,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, valid: false, message: 'Kode reset tidak benar.' })
+  }));
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('#appShell')).toBeHidden();
+  await expect(page.locator('#ipsrsLoginForm')).toHaveCount(0);
+
+  await page.locator('#lhiGlobalBlockReset').click();
+  await expect(page.locator('#lhiResetBackdrop')).toHaveClass(/show/);
+  await page.locator('#lhiResetCode').fill('123456');
+  await page.locator('#lhiResetSubmit').click();
+
+  await expect(page.locator('#lhiResetMessage')).toContainText('Kode reset tidak benar.');
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible();
+  await expect(page.locator('#ipsrsLoginForm')).toHaveCount(0);
+});
+
+test('valid Reset restores the original shared username/password login form', async ({ page }) => {
+  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, blocked: true, message: 'Mode Blok Aplikasi aktif.' })
+  }));
+  await page.route('**/functions/v1/lhi-reset-verify', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      ok: true,
+      valid: true,
+      challenge: 'test-only-challenge-' + 'x'.repeat(40),
+      message: 'Kode reset diterima.'
+    })
+  }));
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({ timeout: 10000 });
+  await page.locator('#lhiGlobalBlockReset').click();
+  await page.locator('#lhiResetCode').fill('123456');
+  await page.locator('#lhiResetSubmit').click();
+
+  await expect(page.locator('#ipsrsLoginForm')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('#loginUsername')).toBeVisible();
+  await expect(page.locator('#loginPassword')).toBeVisible();
+  await expect(page.locator('#loginMsg')).toContainText('Kode reset diterima.');
+  await expect(page.locator('#appShell')).toBeHidden();
+  await expect(page.locator('#lhiGlobalBlockReset')).toHaveCount(0);
+});
