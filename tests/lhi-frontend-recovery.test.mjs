@@ -88,5 +88,5 @@ test("global lock screen does not claim a delinquent person is listed when serve
   const end = app.indexOf("function removeLhiRecoveryResumeUi_", start);
   const block = app.slice(start, end);
   assert.match(block, /const triggerIntro=trigger[\s\S]*?Mode Blok Aplikasi diaktifkan oleh server karena kewajiban LHI belum dipenuhi/);
-  assert.match(block, /<p class="lhi-lock-intro">\\$\\{triggerIntro\\}<\\/p>/);
+  assert.ok(block.includes('<p class="lhi-lock-intro">${triggerIntro}</p>'));
 });
