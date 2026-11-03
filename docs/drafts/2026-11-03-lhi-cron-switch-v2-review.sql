@@ -2,7 +2,7 @@
 -- Switch the existing LHI five-minute cron job to scheduler v2.
 -- Depends on schema-v2, scheduler-v2, and atomic-reset-v2 SQL having been
 -- reviewed and applied in a disposable/non-production Supabase project first.
--- This script preserves the existing job ID, job name, active state, and cadence.
+-- Run after the dedicated pause script. It preserves the existing job ID, job name, and cadence, then re-enables the same job.
 -- It must never create a second LHI scheduler job.
 
 BEGIN;
@@ -44,8 +44,8 @@ BEGIN
     RAISE EXCEPTION 'Jadwal cron berubah dari */5 * * * *; cutover dibatalkan.';
   END IF;
 
-  IF v_active IS DISTINCT FROM true THEN
-    RAISE EXCEPTION 'Cron LHI tidak aktif; cutover otomatis dibatalkan.';
+  IF v_active IS DISTINCT FROM false THEN
+    RAISE EXCEPTION 'Cron LHI harus sudah dipause melalui cron-pause-v2; cutover dibatalkan.';
   END IF;
 
   IF v_command NOT IN (
@@ -57,7 +57,8 @@ BEGIN
 
   PERFORM cron.alter_job(
     job_id := v_job_id,
-    command := 'select public.run_lhi_discipline_scheduler_v2();'
+    command := 'select public.run_lhi_discipline_scheduler_v2();',
+    active := true
   );
 
   IF NOT EXISTS (
