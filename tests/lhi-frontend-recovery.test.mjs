@@ -10,6 +10,10 @@ const recoveryAction = await readFile(
   new URL("../supabase/functions/lhi-recovery-action/index.ts", import.meta.url),
   "utf8",
 );
+const accessControl = await readFile(
+  new URL("../frontend/access-control.js", import.meta.url),
+  "utf8",
+);
 
 test("Reset challenge is kept in memory and exchanged before apiWhoAmI", () => {
   assert.match(app, /pendingLhiRecoveryChallenge_\s*=\s*String\(result\.challenge\|\|''\)/);
@@ -94,4 +98,11 @@ test("global lock screen does not claim a delinquent person is listed when serve
   const block = app.slice(start, end);
   assert.match(block, /const triggerIntro=trigger[\s\S]*?Mode Blok Aplikasi diaktifkan oleh server karena kewajiban LHI belum dipenuhi/);
   assert.ok(block.includes('<p class="lhi-lock-intro">${triggerIntro}</p>'));
+});
+
+
+test("operational access panel never exposes the obsolete direct global-unlock action", () => {
+  assert.doesNotMatch(accessControl, /deactivateLhiGlobalBlock|onclick=["']deactivateLhiGlobalBlock/);
+  assert.match(accessControl, /Gunakan jalur Reset khusus pada Form Blok Aplikasi/);
+  assert.match(accessControl, /seluruh login normal ditutup/);
 });
