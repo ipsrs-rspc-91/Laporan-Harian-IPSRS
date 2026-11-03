@@ -18,7 +18,7 @@ Untuk setiap petugas dengan `staff.status = 'Aktif'`:
    - Jika tidak ada, gunakan `staff.lhi_active_since`.
 2. Konversi tanggal anchor dan tanggal sekarang ke WIB:
    - `anchor_wib_date = (anchor_at AT TIME ZONE 'Asia/Jakarta')::date`
-   - `today_wib = (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date`
+   - `today_wib = (p_now AT TIME ZONE 'Asia/Jakarta')::date`
 3. Hitung:
    - `missed_full_days = GREATEST(0, today_wib - anchor_wib_date - 1)`
 4. Abaikan `reports.tanggal` untuk seluruh keputusan disiplin.
