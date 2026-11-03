@@ -743,6 +743,7 @@
 
     const client=getSupabaseClient_();
     const email=staffAuthEmail_(username);
+    let recoveryLoginAttempt=false;
     try{
       const signIn=await client.auth.signInWithPassword({email,password});
       if(signIn.error) throw signIn.error;
@@ -752,6 +753,7 @@
       // Recovery challenge path is evaluated before apiWhoAmI. A global lock
       // intentionally rejects the normal operational API for every user.
       if(pendingLhiRecoveryChallenge_){
+        recoveryLoginAttempt=true;
         const challenge=pendingLhiRecoveryChallenge_;
         const issued=await exchangeLhiRecoveryChallenge_(session.access_token,challenge);
         pendingLhiRecoveryChallenge_=null;
@@ -833,7 +835,7 @@
     }catch(err){
       // Preserve the flow identity before clearSession() clears both the
       // ordinary app session and the in-memory Reset challenge.
-      const recoveryAttempt=!!pendingLhiRecoveryChallenge_;
+      const recoveryAttempt=recoveryLoginAttempt||!!pendingLhiRecoveryChallenge_;
       // FAIL-CLOSED: Supabase Auth membuat sesi sebelum pemeriksaan kebijakan
       // backend. Jika apiWhoAmI menolak (mis. blokir global LHI), sesi Auth
       // wajib langsung dicabut agar tidak tertinggal sebagai sesi aktif.
