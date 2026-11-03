@@ -75,3 +75,9 @@ test("a new Reset after grace relock creates a new immutable snapshot cycle", as
 test("atomic Reset rejects null or invalid global lock setting", () => {
   assert.match(sql, /v_lock IS NULL OR v_lock NOT IN \('AKTIF', 'NONAKTIF'\)/);
 });
+
+
+test("atomic Reset refuses unverified employment anchors", () => {
+  assert.match(sql, /lhi_active_since IS NULL OR s\.lhi_active_since_verified_at IS NULL/);
+  assert.match(sql, /anchor belum diverifikasi HR atau peristiwa reaktivasi/);
+});
