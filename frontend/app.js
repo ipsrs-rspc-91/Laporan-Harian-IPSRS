@@ -567,10 +567,10 @@
     resetLaporanUnfinishedState();
     const authLoading = document.getElementById('authLoading');
     const loginScreen = document.getElementById('loginScreen');
-    // Halaman blokir mengganti innerHTML loginScreen. Pulihkan form login
-    // asli sebelum menampilkan layar login setelah reset/kondisi sesi lain.
-    if(loginScreen && !loginScreen.querySelector('#ipsrsLoginForm') && IPSRS_LOGIN_SCREEN_TEMPLATE){
-      loginScreen.innerHTML = IPSRS_LOGIN_SCREEN_TEMPLATE;
+    // Halaman blokir/pemulihan dapat mengganti innerHTML loginScreen.
+    // Pulihkan markup login normal yang sama jika layar login diminta kembali.
+    if(loginScreen && !loginScreen.querySelector('#ipsrsLoginForm')){
+      restoreLhiLoginMarkup_(loginScreen);
     }
     if(authLoading) authLoading.classList.add('hidden');
     if(loginScreen) loginScreen.classList.remove('hidden');
@@ -6480,15 +6480,8 @@
     }).catch(() => {});
   }
 
-  // Simpan template login asli sebelum layar login diganti dengan halaman blokir.
-  // Tanpa pemulihan ini, reset yang berhasil hanya membuka container kosong.
-  let IPSRS_LOGIN_SCREEN_TEMPLATE = null;
-
   function renderLhiGlobalBlockScreen_(message, serverDetails){
     const screen=document.getElementById('loginScreen');
-    if(!IPSRS_LOGIN_SCREEN_TEMPLATE && screen && screen.querySelector('#ipsrsLoginForm')){
-      IPSRS_LOGIN_SCREEN_TEMPLATE = screen.innerHTML;
-    }
     const shell=document.getElementById('appShell');
     const loading=document.getElementById('authLoading');
     if(!screen) return;
