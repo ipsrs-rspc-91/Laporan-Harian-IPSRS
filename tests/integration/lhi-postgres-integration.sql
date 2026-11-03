@@ -507,7 +507,7 @@ BEGIN
   END IF;
 
   IF has_function_privilege('anon', 'public.create_lhi_recovery_challenge(text,text)', 'EXECUTE')
-     OR has_function_privilege('authenticated', 'public.consume_lhi_recovery_challenge(text,uuid,text)', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'public.consume_lhi_recovery_challenge(text,uuid,text,text)', 'EXECUTE')
      OR has_function_privilege('anon', 'public.validate_lhi_recovery_session(text,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'Client roles must not execute restricted recovery RPCs directly.';
   END IF;
@@ -622,7 +622,7 @@ BEGIN
     RAISE EXCEPTION 'Legacy Reset challenge creation failed: %', v_result;
   END IF;
 
-  SELECT public.consume_lhi_recovery_challenge(v_nonce, '00000000-0000-0000-0000-000000000001', v_token)
+  SELECT public.consume_lhi_recovery_challenge(v_nonce, '00000000-0000-0000-0000-000000000001', v_token, v_ip)
     INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Legacy Reset KA exchange failed: %', v_result;
