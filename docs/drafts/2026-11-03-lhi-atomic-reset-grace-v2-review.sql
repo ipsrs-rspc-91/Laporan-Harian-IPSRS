@@ -61,6 +61,9 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Konfigurasi blokir global tidak ditemukan.';
   END IF;
+  IF v_lock IS NULL OR v_lock NOT IN ('AKTIF', 'NONAKTIF') THEN
+    RAISE EXCEPTION 'Status LHI_GLOBAL_BLOCK tidak valid; transaksi Reset dibatalkan.';
+  END IF;
 
   SELECT i.* INTO v_incident
   FROM public.lhi_discipline_incidents i
