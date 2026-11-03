@@ -837,7 +837,7 @@
       // FAIL-CLOSED: Supabase Auth membuat sesi sebelum pemeriksaan kebijakan
       // backend. Jika apiWhoAmI menolak (mis. blokir global LHI), sesi Auth
       // wajib langsung dicabut agar tidak tertinggal sebagai sesi aktif.
-      try{ await client.auth.signOut(); }catch(_signOutError){}
+      try{ await client.auth.signOut({scope:'local'}); }catch(_signOutError){}
       clearSession();
       try{ resetSupabaseClient_(); }catch(_resetError){}
       if(recoveryAttempt){
