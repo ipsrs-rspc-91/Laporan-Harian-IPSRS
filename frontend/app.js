@@ -6639,7 +6639,7 @@
         const result=await response.json().catch(()=>null);
         if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
         const challenge=String(result.challenge||'').trim();
-        if(challenge.length<32) throw new Error('Challenge Reset dari server tidak valid. Ulangi verifikasi kode.');
+        if(challenge.length<32) throw new Error('Kode Reset diterima server, tetapi layanan pemulihan KA IPSRS belum lengkap di server. Form login belum dapat dibuka dan blokir tetap aktif. Jangan ulangi kode berkali-kali; administrator harus menyelesaikan pembaruan layanan pemulihan.');
         if(!restoreLhiLoginMarkup_(screen)) throw new Error('Form login normal tidak dapat dipulihkan. Muat ulang halaman dan ulangi Reset.');
         pendingLhiRecoveryChallenge_=challenge;
         setLhiRecoveryCapability_(null);
@@ -6715,7 +6715,9 @@
           });
           const result=await response.json().catch(()=>null);
           if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode Reset tidak dapat diverifikasi.');
-          pendingLhiRecoveryChallenge_=String(result.challenge||'');
+          const challenge=String(result.challenge||'').trim();
+          if(challenge.length<32) throw new Error('Kode Reset diterima server, tetapi layanan pemulihan KA IPSRS belum lengkap di server. Form login belum dapat dibuka dan blokir tetap aktif. Jangan ulangi kode berkali-kali; administrator harus menyelesaikan pembaruan layanan pemulihan.');
+          pendingLhiRecoveryChallenge_=challenge;
           setLhiRecoveryCapability_(null);
           modal.style.display='none';
           showLoginScreen('Kode Reset diterima. Silakan login menggunakan akun KA IPSRS.');
