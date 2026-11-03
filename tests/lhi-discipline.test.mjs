@@ -435,7 +435,7 @@ test("both reset endpoints explicitly disable gateway JWT because they verify th
 });
 
 
-test("team warning event key changes when another delinquent joins the same stage", async () => {
+test("team warning event key stays stable when another delinquent joins the same stage", async () => {
   const { buildWarningNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
   const first = buildWarningNotifications(
     [{ staff_id: "A", nama: "Agung", action: "WARNING_1" }],
@@ -450,11 +450,11 @@ test("team warning event key changes when another delinquent joins the same stag
     [{ staff_id: "A", status: "Aktif" }, { staff_id: "B", status: "Aktif" }],
     "2026-11-03",
   )[0];
-  assert.notEqual(first.event_key, updated.event_key);
+  assert.equal(first.event_key, updated.event_key);
   assert.match(updated.message, /Agung, Budi/);
 });
 
-test("day-8 team event key changes when another employee is blocked later the same day", async () => {
+test("day-8 team event key stays stable when another employee is blocked later the same day", async () => {
   const { buildIndividualBlockNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
   const first = buildIndividualBlockNotifications(
     [{ staff_id: "A", nama: "Agung", action: "BLOCK_INDIVIDUAL_ACCESS" }],
@@ -477,7 +477,7 @@ test("day-8 team event key changes when another employee is blocked later the sa
     ],
     "2026-11-03",
   )[0];
-  assert.notEqual(first.event_key, updated.event_key);
+  assert.equal(first.event_key, updated.event_key);
   assert.match(updated.message, /Agung, Budi/);
 });
 
