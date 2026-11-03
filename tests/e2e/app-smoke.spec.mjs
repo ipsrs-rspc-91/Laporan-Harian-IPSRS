@@ -1,6 +1,23 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+// These tests exercise authenticated app-shell UI without authenticating.
+// The production global-lock renderer injects display:block!important into
+// #loginScreen, so toggling only the .hidden class does not isolate the form.
+// Hide that startup-only layer with an inline important rule for these tests.
+async function exposeAppShellForIsolatedUiTest(page){
+  await page.evaluate(() => {
+    const login = document.getElementById('loginScreen');
+    if(login){
+      login.style.setProperty('display', 'none', 'important');
+      login.setAttribute('aria-hidden', 'true');
+    }
+    const loading = document.getElementById('authLoading');
+    if(loading) loading.style.setProperty('display', 'none', 'important');
+    document.getElementById('appShell')?.classList.remove('hidden');
+  });
+}
+
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', msg => {
@@ -220,11 +237,7 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
   await expect(appShell).toBeAttached();
   // This test covers the authenticated app-shell keyboard layout, not the
   // global LHI lock overlay. Remove startup-only overlays in this isolated UI test.
-  await page.evaluate(() => {
-    document.getElementById('authLoading')?.classList.add('hidden');
-    document.getElementById('loginScreen')?.classList.add('hidden');
-    document.getElementById('appShell')?.classList.remove('hidden');
-  });
+  await exposeAppShellForIsolatedUiTest(page);
 
   const content = page.locator('main.content');
   const ruang = page.locator('#Ruang');
@@ -275,7 +288,7 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
-  await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await exposeAppShellForIsolatedUiTest(page);
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
 
   const setup = await page.evaluate(() => {
