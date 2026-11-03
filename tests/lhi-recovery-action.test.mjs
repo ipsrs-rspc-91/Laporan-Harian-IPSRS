@@ -55,3 +55,12 @@ test("Reset rate limit trusts only edge-overwritten client IP header", () => {
   assert.match(resetVerify, /cf-connecting-ip/);
   assert.doesNotMatch(resetVerify, /headers\.get\(\"x-forwarded-for\"\)/i);
 });
+
+test("recovery status returns snapshot member projection only after capability validation", () => {
+  const validation = source.indexOf("validate_lhi_recovery_session");
+  const statusAction = source.indexOf('if (action === "apiRecoveryStatus")');
+  const projection = source.indexOf('get_lhi_grace_status_v2');
+  assert.ok(validation >= 0 && statusAction > validation && projection > statusAction);
+  assert.match(source, /grace_status: graceStatus/);
+  assert.match(source, /Daftar kewajiban pemulihan belum dapat dibaca/);
+});
