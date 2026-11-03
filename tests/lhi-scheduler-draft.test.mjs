@@ -71,7 +71,12 @@ test("scheduler creates only a LOCKED incident; snapshot waits for atomic Reset"
   assert.doesNotMatch(sql, /INSERT INTO public\.lhi_discipline_snapshot_members/i);
   assert.match(sql, /locked_at/);
   assert.match(sql, /'LOCKED'/);
-  assert.match(schemaSql, /UNIQUE \(incident_id, staff_id\)/);
+  assert.match(schemaSql, /UNIQUE \(incident_id, grace_cycle, staff_id\)/);
+});
+
+test("each grace evaluation is isolated to the active Reset cycle", () => {
+  assert.match(sql, /m\.grace_cycle = v_grace\.grace_cycle/);
+  assert.match(sql, /v_grace\.grace_cycle/);
 });
 
 test("scheduler refuses inconsistent global lock and missing anchor", () => {
