@@ -208,7 +208,7 @@ BEGIN
     RAISE EXCEPTION 'Recovery challenge creation failed: %', v_result;
   END IF;
 
-  SELECT public.consume_lhi_recovery_challenge(v_nonce_1, v_ka, v_token_1) INTO v_result;
+  SELECT public.consume_lhi_recovery_challenge(v_nonce_1, v_ka, v_token_1, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'KA challenge exchange failed: %', v_result;
   END IF;
@@ -247,7 +247,7 @@ BEGIN
     RAISE EXCEPTION 'Challenge gate accepted a null global lock state.';
   END IF;
 
-  SELECT public.consume_lhi_recovery_challenge(v_nonce_bad, v_ka, v_token_bad) INTO v_result;
+  SELECT public.consume_lhi_recovery_challenge(v_nonce_bad, v_ka, v_token_bad, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS TRUE THEN
     RAISE EXCEPTION 'Challenge exchange accepted a null global lock state.';
   END IF;
@@ -365,7 +365,7 @@ BEGIN
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Second recovery challenge creation failed: %', v_result;
   END IF;
-  SELECT public.consume_lhi_recovery_challenge(v_nonce_2, v_ka, v_token_2) INTO v_result;
+  SELECT public.consume_lhi_recovery_challenge(v_nonce_2, v_ka, v_token_2, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Second KA challenge exchange failed: %', v_result;
   END IF;
