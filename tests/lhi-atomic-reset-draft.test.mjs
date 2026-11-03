@@ -60,8 +60,10 @@ test("only service_role can execute the atomic Reset RPC", () => {
 });
 
 test("a new Reset after grace relock creates a new immutable snapshot cycle", () => {
-  assert.match(sql, /v_incident\.grace_cycle \+ 1/);
-  assert.match(sql, /grace_cycle, staff_id, snapshot_created_at/);
-  assert.match(sql, /AND m\.grace_cycle = v_incident\.grace_cycle \+ 1/);
-  assert.match(sql, /SET status = 'GRACE',[\s\S]*?grace_cycle = v_incident\.grace_cycle \+ 1/);
+  assert.match(sql, /UNIQUE \\(incident_id, grace_cycle, staff_id\\)/);
+  assert.match(sql, /ON CONFLICT \\(incident_id, grace_cycle, staff_id\\) DO NOTHING/);
+  assert.match(sql, /v_incident\\.grace_cycle \\+ 1/);
+  assert.match(sql, /WHERE m\\.incident_id = v_incident\\.incident_id\\s+AND m\\.grace_cycle = v_incident\\.grace_cycle \\+ 1\\s+AND m\\.snapshot_created_at = v_now/);
+  assert.doesNotMatch(sql, /AND m\\.grace_cycle = v_incident\\.grace_cycle\\s+AND m\\.grace_cycle = v_incident\\.grace_cycle \\+ 1/);
+  assert.match(sql, /SET status = 'GRACE',[\\s\\S]*?grace_cycle = v_incident\\.grace_cycle \\+ 1/);
 });
