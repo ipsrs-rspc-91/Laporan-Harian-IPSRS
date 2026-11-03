@@ -91,7 +91,10 @@ test("warning team broadcast contains all names and day-7 notice explains day-8 
   assert.match(sql, /string_agg\(x\.nama, ', ' ORDER BY x\.nama\)/);
   assert.match(sql, /Blokir akses individual berlaku pada hari ke-8/);
   assert.match(sql, /:TEAM/);
+  assert.match(sql, /FROM public\.staff s\s+WHERE s\.status = 'Aktif'/);
+  assert.doesNotMatch(sql, /:PERSONAL:/);
 });
+
 
 test("scheduler functions are not executable by client roles", () => {
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.run_lhi_discipline_scheduler_v2\(\)[\s\S]*FROM PUBLIC, anon, authenticated, service_role/);
