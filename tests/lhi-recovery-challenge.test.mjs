@@ -44,3 +44,7 @@ test("SECURITY DEFINER recovery RPCs use an empty search_path", () => {
   assert.equal((migration.match(/SET search_path = ''/g) || []).length, 4);
   assert.doesNotMatch(migration, /SET search_path = public, private, pg_temp/);
 });
+
+test("recovery gate, exchange, and validator fail closed on missing or invalid global lock state", () => {
+  assert.equal((migration.match(/v_lock IS NULL OR v_lock NOT IN \('AKTIF', 'NONAKTIF'\)/g) || []).length, 3);
+});
