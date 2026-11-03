@@ -114,3 +114,13 @@ test("grace status projection reads protected snapshot tables only through servi
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.get_lhi_grace_status_v2\(\)[\s\S]*FROM PUBLIC, anon, authenticated, service_role/);
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.get_lhi_grace_status_v2\(\)[\s\S]*TO service_role/);
 });
+
+test("KA grace status projection includes each snapshot member and obligation state", () => {
+  assert.match(sql, /'members', m\.items/);
+  assert.match(sql, /jsonb_agg\([\s\S]*'staff_id', staff_id[\s\S]*'nama', nama/);
+  assert.match(sql, /'current_employment_status', current_employment_status/);
+  assert.match(sql, /'obligation_status', obligation_status/);
+  assert.match(sql, /'completed_at', completed_at/);
+  assert.match(sql, /'excluded_at', excluded_at/);
+  assert.match(sql, /ORDER BY nama, staff_id/);
+});
