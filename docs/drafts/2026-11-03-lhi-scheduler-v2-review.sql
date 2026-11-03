@@ -102,14 +102,9 @@ BEGIN
   -- Serialize cron/manual invocations; transaction lock releases automatically.
   PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
 
-  -- Fail closed on incomplete staff migration; never invent an anchor.
-  IF EXISTS (
-    SELECT 1 FROM public.staff
-    WHERE status = 'Aktif'
-      AND (lhi_active_since IS NULL OR lhi_active_since_verified_at IS NULL)
-  ) THEN
-    RAISE EXCEPTION 'Scheduler LHI v2 dihentikan: terdapat pegawai Aktif dengan anchor belum diverifikasi HR atau peristiwa reaktivasi.';
-  END IF;
+  -- Active LOCKED/GRACE incidents are handled from their immutable incident
+  -- state and snapshot below; HR anchors are required only before starting a
+  -- new normal discipline cycle, not to keep an existing recovery alive.
 
   SELECT value INTO v_lock
   FROM public.access_settings
@@ -293,6 +288,17 @@ BEGIN
       'ok', true, 'mode', 'GRACE_COMPLETED',
       'incident_id', v_grace.incident_id, 'pending', 0
     );
+  END IF;
+
+  -- No active incident remains. Before starting a new discipline cycle,
+  -- every active employee must have a verified HR activation/reactivation
+  -- anchor. Existing LOCKED/GRACE recovery never depends on this backfill.
+  IF EXISTS (
+    SELECT 1 FROM public.staff
+    WHERE status = 'Aktif'
+      AND (lhi_active_since IS NULL OR lhi_active_since_verified_at IS NULL)
+  ) THEN
+    RAISE EXCEPTION 'Scheduler LHI v2 dihentikan: terdapat pegawai Aktif dengan anchor belum diverifikasi HR atau peristiwa reaktivasi.';
   END IF;
 
   -- If a global incident is LOCKED, do not mutate its snapshot or create
