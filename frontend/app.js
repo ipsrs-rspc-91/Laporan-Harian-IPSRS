@@ -423,6 +423,7 @@
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
       case 'apiGetDisciplineWarning':
+      case 'apiGetLhiNotifications':
       case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
@@ -442,6 +443,8 @@
         payload.token=token; payload.bulan=args[0]||''; payload.staffIdFilter=args[1]||null; payload.bidangFilter=args[2]||null; payload.viewMode=args[3]||'daftar'; break;
       case 'apiGetOverdueReports':
         payload.token=token; payload.cutoffDate=args[0]||''; break;
+      case 'apiMarkLhiNotificationRead':
+        payload.token=token; payload.notificationId=args[0]||0; break;
       case 'apiUpdateReport':
         payload.token=token; payload.reportId=args[0]||''; payload.payload=args[1]||{}; break;
       case 'apiDeleteReport':
@@ -542,7 +545,9 @@
     return json;
   }
 
-  // Expose only the existing session reader needed by the reminder module.
+  // Expose the authenticated API wrapper for narrowly scoped notification modules.
+  // Authorization remains enforced by the server-side staff/session checks.
+  window.authRun = authRun;
   window.getSession = getSession;
 
   // Single read-only request for the aged-report reminder; server applies existing report visibility policy.
