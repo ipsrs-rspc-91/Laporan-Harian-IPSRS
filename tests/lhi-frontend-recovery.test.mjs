@@ -105,4 +105,5 @@ test("operational access panel never exposes the obsolete direct global-unlock a
   assert.doesNotMatch(accessControl, /deactivateLhiGlobalBlock|onclick=["']deactivateLhiGlobalBlock/);
   assert.match(accessControl, /Gunakan jalur Reset khusus pada Form Blok Aplikasi/);
   assert.match(accessControl, /seluruh login normal ditutup/);
+  assert.match(accessControl, /grace\.data\.excluded/);
 });
