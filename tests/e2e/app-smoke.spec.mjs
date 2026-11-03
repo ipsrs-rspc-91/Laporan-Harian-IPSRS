@@ -275,6 +275,10 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
 
@@ -330,6 +334,10 @@ test('add-item modal opens from input form when report fields are populated', as
 
   // Modal harus tersedia bersama fragment input, tanpa menunggu fragment Laporan.
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   // Smoke test berjalan tanpa autentikasi; tampilkan shell seperti tes form mobile
   // agar visibility modal diuji, bukan status hidden pada shell login.
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
