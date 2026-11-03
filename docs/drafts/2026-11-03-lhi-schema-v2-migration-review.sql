@@ -278,6 +278,15 @@ FOR EACH ROW EXECUTE FUNCTION public.track_staff_employment_status_change();
 DROP TRIGGER IF EXISTS trg_reactivate_lhi_staff_after_report ON public.reports;
 DROP TRIGGER IF EXISTS trg_protect_lhi_manual_unblock_status ON public.staff;
 
+-- These legacy trigger functions are no longer attached after the trigger
+-- removal above. They must not remain callable through PostgREST roles.
+-- The database owner retains implicit control; trigger execution no longer
+-- requires application-role EXECUTE privileges because these triggers are gone.
+REVOKE ALL ON FUNCTION public.protect_lhi_manual_unblock_status()
+  FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.reactivate_lhi_staff_after_report()
+  FROM PUBLIC, anon, authenticated, service_role;
+
 -- Constraint validation is deliberately separate from initial legacy mapping.
 -- Run only after reviewing every staff row and normalizing employment statuses.
 -- ALTER TABLE public.staff VALIDATE CONSTRAINT staff_lhi_access_status_check;
