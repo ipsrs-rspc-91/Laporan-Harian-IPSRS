@@ -172,7 +172,11 @@ jobs:
           psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
           CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
           CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler()
-          RETURNS void LANGUAGE sql AS $legacy$ SELECT; $legacy$;
+          RETURNS void LANGUAGE plpgsql AS $legacy$
+          BEGIN
+            RETURN;
+          END;
+          $legacy$;
           SELECT cron.schedule(
             'lhi-discipline-scheduler-every-5-minutes',
             '*/5 * * * *',
