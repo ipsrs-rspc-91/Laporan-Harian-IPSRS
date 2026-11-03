@@ -765,6 +765,12 @@
           setLhiRecoveryCapability_(null);
           throw new Error('Sesi login operasional gagal ditutup. Ulangi prosedur Reset.');
         }
+        // The Auth state listener mirrors SIGNED_IN into the app's own
+        // sessionStorage record. SIGNED_OUT is intentionally ignored there,
+        // so remove that mirrored operational credential explicitly without
+        // calling clearSession(), which would also discard the recovery token.
+        CURRENT_SESSION=null;
+        try{sessionStorage.removeItem(SESSION_KEY);}catch(_storageError){}
         let recoveryStatus={incident_status:'UNKNOWN'};
         try{recoveryStatus=await lhiRecoveryAction_('apiRecoveryStatus');}catch(_statusError){}
         if(msgEl)msgEl.innerText='';
