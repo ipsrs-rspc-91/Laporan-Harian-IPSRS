@@ -57,3 +57,8 @@ test("PowerShell backup script is syntax-parsed in CI", async () => {
   assert.match(workflow, /shell: pwsh/);
   assert.match(workflow, /Language\]::Parser\]::ParseFile/);
 });
+
+test("backup and restore modes fail early when required local tools are missing", () => {
+  assert.match(script, /foreach \(\$requiredCommand in @\("supabase", "psql", "docker"\)\)/);
+  assert.match(script, /Get-Command "psql"/);
+});
