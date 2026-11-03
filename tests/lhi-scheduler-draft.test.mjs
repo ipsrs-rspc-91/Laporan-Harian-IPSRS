@@ -109,3 +109,8 @@ test("day-8 in-app notification reaches active staff whose access is not blocked
   assert.match(recipientQuery, /WHERE s\.status = 'Aktif'/);
   assert.match(recipientQuery, /COALESCE\(s\.lhi_access_status, 'NORMAL'\) <> 'BLOCKED_LHI'/);
 });
+
+test("scheduler fails closed when multiple LOCKED or GRACE incidents coexist", () => {
+  assert.match(sql, /SELECT count\(\*\)[\s\S]*FROM public\.lhi_discipline_incidents\s+WHERE status IN \('LOCKED', 'GRACE'\)/);
+  assert.match(sql, /Lebih dari satu insiden LHI aktif ditemukan/);
+});
