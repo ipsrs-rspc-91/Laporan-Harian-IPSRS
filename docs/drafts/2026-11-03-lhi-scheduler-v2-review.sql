@@ -230,7 +230,7 @@ BEGIN
 
     IF v_pending > 0 THEN
       UPDATE public.lhi_discipline_incidents
-      SET status = 'LOCKED', reactivated_at = v_now
+      SET status = 'LOCKED', locked_at = v_now, reactivated_at = v_now
       WHERE incident_id = v_grace.incident_id AND status = 'GRACE';
 
       UPDATE public.access_settings
