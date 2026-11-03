@@ -756,6 +756,15 @@
         const issued=await exchangeLhiRecoveryChallenge_(session.access_token,challenge);
         pendingLhiRecoveryChallenge_=null;
         setLhiRecoveryCapability_(issued.recovery_capability);
+        // The Auth access token was used only to prove the KA IPSRS identity.
+        // Close that ordinary Supabase session before showing recovery-only UI;
+        // the separate opaque capability remains memory-only and is the sole
+        // credential accepted by the restricted recovery Edge Function.
+        const recoverySignOut=await client.auth.signOut({scope:'local'});
+        if(recoverySignOut.error){
+          setLhiRecoveryCapability_(null);
+          throw new Error('Sesi login operasional gagal ditutup. Ulangi prosedur Reset.');
+        }
         let recoveryStatus={incident_status:'UNKNOWN'};
         try{recoveryStatus=await lhiRecoveryAction_('apiRecoveryStatus');}catch(_statusError){}
         if(msgEl)msgEl.innerText='';
