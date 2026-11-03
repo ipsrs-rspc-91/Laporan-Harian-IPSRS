@@ -123,3 +123,17 @@ INSERT INTO public.staff (
 
 INSERT INTO public.access_settings (key, value)
 VALUES ('LHI_GLOBAL_BLOCK', 'NONAKTIF');
+
+-- Match the service-role access already present on the production legacy
+-- tables. New LHI internal tables created by the migrations are intentionally
+-- not granted directly and are accessed only through SECURITY DEFINER RPCs.
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+  public.staff,
+  public.reports,
+  public.access_settings,
+  public.lhi_discipline_incidents,
+  public.lhi_discipline_obligations,
+  public.lhi_discipline_notifications,
+  public.audit_log
+TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
