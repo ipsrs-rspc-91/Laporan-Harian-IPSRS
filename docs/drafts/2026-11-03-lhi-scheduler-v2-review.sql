@@ -298,7 +298,11 @@ BEGIN
     WHERE status = 'Aktif'
       AND (lhi_active_since IS NULL OR lhi_active_since_verified_at IS NULL)
   ) THEN
-    RAISE EXCEPTION 'Scheduler LHI v2 dihentikan: terdapat pegawai Aktif dengan anchor belum diverifikasi HR atau peristiwa reaktivasi.';
+    RETURN jsonb_build_object(
+      'ok', false,
+      'mode', 'ANCHOR_RECONCILIATION_REQUIRED',
+      'message', 'Siklus disiplin baru ditahan sampai tanggal aktivasi/reaktivasi seluruh pegawai Aktif diverifikasi HR.'
+    );
   END IF;
 
   -- If a global incident is LOCKED, do not mutate its snapshot or create
