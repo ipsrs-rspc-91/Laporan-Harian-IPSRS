@@ -465,6 +465,13 @@ BEGIN
   IF NOT has_function_privilege('service_role', 'public.validate_lhi_recovery_session(text,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'service_role must execute the restricted recovery validator.';
   END IF;
+  IF NOT has_function_privilege('service_role', 'public.get_lhi_grace_status_v2()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'service_role must execute the restricted grace-status projection.';
+  END IF;
+  IF has_function_privilege('anon', 'public.get_lhi_grace_status_v2()', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'public.get_lhi_grace_status_v2()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'Client roles must not execute the grace-status projection.';
+  END IF;
 
   IF has_function_privilege('anon', 'public.create_lhi_recovery_challenge(text,text)', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.consume_lhi_recovery_challenge(text,uuid,text)', 'EXECUTE')
@@ -475,6 +482,7 @@ BEGIN
   IF has_table_privilege('anon', 'public.lhi_discipline_snapshot_members', 'SELECT')
      OR has_table_privilege('authenticated', 'public.lhi_discipline_obligation_events', 'SELECT')
      OR has_table_privilege('service_role', 'private.lhi_recovery_sessions', 'SELECT')
+     OR has_table_privilege('service_role', 'public.lhi_discipline_snapshot_members', 'SELECT')
      OR has_table_privilege('anon', 'private.lhi_recovery_challenges', 'SELECT') THEN
     RAISE EXCEPTION 'Direct table access to LHI snapshot/recovery internals must be denied.';
   END IF;
@@ -495,6 +503,11 @@ BEGIN
 END;
 $test$;
 
+-- Verify the service-role-only SECURITY DEFINER projection can read the
+-- protected snapshot even though service_role has no direct table SELECT.
+SET ROLE service_role;
+SELECT public.get_lhi_grace_status_v2();
+RESET ROLE;
 
 -- Legacy production recovery bridge: an existing LOCKED incident has a
 -- per-date obligation snapshot but no HR-verified active_since values.
