@@ -118,3 +118,7 @@ test("scheduler fails closed when multiple LOCKED or GRACE incidents coexist", (
   assert.match(sql, /SELECT count\(\*\)[\s\S]*FROM public\.lhi_discipline_incidents\s+WHERE status IN \('LOCKED', 'GRACE'\)/);
   assert.match(sql, /Lebih dari satu insiden LHI aktif ditemukan/);
 });
+
+test("scheduler fails closed when the global lock setting is missing or invalid", () => {
+  assert.match(sql, /IF NOT FOUND OR v_lock IS NULL OR v_lock NOT IN \('AKTIF', 'NONAKTIF'\)/);
+});
