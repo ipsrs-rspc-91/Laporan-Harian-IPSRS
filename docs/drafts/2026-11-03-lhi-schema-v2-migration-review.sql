@@ -258,7 +258,13 @@ BEGIN
     ) VALUES (
       NEW.staff_id, OLD.status, NEW.status, clock_timestamp(), v_actor_staff_id,
       CASE WHEN v_actor_staff_id IS NULL THEN 'SYSTEM' ELSE 'ADMIN_UI' END,
-      CASE WHEN v_reactivated THEN 'Reaktivasi kepegawaian; anchor LHI direset.' ELSE NULL END,
+      COALESCE(
+        NULLIF(current_setting('app.lhi_status_change_reason', true), ''),
+        CASE
+          WHEN v_reactivated THEN 'Reaktivasi kepegawaian; anchor LHI direset.'
+          ELSE 'Alasan perubahan status tidak disertakan oleh sumber perubahan; perlu verifikasi administrator.'
+        END
+      ),
       OLD.lhi_access_status, NEW.lhi_access_status
     );
   END IF;
