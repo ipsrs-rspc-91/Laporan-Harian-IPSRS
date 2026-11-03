@@ -24,7 +24,7 @@ on:
       - ".github/workflows/lhi-supabase-local-e2e.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: lhi-local-supabase-e2e-${{ github.ref }}
@@ -42,62 +42,6 @@ jobs:
         uses: supabase/setup-cli@v3
         with:
           version: "2.122.1"
-
-      - name: Generate timestamped LHI migrations through Supabase CLI
-        shell: bash
-        run: |
-          set -euo pipefail
-          names=(lhi_schema_v2 lhi_restricted_recovery_challenges lhi_scheduler_v2 lhi_atomic_reset_grace_v2)
-          existing=0
-          for name in "${names[@]}"; do
-            if compgen -G "supabase/migrations/*_${name}.sql" > /dev/null; then
-              existing=$((existing + 1))
-            fi
-          done
-          if [ "$existing" -eq "${#names[@]}" ]; then
-            echo "All CLI-generated LHI migrations already exist."
-            exit 0
-          fi
-          if [ "$existing" -ne 0 ]; then
-            echo "::error::Partial LHI migration set found; refusing to create duplicates."
-            exit 1
-          fi
-
-          create_migration() {
-            local name="$1"
-            local source="$2"
-            supabase migration new "$name"
-            local generated
-            generated="$(find supabase/migrations -maxdepth 1 -type f -name "*_${name}.sql" -print | sort | tail -n 1)"
-            test -n "$generated"
-            cp "$source" "$generated"
-            echo "Generated $generated from $source"
-          }
-
-          supabase --version
-          create_migration lhi_schema_v2 docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
-          sleep 2
-          create_migration lhi_restricted_recovery_challenges docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql
-          sleep 2
-          create_migration lhi_scheduler_v2 docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
-          sleep 2
-          create_migration lhi_atomic_reset_grace_v2 docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
-
-          schema_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)" | cut -d '_' -f 1)"
-          challenge_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)" | cut -d '_' -f 1)"
-          scheduler_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)" | cut -d '_' -f 1)"
-          atomic_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)" | cut -d '_' -f 1)"
-          if ! [ "$schema_ts" -lt "$challenge_ts" ] || ! [ "$challenge_ts" -lt "$scheduler_ts" ] || ! [ "$scheduler_ts" -lt "$atomic_ts" ]; then
-            echo "::error::CLI migration timestamps are not strictly ordered."
-            exit 1
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add supabase/migrations
-          git diff --cached --check
-          git commit -m "build(lhi): add Supabase CLI generated v2 migrations"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -159,6 +103,39 @@ jobs:
           cp -R supabase/functions/lhi-recovery-exchange tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-recovery-action tests/supabase-local/supabase/functions/
 
+      - name: Generate isolated CLI migrations (never in deployable project migrations)
+        working-directory: tests/supabase-local
+        shell: bash
+        run: |
+          set -euo pipefail
+          create_migration() {
+            local name="$1"
+            local source="$2"
+            supabase migration new "$name"
+            local generated
+            generated="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name "*_${name}.sql" -print | sort | tail -n 1)"
+            test -n "$generated"
+            cp "../../$source" "$generated"
+            echo "Generated isolated test migration: $generated"
+          }
+
+          create_migration lhi_schema_v2 docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
+          sleep 1
+          create_migration lhi_restricted_recovery_challenges docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql
+          sleep 1
+          create_migration lhi_scheduler_v2 docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
+          sleep 1
+          create_migration lhi_atomic_reset_grace_v2 docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
+
+          schema_ts="$(basename "$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)" | cut -d '_' -f 1)"
+          challenge_ts="$(basename "$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)" | cut -d '_' -f 1)"
+          scheduler_ts="$(basename "$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)" | cut -d '_' -f 1)"
+          atomic_ts="$(basename "$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)" | cut -d '_' -f 1)"
+          if ! [ "$schema_ts" -lt "$challenge_ts" ] || ! [ "$challenge_ts" -lt "$scheduler_ts" ] || ! [ "$scheduler_ts" -lt "$atomic_ts" ]; then
+            echo "::error::CLI migration timestamps are not strictly ordered."
+            exit 1
+          fi
+
       - name: Start local Supabase stack
         working-directory: tests/supabase-local
         run: supabase start --exclude studio,mailpit,storage-api,imgproxy,logflare,vector
@@ -185,10 +162,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/lhi-postgres-baseline.sql
-          SCHEMA_MIGRATION="$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)"
-          RECOVERY_MIGRATION="$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)"
-          SCHEDULER_MIGRATION="$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)"
-          ATOMIC_MIGRATION="$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)"
+          SCHEMA_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)"
+          RECOVERY_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)"
+          SCHEDULER_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)"
+          ATOMIC_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)"
           test -n "$SCHEMA_MIGRATION"
           test -n "$RECOVERY_MIGRATION"
           test -n "$SCHEDULER_MIGRATION"
