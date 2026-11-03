@@ -28,6 +28,16 @@ DECLARE
   v_anchor_result jsonb;
   v_anchor_staff record;
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.staff'::regclass
+      AND conname = 'staff_lhi_access_status_check'
+      AND convalidated
+  ) THEN
+    RAISE EXCEPTION 'LHI access status constraint must be validated after legacy normalization.';
+  END IF;
+
   SELECT status, lhi_access_status, lhi_active_since
     INTO v_status, v_access, v_anchor_before
   FROM public.staff WHERE staff_id = 'LEGACY-TEST';
