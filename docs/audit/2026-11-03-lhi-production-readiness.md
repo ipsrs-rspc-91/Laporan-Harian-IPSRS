@@ -60,3 +60,20 @@ Production remains locked (`LHI_GLOBAL_BLOCK=AKTIF`; incident `LOCKED`). This au
 ## Audit limitations
 
 The connected Supabase operations available in this session provide SQL inspection and project/function metadata but do not provide a downloadable full database dump or a verified restore rehearsal. Therefore this document records readiness blockers; it does not claim that a backup has been completed.
+
+## Additional Supabase advisor checks — 3 November 2026
+
+Read-only Security Advisor and Performance Advisor checks were run after the production snapshot.
+
+### Security findings
+
+- Supabase Auth leaked-password protection is disabled (one WARN). Enablement should be planned and tested with the hospital's authentication policy; this audit did not change Auth settings.
+- The advisor reports 14 tables with RLS enabled and no policies. Direct inspection confirmed this includes `staff` and the LHI discipline/backup tables. The checked tables have no grants to `anon` or `authenticated`; service access is via `service_role`. This is consistent with a service-role-only access design and is not, by itself, evidence of public data exposure. Keep it under regression testing: do not add broad client policies merely to silence the lint.
+- `master_item_review_queue` also has RLS enabled with no policies and service-role-only grants in the inspected grants list. Confirm the intended workflow still uses server-side access.
+
+### Performance findings
+
+- The advisor reports 27 tables without primary keys, mostly historical rollback/backup snapshots. Do not add keys to immutable historical snapshots without a specific access or restore requirement.
+- Nine indexes were reported unused. Do not drop them based only on this snapshot; verify query workload and a representative observation window first.
+
+These findings are recorded for remediation planning. No production grants, policies, indexes, Auth settings, or table definitions were modified.
