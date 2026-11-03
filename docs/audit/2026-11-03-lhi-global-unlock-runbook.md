@@ -7,7 +7,7 @@ Status dokumen: rencana eksekusi; belum dijalankan pada produksi.
 
 ## 1. Penyebab langsung yang sudah dibuktikan
 
-Frontend produksi di `main` hanya memvalidasi kode Reset 6 digit lalu mengembalikan pengguna ke form login. Tidak ada pemanggilan `apiStartLhiGrace` atau `apiGetLhiGraceStatus`. Karena itu, kode Reset yang benar belum menjalankan transaksi yang mengubah insiden `LOCKED` menjadi `GRACE` dan `LHI_GLOBAL_BLOCK` menjadi `NONAKTIF`.
+Frontend produksi di `main` hanya memvalidasi kode Reset 6 digit lalu mengembalikan pengguna ke form login. Tidak ada pemanggilan `apiStartLhiGrace` atau `apiGetLhiGraceStatus`. Edge Function produksi `lhi-reset-verify` masih versi 1 dan tidak membuat recovery challenge (`create_lhi_recovery_challenge` tidak ada di source); responsnya hanya `valid: true/false`. Karena itu, kode Reset belum pernah menjalankan transaksi yang mengubah insiden `LOCKED` menjadi `GRACE` dan `LHI_GLOBAL_BLOCK` menjadi `NONAKTIF`.
 
 Backend lama mempunyai RPC `open_lhi_global_grace(text,text)`, tetapi jalur lama mengubah `staff.status` menjadi `Aktif` sebagai efek samping pemulihan dan tidak menyediakan sesi recovery-only. Jangan gunakan jalur lama sebagai hotfix.
 
@@ -32,7 +32,7 @@ Backend lama mempunyai RPC `open_lhi_global_grace(text,text)`, tetapi jalur lama
      LHI_RATE_LIMIT_SALT="$(openssl rand -hex 32)"
    ```
    Jangan mencetak, menyimpan di repository, atau mengirim nilai `LHI_RATE_LIMIT_SALT` ke chat/log. Origin produksi diperiksa dari subdomain Worker Cloudflare `rspc`; preview Worker tidak dimasukkan ke allowlist produksi.
-5. Uji fungsi pembacaan `cf-connecting-ip` pada request Supabase Edge Function yang berasal dari Cloudflare. Jika header tidak tersedia, endpoint Reset harus tetap fail-closed; jangan menonaktifkan rate limit untuk melewati masalah tersebut.
+5. Header `cf-connecting-ip` sudah terlihat pada log produksi Supabase Edge Function: 14 request ke `lhi-reset-verify` selama 24 jam terakhir semuanya memiliki header tersebut. Tetap verifikasi lagi setelah deploy versi baru; endpoint harus fail-closed jika header hilang. Jangan menggunakan `x-forwarded-for` sebagai fallback yang dapat dimanipulasi klien.
 
 ## 4. Urutan cutover
 
