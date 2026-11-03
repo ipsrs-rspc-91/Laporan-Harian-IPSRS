@@ -72,6 +72,20 @@ jobs:
           node-version: "22"
       - name: Check frontend JavaScript syntax
         run: node --check frontend/app.js && node --check frontend/login-fast.js
+      - name: Parse production backup PowerShell script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "scripts/lhi-production-backup.ps1"),
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | Format-List * | Out-String | Write-Host
+            throw "PowerShell parser rejected scripts/lhi-production-backup.ps1"
+          }
       - name: Run LHI discipline and recovery unit tests
         run: node --test tests/lhi-*.test.mjs
       - name: Setup Deno
