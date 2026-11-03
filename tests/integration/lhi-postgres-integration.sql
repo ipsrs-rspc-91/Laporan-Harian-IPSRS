@@ -36,6 +36,12 @@ BEGIN
     RAISE EXCEPTION 'Legacy LHI marker was not normalized to Aktif while retaining BLOCKED_LHI.';
   END IF;
 
+  -- Reactivation may clear the LHI individual block, but must never bypass
+  -- an active global application lock.
+  UPDATE public.access_settings
+  SET value = 'AKTIF'
+  WHERE key = 'LHI_GLOBAL_BLOCK';
+
   UPDATE public.staff SET status = 'Nonaktif' WHERE staff_id = 'LEGACY-TEST';
   SELECT lhi_access_status INTO v_access
   FROM public.staff WHERE staff_id = 'LEGACY-TEST';
@@ -52,6 +58,16 @@ BEGIN
      OR v_anchor_after <= v_anchor_before THEN
     RAISE EXCEPTION 'Employment reactivation did not reset active_since and clear only the LHI access block.';
   END IF;
+
+  SELECT value INTO v_lock
+  FROM public.access_settings WHERE key = 'LHI_GLOBAL_BLOCK';
+  IF v_lock IS DISTINCT FROM 'AKTIF' THEN
+    RAISE EXCEPTION 'Employment reactivation must not clear the global application block.';
+  END IF;
+
+  UPDATE public.access_settings
+  SET value = 'NONAKTIF'
+  WHERE key = 'LHI_GLOBAL_BLOCK';
 
   -- Only authenticated KA IPSRS may verify an active-since anchor.
   v_failed := false;
