@@ -56,7 +56,7 @@ CREATE OR REPLACE FUNCTION public.register_lhi_reset_attempt(p_ip_hash text)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, private, pg_temp
+SET search_path = ''
 AS $function$
 DECLARE
   v_attempts integer;
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION public.create_lhi_recovery_challenge(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, private, pg_temp
+SET search_path = ''
 AS $function$
 DECLARE
   v_lock text;
@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION public.consume_lhi_recovery_challenge(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, private, pg_temp
+SET search_path = ''
 AS $function$
 DECLARE
   v_challenge private.lhi_recovery_challenges%ROWTYPE;
@@ -260,7 +260,7 @@ CREATE OR REPLACE FUNCTION public.validate_lhi_recovery_session(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, private, pg_temp
+SET search_path = ''
 AS $function$
 DECLARE
   v_session private.lhi_recovery_sessions%ROWTYPE;
