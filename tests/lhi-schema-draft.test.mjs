@@ -20,11 +20,16 @@ test("employment status and LHI access status are separate columns", () => {
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_access_block_reason text/);
 });
 
-test("legacy blocked status is preserved rather than rewritten as employment status", () => {
-  assert.match(sql, /Preserve legacy employment\/status text/);
+test("legacy LHI-only status is normalized to Aktif while LHI access remains blocked", () => {
+  assert.match(sql, /lhi_access_status = 'BLOCKED_LHI'/);
   assert.match(sql, /WHERE status IN \('Nonaktif_LHI_HARI_8', 'DIBLOKIR_LHI_7_HARI'\)/);
-  assert.doesNotMatch(sql, /UPDATE public\.staff\s+SET status\s*=/i);
+  assert.match(sql, /SET status = 'Aktif',\s+updated_at = clock_timestamp\(\)/);
+  assert.match(sql, /INSERT INTO public\.staff_employment_status_events/);
+  assert.match(sql, /'BACKFILL'/);
+  assert.match(sql, /lhi_access_before, lhi_access_after/);
+  assert.match(sql, /Normalisasi status blokir lama yang dibuat scheduler LHI/);
 });
+
 
 test("grace snapshot is unique per incident, Reset cycle, and staff member", () => {
   assert.match(sql, /grace_cycle integer NOT NULL DEFAULT 0 CHECK \(grace_cycle >= 0\)/);
