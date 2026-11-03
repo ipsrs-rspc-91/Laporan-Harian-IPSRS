@@ -30,6 +30,8 @@ WHERE status = 'LOCKED' AND locked_at IS NULL;
 ALTER TABLE public.staff
   ADD COLUMN IF NOT EXISTS lhi_access_status text NOT NULL DEFAULT 'NORMAL',
   ADD COLUMN IF NOT EXISTS lhi_active_since timestamptz,
+  ADD COLUMN IF NOT EXISTS lhi_active_since_source text NOT NULL DEFAULT 'PROVISIONAL_STAFF_CREATED_AT',
+  ADD COLUMN IF NOT EXISTS lhi_active_since_verified_at timestamptz,
   ADD COLUMN IF NOT EXISTS lhi_access_blocked_at timestamptz,
   ADD COLUMN IF NOT EXISTS lhi_access_block_reason text;
 
@@ -132,7 +134,9 @@ JOIN legacy l USING (staff_id);
 -- employee's actual hire/activation date; do not enable discipline scheduler
 -- until the values are reconciled against HR/master-data history.
 UPDATE public.staff
-SET lhi_active_since = created_at
+SET lhi_active_since = created_at,
+    lhi_active_since_source = 'PROVISIONAL_STAFF_CREATED_AT',
+    lhi_active_since_verified_at = NULL
 WHERE lower(status) = 'aktif'
   AND lhi_active_since IS NULL;
 
@@ -238,6 +242,8 @@ BEGIN
 
     IF v_reactivated THEN
       NEW.lhi_active_since := clock_timestamp();
+      NEW.lhi_active_since_source := 'EMPLOYMENT_REACTIVATION';
+      NEW.lhi_active_since_verified_at := clock_timestamp();
       IF OLD.lhi_access_status = 'BLOCKED_LHI'
          AND OLD.lhi_access_block_reason = 'LHI_NONCOMPLIANCE' THEN
         NEW.lhi_access_status := 'NORMAL';
