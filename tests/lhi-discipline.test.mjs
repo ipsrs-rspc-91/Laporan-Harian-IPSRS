@@ -19,8 +19,25 @@ test("multiple reports on one input date produce one active date via latest time
     { created_at: "2026-11-01T01:00:00Z", deleted_at: null },
     { created_at: "2026-11-01T10:00:00Z", deleted_at: null },
   ];
-  assert.equal(latestValidInputAt(reports, "2026-10-01T00:00:00Z"), "2026-11-01T10:00:00.000Z");
-  assert.equal(complianceAnchorWibDate(reports, "2026-10-01T00:00:00Z"), "2026-11-01");
+  assert.equal(latestValidInputAt(reports, "2026-10-01T00:00:00Z", "2026-11-03T00:00:00Z"), "2026-11-01T10:00:00.000Z");
+  assert.equal(complianceAnchorWibDate(reports, "2026-10-01T00:00:00Z", "2026-11-03T00:00:00Z"), "2026-11-01");
+});
+
+
+test("future-dated reports cannot reset the discipline anchor before server evaluation time", () => {
+  const reports = [
+    { created_at: "2026-11-03T02:00:00Z", deleted_at: null },
+    { created_at: "2026-11-04T02:00:00Z", deleted_at: null },
+  ];
+  const evaluatedAt = "2026-11-03T01:00:00Z";
+  assert.equal(
+    latestValidInputAt(reports, "2026-10-01T00:00:00Z", evaluatedAt),
+    null,
+  );
+  assert.equal(
+    complianceAnchorWibDate(reports, "2026-10-01T00:00:00Z", evaluatedAt),
+    "2026-10-01",
+  );
 });
 
 test("cancelled report is not a valid LHI input", () => {
@@ -28,7 +45,7 @@ test("cancelled report is not a valid LHI input", () => {
     { created_at: "2026-11-02T03:00:00Z", deleted_at: "2026-11-02T04:00:00Z" },
     { created_at: "2026-11-01T03:00:00Z", deleted_at: null },
   ];
-  assert.equal(latestValidInputAt(reports, "2026-10-01T00:00:00Z"), "2026-11-01T03:00:00.000Z");
+  assert.equal(latestValidInputAt(reports, "2026-10-01T00:00:00Z", "2026-11-03T00:00:00Z"), "2026-11-01T03:00:00.000Z");
 });
 
 test("reactivation timestamp resets the anchor and ignores older LHI", () => {
@@ -37,8 +54,8 @@ test("reactivation timestamp resets the anchor and ignores older LHI", () => {
     { created_at: "2026-11-02T02:00:00Z", deleted_at: null },
   ];
   const activeSince = "2026-11-02T03:00:00Z";
-  assert.equal(latestValidInputAt(reports, activeSince), null);
-  assert.equal(complianceAnchorWibDate(reports, activeSince), "2026-11-02");
+  assert.equal(latestValidInputAt(reports, activeSince, "2026-11-03T00:00:00Z"), null);
+  assert.equal(complianceAnchorWibDate(reports, activeSince, "2026-11-03T00:00:00Z"), "2026-11-02");
 });
 
 test("calendar day calculation excludes anchor date and current unfinished date", () => {
@@ -66,7 +83,7 @@ test("evaluation monitors every active role and keeps blocked staff in day-10 tr
     { staff_id: "K", nama: "KA IPSRS", role: "KA_IPSRS", status: "Aktif", lhi_access_status: "NORMAL", lhi_active_since: "2026-10-20T00:00:00Z" },
     { staff_id: "N", nama: "Nonaktif", role: "STAFF", status: "Nonaktif", lhi_active_since: "2026-10-01T00:00:00Z" },
   ];
-  const result = evaluateDiscipline(staff, {}, "2026-10-30");
+  const result = evaluateDiscipline(staff, {}, "2026-10-30", "2026-10-30T16:59:59Z");
   assert.deepEqual(result.evaluations.map((row) => row.staff_id), ["A", "K"]);
   assert.deepEqual(result.globalBlockTriggers.map((row) => row.staff_id), ["A", "K"]);
   assert.equal(result.evaluations[0].access_status, "BLOCKED_LHI");
@@ -85,7 +102,7 @@ test("discipline evaluation produces warning stages and day-8 block from the sam
     const anchorDay = new Date(Date.UTC(2026, 9, 20 - missed - 1)).toISOString();
     return [row.staff_id, [{ created_at: anchorDay, deleted_at: null }]];
   }));
-  const result = evaluateDiscipline(staff, reports, today);
+  const result = evaluateDiscipline(staff, reports, today, "2026-10-20T16:59:59Z");
   assert.deepEqual(result.warnings.WARNING_1.map((row) => row.staff_id), ["3"]);
   assert.deepEqual(result.warnings.WARNING_2.map((row) => row.staff_id), ["5"]);
   assert.deepEqual(result.warnings.WARNING_3.map((row) => row.staff_id), ["6"]);
