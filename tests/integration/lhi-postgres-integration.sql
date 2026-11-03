@@ -24,6 +24,7 @@ DECLARE
   v_token_1 text := repeat('c', 64);
   v_nonce_2 text := repeat('d', 64);
   v_token_2 text := repeat('e', 64);
+  v_mutation_rejected boolean := false;
 BEGIN
   SELECT status, lhi_access_status, lhi_active_since
     INTO v_status, v_access, v_anchor_before
@@ -356,6 +357,39 @@ BEGIN
   WHERE incident_id = v_incident_id;
   IF v_count <> 3 THEN
     RAISE EXCEPTION 'Expected immutable snapshot history of 2 members in cycle 1 plus 1 in cycle 2; got %.', v_count;
+  END IF;
+
+  -- The event log is append-only even for privileged database execution:
+  -- UPDATE and DELETE must fail at the database trigger boundary.
+  v_mutation_rejected := false;
+  BEGIN
+    UPDATE public.lhi_discipline_obligation_events
+    SET details = details || jsonb_build_object('tampered', true)
+    WHERE event_id = (SELECT min(event_id) FROM public.lhi_discipline_obligation_events);
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM = 'Riwayat kewajiban LHI bersifat append-only.' THEN
+      v_mutation_rejected := true;
+    ELSE
+      RAISE;
+    END IF;
+  END;
+  IF NOT v_mutation_rejected THEN
+    RAISE EXCEPTION 'LHI obligation event UPDATE was not rejected.';
+  END IF;
+
+  v_mutation_rejected := false;
+  BEGIN
+    DELETE FROM public.lhi_discipline_obligation_events
+    WHERE event_id = (SELECT min(event_id) FROM public.lhi_discipline_obligation_events);
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM = 'Riwayat kewajiban LHI bersifat append-only.' THEN
+      v_mutation_rejected := true;
+    ELSE
+      RAISE;
+    END IF;
+  END;
+  IF NOT v_mutation_rejected THEN
+    RAISE EXCEPTION 'LHI obligation event DELETE was not rejected.';
   END IF;
 
   IF has_function_privilege('anon', 'public.run_lhi_discipline_scheduler_v2()', 'EXECUTE') THEN
