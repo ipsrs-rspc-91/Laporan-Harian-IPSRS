@@ -607,6 +607,66 @@
     lhiRecoveryCapability_=String(value||'');
   }
 
+  // Dedicated KA IPSRS login is rendered only after the server accepts Reset.
+  // It deliberately reuses doLogin() so the same trusted-button guard,
+  // Supabase Auth flow, and recovery challenge exchange remain in force.
+  function renderLhiKaRecoveryLogin_(message){
+    const screen=document.getElementById('loginScreen');
+    const shell=document.getElementById('appShell');
+    const loading=document.getElementById('authLoading');
+    if(!screen) return false;
+    if(loading) loading.classList.add('hidden');
+    if(shell) shell.classList.add('hidden');
+    screen.classList.remove('hidden');
+    screen.innerHTML=`
+      <section class="login-card lhi-ka-login-card" role="region" aria-label="Login khusus KA IPSRS">
+        <div class="login-brand">
+          <div class="login-logo"><img src="./logo.png" alt="Logo RS Puri Cinere"></div>
+          <div class="login-hospital">RS. Puri Cinere</div>
+          <h1>LAPORAN HARIAN IPSRS</h1>
+        </div>
+        <div class="login-icon" aria-hidden="true">🔐</div>
+        <div class="login-title">LOGIN KHUSUS KA IPSRS</div>
+        <div class="login-text">Kode Reset diterima. Silakan autentikasi menggunakan akun KA IPSRS untuk melanjutkan pemulihan akses.</div>
+        <div class="lhi-ka-login-notice">Akses ini hanya untuk proses pemulihan. Dashboard dan seluruh menu operasional tetap tertutup sampai proses pemulihan dinyatakan selesai oleh server.</div>
+        <form class="login-login" id="ipsrsLoginForm" autocomplete="on" onsubmit="return doLogin(event)">
+          <label for="loginUsername">USERNAME KA IPSRS</label>
+          <input id="loginUsername" name="username" type="text" autocomplete="username" placeholder="Username KA IPSRS" required>
+          <label for="loginPassword">PASSWORD</label>
+          <div class="password-wrap">
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="Password KA IPSRS" required>
+            <button id="togglePassword" type="button" class="password-toggle" onclick="togglePasswordVisibility()" aria-label="Tampilkan password">👁</button>
+          </div>
+          <div id="loginMsg" class="login-msg" role="status" aria-live="polite">${String(message||'')}</div>
+          <button id="loginBtn" type="submit" class="login-btn" onclick="window.__IPSRS_LOGIN_BUTTON_CLICKED=true">MASUK SEBAGAI KA IPSRS <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+      <style>
+        #loginScreen{position:fixed!important;inset:0!important;z-index:99990!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:auto!important;padding:18px!important;box-sizing:border-box!important;background:linear-gradient(135deg,#071b3b,#164b78)!important}
+        #loginScreen .lhi-ka-login-card{width:min(100%,460px);max-width:460px;padding:26px 30px;background:#fff;border-radius:20px;box-shadow:0 18px 48px rgba(0,0,0,.25);text-align:center;color:#163247}
+        #loginScreen .login-logo{width:76px;height:76px;margin:0 auto 7px}
+        #loginScreen .login-logo img{width:100%;height:100%;object-fit:contain}
+        #loginScreen .login-hospital{color:#08a52a;font-size:1.1rem;font-weight:800}
+        #loginScreen .login-brand h1{margin:0;color:#123c55;font-size:1.35rem}
+        #loginScreen .login-icon{width:48px;height:48px;margin:14px auto 8px;border-radius:50%;display:grid;place-items:center;background:#edf3f8;font-size:24px}
+        #loginScreen .login-title{margin:0 0 8px;color:#123c55;font-size:1.2rem;font-weight:850}
+        #loginScreen .login-text{font-size:.9rem;line-height:1.5;color:#526678}
+        #loginScreen .lhi-ka-login-notice{margin:14px 0;padding:10px 12px;border:1px solid #f2c879;border-left:4px solid #d99a18;border-radius:9px;background:#fff8e8;color:#704b08;text-align:left;font-size:12px;line-height:1.5}
+        #loginScreen .login-login{text-align:left;margin-top:12px}
+        #loginScreen .login-login label{display:block;margin:10px 0 5px;color:#40576a;font-size:12px;font-weight:800}
+        #loginScreen .login-login input{width:100%;height:46px;box-sizing:border-box;padding:0 12px;border:1px solid #cbd8e3;border-radius:9px;background:#eef4ff;color:#182b3a;font-size:15px}
+        #loginScreen .password-wrap{position:relative}
+        #loginScreen .password-wrap input{padding-right:46px}
+        #loginScreen .password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;background:transparent;cursor:pointer}
+        #loginScreen .login-btn{width:100%;min-height:48px;margin-top:12px;border:0;border-radius:10px;background:#08ad39;color:#fff;font-weight:850;cursor:pointer}
+        #loginScreen .login-msg{min-height:20px;margin-top:8px;text-align:center;color:#bd3434;font-size:12px;font-weight:700}
+        @media(max-width:480px){#loginScreen .lhi-ka-login-card{width:min(100%,380px);padding:20px 18px}#loginScreen .login-brand h1{font-size:1.12rem}#loginScreen .login-text{font-size:.8rem}}
+      </style>`;
+    const username=document.getElementById('loginUsername');
+    if(username) username.focus();
+    return !!screen.querySelector('#ipsrsLoginForm');
+  }
+
   async function lhiRecoveryAction_(action){
     const capability=lhiRecoveryCapability_;
     if(!capability) throw new Error('Sesi pemulihan tidak ditemukan.');
@@ -6640,10 +6700,9 @@
         if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
         const challenge=String(result.challenge||'').trim();
         if(challenge.length<32) throw new Error('Kode Reset diterima server, tetapi layanan pemulihan KA IPSRS belum lengkap di server. Form login belum dapat dibuka dan blokir tetap aktif. Jangan ulangi kode berkali-kali; administrator harus menyelesaikan pembaruan layanan pemulihan.');
-        if(!restoreLhiLoginMarkup_(screen)) throw new Error('Form login normal tidak dapat dipulihkan. Muat ulang halaman dan ulangi Reset.');
         pendingLhiRecoveryChallenge_=challenge;
         setLhiRecoveryCapability_(null);
-        showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
+        if(!renderLhiKaRecoveryLogin_('Kode Reset diterima. Silakan login menggunakan akun KA IPSRS.')) throw new Error('Form login khusus KA IPSRS gagal ditampilkan. Muat ulang halaman dan ulangi Reset.');
       }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
       finally{if(submit){submit.disabled=false;submit.textContent='OK';}}
     });
@@ -6720,7 +6779,7 @@
           pendingLhiRecoveryChallenge_=challenge;
           setLhiRecoveryCapability_(null);
           modal.style.display='none';
-          showLoginScreen('Kode Reset diterima. Silakan login menggunakan akun KA IPSRS.');
+          if(!renderLhiKaRecoveryLogin_('Kode Reset diterima. Silakan login menggunakan akun KA IPSRS.')) throw new Error('Form login khusus KA IPSRS gagal ditampilkan.');
         }catch(error){
           if(message)message.textContent=String(error&&error.message||'Verifikasi Reset gagal.');
         }finally{verify.disabled=false;}
