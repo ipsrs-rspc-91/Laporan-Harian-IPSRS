@@ -83,20 +83,20 @@ normalized AS (
   UPDATE public.staff s
   SET status = 'Aktif',
       updated_at = clock_timestamp()
-  FROM legacy l
-  WHERE s.staff_id = l.staff_id
-  RETURNING s.staff_id, l.old_status, s.status AS new_status,
-            l.old_lhi_access, s.lhi_access_status AS new_lhi_access
+  WHERE s.status IN ('Nonaktif_LHI_HARI_8', 'DIBLOKIR_LHI_7_HARI')
+  RETURNING s.staff_id, s.status AS new_status,
+            s.lhi_access_status AS new_lhi_access
 )
 INSERT INTO public.staff_employment_status_events (
   staff_id, old_status, new_status, changed_at, changed_by_staff_id,
   change_source, reason, lhi_access_before, lhi_access_after
 )
-SELECT staff_id, old_status, new_status, clock_timestamp(), NULL,
+SELECT n.staff_id, l.old_status, n.new_status, clock_timestamp(), NULL,
        'BACKFILL',
        'Normalisasi status blokir lama yang dibuat scheduler LHI menjadi status kepegawaian Aktif; blokir hak akses LHI tetap dipertahankan.',
-       old_lhi_access, new_lhi_access
-FROM normalized;
+       l.old_lhi_access, n.new_lhi_access
+FROM normalized n
+JOIN legacy l USING (staff_id);
 
 -- Provisional anchors for review only. These are not asserted to be the
 -- employee's actual hire/activation date; do not enable discipline scheduler
