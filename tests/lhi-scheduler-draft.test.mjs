@@ -133,3 +133,14 @@ test("day-8 SQL notification event identity matches the JavaScript discipline he
   assert.match(sql, /:BLOCK_INDIVIDUAL:TEAM'/);
   assert.match(helper, /event_key: `LHI:\$\{todayWib\}:BLOCK_INDIVIDUAL:TEAM`/);
 });
+
+
+test("Supabase local E2E pins a fixed CLI release instead of resolving latest at runtime", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/lhi-supabase-local-e2e.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(workflow, /uses: supabase\/setup-cli@v3/);
+  assert.match(workflow, /version: "2\.122\.1"/);
+  assert.doesNotMatch(workflow, /version: latest/);
+});
