@@ -16,6 +16,8 @@ test("schema v2 draft is explicitly review-only and transaction-wrapped", () => 
 test("employment status and LHI access status are separate columns", () => {
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_access_status text/);
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_active_since timestamptz/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_active_since_source text/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_active_since_verified_at timestamptz/);
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_access_blocked_at timestamptz/);
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_access_block_reason text/);
 });
