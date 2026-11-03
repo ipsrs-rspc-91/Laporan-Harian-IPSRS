@@ -7,15 +7,17 @@ Biaya: prosedur ini menggunakan ekspor manual Supabase CLI; tidak mensyaratkan u
 
 ## 1. Batas cakupan
 
-Backup harus mencakup tiga dump PostgreSQL terpisah:
-1. `roles.sql` — definisi role (password custom role tidak ikut diekspor).
-2. `schema.sql` — schema, tabel, index, sequence, function, trigger, policy/RLS, dan struktur database yang didukung dump Supabase.
-3. `data.sql` — data database termasuk tabel Auth yang termasuk dalam dump.
+Prosedur ini menghasilkan tiga dump PostgreSQL terpisah:
+1. `roles.sql` — definisi role yang didukung dump (password custom role tidak ikut diekspor).
+2. `schema.sql` — schema dan objek database yang didukung dump Supabase.
+3. `data.sql` — data pada schema yang disertakan oleh dump.
 
-Hal yang tidak otomatis tercakup:
-- File objek Supabase Storage; database hanya menyimpan metadata objek. Jika bucket dipakai, ekspor objek Storage secara terpisah dan catat daftar bucket serta jumlah objek.
+**PENTING: ketiga dump tersebut BUKAN backup lengkap seluruh layanan Supabase.** Perintah `supabase db dump` secara default mengecualikan schema yang dikelola Supabase, termasuk `auth` dan `storage`, serta schema ekstensi. Karena itu `auth.users` dan isi schema Auth tidak boleh diasumsikan ikut tercakup. Jangan menyebut hasil tiga dump ini sebagai backup identitas pengguna yang lengkap atau sebagai bukti pemulihan penuh sebelum komponen yang dikecualikan ditangani dan diuji dengan prosedur resmi yang kompatibel.
+
+Komponen yang tidak otomatis tercakup:
+- **Supabase Auth:** schema/tabel Auth (termasuk `auth.users`) dan konfigurasi provider, OAuth, SMTP, domain, serta pengaturan dashboard. Buat rencana ekspor/pemulihan terpisah yang didukung Supabase; jangan menyalin atau memodifikasi tabel internal Auth secara manual sebagai jalan pintas.
+- **Supabase Storage:** schema Storage dan file objek. Database tidak menyertakan objek Storage; ekspor objek serta catat bucket dan jumlah objek dengan prosedur terpisah.
 - Source/deployment Edge Functions dan secrets; source harus disimpan di GitHub, sedangkan secrets harus dikelola terpisah dan tidak pernah dimasukkan ke dump atau repository.
-- Konfigurasi dashboard Auth/OAuth, SMTP, domain, dan konfigurasi layanan; dokumentasikan terpisah.
 - Password role PostgreSQL kustom tidak disertakan; atur ulang secara aman setelah restore bila ada.
 
 ## 2. Persiapan pada komputer operator
@@ -101,7 +103,7 @@ Bandingkan jumlah baris dan keberadaan objek utama antara produksi dan database 
 - `public.access_settings`
 - `public.lhi_discipline_incidents`
 - `public.lhi_discipline_obligations`
-- `auth.users`
+- Verifikasi Auth melalui mekanisme ekspor/pemulihan resmi yang terpisah; jangan mengharapkan `auth.users` ada di tiga dump default.
 - schema, index, function, trigger, dan RLS policies penting.
 
 Periksa juga bahwa status LHI sebelum cutover terekam pada dump:
@@ -109,7 +111,7 @@ Periksa juga bahwa status LHI sebelum cutover terekam pada dump:
 - incident 1 `LOCKED`
 - cron job lama tercatat dalam backup metadata/checkpoint yang dibuat terpisah.
 
-Catat waktu restore, versi PostgreSQL, hasil pemeriksaan, jumlah baris aktual dan hasil perbandingan. Backup baru dinyatakan **RESTORABLE** hanya setelah restore rehearsal dan pemeriksaan tersebut lulus. File dump yang sekadar berhasil dibuat belum membuktikan restore berhasil.
+Catat waktu restore, versi PostgreSQL, hasil pemeriksaan, jumlah baris aktual dan hasil perbandingan. Dump database inti baru dinyatakan **RESTORABLE untuk cakupan schema/data yang benar-benar disertakan** setelah restore rehearsal dan pemeriksaan tersebut lulus. Backup layanan Supabase secara keseluruhan belum boleh dinyatakan RESTORABLE sampai Auth, Storage, secrets, konfigurasi layanan, dan seluruh komponen yang dikecualikan mempunyai bukti pemulihan terpisah. File dump yang sekadar berhasil dibuat belum membuktikan restore berhasil.
 
 ## 7. Setelah backup tervalidasi
 
