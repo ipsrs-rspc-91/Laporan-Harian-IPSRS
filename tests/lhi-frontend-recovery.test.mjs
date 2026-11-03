@@ -82,3 +82,11 @@ test("server discipline warning escapes staff names before inserting them into H
   assert.match(login, /names\.map\(x=>'🔴 '\+escapeHtml\(x\.nama\)\)/);
   assert.doesNotMatch(login, /names\.map\(x=>'🔴 '\+x\.nama\)/);
 });
+
+test("global lock screen does not claim a delinquent person is listed when server has no names", () => {
+  const start = app.indexOf("function renderLhiGlobalBlockScreen_");
+  const end = app.indexOf("function removeLhiRecoveryResumeUi_", start);
+  const block = app.slice(start, end);
+  assert.match(block, /const triggerIntro=trigger[\\s\\S]*?Mode Blok Aplikasi diaktifkan oleh server karena kewajiban LHI belum dipenuhi/);
+  assert.match(block, /<p class="lhi-lock-intro">\\$\\{triggerIntro\\}<\\/p>/);
+});
