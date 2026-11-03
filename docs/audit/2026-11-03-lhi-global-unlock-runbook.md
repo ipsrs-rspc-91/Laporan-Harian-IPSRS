@@ -1,0 +1,77 @@
+# Runbook pembukaan Form Blok Aplikasi LHI — produksi
+
+Tanggal audit: 3 November 2026  
+Target: insiden legacy `incident_id=1`, `LHI_GLOBAL_BLOCK=AKTIF`  
+Branch implementasi: `repair/lhi-status-separation-20261103`  
+Status dokumen: rencana eksekusi; belum dijalankan pada produksi.
+
+## 1. Penyebab langsung yang sudah dibuktikan
+
+Frontend produksi di `main` hanya memvalidasi kode Reset 6 digit lalu mengembalikan pengguna ke form login. Tidak ada pemanggilan `apiStartLhiGrace` atau `apiGetLhiGraceStatus`. Edge Function produksi `lhi-reset-verify` masih versi 1 dan tidak membuat recovery challenge (`create_lhi_recovery_challenge` tidak ada di source); responsnya hanya `valid: true/false`. Karena itu, kode Reset belum pernah menjalankan transaksi yang mengubah insiden `LOCKED` menjadi `GRACE` dan `LHI_GLOBAL_BLOCK` menjadi `NONAKTIF`.
+
+Backend lama mempunyai RPC `open_lhi_global_grace(text,text)`, tetapi jalur lama mengubah `staff.status` menjadi `Aktif` sebagai efek samping pemulihan dan tidak menyediakan sesi recovery-only. Jangan gunakan jalur lama sebagai hotfix.
+
+## 2. Kondisi produksi yang diperiksa secara read-only
+
+- `LHI_GLOBAL_BLOCK=AKTIF`.
+- Insiden 1 berstatus `LOCKED`; deadline legacy sudah lewat.
+- Cron `lhi-discipline-scheduler-every-5-minutes` aktif, cadence `*/5 * * * *`, command lama `run_lhi_discipline_scheduler()`.
+- Terdapat 156 baris kewajiban legacy untuk 21 petugas unik; seluruh 156 baris masih pending. Join ulang pada saat audit menunjukkan 147 baris untuk 20 petugas berstatus `Aktif` dan 9 baris untuk 1 petugas berstatus legacy `Nonaktif_LHI_HARI_8`. Satu petugas aktif lainnya tidak memiliki baris kewajiban pending pada incident 1; jangan menambahkannya ke snapshot legacy tanpa bukti evaluasi yang sah.
+- Distribusi seluruh master petugas saat audit: 21 `Aktif`, 18 `Nonaktif`, dan 1 `Nonaktif_LHI_HARI_8`. Angka 21 petugas aktif pada master tidak sama dengan 21 petugas dalam snapshot kewajiban legacy.
+- Pemeriksaan `information_schema.columns` memastikan kolom v2 `staff.lhi_active_since`, `lhi_active_since_source`, `lhi_active_since_verified_at`, dan `lhi_access_status` **belum ada di produksi**. Kolom tersebut baru tersedia setelah batch schema-v2 disetujui dan diterapkan; jangan jalankan kode/endpoint v2 di produksi sebelum itu.
+- Tidak ada perubahan database produksi pada saat audit.
+
+## 3. Persiapan wajib
+
+1. Ambil backup database produksi yang dapat dipulihkan dan verifikasi prosedur restore. Backup tabel pilihan yang sudah ada bukan pengganti backup database yang dapat dipulihkan.
+2. Rollback target Cloudflare Worker produksi sudah teridentifikasi secara read-only: Worker `laporan-harian-ipsrs`, deployment `d320da6d-8441-4c0d-a29e-100287ee992e`, version `e585e341-eed1-4097-8b08-6db92f5cbabe`, aktif 3 Nov 2026 02:22:08 UTC. Simpan metadata ini pada change record dan verifikasi prosedur rollback sebelum deploy; jangan membuat deployment baru saat checkpoint.
+3. **Status migrasi pada branch saat ini: BELUM DIPAKETKAN sebagai migration aktif.** Empat SQL v2 masih berupa review draft di `docs/drafts/`: `2026-11-03-lhi-schema-v2-migration-review.sql`, `2026-11-03-lhi-restricted-recovery-challenges-review.sql`, `2026-11-03-lhi-scheduler-v2-review.sql`, dan `2026-11-03-lhi-atomic-reset-grace-v2-review.sql`. Keempat file tersebut tidak ada di `supabase/migrations/`; workflow E2E menyalinnya hanya ke direktori staging terisolasi untuk pengujian dan itu **bukan** migration produksi. Karena itu jangan menyatakan empat migration sudah aktif/siap di-push dan jangan menjalankan `supabase db push` berdasarkan nama timestamp contoh. Setelah backup/restore terbukti, HR anchor direkonsiliasi, dan persetujuan rilis diberikan, buat migration melalui `supabase migration new` dalam urutan dependency yang telah diuji, bandingkan hasilnya byte-for-byte dengan draft, lalu jalankan `supabase migration list --linked` dan `supabase db push --dry-run`. Pastikan hanya batch yang disetujui yang pending; jangan membuat salinan migration kedua.
+4. Set secret Edge Function sebelum deploy:
+   ```sh
+   supabase secrets set --project-ref tcrmlhfsroyhaxdfwyll \
+     LHI_ALLOWED_ORIGINS="https://laporan-harian-ipsrs.rspc.workers.dev" \
+     LHI_RATE_LIMIT_SALT="$(openssl rand -hex 32)"
+   ```
+   Jangan mencetak, menyimpan di repository, atau mengirim nilai `LHI_RATE_LIMIT_SALT` ke chat/log. Origin produksi diperiksa dari subdomain Worker Cloudflare `rspc`; preview Worker tidak dimasukkan ke allowlist produksi.
+5. Header `cf-connecting-ip` sudah terlihat pada log produksi Supabase Edge Function: 14 request ke `lhi-reset-verify` selama 24 jam terakhir semuanya memiliki header tersebut. Tetap verifikasi lagi setelah deploy versi baru; endpoint harus fail-closed jika header hilang. Jangan menggunakan `x-forwarded-for` sebagai fallback yang dapat dimanipulasi klien.
+
+## 4. Urutan cutover
+
+1. Jalankan dan verifikasi backup/checkpoint.
+2. Jalankan `docs/drafts/2026-11-03-lhi-cron-pause-v2-review.sql`. Script memeriksa tepat satu job, tidak ada run berstatus `running`, lalu mem-pause job yang sama. Jangan menghapus atau membuat job cron baru.
+3. Terapkan schema-v2 melalui migration CLI yang sudah diuji.
+4. Terapkan migration restricted recovery challenge/session.
+5. Terapkan scheduler-v2 dan atomic Reset-v2.
+6. Deploy Edge Functions: `lhi-reset-verify`, `lhi-recovery-exchange`, `lhi-recovery-action`, `lhi-block-status`, dan versi `ipsrs-api` yang sesuai branch.
+7. Deploy frontend Worker dari commit branch yang sama dan verifikasi build/commit production.
+8. Jalankan `docs/drafts/2026-11-03-lhi-cron-switch-v2-review.sql`. Script hanya mengaktifkan kembali job yang sama, dengan cadence lima menit dan command scheduler v2; verifikasi tidak ada scheduler aktif ganda.
+9. Verifikasi endpoint block-status masih melaporkan global lock AKTIF sebelum Reset KA dilakukan.
+
+## 5. Prosedur Reset KA IPSRS
+
+1. Buka halaman aplikasi dan pilih Reset.
+2. Kode Reset hanya menerbitkan challenge satu kali; kode tidak memberikan sesi login.
+3. Login menggunakan username/password akun KA IPSRS yang sudah diverifikasi Supabase Auth.
+4. Backend memeriksa role persis `KA_IPSRS`, status kepegawaian `Aktif`, challenge belum dipakai, belum kedaluwarsa, dan terikat ke insiden aktif.
+5. KA masuk ke layar recovery-only. Dashboard, input laporan, rekap, dan tindakan operasional tidak boleh tersedia.
+6. KA menekan tombol mulai Reset. Server membuat snapshot baru dari kewajiban legacy pending, satu baris per petugas unik, membuka status akses individual LHI, mengubah insiden menjadi `GRACE`, dan mengubah global lock menjadi `NONAKTIF` dalam satu transaksi.
+7. Untuk insiden legacy saat ini, snapshot diambil dari 156 kewajiban lama yang masih pending dan diringkas menjadi 21 petugas unik. Tanggal aktivasi HR tidak direka dari `staff.created_at`.
+8. Catat `started_at` dan `deadline_at`; grace harus tepat 12 jam. Retry setelah respons hilang harus mengembalikan waktu yang sama, tidak membuat snapshot kedua.
+
+## 6. Verifikasi setelah Reset
+
+- `LHI_GLOBAL_BLOCK=NONAKTIF`.
+- Insiden 1 berstatus `GRACE`, satu snapshot cycle baru terbentuk, dan jumlah anggota sesuai jumlah petugas unik yang masih aktif pada snapshot.
+- Status kepegawaian tetap tidak berubah oleh Reset; hanya status akses LHI yang dibuka.
+- Sesi KA hanya dapat membaca status recovery dan memulai Reset; tidak dapat membuka dashboard/operasional.
+- Laporan sah harus disimpan dalam rentang `[started_at, deadline_at)`; laporan yang dibatalkan tidak memenuhi kewajiban bila tidak ada pengganti yang sah.
+- Pada deadline 12 jam, global lock hanya aktif kembali jika masih ada anggota snapshot berstatus aktif dengan kewajiban pending.
+- Bila semua kewajiban selesai atau dikecualikan, insiden ditutup dan global lock tetap NONAKTIF.
+- Setelah insiden legacy selesai, scheduler mengembalikan mode `ANCHOR_RECONCILIATION_REQUIRED` sampai HR memverifikasi tanggal aktivasi/reaktivasi. Siklus disiplin baru tidak boleh memakai `staff.created_at` sebagai pengganti data HR.
+
+## 7. Batas perubahan dan persetujuan
+
+- Jangan mengubah `access_settings.value` secara manual untuk mematikan global lock.
+- Jangan menjalankan SQL draft di produksi sebelum migration CLI, pengujian nonproduksi, backup, dan rollback tervalidasi.
+- Jangan menggabungkan PR atau menerbitkan Worker/Edge Function produksi sebelum seluruh preflight lulus dan persetujuan rilis produksi diberikan.
+- Bila salah satu precondition gagal, hentikan cutover; global lock tetap AKTIF dan data insiden dipertahankan.

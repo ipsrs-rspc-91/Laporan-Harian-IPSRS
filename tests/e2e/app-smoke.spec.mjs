@@ -227,6 +227,17 @@ test('mobile-input-keyboard-scroll-keeps-next-field-visible-checkpoint-mode', as
   });
 
   const content = page.locator('main.content');
+  // Chromium CI does not open a real Android software keyboard. Reproduce
+  // the resized-content viewport contract deterministically: the app's main
+  // form remains the scroll container, but its visible height is reduced to
+  // the mocked visual viewport (430 CSS px), leaving the lower fields scrollable.
+  await content.evaluate(el => {
+    el.style.height = '430px';
+    el.style.maxHeight = '430px';
+    el.style.minHeight = '0';
+    el.style.overflowY = 'auto';
+    el.style.flex = '0 1 430px';
+  });
   const ruang = page.locator('#Ruang');
   const masalah = page.locator('#MasalahKegiatan');
   const tindakan = page.locator('#Tindakan');
@@ -275,7 +286,15 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
+  // This test uses a local synthetic area fixture. Live master data is
+  // intentionally allowed to omit this legacy/static area; the picker must
+  // still behave correctly when a valid selected area is supplied locally.
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
 
   const setup = await page.evaluate(() => {
@@ -330,9 +349,14 @@ test('add-item modal opens from input form when report fields are populated', as
 
   // Modal harus tersedia bersama fragment input, tanpa menunggu fragment Laporan.
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   // Smoke test berjalan tanpa autentikasi; tampilkan shell seperti tes form mobile
   // agar visibility modal diuji, bukan status hidden pada shell login.
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
   await expect(page.locator('#itemBaruAreaLabel')).toBeAttached();
   await expect(page.locator('#itemBaruInput')).toBeAttached();
@@ -390,7 +414,15 @@ test('area picker stays open and explains when Item Baru is tapped without selec
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  // Wait for the startup lock check to finish before injecting deterministic
+  // master-area data; otherwise its asynchronous completion can clear the
+  // synthetic option in the middle of this regression test.
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
 
   const setup = await page.evaluate(() => {
     const area = document.getElementById('AreaKerja');
@@ -423,7 +455,15 @@ test('direct Area Kerja group selection is retained for Item Baru', async ({ pag
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  // Wait for the asynchronous startup/access check to finish before arranging
+  // the direct-area fixture; otherwise the late master-data load can replace
+  // the synthetic option while the picker is being rebuilt.
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
 
   const setup = await page.evaluate(() => {
     const area = document.getElementById('AreaKerja');
@@ -462,4 +502,134 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   // ESTAFET remains inline within the first paragraph and its punctuation.
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
+});
+
+
+test('global LHI block displays Reset modal and keeps login unavailable for an invalid code', async ({ page }) => {
+  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, blocked: true, message: 'Mode Blok Aplikasi aktif.' })
+  }));
+  await page.route('**/functions/v1/lhi-reset-verify', route => route.fulfill({
+    status: 400,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, valid: false, message: 'Kode reset tidak benar.' })
+  }));
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('#appShell')).toBeHidden();
+  await expect(page.locator('#ipsrsLoginForm')).toHaveCount(0);
+
+  await page.locator('#lhiGlobalBlockReset').click();
+  await expect(page.locator('#lhiResetBackdrop')).toHaveClass(/show/);
+  await page.locator('#lhiResetCode').fill('123456');
+  await page.locator('#lhiResetSubmit').click();
+
+  await expect(page.locator('#lhiResetMessage')).toContainText('Kode reset tidak benar.');
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible();
+  await expect(page.locator('#ipsrsLoginForm')).toHaveCount(0);
+});
+
+test('valid Reset restores the original shared username/password login form', async ({ page }) => {
+  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, blocked: true, message: 'Mode Blok Aplikasi aktif.' })
+  }));
+  await page.route('**/functions/v1/lhi-reset-verify', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      ok: true,
+      valid: true,
+      challenge: 'test-only-challenge-' + 'x'.repeat(40),
+      message: 'Kode reset diterima.'
+    })
+  }));
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({ timeout: 10000 });
+  await page.locator('#lhiGlobalBlockReset').click();
+  await page.locator('#lhiResetCode').fill('123456');
+  await page.locator('#lhiResetSubmit').click();
+
+  await expect(page.locator('#ipsrsLoginForm')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('#loginUsername')).toBeVisible();
+  await expect(page.locator('#loginPassword')).toBeVisible();
+  await expect(page.locator('#loginMsg')).toContainText('Kode reset diterima.');
+  await expect(page.locator('#appShell')).toBeHidden();
+  await expect(page.locator('#lhiGlobalBlockReset')).toHaveCount(0);
+});
+
+
+test('KA IPSRS Hak Akses displays provisional HR anchors and submits an audited verification reference', async ({ page }) => {
+  const dialogs = [];
+  page.on('dialog', async dialog => {
+    dialogs.push(dialog.message());
+    await dialog.accept();
+  });
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.__ipsrsOpenAccessPanel === 'function');
+
+  await page.evaluate(async () => {
+    sessionStorage.setItem('ipsrs_session_v1', JSON.stringify({
+      staff_id: 'KA-TEST',
+      username: 'KA-TEST',
+      nama: 'KA IPSRS Test',
+      role: 'KA_IPSRS',
+      status: 'Aktif',
+      token: 'TEST-ONLY'
+    }));
+
+    window.__anchorVerifyCalls = [];
+    window.authRun = async (action, ...args) => {
+      if (action === 'apiGetAccessControl') {
+        return { ok: true, laporan_tim: 'AKTIF', administrasi_edit: 'NONAKTIF', lhi_global_block: 'NONAKTIF' };
+      }
+      if (action === 'apiListStaff') {
+        return { ok: true, data: [{ staff_id: 'HR-001', nama: 'Petugas Uji HR', role: 'STAF', role_label: 'Staf', status: 'Aktif' }] };
+      }
+      if (action === 'apiListEditPermissions') return { ok: true, data: [] };
+      if (action === 'apiGetLhiGraceStatus') return { ok: true, data: null };
+      if (action === 'apiGetLhiAnchorReview') {
+        return {
+          ok: true,
+          data: [{
+            staff_id: 'HR-001',
+            nama: 'Petugas Uji HR',
+            role: 'STAF',
+            status: 'Aktif',
+            lhi_active_since: '2026-09-12T17:00:00.000Z',
+            lhi_active_since_source: 'PROVISIONAL_STAFF_CREATED_AT',
+            lhi_active_since_verified_at: null,
+            verification_reference: null
+          }]
+        };
+      }
+      if (action === 'apiVerifyLhiActiveSince') {
+        window.__anchorVerifyCalls.push(args);
+        return { ok: true, msg: 'Tanggal mulai aktif berhasil diverifikasi.' };
+      }
+      return { ok: true, data: [] };
+    };
+
+    await window.__ipsrsOpenAccessPanel();
+  });
+
+  await expect(page.locator('#accessBg')).toHaveClass(/show/);
+  await expect(page.getByText('Verifikasi Tanggal Mulai Aktif Petugas')).toBeVisible();
+  await expect(page.locator('[data-lhi-anchor-row="0"]')).toContainText('Petugas Uji HR');
+  await expect(page.getByText('PERLU VERIFIKASI')).toBeVisible();
+
+  const row = page.locator('[data-lhi-anchor-row="0"]');
+  await row.locator('[data-anchor-date]').fill('2026-09-12');
+  await row.locator('[data-anchor-reference]').fill('SK-HR-2026-001');
+  await row.getByRole('button', { name: 'Simpan' }).click();
+
+  await expect.poll(() => page.evaluate(() => window.__anchorVerifyCalls))
+    .toEqual([['HR-001', '2026-09-12', 'SK-HR-2026-001']]);
+  expect(dialogs.some(message => message.includes('sudah dicocokkan dengan dokumen HR'))).toBeTruthy();
 });
