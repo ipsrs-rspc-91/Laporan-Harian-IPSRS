@@ -50,6 +50,12 @@ BEGIN
     RAISE EXCEPTION 'Employment reactivation did not reset active_since and clear only the LHI access block.';
   END IF;
 
+  -- Test-only HR reconciliation: all active fixture anchors are explicitly verified.
+  UPDATE public.staff
+  SET lhi_active_since_verified_at = clock_timestamp(),
+      lhi_active_since_source = 'HR_MASTER'
+  WHERE status = 'Aktif';
+
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
   IF v_result ->> 'mode' IS DISTINCT FROM 'GLOBAL_LOCKED' THEN
     RAISE EXCEPTION 'Day-10 scheduler did not activate global lock: %', v_result;
