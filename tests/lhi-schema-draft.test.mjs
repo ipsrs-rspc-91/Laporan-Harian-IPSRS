@@ -60,3 +60,8 @@ test("legacy anchor and status reconciliation are explicitly marked as required 
   assert.match(sql, /do not enable discipline scheduler[\s\S]*until the values are reconciled/i);
   assert.match(sql, /ALTER TABLE public\.staff VALIDATE CONSTRAINT staff_lhi_access_status_check/);
 });
+
+test("SECURITY DEFINER employment trigger uses an empty search_path", () => {
+  assert.match(sql, /SECURITY DEFINER\s+SET search_path = ''/);
+  assert.doesNotMatch(sql, /SET search_path = public, pg_temp/);
+});
