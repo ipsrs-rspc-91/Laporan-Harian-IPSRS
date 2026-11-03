@@ -46,16 +46,23 @@ export function calendarDateDifference(laterDate, earlierDate) {
  * A soft-deleted report is never valid. Reports saved before activeSince are
  * ignored after reactivation, even if they have a later work-event date.
  */
-export function latestValidInputAt(reports, activeSince) {
+export function latestValidInputAt(reports, activeSince, evaluatedAt) {
   if (!activeSince) throw new TypeError("Waktu mulai aktif wajib tersedia.");
+  if (!evaluatedAt) throw new TypeError("Waktu evaluasi server wajib tersedia.");
   const activeSinceMs = new Date(activeSince).getTime();
+  const evaluatedAtMs = new Date(evaluatedAt).getTime();
   if (Number.isNaN(activeSinceMs)) throw new TypeError("Waktu mulai aktif tidak valid.");
+  if (Number.isNaN(evaluatedAtMs)) throw new TypeError("Waktu evaluasi server tidak valid.");
 
   let latest = null;
   for (const report of Array.isArray(reports) ? reports : []) {
     if (!report || report.deleted_at != null || !report.created_at) continue;
     const createdMs = new Date(report.created_at).getTime();
-    if (Number.isNaN(createdMs) || createdMs < activeSinceMs) continue;
+    if (
+      Number.isNaN(createdMs) ||
+      createdMs < activeSinceMs ||
+      createdMs > evaluatedAtMs
+    ) continue;
     if (latest == null || createdMs > new Date(latest).getTime()) {
       latest = new Date(createdMs).toISOString();
     }
@@ -67,9 +74,9 @@ export function latestValidInputAt(reports, activeSince) {
  * Returns the anchor date in WIB. The activation timestamp is the anchor
  * until a valid LHI has actually been saved during this active period.
  */
-export function complianceAnchorWibDate(reports, activeSince) {
+export function complianceAnchorWibDate(reports, activeSince, evaluatedAt) {
   if (!activeSince) throw new TypeError("Waktu mulai aktif wajib tersedia.");
-  const latest = latestValidInputAt(reports, activeSince);
+  const latest = latestValidInputAt(reports, activeSince, evaluatedAt);
   return wibDateKey(latest || activeSince);
 }
 
@@ -113,8 +120,11 @@ export function disciplineStage(missedDays) {
  * Employment status is the monitoring gate; individual access status is
  * deliberately ignored so a blocked staff member can still trigger day 10.
  */
-export function evaluateDiscipline(staffRows, reportsByStaff, todayWib) {
+export function evaluateDiscipline(staffRows, reportsByStaff, todayWib, evaluatedAt) {
   parseDateKey(todayWib, "Tanggal hari ini");
+  if (!evaluatedAt || Number.isNaN(new Date(evaluatedAt).getTime())) {
+    throw new TypeError("Waktu evaluasi server wajib valid.");
+  }
   const evaluations = [];
 
   for (const staff of Array.isArray(staffRows) ? staffRows : []) {
@@ -126,7 +136,7 @@ export function evaluateDiscipline(staffRows, reportsByStaff, todayWib) {
     const reports = reportsByStaff instanceof Map
       ? reportsByStaff.get(staff.staff_id) || []
       : reportsByStaff?.[staff.staff_id] || [];
-    const anchorWib = complianceAnchorWibDate(reports, staff.lhi_active_since);
+    const anchorWib = complianceAnchorWibDate(reports, staff.lhi_active_since, evaluatedAt);
     const missedDays = missedFullCalendarDays(todayWib, anchorWib);
     const stage = disciplineStage(missedDays);
 
