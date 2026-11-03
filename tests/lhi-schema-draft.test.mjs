@@ -26,8 +26,10 @@ test("legacy blocked status is preserved rather than rewritten as employment sta
   assert.doesNotMatch(sql, /UPDATE public\.staff\s+SET status\s*=/i);
 });
 
-test("grace snapshot is unique per incident and staff member", () => {
-  assert.match(sql, /UNIQUE \(incident_id, staff_id\)/);
+test("grace snapshot is unique per incident, Reset cycle, and staff member", () => {
+  assert.match(sql, /grace_cycle integer NOT NULL DEFAULT 0 CHECK \(grace_cycle >= 0\)/);
+  assert.match(sql, /grace_cycle integer NOT NULL CHECK \(grace_cycle > 0\)/);
+  assert.match(sql, /UNIQUE \(incident_id, grace_cycle, staff_id\)/);
   assert.match(sql, /obligation_status IN \('PENDING', 'COMPLETED', 'EXCLUDED_INACTIVE'\)/);
 });
 
