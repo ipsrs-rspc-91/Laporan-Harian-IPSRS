@@ -509,6 +509,21 @@ SET ROLE service_role;
 SELECT public.get_lhi_grace_status_v2();
 RESET ROLE;
 
+DO $grace_status_projection_check$
+DECLARE
+  v_status jsonb;
+BEGIN
+  v_status := public.get_lhi_grace_status_v2();
+  IF v_status ->> 'status' IS DISTINCT FROM 'COMPLETED'
+     OR (v_status ->> 'total')::integer <> 1
+     OR (v_status ->> 'completed')::integer <> 1
+     OR (v_status ->> 'pending')::integer <> 0
+     OR (v_status ->> 'snapshot_total')::integer <> 1 THEN
+    RAISE EXCEPTION 'Grace status projection returned incorrect v2 snapshot counts: %', v_status;
+  END IF;
+END;
+$grace_status_projection_check$;
+
 -- Legacy production recovery bridge: an existing LOCKED incident has a
 -- per-date obligation snapshot but no HR-verified active_since values.
 -- Reset must reuse the existing snapshot rather than guessing from created_at.
