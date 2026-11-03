@@ -357,6 +357,7 @@ DECLARE
   v_nonce text := repeat('7', 64);
   v_token text := repeat('8', 64);
   v_ip text := repeat('6', 64);
+  v_anchor_a timestamptz := clock_timestamp() - interval '10 days';
   v_count integer;
 BEGIN
   UPDATE public.access_settings
@@ -387,6 +388,13 @@ BEGIN
   SET lhi_active_since_verified_at = NULL
   WHERE staff_id IN ('LEGACY-TEST', 'STAFF-TEST');
 
+  -- Legacy snapshot must use actual valid LHI created_at values, not the
+  -- number of old required_date rows. STAFF-TEST deliberately has no report,
+  -- so its unavailable input anchor and missed-day count remain NULL.
+  INSERT INTO public.reports (report_id, staff_id, tanggal, created_at, deleted_at)
+  VALUES ('REPORT-LEGACY-ANCHOR-A', 'LEGACY-TEST',
+    (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date, v_anchor_a, NULL);
+
   SELECT public.create_lhi_recovery_challenge(v_nonce, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Legacy Reset challenge creation failed: %', v_result;
@@ -408,10 +416,22 @@ BEGIN
   FROM public.lhi_discipline_snapshot_members
   WHERE incident_id = v_incident
     AND grace_cycle = 1
-    AND anchor_input_at IS NULL
-    AND obligation_status = 'PENDING';
+    AND obligation_status = 'PENDING'
+    AND (
+      (staff_id = 'LEGACY-TEST'
+        AND anchor_input_at = v_anchor_a
+        AND missed_full_days_at_snapshot = GREATEST(
+          0,
+          (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date
+            - (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date - 1
+        ))
+      OR
+      (staff_id = 'STAFF-TEST'
+        AND anchor_input_at IS NULL
+        AND missed_full_days_at_snapshot IS NULL)
+    );
   IF v_count <> 2 THEN
-    RAISE EXCEPTION 'Legacy snapshot did not preserve two pending members without invented HR anchors.';
+    RAISE EXCEPTION 'Legacy snapshot did not use real latest LHI input timestamps or preserve unknown anchors as NULL.';
   END IF;
 
   SELECT value INTO v_status
