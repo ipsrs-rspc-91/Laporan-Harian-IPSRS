@@ -103,9 +103,10 @@ BEGIN
 
   IF EXISTS (
     SELECT 1 FROM public.staff s
-    WHERE s.status = 'Aktif' AND s.lhi_active_since IS NULL
+    WHERE s.status = 'Aktif'
+      AND (s.lhi_active_since IS NULL OR s.lhi_active_since_verified_at IS NULL)
   ) THEN
-    RAISE EXCEPTION 'Reset dibatalkan: terdapat pegawai Aktif tanpa anchor lhi_active_since.';
+    RAISE EXCEPTION 'Reset dibatalkan: terdapat pegawai Aktif dengan anchor belum diverifikasi HR atau peristiwa reaktivasi.';
   END IF;
 
   -- Snapshot is created at Reset, atomically with opening grace, per README.
