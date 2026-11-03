@@ -110,7 +110,7 @@ test("operational access panel never exposes the obsolete direct global-unlock a
 
 
 test("failed Reset authentication keeps the recovery-specific fail-closed message reachable", () => {
-  const recoveryIndex = app.indexOf("const recoveryAttempt=!!pendingLhiRecoveryChallenge_");
+  const recoveryIndex = app.indexOf("const recoveryAttempt=recoveryLoginAttempt||!!pendingLhiRecoveryChallenge_");
   const clearIndex = app.indexOf("clearSession()", recoveryIndex);
   const branchIndex = app.indexOf("if(recoveryAttempt)", clearIndex);
   assert.ok(recoveryIndex >= 0);
