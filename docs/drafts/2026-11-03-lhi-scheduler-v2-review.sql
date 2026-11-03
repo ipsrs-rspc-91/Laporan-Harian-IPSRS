@@ -367,7 +367,7 @@ BEGIN
 
     INSERT INTO public.lhi_discipline_notifications
       (event_key, recipient_staff_id, subject, message)
-    SELECT 'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM',
+    SELECT 'LHI:' || v_today_wib::text || ':BLOCK_INDIVIDUAL:TEAM',
       s.staff_id, 'Blokir akses LHI individual',
       'Hak akses LHI diblokir untuk: ' || v_names ||
       '. Status kepegawaian tidak berubah; akses dipisahkan dari status pegawai.'
