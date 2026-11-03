@@ -56,12 +56,12 @@ test("legacy snapshot may store NULL only when no valid historical LHI timestamp
 });
 
 test("obligation event audit history is protected against UPDATE and DELETE", () => {
-  assert.match(sql, /CREATE OR REPLACE FUNCTION public\\.prevent_lhi_obligation_event_mutation\\(\\)/);
-  assert.match(sql, /RAISE EXCEPTION 'Riwayat kewajiban LHI bersifat append-only\\.'/);
-  assert.match(sql, /REVOKE ALL ON FUNCTION public\\.prevent_lhi_obligation_event_mutation\\(\\)[\\s\\S]*FROM PUBLIC, anon, authenticated, service_role/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.prevent_lhi_obligation_event_mutation\(\)/);
+  assert.match(sql, /RAISE EXCEPTION 'Riwayat kewajiban LHI bersifat append-only\.'/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.prevent_lhi_obligation_event_mutation\(\)[\\s\\S]*FROM PUBLIC, anon, authenticated, service_role/);
   assert.match(sql, /BEFORE UPDATE OR DELETE ON public\\.lhi_discipline_obligation_events/);
   assert.match(sql, /BEFORE TRUNCATE ON public\\.lhi_discipline_obligation_events/);
-  assert.match(sql, /EXECUTE FUNCTION public\\.prevent_lhi_obligation_event_mutation\\(\\)/);
+  assert.match(sql, /EXECUTE FUNCTION public\.prevent_lhi_obligation_event_mutation\(\)/);
 });
 
 test("new snapshot and event tables deny direct client access", () => {
