@@ -97,12 +97,12 @@ test("scheduler functions are not executable by client roles", () => {
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.run_lhi_discipline_scheduler_v2\(\)[\s\S]*FROM PUBLIC, anon, authenticated, service_role/);
 });
 
-test("day-8 team block notice reaches every active staff including individually blocked staff", () => {
+test("day-8 in-app notification reaches active staff whose access is not blocked", () => {
   const start = sql.indexOf("'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM'");
   assert.notEqual(start, -1);
   const end = sql.indexOf("ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;", start);
   assert.notEqual(end, -1);
   const recipientQuery = sql.slice(start, end);
   assert.match(recipientQuery, /WHERE s\.status = 'Aktif'/);
-  assert.doesNotMatch(recipientQuery, /lhi_access_status/);
+  assert.match(recipientQuery, /COALESCE\(s\.lhi_access_status, 'NORMAL'\) <> 'BLOCKED_LHI'/);
 });
