@@ -16,7 +16,7 @@ const accessControl = await readFile(
 );
 
 test("Reset challenge is kept in memory and exchanged before apiWhoAmI", () => {
-  assert.match(app, /pendingLhiRecoveryChallenge_\s*=\s*String\(result\.challenge\|\|''\)/);
+  assert.match(app, /const challenge=String\\(result\\.challenge\\|\\|''\\)\\.trim\\(\\);[\\s\\S]*?pendingLhiRecoveryChallenge_=challenge/);
   assert.match(app, /exchangeLhiRecoveryChallenge_\(session\.access_token,challenge\)/);
   const recoveryBranch = app.indexOf("if(pendingLhiRecoveryChallenge_){");
   const whoAmI = app.indexOf("action:'apiWhoAmI'");
@@ -66,7 +66,7 @@ test("KA can resume restricted recovery from a fresh tab during grace", () => {
   assert.match(app, /function renderLhiRecoveryResumeUi_\(/);
   assert.match(app, /LANJUTKAN PEMULIHAN KA IPSRS/);
   assert.match(app, /lhi-reset-verify/);
-  assert.match(app, /pendingLhiRecoveryChallenge_=String\(result\.challenge\|\|''\)/);
+  assert.match(app, /const challenge=String\\(result\\.challenge\\|\\|''\\)\\.trim\\(\\);[\\s\\S]*?pendingLhiRecoveryChallenge_=challenge/);
   assert.match(app, /status\.grace_active/);
 });
 
