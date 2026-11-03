@@ -438,7 +438,7 @@ BEGIN
           0,
           (v_snapshot_created_at AT TIME ZONE 'Asia/Jakarta')::date
             - (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date - 1
-        )
+        ))
       OR
       (staff_id = 'STAFF-TEST'
         AND anchor_input_at IS NULL
