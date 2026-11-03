@@ -112,7 +112,10 @@ test("existing LOCKED/GRACE recovery is processed before HR-anchor gate", () => 
   assert.match(sql.slice(normalCycleGate, anchorGate), /Before starting a new discipline cycle/);
 });
 
-test("warning team broadcast contains all names and day-7 notice explains day-8 block", () => {
+test("warning team broadcast contains names and correct completed full-day counts", () => {
+  assert.match(sql, /Peringatan 1 LHI \(hari ke-4\)[\s\S]*?3 hari kalender penuh/);
+  assert.match(sql, /Peringatan 2 LHI \(hari ke-6\)[\s\S]*?5 hari kalender penuh/);
+  assert.match(sql, /Peringatan 3 LHI \(hari ke-7\)[\s\S]*?6 hari kalender penuh/);
   assert.match(sql, /string_agg\(x\.nama, ', ' ORDER BY x\.nama\)/);
   assert.match(sql, /GROUP BY x\.stage\s+LOOP/);
   assert.doesNotMatch(sql, /GROUP BY x\.stage, x\.missed_full_days/);
