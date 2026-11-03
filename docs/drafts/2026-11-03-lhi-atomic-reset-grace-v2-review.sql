@@ -118,7 +118,7 @@ BEGIN
   FROM public.lhi_discipline_evaluations_v2(v_now) e
   WHERE e.employment_status = 'Aktif'
     AND e.missed_full_days >= 9
-  ON CONFLICT (incident_id, staff_id) DO NOTHING;
+  ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
 
   GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
 
@@ -139,7 +139,6 @@ BEGIN
     )
   FROM public.lhi_discipline_snapshot_members m
   WHERE m.incident_id = v_incident.incident_id
-    AND m.grace_cycle = v_incident.grace_cycle
     AND m.grace_cycle = v_incident.grace_cycle + 1
     AND m.snapshot_created_at = v_now;
 
