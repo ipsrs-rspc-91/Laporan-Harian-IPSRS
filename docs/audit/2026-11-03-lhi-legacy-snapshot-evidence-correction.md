@@ -28,3 +28,21 @@ Jumlah tanggal kewajiban lama bukan definisi jumlah hari kalender penuh tanpa in
 ## Batas perubahan
 
 Perubahan ini hanya pada branch `repair/lhi-status-separation-20261103`. Tidak ada migration, update data, reset, perubahan cron, atau deployment ke Supabase produksi. Pengujian CI untuk commit koreksi masih berjalan dan statusnya harus diverifikasi sebelum dinyatakan lulus.
+
+## Koreksi lanjutan audit peristiwa dan notifikasi
+
+Pemeriksaan Bagian 10 README menemukan bahwa riwayat snapshot perlu mencatat status lama dan baru secara tepat, identitas proses sistem, referensi LHI, serta evaluasi tenggat 12 jam. Scheduler v2 diperbaiki agar:
+
+- Perubahan ke `EXCLUDED_INACTIVE` menyimpan status lama yang sebenarnya (`PENDING` atau `COMPLETED`), status baru, aktor `SYSTEM`, dan alasan pengecualian.
+- Peristiwa `REPORT_QUALIFIED`, `REPORT_CANCELLED`, dan `OBLIGATION_REOPENED` menyimpan aktor `SYSTEM`, ID laporan baru atau ID laporan sebelumnya, dan konteks proses scheduler.
+- Saat tenggat 12 jam selesai dengan sukses, satu peristiwa `GRACE_COMPLETED` ditambahkan per anggota snapshot yang berstatus `COMPLETED` atau `EXCLUDED_INACTIVE`.
+- Peristiwa `GLOBAL_RELOCKED` menyimpan status kewajiban yang tepat, aktor `SYSTEM`, dan tenggat yang dievaluasi.
+
+Pemeriksaan frontend menemukan komponen notifikasi memanggil `window.authRun`, tetapi fungsi tersebut belum diekspos; komponen juga memanggil dua action backend yang belum ada. Koreksi pada branch:
+
+- Mengekspos wrapper `window.authRun` yang tetap memakai token sesi Supabase dan pemeriksaan server.
+- Menambahkan action `apiGetLhiNotifications` yang hanya mengambil notifikasi milik `staff_id` dari sesi yang sudah diverifikasi.
+- Menambahkan action `apiMarkLhiNotificationRead` yang hanya dapat menandai notifikasi milik penerima yang sedang login dan hanya jika belum dibaca.
+- Menambahkan pemanggilan loader notifikasi segera setelah login berhasil; polling berkala tetap digunakan saat aplikasi terbuka.
+
+Seluruh perubahan masih di branch. Belum ada deployment ke produksi. Hasil CI terbaru harus diperiksa setelah workflow selesai.
