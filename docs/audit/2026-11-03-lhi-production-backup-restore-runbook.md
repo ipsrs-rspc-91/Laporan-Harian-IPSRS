@@ -34,10 +34,17 @@ Set-Location $backupDir
 Ambil connection string PostgreSQL dari Supabase Dashboard > Project > Connect. Gunakan direct connection atau session pooler sesuai jaringan. Simpan sementara sebagai environment variable pada terminal saja; jangan tempel connection string/password ke chat, issue, log, atau file repository.
 
 ```powershell
-$env:SUPABASE_DB_URL = Read-Host "Paste database connection string (input tidak disamarkan; jalankan hanya di terminal privat)"
+$secureUrl = Read-Host "Database connection string" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureUrl)
+try {
+  $env:SUPABASE_DB_URL = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+} finally {
+  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+  Remove-Variable secureUrl,ptr -ErrorAction SilentlyContinue
+}
 ```
 
-Jika memungkinkan, gunakan prompt rahasia PowerShell/credential manager agar password tidak terlihat di layar atau riwayat terminal.
+Catatan: CLI meneruskan URL sebagai argumen proses; jalankan hanya pada komputer admin tepercaya, tutup terminal setelah backup, dan jangan gunakan komputer bersama. Untuk perlindungan lebih kuat, gunakan terminal/credential manager yang disetujui organisasi.
 
 ## 3. Buat tiga dump
 
