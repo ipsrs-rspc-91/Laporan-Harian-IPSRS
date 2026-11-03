@@ -5,6 +5,9 @@ DECLARE
   v_result jsonb;
   v_retry jsonb;
   v_status text;
+  v_access text;
+  v_anchor_before timestamptz;
+  v_anchor_after timestamptz;
   v_lock text;
   v_incident_id bigint;
   v_first_started timestamptz;
@@ -22,17 +25,29 @@ DECLARE
   v_nonce_2 text := repeat('d', 64);
   v_token_2 text := repeat('e', 64);
 BEGIN
-  SELECT lhi_access_status INTO v_status
+  SELECT status, lhi_access_status, lhi_active_since
+    INTO v_status, v_access, v_anchor_before
   FROM public.staff WHERE staff_id = 'LEGACY-TEST';
-  IF v_status IS DISTINCT FROM 'BLOCKED_LHI' THEN
-    RAISE EXCEPTION 'Legacy LHI access state was not mapped to BLOCKED_LHI.';
+  IF v_status IS DISTINCT FROM 'Aktif'
+     OR v_access IS DISTINCT FROM 'BLOCKED_LHI' THEN
+    RAISE EXCEPTION 'Legacy LHI marker was not normalized to Aktif while retaining BLOCKED_LHI.';
+  END IF;
+
+  UPDATE public.staff SET status = 'Nonaktif' WHERE staff_id = 'LEGACY-TEST';
+  SELECT lhi_access_status INTO v_access
+  FROM public.staff WHERE staff_id = 'LEGACY-TEST';
+  IF v_access IS DISTINCT FROM 'BLOCKED_LHI' THEN
+    RAISE EXCEPTION 'Changing employment to Nonaktif must not silently clear the LHI block.';
   END IF;
 
   UPDATE public.staff SET status = 'Aktif' WHERE staff_id = 'LEGACY-TEST';
-  SELECT lhi_access_status INTO v_status
+  SELECT lhi_access_status, lhi_active_since
+    INTO v_access, v_anchor_after
   FROM public.staff WHERE staff_id = 'LEGACY-TEST';
-  IF v_status IS DISTINCT FROM 'NORMAL' THEN
-    RAISE EXCEPTION 'Employment reactivation did not clear only the LHI access block.';
+  IF v_access IS DISTINCT FROM 'NORMAL'
+     OR v_anchor_after IS NULL
+     OR v_anchor_after <= v_anchor_before THEN
+    RAISE EXCEPTION 'Employment reactivation did not reset active_since and clear only the LHI access block.';
   END IF;
 
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
