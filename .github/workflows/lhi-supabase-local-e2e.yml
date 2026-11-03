@@ -159,4 +159,5 @@ jobs:
       - name: Stop local Supabase stack
         if: always()
         working-directory: tests/supabase-local
+        continue-on-error: true
         run: supabase stop --no-backup || true
