@@ -109,9 +109,29 @@ test("warning broadcast includes every delinquent name and deduplicated recipien
   ], "2026-11-03");
   assert.equal(notifications.length, 1);
   assert.match(notifications[0].message, /Agung, Budi/);
+  assert.match(notifications[0].message, /hari ke-7/);
+  assert.match(notifications[0].message, /6 hari kalender penuh tanpa LHI/);
   assert.match(notifications[0].message, /hari ke-8/);
   assert.deepEqual(notifications[0].recipients.map((r) => r.recipient_staff_id), ["A", "B", "C"]);
   assert.equal(new Set(notifications[0].recipients.map((r) => r.event_key)).size, 3);
+});
+
+test("warning messages distinguish stage day from completed full calendar days", async () => {
+  const { buildWarningNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const active = [{ staff_id: "A", status: "Aktif" }];
+  const expected = [
+    ["WARNING_1", /hari ke-4; 3 hari kalender penuh tanpa LHI/],
+    ["WARNING_2", /hari ke-6; 5 hari kalender penuh tanpa LHI/],
+    ["WARNING_3", /hari ke-7; 6 hari kalender penuh tanpa LHI/],
+  ];
+  for (const [action, pattern] of expected) {
+    const [notification] = buildWarningNotifications(
+      [{ staff_id: "A", nama: "Agung", action }],
+      active,
+      "2026-11-03",
+    );
+    assert.match(notification.message, pattern);
+  }
 });
 
 test("grace snapshot has one member per delinquent active staff, not one per missed day", async () => {
