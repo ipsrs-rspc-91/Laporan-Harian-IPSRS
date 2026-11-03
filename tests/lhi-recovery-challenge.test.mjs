@@ -39,3 +39,8 @@ test("recovery capability validation rejects mismatched global lock and incident
   assert.match(migration, /v_incident\.status = 'GRACE' AND v_lock = 'NONAKTIF'/);
   assert.match(migration, /INCIDENT_NO_LONGER_RECOVERABLE/);
 });
+
+test("SECURITY DEFINER recovery RPCs use an empty search_path", () => {
+  assert.equal((migration.match(/SET search_path = ''/g) || []).length, 4);
+  assert.doesNotMatch(migration, /SET search_path = public, private, pg_temp/);
+});
