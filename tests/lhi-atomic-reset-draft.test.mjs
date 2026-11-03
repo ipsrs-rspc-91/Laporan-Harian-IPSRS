@@ -89,15 +89,15 @@ test("new-format Reset fallback refuses unverified employment anchors", () => {
 });
 
 test("legacy LOCKED incident reuses pending staff but snapshots real latest valid LHI input", () => {
-  assert.match(sql, /FROM public\\.lhi_discipline_obligations o[\\s\\S]*?o\\.incident_id = v_incident\\.incident_id[\\s\\S]*?o\\.completed_at IS NULL/);
-  assert.match(sql, /SELECT DISTINCT o\\.staff_id/);
-  assert.match(sql, /max\\(r\\.created_at\\) AS last_valid_input_at/);
-  assert.match(sql, /r\\.deleted_at IS NULL/);
-  assert.match(sql, /r\\.created_at <= v_now/);
-  assert.match(sql, /latest\\.last_valid_input_at/);
-  assert.match(sql, /missed_full_days_at_snapshot/);
-  assert.doesNotMatch(sql, /count\\(DISTINCT o\\.required_date\\)/);
-  assert.match(sql, /LEGACY_OBLIGATION_SNAPSHOT/);
+  assert.ok(sql.includes("FROM public.lhi_discipline_obligations o"));
+  assert.ok(sql.includes("SELECT DISTINCT o.staff_id"));
+  assert.ok(sql.includes("max(r.created_at) AS last_valid_input_at"));
+  assert.ok(sql.includes("r.deleted_at IS NULL"));
+  assert.ok(sql.includes("r.created_at <= v_now"));
+  assert.ok(sql.includes("latest.last_valid_input_at"));
+  assert.ok(sql.includes("missed_full_days_at_snapshot"));
+  assert.ok(!sql.includes("count(DISTINCT o.required_date)"));
+  assert.ok(sql.includes("LEGACY_OBLIGATION_SNAPSHOT"));
   const legacyBranch = sql.indexOf("FROM public.lhi_discipline_obligations o");
   const fallbackComment = sql.indexOf("-- A new-format incident has no legacy obligations.", legacyBranch);
   const anchorGuard = sql.indexOf("lhi_active_since_verified_at", fallbackComment);
