@@ -48,6 +48,11 @@ test("grace snapshot is unique per incident, Reset cycle, and staff member", () 
   assert.match(sql, /obligation_status IN \('PENDING', 'COMPLETED', 'EXCLUDED_INACTIVE'\)/);
 });
 
+test("legacy snapshot may store NULL only when no valid historical LHI timestamp exists", () => {
+  assert.match(sql, /missed_full_days_at_snapshot integer CHECK \\(missed_full_days_at_snapshot >= 0\\)/);
+  assert.doesNotMatch(sql, /missed_full_days_at_snapshot integer NOT NULL/);
+});
+
 test("new snapshot and event tables deny direct client access", () => {
   assert.equal((sql.match(/ENABLE ROW LEVEL SECURITY;/g) || []).length, 3);
   assert.match(sql, /REVOKE ALL ON public\.staff_employment_status_events FROM PUBLIC, anon, authenticated/);
