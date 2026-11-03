@@ -322,11 +322,13 @@ BEGIN
 
     INSERT INTO public.lhi_discipline_notifications
       (event_key, recipient_staff_id, subject, message)
-    SELECT 'LHI:' || v_today_wib::text || ':' || v_stage.stage || ':TEAM:' || v_stage.fingerprint,
+    SELECT 'LHI:' || v_today_wib::text || ':' || v_stage.stage || ':TEAM',
            s.staff_id, 'Ringkasan ' || v_stage.stage || ' LHI', v_message
     FROM public.staff s
     WHERE s.status = 'Aktif'
-    ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
+    ON CONFLICT (event_key, recipient_staff_id) DO UPDATE
+      SET subject = EXCLUDED.subject,
+          message = EXCLUDED.message;
 
     -- The team broadcast already includes every active staff member, including
     -- the delinquent staff. Do not create a second duplicate warning for them.
@@ -367,14 +369,16 @@ BEGIN
 
     INSERT INTO public.lhi_discipline_notifications
       (event_key, recipient_staff_id, subject, message)
-    SELECT 'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM:' || v_fingerprint,
+    SELECT 'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM',
       s.staff_id, 'Blokir akses LHI individual',
       'Hak akses LHI diblokir untuk: ' || v_names ||
       '. Status kepegawaian tidak berubah; akses dipisahkan dari status pegawai.'
     FROM public.staff s
     WHERE s.status = 'Aktif'
       AND COALESCE(s.lhi_access_status, 'NORMAL') <> 'BLOCKED_LHI'
-    ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
+    ON CONFLICT (event_key, recipient_staff_id) DO UPDATE
+      SET subject = EXCLUDED.subject,
+          message = EXCLUDED.message;
   END IF;
 
   -- Day 10: one global incident, one snapshot row per delinquent active staff.
