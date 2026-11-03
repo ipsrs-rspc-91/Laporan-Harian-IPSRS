@@ -190,6 +190,7 @@ jobs:
             'select public.run_lhi_discipline_scheduler();'
           );
           SQL
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-cron-pause-v2-review.sql
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-cron-switch-v2-review.sql
           psql "$DB_URL" -v ON_ERROR_STOP=1 -c "select cron.unschedule('lhi-discipline-scheduler-every-5-minutes');"
 
