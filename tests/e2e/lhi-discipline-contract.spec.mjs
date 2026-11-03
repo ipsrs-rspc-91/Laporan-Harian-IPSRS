@@ -51,7 +51,8 @@ test('Reset issues a server proof token and binds it to an authenticated KA IPSR
   const reset = await read('../../supabase/functions/lhi-reset-verify/index.ts');
   const api = await read('../../supabase/functions/ipsrs-api/index.ts');
   expect(reset).toContain('recovery_token: recoveryToken');
-  expect(reset).toContain('lhi_recovery_tokens').toContain('expires_at');
+  expect(reset).toContain('lhi_recovery_tokens');
+  expect(reset).toContain('expires_at');
   expect(api).toContain('redeemed_by_auth_user_id');
   expect(api).toContain('identity.role!=="KA_IPSRS"');
   expect(api).toContain('Perintah pemulihan wajib menggunakan sesi Reset terbatas KA IPSRS.');
