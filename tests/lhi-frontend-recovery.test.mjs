@@ -133,3 +133,12 @@ test("access panel never reports zero unverified anchors when the server read fa
   assert.match(accessControl, /STATUS KELONGGARAN TIDAK TERSEDIA/);
   assert.match(accessControl, /jangan menganggap tidak ada insiden/);
 });
+
+
+test("maintenance role rejection signs out only the current device", () => {
+  const marker = app.indexOf("if(IPSRS_MAINTENANCE_MODE");
+  const end = app.indexOf("setSession(Object.assign", marker);
+  const block = app.slice(marker, end);
+  assert.match(block, /client\.auth\.signOut\(\{scope:'local'\}\)/);
+  assert.doesNotMatch(block, /client\.auth\.signOut\(\)/);
+});
