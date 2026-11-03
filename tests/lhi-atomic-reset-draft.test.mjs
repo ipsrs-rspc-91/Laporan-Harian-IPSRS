@@ -69,5 +69,5 @@ test("a new Reset after grace relock creates a new immutable snapshot cycle", as
   assert.match(sql, /v_incident\.grace_cycle \+ 1/);
   assert.match(sql, /WHERE m\.incident_id = v_incident\.incident_id\s+AND m\.grace_cycle = v_incident\.grace_cycle \+ 1\s+AND m\.snapshot_created_at = v_now/);
   assert.doesNotMatch(sql, /AND m\.grace_cycle = v_incident\.grace_cycle\s+AND m\.grace_cycle = v_incident\.grace_cycle \+ 1/);
-  assert.match(sql, /SET status = 'GRACE',[\\s\\S]*?grace_cycle = v_incident\.grace_cycle \+ 1/);
+  assert.match(sql, /SET status = 'GRACE',[\s\S]*?grace_cycle = v_incident\.grace_cycle \+ 1/);
 });
