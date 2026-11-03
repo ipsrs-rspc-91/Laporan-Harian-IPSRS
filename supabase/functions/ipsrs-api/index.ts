@@ -624,6 +624,34 @@ if(a==="apiReviewMasterItem"){
  return{ok:true,data:updated};
 }
 if(a==="apiGetAccessControl"){if(s.role!=="KA_IPSRS"&&s.role!=="ADMINISTRASI")return{ok:false,msg:"Tidak memiliki akses pengaturan."};const {data,error}=await db.from("access_settings").select("key,value");if(error)throw error;const o:any={};for(const x of data||[])o[String(x.key).toLowerCase()]=x.value;const {data:ep,error:ee}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(ee)throw ee;return{ok:true,laporan_tim:o.laporan_tim||"AKTIF",administrasi_edit:o.administrasi_edit||"NONAKTIF",lhi_global_block:o.lhi_global_block||"NONAKTIF",has_edit_permission:!!ep}}
+if(a==="apiGetLhiAnchorReview"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memverifikasi tanggal mulai aktif petugas."};
+ const {data,error}=await db.from("staff")
+  .select("staff_id,nama,role,status,lhi_active_since,lhi_active_since_source,lhi_active_since_verified_at")
+  .eq("status","Aktif").order("nama");
+ if(error)throw error;
+ return{ok:true,data:data||[]};
+}
+if(a==="apiVerifyLhiActiveSince"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memverifikasi tanggal mulai aktif petugas."};
+ const target=String(d.staffId||"").trim();
+ const date=String(d.activeSinceDate||"").trim();
+ const reference=String(d.sourceReference||"").trim();
+ const actorAuthUserId=String(ctx.userClaims?.sub||"").trim();
+ if(!target||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!reference){
+   return{ok:false,msg:"Petugas, tanggal mulai aktif, dan referensi dokumen HR wajib diisi."};
+ }
+ if(!actorAuthUserId)return{ok:false,msg:"Identitas akun KA IPSRS tidak dapat diverifikasi."};
+ const {data,error}=await db.rpc("verify_lhi_active_since_v2",{
+   p_staff_id:target,
+   p_active_since_date:date,
+   p_source_reference:reference,
+   p_actor_auth_user_id:actorAuthUserId
+ });
+ if(error)throw error;
+ if(!data||data.ok!==true)return{ok:false,msg:"Verifikasi tanggal mulai aktif gagal."};
+ return{ok:true,data,msg:"Tanggal mulai aktif berhasil diverifikasi berdasarkan referensi HR."};
+}
 if(a==="apiGetLhiGraceStatus"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status kelonggaran LHI."};const {data:incident,error:ie}=await db.from("lhi_discipline_incidents").select("incident_id,started_at,deadline_at,status").order("incident_id",{ascending:false}).limit(1).maybeSingle();if(ie)throw ie;if(!incident)return{ok:true,data:null};const {data:rows,error:oe}=await db.from("lhi_discipline_obligations").select("staff_id,completed_at").eq("incident_id",incident.incident_id);if(oe)throw oe;const grouped=new Map<string,{completed:boolean}>();for(const row of rows||[]){const id=String(row.staff_id||"");if(!id)continue;const current=grouped.get(id);if(!current)grouped.set(id,{completed:!!row.completed_at});else if(!row.completed_at)current.completed=false;}const values=[...grouped.values()];const completed=values.filter(x=>x.completed).length;return{ok:true,data:{incident_id:incident.incident_id,status:incident.status,started_at:incident.started_at,deadline_at:incident.deadline_at,total:values.length,completed,pending:values.length-completed}}}
 if(a==="apiListEditPermissions"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat izin edit."};const {data,error}=await db.from("edit_permissions").select("*").order("created_at",{ascending:false});if(error)throw error;return{ok:true,data:data||[]}}
 if(a==="apiStartLhiGrace"){return{ok:false,msg:"Jalur Reset lama dinonaktifkan. Gunakan restricted recovery session melalui prosedur Reset."}}
