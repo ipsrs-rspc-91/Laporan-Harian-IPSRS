@@ -1,41 +1,39 @@
-name: LHI Discipline Unit Tests
+name: LHI Discipline and Recovery Tests
 
 on:
   push:
     branches:
       - repair/lhi-status-separation-20261103
     paths:
-      - "supabase/functions/ipsrs-api/lhi-discipline.mjs"
-      - "tests/lhi-discipline.test.mjs"
-      - "tests/lhi-schema-draft.test.mjs"
-      - "tests/lhi-scheduler-draft.test.mjs"
-      - "tests/lhi-atomic-reset-draft.test.mjs"
-      - "tests/lhi-recovery-action.test.mjs"
-      - "tests/lhi-api-gate.test.mjs"
-      - "tests/lhi-frontend-recovery.test.mjs"
-      - "tests/lhi-recovery-challenge.test.mjs"
       - "frontend/app.js"
-      - "supabase/functions/lhi-block-status/index.ts"
-      - "supabase/functions/ipsrs-api/index.ts"
-      - "supabase/functions/lhi-recovery-action/index.ts"
-      - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
-      - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
-      - "docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql"
-      - "docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql"
-      - "supabase/functions/ipsrs-api/recovery-policy.mjs"
-      - "supabase/functions/lhi-reset-verify/index.ts"
-      - "supabase/functions/lhi-recovery-exchange/index.ts"
-      - "supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql"
-      - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
+      - "frontend/login-fast.js"
       - "supabase/config.toml"
+      - "supabase/functions/ipsrs-api/**"
+      - "supabase/functions/lhi-block-status/**"
+      - "supabase/functions/lhi-reset-verify/**"
+      - "supabase/functions/lhi-recovery-exchange/**"
+      - "supabase/functions/lhi-recovery-action/**"
+      - "supabase/migrations/**"
+      - "docs/drafts/*lhi*.sql"
+      - "tests/lhi-*.test.mjs"
       - ".github/workflows/lhi-discipline-tests.yml"
   pull_request:
     branches:
       - main
       - master
     paths:
-      - "supabase/functions/ipsrs-api/lhi-discipline.mjs"
-      - "tests/lhi-discipline.test.mjs"
+      - "frontend/app.js"
+      - "frontend/login-fast.js"
+      - "supabase/config.toml"
+      - "supabase/functions/ipsrs-api/**"
+      - "supabase/functions/lhi-block-status/**"
+      - "supabase/functions/lhi-reset-verify/**"
+      - "supabase/functions/lhi-recovery-exchange/**"
+      - "supabase/functions/lhi-recovery-action/**"
+      - "supabase/migrations/**"
+      - "docs/drafts/*lhi*.sql"
+      - "tests/lhi-*.test.mjs"
+      - ".github/workflows/lhi-discipline-tests.yml"
 
 permissions:
   contents: read
@@ -52,5 +50,5 @@ jobs:
           node-version: "22"
       - name: Check frontend JavaScript syntax
         run: node --check frontend/app.js && node --check frontend/login-fast.js
-      - name: Run LHI discipline unit tests
-        run: node --test tests/lhi-discipline.test.mjs tests/lhi-schema-draft.test.mjs tests/lhi-scheduler-draft.test.mjs tests/lhi-atomic-reset-draft.test.mjs tests/lhi-recovery-action.test.mjs tests/lhi-api-gate.test.mjs tests/lhi-frontend-recovery.test.mjs tests/lhi-recovery-challenge.test.mjs
+      - name: Run LHI discipline and recovery unit tests
+        run: node --test tests/lhi-*.test.mjs
