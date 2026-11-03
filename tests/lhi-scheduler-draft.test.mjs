@@ -170,6 +170,9 @@ test("production cron cutover pauses and resumes the same single job", async () 
   assert.match(pause, /jobname = 'lhi-discipline-scheduler-every-5-minutes'/);
   assert.match(pause, /status = 'running'/);
   assert.match(pause, /active := false/);
+  assert.doesNotMatch(pause, /FROM cron\.job[\s\S]*?FOR UPDATE/);
+  assert.doesNotMatch(cutover, /FROM cron\.job[\s\S]*?FOR UPDATE/);
+  assert.match(pause, /cron\.alter_job\(job_id := v_job_id, active := false\)/);
   assert.match(cutover, /active IS DISTINCT FROM false/);
   assert.match(cutover, /command := 'select public\.run_lhi_discipline_scheduler_v2\(\);'/);
   assert.match(cutover, /active := true/);
