@@ -55,8 +55,10 @@ jobs:
       - name: Prepare isolated local Supabase workdir
         run: |
           mkdir -p tests/supabase-local/supabase/migrations
-          cp supabase/config.toml tests/supabase-local/supabase/config.toml
-          sed -i 's/^project_id = .*/project_id = "ipsrs-lhi-local-ci"/' tests/supabase-local/supabase/config.toml
+          {
+            echo 'project_id = "ipsrs-lhi-local-ci"'
+            tail -n +3 supabase/config.toml
+          } > tests/supabase-local/supabase/config.toml
           mkdir -p tests/supabase-local/supabase/functions
           cp -R supabase/functions/ipsrs-api tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-block-status tests/supabase-local/supabase/functions/
@@ -66,7 +68,7 @@ jobs:
 
       - name: Start local Supabase stack
         working-directory: tests/supabase-local
-        run: supabase start --exclude studio,mailpit,storage-api,imgproxy,logflare,vector,analytics
+        run: supabase start --exclude studio,mailpit,storage-api,imgproxy,logflare,vector
 
       - name: Export local Supabase connection values
         working-directory: tests/supabase-local
