@@ -59,3 +59,15 @@ test("block status reports active grace deadline without globally blocking norma
   assert.match(blockStatus, /grace_active: Boolean\(graceIncident\)/);
   assert.match(blockStatus, /grace_deadline_at/);
 });
+
+test("KA grace monitoring reads the v2 snapshot members, not legacy per-date obligations", () => {
+  const start = api.indexOf('if(a==="apiGetLhiGraceStatus")');
+  const end = api.indexOf('if(a==="apiListEditPermissions")', start);
+  const block = api.slice(start, end);
+  assert.match(block, /from\("lhi_discipline_snapshot_members"\)/);
+  assert.match(block, /\.eq\("grace_cycle",incident\.grace_cycle\)/);
+  assert.match(block, /obligation_status==="COMPLETED"/);
+  assert.match(block, /obligation_status==="PENDING"/);
+  assert.match(block, /obligation_status==="EXCLUDED_INACTIVE"/);
+  assert.doesNotMatch(block, /from\("lhi_discipline_obligations"\)/);
+});
