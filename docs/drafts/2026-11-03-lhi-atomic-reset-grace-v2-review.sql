@@ -27,6 +27,7 @@ DECLARE
   v_now timestamptz := clock_timestamp();
   v_snapshot_count integer := 0;
   v_unblocked_count integer := 0;
+  v_snapshot_source text := 'KA_IPSRS_RESET';
 BEGIN
   -- Match scheduler lock ordering so recovery and cron cannot deadlock.
   PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
@@ -112,6 +113,14 @@ BEGIN
     WHERE o.incident_id = v_incident.incident_id
       AND o.completed_at IS NULL
   ) THEN
+    v_snapshot_source := 'LEGACY_OBLIGATION_SNAPSHOT';
+
+    -- The legacy obligation rows identify who must satisfy the grace, but
+    -- their row count/required_date count is not the missed-calendar-day
+    -- calculation. Populate the snapshot anchor from the latest valid LHI
+    -- input timestamp; derive missed days from its WIB calendar date.
+    -- If a legacy staff member has no valid report at all, retain NULL rather
+    -- than fabricate a timestamp or infer an HR activation date.
     INSERT INTO public.lhi_discipline_snapshot_members (
       incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
       missed_full_days_at_snapshot, employment_status_at_snapshot,
@@ -120,18 +129,34 @@ BEGIN
     SELECT
       v_incident.incident_id,
       v_incident.grace_cycle + 1,
-      s.staff_id,
+      pending.staff_id,
       v_now,
-      NULL,
-      count(DISTINCT o.required_date)::integer,
+      latest.last_valid_input_at,
+      CASE
+        WHEN latest.last_valid_input_at IS NULL THEN NULL
+        ELSE GREATEST(
+          0,
+          (v_now AT TIME ZONE 'Asia/Jakarta')::date
+            - (latest.last_valid_input_at AT TIME ZONE 'Asia/Jakarta')::date - 1
+        )::integer
+      END,
       s.status,
       'PENDING'
-    FROM public.lhi_discipline_obligations o
-    JOIN public.staff s ON s.staff_id = o.staff_id
-    WHERE o.incident_id = v_incident.incident_id
-      AND o.completed_at IS NULL
-      AND s.status = 'Aktif'
-    GROUP BY s.staff_id, s.status
+    FROM (
+      SELECT DISTINCT o.staff_id
+      FROM public.lhi_discipline_obligations o
+      WHERE o.incident_id = v_incident.incident_id
+        AND o.completed_at IS NULL
+    ) pending
+    JOIN public.staff s ON s.staff_id = pending.staff_id
+    LEFT JOIN LATERAL (
+      SELECT max(r.created_at) AS last_valid_input_at
+      FROM public.reports r
+      WHERE r.staff_id = pending.staff_id
+        AND r.deleted_at IS NULL
+        AND r.created_at <= v_now
+    ) latest ON TRUE
+    WHERE s.status = 'Aktif'
     ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
     GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
   ELSE
@@ -174,10 +199,7 @@ BEGIN
       'incident_id', v_incident.incident_id,
       'missed_full_days', m.missed_full_days_at_snapshot,
       'anchor_input_at', m.anchor_input_at,
-      'snapshot_source', CASE
-        WHEN m.anchor_input_at IS NULL THEN 'LEGACY_OBLIGATION_SNAPSHOT'
-        ELSE 'KA_IPSRS_RESET'
-      END
+      'snapshot_source', v_snapshot_source
     )
   FROM public.lhi_discipline_snapshot_members m
   WHERE m.incident_id = v_incident.incident_id
