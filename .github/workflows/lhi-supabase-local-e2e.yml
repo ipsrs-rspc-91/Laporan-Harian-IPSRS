@@ -126,7 +126,9 @@ jobs:
           sudo apt-get install -y postgresql-client
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/lhi-postgres-baseline.sql
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
-          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql
+          RECOVERY_MIGRATION="$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)"
+          test -n "$RECOVERY_MIGRATION"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$RECOVERY_MIGRATION"
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
           RESET_HASH="$(printf '%s' "$LHI_TEST_RESET_CODE" | sha256sum | cut -d ' ' -f 1)"
