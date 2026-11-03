@@ -121,6 +121,10 @@ INSERT INTO public.staff (
    '00000000-0000-0000-0000-000000000006',
    clock_timestamp() - interval '7 days', clock_timestamp() - interval '7 days');
 
+INSERT INTO public.audit_log (timestamp, username, staff_id, action, field_changed, old_value, new_value)
+VALUES (clock_timestamp() - interval '1 day', 'SYSTEM', 'LEGACY-TEST',
+        'DEACTIVATE_LHI_DAY_8', 'status', 'Aktif', 'Nonaktif_LHI_HARI_8');
+
 INSERT INTO public.access_settings (key, value)
 VALUES ('LHI_GLOBAL_BLOCK', 'NONAKTIF');
 
