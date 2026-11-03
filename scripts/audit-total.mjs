@@ -385,7 +385,7 @@ if (changedJs.length) {
 const functionNames=new Map();
 for (const f of jsFiles) {
   const s=fs.readFileSync(f,'utf8');
-  for (const m of s.matchAll(/(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
+  for (const m of s.matchAll(/(?:^|\n)(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
     const n=m[1]; if(!functionNames.has(n)) functionNames.set(n,[]); functionNames.get(n).push(rel(f));
   }
 }
@@ -393,13 +393,51 @@ const dup=[...functionNames.entries()].filter(([,v])=>v.length>1);
 if (dup.length) warn('Duplicate global function names',dup.map(([n,v])=>n+': '+v.join(', ')).join('\n'));
 else pass('Duplicate global function names','No duplicate top-level function declarations');
 
-const direct=[];
-for (const f of files.filter(f=>/\.(js|html)$/i.test(f) && !f.includes('/supabase/functions/'))) {
-  const s=fs.readFileSync(f,'utf8');
-  if (/\.from\s*\(/.test(s) && /supabase/i.test(s)) direct.push(rel(f));
+function hasDirectSupabaseQuery(source) {
+  const aliases = new Set();
+  const aliasPatterns = [
+    /\b(?:const|let|var)\s+([\w$]+)\s*=\s*(?:window\.)?supabase\.createClient\s*\(/g,
+    /\b(?:const|let|var)\s+([\w$]+)\s*=\s*createClient\s*\(/g,
+    /\b(?:const|let|var)\s+([\w$]+)\s*=\s*getSupabaseClient_\s*\(/g,
+    /\b(?:const|let|var)\s+([\w$]+)\s*=\s*window\.IPSRS_SUPABASE_CLIENT\b/g
+  ];
+  for (const pattern of aliasPatterns) {
+    for (const match of source.matchAll(pattern)) aliases.add(match[1]);
+  }
+
+  const directClientPatterns = [
+    /\b(?:supabase|supabaseClient|supabaseAdmin)\s*\.\s*(?:from|rpc)\s*\(/i,
+    /\bwindow\.(?:IPSRS_SUPABASE_CLIENT|supabase)\s*\.\s*(?:from|rpc)\s*\(/i,
+    /\bgetSupabaseClient_\s*\(\s*\)\s*\.\s*(?:from|rpc)\s*\(/i
+  ];
+  if (directClientPatterns.some(pattern => pattern.test(source))) return true;
+
+  const compact = source.replace(/\s+/g, '');
+  for (const alias of aliases) {
+    if (compact.includes(alias + '.from(') || compact.includes(alias + '.rpc(')) return true;
+  }
+  return false;
 }
-if (direct.length) warn('Frontend direct Supabase access',direct.join(', '));
-else pass('Frontend direct Supabase access','No obvious direct .from() Supabase access detected in frontend');
+
+const direct = [];
+const supabaseAccessDetectorSelfTests = [
+  ['Array.from is not a Supabase query', 'const rows = Array.from(items); // Supabase client', false],
+  ['supabase.from is detected', 'supabase.from("staff").select("*")', true],
+  ['created Supabase client alias is detected', 'const db = createClient(url, key); db.from("staff")', true],
+  ['window client alias is detected', 'window.IPSRS_SUPABASE_CLIENT.from("staff")', true],
+  ['recovery API fetch is not direct table access', "fetch(base + '/functions/v1/lhi-recovery-action')", false]
+];
+for (const [name, source, expected] of supabaseAccessDetectorSelfTests) {
+  if (hasDirectSupabaseQuery(source) !== expected) fail('Supabase access detector: ' + name, 'Detector result differs from expected result');
+}
+if (!failures.some(x => x.name.startsWith('Supabase access detector:'))) pass('Supabase access detector self-test', supabaseAccessDetectorSelfTests.length + ' cases checked');
+
+for (const f of files.filter(f => /\.(js|html)$/i.test(f) && !f.includes('/supabase/functions/'))) {
+  const source = fs.readFileSync(f, 'utf8');
+  if (hasDirectSupabaseQuery(source)) direct.push(rel(f));
+}
+if (direct.length) warn('Frontend direct Supabase access', direct.join(', '));
+else pass('Frontend direct Supabase access', 'No direct Supabase table/RPC calls detected in frontend');
 
 // Delete Report safety contract: UI placement + API authorization + soft-delete/RLS.
 const deleteApi=path.join(root,'supabase','functions','ipsrs-api','index.ts');

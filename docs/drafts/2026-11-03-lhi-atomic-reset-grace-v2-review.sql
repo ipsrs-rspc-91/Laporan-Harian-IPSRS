@@ -1,0 +1,379 @@
+-- REVIEW DRAFT ONLY — NOT A DEPLOYABLE MIGRATION.
+-- Atomic Reset -> 12-hour grace transaction for restricted KA IPSRS recovery.
+-- Depends on:
+--   1) docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql (CLI-generated migration copy before deployment)
+--   2) docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
+--   3) docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
+-- Never execute in production. Validate only in a disposable/non-production
+-- Supabase project after schema and Edge Function review.
+
+BEGIN;
+
+CREATE OR REPLACE FUNCTION public.open_lhi_global_grace_v2(
+  p_recovery_session_token_hash text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_validation jsonb;
+  v_staff_id text;
+  v_staff_name text;
+  v_incident_id bigint;
+  v_incident public.lhi_discipline_incidents%ROWTYPE;
+  v_lock text;
+  v_now timestamptz := clock_timestamp();
+  v_snapshot_count integer := 0;
+  v_unblocked_count integer := 0;
+  v_snapshot_source text := 'KA_IPSRS_RESET';
+BEGIN
+  -- Match scheduler lock ordering so recovery and cron cannot deadlock.
+  PERFORM pg_advisory_xact_lock(hashtextextended('lhi_discipline_scheduler_v2', 0));
+
+  IF p_recovery_session_token_hash IS NULL
+     OR p_recovery_session_token_hash !~ '^[0-9a-f]{64}$' THEN
+    RAISE EXCEPTION 'Sesi pemulihan tidak valid.';
+  END IF;
+
+  -- Revalidate the opaque capability inside the same database transaction.
+  -- This independently verifies KA_IPSRS identity, active employment,
+  -- session expiry/revocation, incident binding and action allowlist.
+  v_validation := public.validate_lhi_recovery_session(
+    p_recovery_session_token_hash,
+    'apiStartLhiGrace'
+  );
+
+  IF COALESCE((v_validation ->> 'ok')::boolean, false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'Sesi pemulihan tidak valid atau tidak memiliki kewenangan.';
+  END IF;
+
+  v_staff_id := v_validation ->> 'staff_id';
+  v_staff_name := v_validation ->> 'staff_name';
+  v_incident_id := (v_validation ->> 'incident_id')::bigint;
+
+  -- Stable lock order: global setting first, then the incident row.
+  SELECT a.value INTO v_lock
+  FROM public.access_settings a
+  WHERE a.key = 'LHI_GLOBAL_BLOCK'
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Konfigurasi blokir global tidak ditemukan.';
+  END IF;
+  IF v_lock IS NULL OR v_lock NOT IN ('AKTIF', 'NONAKTIF') THEN
+    RAISE EXCEPTION 'Status LHI_GLOBAL_BLOCK tidak valid; transaksi Reset dibatalkan.';
+  END IF;
+
+  SELECT i.* INTO v_incident
+  FROM public.lhi_discipline_incidents i
+  WHERE i.incident_id = v_incident_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Insiden pemulihan tidak ditemukan.';
+  END IF;
+
+  -- Idempotency: a retry after a lost HTTP response returns the original
+  -- grace start/deadline and never creates a second snapshot or shifts 12h.
+  IF v_incident.status = 'GRACE' THEN
+    IF v_lock <> 'NONAKTIF' THEN
+      RAISE EXCEPTION 'Status insiden GRACE tidak konsisten dengan LHI_GLOBAL_BLOCK.';
+    END IF;
+
+    RETURN jsonb_build_object(
+      'ok', true,
+      'already_open', true,
+      'incident_id', v_incident.incident_id,
+      'status', v_incident.status,
+      'started_at', v_incident.started_at,
+      'deadline_at', v_incident.deadline_at,
+      'snapshot_total', (
+        SELECT count(*)::integer
+        FROM public.lhi_discipline_snapshot_members m
+        WHERE m.incident_id = v_incident.incident_id
+          AND m.grace_cycle = v_incident.grace_cycle
+      )
+    );
+  END IF;
+
+  IF v_incident.status <> 'LOCKED' OR v_lock <> 'AKTIF' THEN
+    RAISE EXCEPTION 'Reset hanya dapat dijalankan untuk insiden LOCKED dengan blokir global AKTIF.';
+  END IF;
+
+  -- Snapshot is created at Reset, atomically with opening grace.
+  -- Legacy production LOCKED incidents already have a per-date obligation
+  -- snapshot. Reuse its distinct pending staff members instead of inventing
+  -- HR activation dates from staff.created_at. This is the safe bridge for
+  -- the currently locked legacy incident and preserves its original duties.
+  IF EXISTS (
+    SELECT 1
+    FROM public.lhi_discipline_obligations o
+    WHERE o.incident_id = v_incident.incident_id
+      AND o.completed_at IS NULL
+  ) THEN
+    v_snapshot_source := 'LEGACY_OBLIGATION_SNAPSHOT';
+
+    -- The legacy obligation rows identify who must satisfy the grace, but
+    -- their row count/required_date count is not the missed-calendar-day
+    -- calculation. Populate the snapshot anchor from the latest valid LHI
+    -- input timestamp; derive missed days from its WIB calendar date.
+    -- If a legacy staff member has no valid report at all, retain NULL rather
+    -- than fabricate a timestamp or infer an HR activation date.
+    INSERT INTO public.lhi_discipline_snapshot_members (
+      incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
+      missed_full_days_at_snapshot, employment_status_at_snapshot,
+      obligation_status
+    )
+    SELECT
+      v_incident.incident_id,
+      v_incident.grace_cycle + 1,
+      pending.staff_id,
+      v_now,
+      latest.last_valid_input_at,
+      CASE
+        WHEN latest.last_valid_input_at IS NULL THEN NULL
+        ELSE GREATEST(
+          0,
+          (v_now AT TIME ZONE 'Asia/Jakarta')::date
+            - (latest.last_valid_input_at AT TIME ZONE 'Asia/Jakarta')::date - 1
+        )::integer
+      END,
+      s.status,
+      'PENDING'
+    FROM (
+      SELECT DISTINCT o.staff_id
+      FROM public.lhi_discipline_obligations o
+      WHERE o.incident_id = v_incident.incident_id
+        AND o.completed_at IS NULL
+    ) pending
+    JOIN public.staff s ON s.staff_id = pending.staff_id
+    LEFT JOIN LATERAL (
+      SELECT max(r.created_at) AS last_valid_input_at
+      FROM public.reports r
+      WHERE r.staff_id = pending.staff_id
+        AND r.deleted_at IS NULL
+        AND r.created_at <= v_now
+    ) latest ON TRUE
+    WHERE s.status = 'Aktif'
+    ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
+    GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
+  ELSE
+    -- A new-format incident has no legacy obligations. It must use verified
+    -- HR anchors and the single v2 evaluator; provisional account timestamps
+    -- are never accepted as employment start dates.
+    IF EXISTS (
+      SELECT 1 FROM public.staff s
+      WHERE s.status = 'Aktif'
+        AND (s.lhi_active_since IS NULL OR s.lhi_active_since_verified_at IS NULL)
+    ) THEN
+      RAISE EXCEPTION 'Reset dibatalkan: pegawai Aktif memiliki anchor HR yang belum diverifikasi dan tidak tersedia snapshot kewajiban legacy.';
+    END IF;
+
+    INSERT INTO public.lhi_discipline_snapshot_members (
+      incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
+      missed_full_days_at_snapshot, employment_status_at_snapshot,
+      obligation_status
+    )
+    SELECT
+      v_incident.incident_id, v_incident.grace_cycle + 1, e.staff_id, v_now, e.anchor_at,
+      e.missed_full_days, e.employment_status, 'PENDING'
+    FROM public.lhi_discipline_evaluations_v2(v_now) e
+    WHERE e.employment_status = 'Aktif'
+      AND e.missed_full_days >= 9
+    ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
+    GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
+  END IF;
+
+  IF v_snapshot_count < 1 THEN
+    RAISE EXCEPTION 'Snapshot petugas lalai tidak terbentuk. Blokir global tetap aktif.';
+  END IF;
+
+  INSERT INTO public.lhi_discipline_obligation_events (
+    member_id, event_type, event_at, new_status, actor_staff_id, details
+  )
+  SELECT
+    m.member_id, 'SNAPSHOT_CREATED', v_now, 'PENDING', v_staff_id,
+    jsonb_build_object(
+      'incident_id', v_incident.incident_id,
+      'missed_full_days', m.missed_full_days_at_snapshot,
+      'anchor_input_at', m.anchor_input_at,
+      'snapshot_source', v_snapshot_source
+    )
+  FROM public.lhi_discipline_snapshot_members m
+  WHERE m.incident_id = v_incident.incident_id
+    AND m.grace_cycle = v_incident.grace_cycle + 1
+    AND m.snapshot_created_at = v_now;
+
+  -- Clear LHI access blocks only. Never modify staff.status (employment).
+  UPDATE public.staff s
+  SET lhi_access_status = 'NORMAL',
+      lhi_access_blocked_at = NULL,
+      lhi_access_block_reason = NULL,
+      lhi_manual_unblock_until = NULL,
+      updated_at = v_now
+  WHERE s.lhi_access_status = 'BLOCKED_LHI';
+
+  GET DIAGNOSTICS v_unblocked_count = ROW_COUNT;
+
+  UPDATE public.lhi_discipline_incidents
+  SET status = 'GRACE',
+      grace_cycle = v_incident.grace_cycle + 1,
+      started_at = v_now,
+      deadline_at = v_now + interval '12 hours',
+      started_by_staff_id = v_staff_id,
+      started_by_name = v_staff_name,
+      completed_at = NULL,
+      reactivated_at = NULL
+  WHERE incident_id = v_incident.incident_id
+    AND status = 'LOCKED';
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Insiden gagal berpindah ke GRACE; seluruh perubahan dibatalkan.';
+  END IF;
+
+  UPDATE public.access_settings
+  SET value = 'NONAKTIF',
+      updated_at = v_now,
+      updated_by_staff_id = v_staff_id,
+      updated_by_name = v_staff_name
+  WHERE key = 'LHI_GLOBAL_BLOCK';
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Blokir global gagal dinonaktifkan; seluruh perubahan dibatalkan.';
+  END IF;
+
+  -- Keep this narrowly scoped capability valid only through the current grace
+  -- deadline, so a page refresh can re-authenticate KA and resume status checks.
+  UPDATE private.lhi_recovery_sessions
+  SET expires_at = v_now + interval '12 hours'
+  WHERE token_hash = p_recovery_session_token_hash
+    AND staff_id = v_staff_id
+    AND incident_id = v_incident.incident_id::text
+    AND revoked_at IS NULL;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Sesi pemulihan gagal diperpanjang sampai tenggat grace; seluruh perubahan dibatalkan.';
+  END IF;
+
+  INSERT INTO public.audit_log (
+    username, staff_id, action, report_id, keterangan,
+    field_changed, old_value, new_value
+  ) VALUES (
+    v_staff_id, v_staff_id, 'OPEN_LHI_GLOBAL_GRACE_V2', NULL,
+    'KA IPSRS terverifikasi menjalankan Reset melalui restricted recovery session. Snapshot dibuat atomik; blokir akses individual LHI dibuka tanpa mengubah status kepegawaian; grace 12 jam dimulai.',
+    'LHI_GLOBAL_BLOCK,lhi_access_status,lhi_discipline_incidents.status',
+    'AKTIF / LOCKED / BLOCKED_LHI',
+    'NONAKTIF / GRACE / NORMAL'
+  );
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'already_open', false,
+    'incident_id', v_incident.incident_id,
+    'status', 'GRACE',
+    'started_at', v_now,
+    'deadline_at', v_now + interval '12 hours',
+    'snapshot_total', v_snapshot_count,
+    'individual_access_unblocked', v_unblocked_count
+  );
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.open_lhi_global_grace_v2(text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.open_lhi_global_grace_v2(text)
+  TO service_role;
+
+-- Read-only status projection for KA IPSRS. Snapshot tables intentionally
+-- deny direct SELECT to application roles; this SECURITY DEFINER RPC is the
+-- only supported read surface for aggregate counts and the member-level audit
+-- view required by README. The caller must already be authorized by the
+-- service-role API or a validated restricted recovery capability.
+CREATE OR REPLACE FUNCTION public.get_lhi_grace_status_v2()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  WITH current_incident AS (
+    SELECT incident_id, grace_cycle, status, started_at, deadline_at
+    FROM public.lhi_discipline_incidents
+    ORDER BY incident_id DESC
+    LIMIT 1
+  ),
+  snapshot_rows AS (
+    SELECT m.*, s.nama, s.role, s.status AS current_employment_status
+    FROM public.lhi_discipline_snapshot_members m
+    JOIN current_incident i
+      ON i.incident_id = m.incident_id
+     AND i.grace_cycle = m.grace_cycle
+    JOIN public.staff s ON s.staff_id = m.staff_id
+  ),
+  counts AS (
+    SELECT
+      count(*) FILTER (WHERE obligation_status IN ('PENDING', 'COMPLETED'))::integer AS total,
+      count(*) FILTER (WHERE obligation_status = 'COMPLETED')::integer AS completed,
+      count(*) FILTER (WHERE obligation_status = 'PENDING')::integer AS pending,
+      count(*) FILTER (WHERE obligation_status = 'EXCLUDED_INACTIVE')::integer AS excluded,
+      count(*)::integer AS snapshot_total
+    FROM snapshot_rows
+  ),
+  members AS (
+    SELECT COALESCE(
+      jsonb_agg(
+        jsonb_build_object(
+          'staff_id', staff_id,
+          'nama', nama,
+          'role', role,
+          'employment_status_at_snapshot', employment_status_at_snapshot,
+          'current_employment_status', current_employment_status,
+          'obligation_status', obligation_status,
+          'anchor_input_at', anchor_input_at,
+          'missed_full_days_at_snapshot', missed_full_days_at_snapshot,
+          'completed_at', completed_at,
+          'qualifying_report_id', qualifying_report_id,
+          'excluded_at', excluded_at,
+          'exclusion_reason', exclusion_reason
+        )
+        ORDER BY nama, staff_id
+      ),
+      '[]'::jsonb
+    ) AS items
+    FROM snapshot_rows
+  )
+  SELECT jsonb_build_object(
+    'incident_id', i.incident_id,
+    'grace_cycle', i.grace_cycle,
+    'status', i.status,
+    'started_at', i.started_at,
+    'deadline_at', i.deadline_at,
+    'total', c.total,
+    'completed', c.completed,
+    'pending', c.pending,
+    'excluded', c.excluded,
+    'snapshot_total', c.snapshot_total,
+    'members', m.items
+  )
+  FROM current_incident i
+  CROSS JOIN counts c
+  CROSS JOIN members m;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_lhi_grace_status_v2()
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_lhi_grace_status_v2()
+  TO service_role;
+
+COMMIT;
+
+-- Required integration tests before use:
+-- * valid KA_IPSRS recovery session + LOCKED incident -> exactly one GRACE and snapshot.
+-- * retry while GRACE -> same started_at/deadline; no duplicate snapshot.
+-- * expired/revoked session, wrong role, inactive staff, wrong incident -> rejected.
+-- * individual access statuses clear, employment status values unchanged.
+-- * snapshot only delinquent active staff; one member per staff/incident.
+-- * any failure rolls back snapshot, unblocks, incident update and global setting.
+-- * global lock remains AKTIF if snapshot is empty or any precondition fails.

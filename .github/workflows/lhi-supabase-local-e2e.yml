@@ -1,0 +1,274 @@
+name: LHI Local Supabase Auth and Edge E2E
+
+on:
+  push:
+    branches:
+      - repair/lhi-status-separation-20261103
+    paths:
+      - "supabase/config.toml"
+      - "supabase/functions/**"
+      - "docs/drafts/*lhi*.sql"
+      - "tests/fixtures/lhi-postgres-baseline.sql"
+      - "tests/integration/lhi-supabase-edge-e2e.mjs"
+      - ".github/workflows/lhi-supabase-local-e2e.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "supabase/config.toml"
+      - "supabase/functions/**"
+      - "docs/drafts/*lhi*.sql"
+      - "tests/fixtures/lhi-postgres-baseline.sql"
+      - "tests/integration/lhi-supabase-edge-e2e.mjs"
+      - ".github/workflows/lhi-supabase-local-e2e.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lhi-local-supabase-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  local-supabase-auth-edge-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: "2.122.1"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Inspect local CLI commands
+        run: |
+          supabase --version
+          supabase start --help
+          supabase functions serve --help
+          supabase status --help
+          supabase stop --help
+
+      - name: Prepare isolated local Supabase workdir
+        run: |
+          mkdir -p tests/supabase-local/supabase/migrations
+          mkdir -p tests/lhi-migration-staging/supabase/migrations
+          cat > tests/supabase-local/supabase/config.toml <<'TOML'
+          project_id = "ipsrs-lhi-local-ci"
+
+          [api]
+          enabled = true
+          port = 54321
+          schemas = ["public", "graphql_public"]
+          extra_search_path = ["public", "extensions"]
+          max_rows = 1000
+
+          [db]
+          port = 54322
+          major_version = 17
+
+          [studio]
+          enabled = false
+
+          [auth]
+          enabled = true
+          site_url = "http://localhost:3000"
+          additional_redirect_urls = ["http://localhost:3000"]
+
+          [functions.ipsrs-api]
+          verify_jwt = true
+
+          [functions.lhi-reset-verify]
+          verify_jwt = false
+
+          [functions.lhi-recovery-exchange]
+          verify_jwt = false
+
+          [functions.lhi-recovery-action]
+          verify_jwt = false
+
+          [functions.lhi-block-status]
+          verify_jwt = false
+          TOML
+          mkdir -p tests/supabase-local/supabase/functions
+          cp -R supabase/functions/ipsrs-api tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-block-status tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-reset-verify tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-recovery-exchange tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-recovery-action tests/supabase-local/supabase/functions/
+          cp tests/supabase-local/supabase/config.toml tests/lhi-migration-staging/supabase/config.toml
+
+      - name: Generate isolated CLI migrations (never in deployable project migrations)
+        working-directory: tests/lhi-migration-staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          create_migration() {
+            local name="$1"
+            local source="$2"
+            supabase migration new "$name"
+            local generated
+            generated="$(find supabase/migrations -maxdepth 1 -type f -name "*_${name}.sql" -print | sort | tail -n 1)"
+            test -n "$generated"
+            cp "../../$source" "$generated"
+            echo "Generated isolated test migration: $generated"
+          }
+
+          create_migration lhi_schema_v2 docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
+          sleep 1
+          create_migration lhi_restricted_recovery_challenges docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql
+          sleep 1
+          create_migration lhi_scheduler_v2 docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
+          sleep 1
+          create_migration lhi_atomic_reset_grace_v2 docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
+
+          schema_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)" | cut -d '_' -f 1)"
+          challenge_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)" | cut -d '_' -f 1)"
+          scheduler_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)" | cut -d '_' -f 1)"
+          atomic_ts="$(basename "$(find supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)" | cut -d '_' -f 1)"
+          if ! [ "$schema_ts" -lt "$challenge_ts" ] || ! [ "$challenge_ts" -lt "$scheduler_ts" ] || ! [ "$scheduler_ts" -lt "$atomic_ts" ]; then
+            echo "::error::CLI migration timestamps are not strictly ordered."
+            exit 1
+          fi
+
+      - name: Start local Supabase stack
+        working-directory: tests/supabase-local
+        run: supabase start --exclude studio,mailpit,storage-api,imgproxy,logflare,vector
+
+      - name: Export local Supabase connection values
+        working-directory: tests/supabase-local
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(supabase status -o env)"
+          {
+            echo "API_URL=$API_URL"
+            echo "DB_URL=$DB_URL"
+            echo "ANON_KEY=$ANON_KEY"
+            echo "SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "LHI_TEST_PASSWORD=$(openssl rand -hex 24)!"
+            echo "LHI_TEST_RESET_CODE=246810"
+          } >> "$GITHUB_ENV"
+
+      - name: Apply isolated LHI schema and seed locked incident
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/lhi-postgres-baseline.sql
+          SCHEMA_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)"
+          RECOVERY_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)"
+          SCHEDULER_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)"
+          ATOMIC_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)"
+          test -n "$SCHEMA_MIGRATION"
+          test -n "$RECOVERY_MIGRATION"
+          test -n "$SCHEDULER_MIGRATION"
+          test -n "$ATOMIC_MIGRATION"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$SCHEMA_MIGRATION"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$RECOVERY_MIGRATION"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$SCHEDULER_MIGRATION"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$ATOMIC_MIGRATION"
+          RESET_HASH="$(printf '%s' "$LHI_TEST_RESET_CODE" | sha256sum | cut -d ' ' -f 1)"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -v reset_hash="$RESET_HASH" <<'SQL'
+          INSERT INTO public.access_settings (key, value)
+          VALUES ('LHI_RESET_CODE_HASH', :'reset_hash')
+          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+          UPDATE public.access_settings
+          SET value = 'AKTIF'
+          WHERE key = 'LHI_GLOBAL_BLOCK';
+
+          UPDATE public.staff
+          SET status = 'Nonaktif'
+          WHERE staff_id = 'LEGACY-TEST';
+
+          UPDATE public.staff
+          SET lhi_access_status = 'BLOCKED_LHI',
+              lhi_access_block_reason = 'LHI_NONCOMPLIANCE',
+              lhi_access_blocked_at = clock_timestamp()
+          WHERE staff_id IN ('KA-TEST', 'STAFF-TEST');
+
+          -- Test-only HR reconciliation: the E2E fixture explicitly verifies
+          -- active employment anchors before it exercises the Reset flow.
+          UPDATE public.staff
+          SET lhi_active_since_verified_at = clock_timestamp(),
+              lhi_active_since_source = 'HR_MASTER'
+          WHERE status = 'Aktif';
+
+          INSERT INTO public.lhi_discipline_incidents (
+            started_at, deadline_at, status, started_by_staff_id,
+            started_by_name, locked_at, grace_cycle
+          ) VALUES (
+            clock_timestamp() - interval '1 hour',
+            clock_timestamp(),
+            'LOCKED',
+            'KA-TEST',
+            'KA IPSRS Test',
+            clock_timestamp(),
+            0
+          );
+
+          NOTIFY pgrst, 'reload schema';
+          SQL
+
+      - name: Verify existing LHI cron switches to v2 without duplication
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+          CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler()
+          RETURNS void LANGUAGE plpgsql AS $legacy$
+          BEGIN
+            RETURN;
+          END;
+          $legacy$;
+          SELECT cron.schedule(
+            'lhi-discipline-scheduler-every-5-minutes',
+            '*/5 * * * *',
+            'select public.run_lhi_discipline_scheduler();'
+          );
+          SQL
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-cron-pause-v2-review.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-cron-switch-v2-review.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c "select cron.unschedule('lhi-discipline-scheduler-every-5-minutes');"
+
+      - name: Start local Edge Functions
+        working-directory: tests/supabase-local
+        shell: bash
+        run: |
+          set -euo pipefail
+          LHI_RATE_LIMIT_SALT="$(openssl rand -hex 32)"
+          {
+            echo "LHI_ALLOWED_ORIGINS=http://localhost:3000"
+            echo "LHI_RATE_LIMIT_SALT=$LHI_RATE_LIMIT_SALT"
+          } > .env
+          nohup supabase functions serve --env-file .env > /tmp/lhi-local-functions.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -X OPTIONS \
+              -H 'Origin: http://localhost:3000' \
+              "$API_URL/functions/v1/lhi-block-status" || true)"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/lhi-local-functions.log
+          exit 1
+
+      - name: Run local Supabase Auth and Edge recovery lifecycle
+        run: node tests/integration/lhi-supabase-edge-e2e.mjs
+
+      - name: Stop local Supabase stack
+        if: always()
+        working-directory: tests/supabase-local
+        continue-on-error: true
+        run: supabase stop --no-backup || true

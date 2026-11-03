@@ -171,8 +171,8 @@
       if(typeof window.gsRun==='function'){
         const data=await window.gsRun('apiGetDisciplineWarning');
         const rows=Array.isArray(data)?data:(Array.isArray(data?.data)?data.data:(Array.isArray(data?.staff)?data.staff:[]));
-        const overdue=rows.filter(x=>Number(x?.missed_days)>=9).sort((x,y)=>Number(y?.missed_days)-Number(x?.missed_days));
-        names=overdue.map(x=>({nama:String(x?.nama||'').trim(),hari:Number(x?.missed_days)})).filter(x=>x.nama);
+        const blocked=rows.filter(x=>String(x?.staff_id||'').trim()&&String(x?.nama||'').trim());
+        names=blocked.map(x=>({nama:String(x.nama).trim()}));
       }
     }catch(_e){}
     if(!names.length) return;
@@ -182,8 +182,9 @@
     document.head.appendChild(style);
     const bg=document.createElement('div');
     bg.id='ipsrsServerDisciplineWarning';
-    const list=names.map(x=>'🔴 '+x.nama+' — '+x.hari+' hari').join('<br>');
-    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PERINGATAN DISIPLIN LHI</div><div class="sdw-body">'+names.length+' petugas tercatat tidak mengisi LHI selama 9 hari berturut-turut atau lebih:<br><br>'+list+'</div><button class="sdw-btn" type="button">OK</button></div>';
+    const escapeHtml=(value)=>String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const list=names.map(x=>'🔴 '+escapeHtml(x.nama)).join('<br>');
+    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PERINGATAN DISIPLIN LHI</div><div class="sdw-body">Hak akses aplikasi petugas berikut telah diblokir pada tahap hari ke-8 karena belum mengisi LHI selama 7 hari kalender berturut-turut:<br><br>'+list+'<br><br>Mohon saling mengingatkan dan membantu petugas yang bersangkutan melengkapi LHI.</div><button class="sdw-btn" type="button">OK</button></div>';
     document.body.appendChild(bg);
     bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
   }
