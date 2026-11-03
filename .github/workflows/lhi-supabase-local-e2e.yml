@@ -55,10 +55,24 @@ jobs:
       - name: Prepare isolated local Supabase workdir
         run: |
           mkdir -p tests/supabase-local/supabase/migrations
-          {
-            echo 'project_id = "ipsrs-lhi-local-ci"'
-            tail -n +3 supabase/config.toml
-          } > tests/supabase-local/supabase/config.toml
+          cat > tests/supabase-local/supabase/config.toml <<'EOF'
+          project_id = "ipsrs-lhi-local-ci"
+
+          [functions.ipsrs-api]
+          verify_jwt = true
+
+          [functions.lhi-reset-verify]
+          verify_jwt = false
+
+          [functions.lhi-recovery-exchange]
+          verify_jwt = false
+
+          [functions.lhi-recovery-action]
+          verify_jwt = false
+
+          [functions.lhi-block-status]
+          verify_jwt = false
+          EOF
           mkdir -p tests/supabase-local/supabase/functions
           cp -R supabase/functions/ipsrs-api tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-block-status tests/supabase-local/supabase/functions/
