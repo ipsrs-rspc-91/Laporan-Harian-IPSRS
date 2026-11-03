@@ -110,12 +110,13 @@ test("operational access panel never exposes the obsolete direct global-unlock a
 
 
 test("failed Reset authentication keeps the recovery-specific fail-closed message reachable", () => {
-  const start = app.indexOf("    }catch(err){", app.indexOf("async function performLogin"));
-  const end = app.indexOf("\n  }\n\n  // HARD GUARD LOGIN", start);
-  const block = app.slice(start, end);
-  assert.match(block, /const recoveryAttempt=!!pendingLhiRecoveryChallenge_/);
-  assert.ok(block.indexOf("const recoveryAttempt=!!pendingLhiRecoveryChallenge_") < block.indexOf("clearSession()"));
-  assert.ok(block.indexOf("clearSession()") < block.indexOf("if(recoveryAttempt)"));
+  const recoveryIndex = app.indexOf("const recoveryAttempt=!!pendingLhiRecoveryChallenge_");
+  const clearIndex = app.indexOf("clearSession()", recoveryIndex);
+  const branchIndex = app.indexOf("if(recoveryAttempt)", clearIndex);
+  assert.ok(recoveryIndex >= 0);
+  assert.ok(clearIndex > recoveryIndex);
+  assert.ok(branchIndex > clearIndex);
+  const block = app.slice(recoveryIndex, app.indexOf("const rawMsg=", branchIndex));
   assert.match(block, /Login pemulihan gagal\. Blokir aplikasi tetap aktif/);
   assert.match(block, /setTimeout\(\(\)=>checkAuthAndInit\(\),0\)/);
 });
