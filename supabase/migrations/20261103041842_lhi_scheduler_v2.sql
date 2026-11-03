@@ -375,7 +375,13 @@ BEGIN
     FROM public.staff s
     WHERE s.status = 'Aktif'
     ON CONFLICT (event_key, recipient_staff_id) DO UPDATE
-      SET subject = EXCLUDED.subject,
+      SET read_at = CASE
+            WHEN public.lhi_discipline_notifications.subject IS DISTINCT FROM EXCLUDED.subject
+              OR public.lhi_discipline_notifications.message IS DISTINCT FROM EXCLUDED.message
+            THEN NULL
+            ELSE public.lhi_discipline_notifications.read_at
+          END,
+          subject = EXCLUDED.subject,
           message = EXCLUDED.message;
 
     -- The team broadcast already includes every active staff member, including
@@ -424,7 +430,13 @@ BEGIN
     WHERE s.status = 'Aktif'
       AND COALESCE(s.lhi_access_status, 'NORMAL') <> 'BLOCKED_LHI'
     ON CONFLICT (event_key, recipient_staff_id) DO UPDATE
-      SET subject = EXCLUDED.subject,
+      SET read_at = CASE
+            WHEN public.lhi_discipline_notifications.subject IS DISTINCT FROM EXCLUDED.subject
+              OR public.lhi_discipline_notifications.message IS DISTINCT FROM EXCLUDED.message
+            THEN NULL
+            ELSE public.lhi_discipline_notifications.read_at
+          END,
+          subject = EXCLUDED.subject,
           message = EXCLUDED.message;
   END IF;
 
