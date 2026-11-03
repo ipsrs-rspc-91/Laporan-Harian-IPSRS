@@ -90,6 +90,8 @@ test("scheduler refuses inconsistent global lock and missing anchor", () => {
 
 test("warning team broadcast contains all names and day-7 notice explains day-8 block", () => {
   assert.match(sql, /string_agg\(x\.nama, ', ' ORDER BY x\.nama\)/);
+  assert.match(sql, /GROUP BY x\.stage\s+LOOP/);
+  assert.doesNotMatch(sql, /GROUP BY x\.stage, x\.missed_full_days/);
   assert.match(sql, /Blokir akses individual berlaku pada hari ke-8/);
   assert.match(sql, /:TEAM/);
   assert.match(sql, /:TEAM'/);
