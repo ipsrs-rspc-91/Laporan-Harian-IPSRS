@@ -155,7 +155,7 @@ END;
 $function$;
 
 -- Remove the pre-IP-binding signature if this draft is reapplied during review.
-DROP FUNCTION IF EXISTS public.consume_lhi_recovery_challenge(text, uuid, text, text);
+DROP FUNCTION IF EXISTS public.consume_lhi_recovery_challenge(text, uuid, text);
 
 -- Consume the challenge and issue an opaque recovery capability in one transaction.
 -- Initial LOCKED sessions are short-lived; Reset extends the capability only to
@@ -351,12 +351,12 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.register_lhi_reset_attempt(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.create_lhi_recovery_challenge(text, text) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.consume_lhi_recovery_challenge(text, uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.consume_lhi_recovery_challenge(text, uuid, text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validate_lhi_recovery_session(text, text) FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.register_lhi_reset_attempt(text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.create_lhi_recovery_challenge(text, text) TO service_role;
-GRANT EXECUTE ON FUNCTION public.consume_lhi_recovery_challenge(text, uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.consume_lhi_recovery_challenge(text, uuid, text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.validate_lhi_recovery_session(text, text) TO service_role;
 
 -- Expired challenge/session/rate-limit rows require a scheduled cleanup job.
