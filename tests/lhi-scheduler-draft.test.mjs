@@ -104,14 +104,14 @@ test("scheduler functions are not executable by client roles", () => {
 });
 
 test("day-8 in-app notification reaches active staff whose access is not blocked", () => {
-  const start = sql.indexOf("'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM'");
+  const start = sql.indexOf("'LHI:' || v_today_wib::text || ':BLOCK_INDIVIDUAL:TEAM'");
   assert.notEqual(start, -1);
   const end = sql.indexOf("ON CONFLICT (event_key, recipient_staff_id) DO UPDATE", start);
   assert.notEqual(end, -1);
   const recipientQuery = sql.slice(start, end);
   assert.match(recipientQuery, /WHERE s\.status = 'Aktif'/);
   assert.match(recipientQuery, /COALESCE\(s\.lhi_access_status, 'NORMAL'\) <> 'BLOCKED_LHI'/);
-  assert.match(sql, /:INDIVIDUAL_BLOCK:TEAM'/);
+  assert.match(sql, /:BLOCK_INDIVIDUAL:TEAM'/);
   assert.match(sql, /ON CONFLICT \(event_key, recipient_staff_id\) DO UPDATE/);
 });
 
@@ -122,4 +122,14 @@ test("scheduler fails closed when multiple LOCKED or GRACE incidents coexist", (
 
 test("scheduler fails closed when the global lock setting is missing or invalid", () => {
   assert.match(sql, /IF NOT FOUND OR v_lock IS NULL OR v_lock NOT IN \('AKTIF', 'NONAKTIF'\)/);
+});
+
+
+test("day-8 SQL notification event identity matches the JavaScript discipline helper", async () => {
+  const helper = await readFile(
+    new URL("../supabase/functions/ipsrs-api/lhi-discipline.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(sql, /:BLOCK_INDIVIDUAL:TEAM'/);
+  assert.match(helper, /event_key: `LHI:\$\{todayWib\}:BLOCK_INDIVIDUAL:TEAM`/);
 });
