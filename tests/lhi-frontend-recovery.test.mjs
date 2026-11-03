@@ -72,3 +72,13 @@ test("Cloudflare preview hosts never inherit the production Supabase endpoint", 
   assert.match(config, /IPSRS_PREVIEW_BACKEND_DISABLED=true/);
   assert.match(config, /IPSRS_SUPABASE_URL=''/);
 });
+
+test("server discipline warning escapes staff names before inserting them into HTML", async () => {
+  const login = await readFile(
+    new URL("../frontend/login-fast.js", import.meta.url),
+    "utf8",
+  );
+  assert.match(login, /const escapeHtml=\(value\)=>String\(value==null\?'':value\)\.replace\(\/\[&<>"'\]\/g/);
+  assert.match(login, /names\.map\(x=>'🔴 '\+escapeHtml\(x\.nama\)\)/);
+  assert.doesNotMatch(login, /names\.map\(x=>'🔴 '\+x\.nama\)/);
+});
