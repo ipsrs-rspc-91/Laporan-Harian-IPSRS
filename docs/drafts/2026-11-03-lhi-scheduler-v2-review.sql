@@ -316,13 +316,8 @@ BEGIN
     WHERE s.status = 'Aktif'
     ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
 
-    INSERT INTO public.lhi_discipline_notifications
-      (event_key, recipient_staff_id, subject, message)
-    SELECT 'LHI:' || v_today_wib::text || ':' || v_stage.stage || ':PERSONAL:' || e.staff_id,
-           e.staff_id, 'Peringatan LHI', v_message
-    FROM public.lhi_discipline_evaluations_v2(v_now) e
-    WHERE e.stage = v_stage.stage
-    ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
+    -- The team broadcast already includes every active staff member, including
+    -- the delinquent staff. Do not create a second duplicate warning for them.
   END LOOP;
 
   -- Day 8: change access state only. Never change staff.status.
