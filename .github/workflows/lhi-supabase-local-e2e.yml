@@ -1,0 +1,162 @@
+name: LHI Local Supabase Auth and Edge E2E
+
+on:
+  push:
+    branches:
+      - repair/lhi-status-separation-20261103
+    paths:
+      - "supabase/config.toml"
+      - "supabase/functions/**"
+      - "docs/drafts/*lhi*.sql"
+      - "tests/fixtures/lhi-postgres-baseline.sql"
+      - "tests/integration/lhi-supabase-edge-e2e.mjs"
+      - ".github/workflows/lhi-supabase-local-e2e.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "supabase/config.toml"
+      - "supabase/functions/**"
+      - "docs/drafts/*lhi*.sql"
+      - "tests/fixtures/lhi-postgres-baseline.sql"
+      - "tests/integration/lhi-supabase-edge-e2e.mjs"
+      - ".github/workflows/lhi-supabase-local-e2e.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  local-supabase-auth-edge-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Inspect local CLI commands
+        run: |
+          supabase --version
+          supabase start --help
+          supabase functions serve --help
+          supabase status --help
+          supabase stop --help
+
+      - name: Prepare isolated local Supabase workdir
+        run: |
+          mkdir -p tests/supabase-local/supabase/migrations
+          cp supabase/config.toml tests/supabase-local/supabase/config.toml
+          sed -i 's/^project_id = .*/project_id = "ipsrs-lhi-local-ci"/' tests/supabase-local/supabase/config.toml
+          mkdir -p tests/supabase-local/supabase/functions
+          cp -R supabase/functions/_shared tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/ipsrs-api tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-block-status tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-reset-verify tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-recovery-exchange tests/supabase-local/supabase/functions/
+          cp -R supabase/functions/lhi-recovery-action tests/supabase-local/supabase/functions/
+
+      - name: Start local Supabase stack
+        working-directory: tests/supabase-local
+        run: supabase start --exclude studio,mailpit,storage-api,imgproxy,logflare,vector,analytics
+
+      - name: Export local Supabase connection values
+        working-directory: tests/supabase-local
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(supabase status -o env)"
+          {
+            echo "API_URL=$API_URL"
+            echo "DB_URL=$DB_URL"
+            echo "ANON_KEY=$ANON_KEY"
+            echo "SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "LHI_TEST_PASSWORD=$(openssl rand -hex 24)!"
+            echo "LHI_TEST_RESET_CODE=246810"
+          } >> "$GITHUB_ENV"
+
+      - name: Apply isolated LHI schema and seed locked incident
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/lhi-postgres-baseline.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
+          RESET_HASH="$(printf '%s' "$LHI_TEST_RESET_CODE" | sha256sum | cut -d ' ' -f 1)"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -v reset_hash="$RESET_HASH" <<'SQL'
+          INSERT INTO public.access_settings (key, value)
+          VALUES ('LHI_RESET_CODE_HASH', :'reset_hash')
+          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+          UPDATE public.access_settings
+          SET value = 'AKTIF'
+          WHERE key = 'LHI_GLOBAL_BLOCK';
+
+          UPDATE public.staff
+          SET status = 'Nonaktif'
+          WHERE staff_id = 'LEGACY-TEST';
+
+          UPDATE public.staff
+          SET lhi_access_status = 'BLOCKED_LHI',
+              lhi_access_block_reason = 'LHI_NONCOMPLIANCE',
+              lhi_access_blocked_at = clock_timestamp()
+          WHERE staff_id IN ('KA-TEST', 'STAFF-TEST');
+
+          INSERT INTO public.lhi_discipline_incidents (
+            started_at, deadline_at, status, started_by_staff_id,
+            started_by_name, locked_at, grace_cycle
+          ) VALUES (
+            clock_timestamp() - interval '1 hour',
+            clock_timestamp(),
+            'LOCKED',
+            'KA-TEST',
+            'KA IPSRS Test',
+            clock_timestamp(),
+            0
+          );
+
+          NOTIFY pgrst, 'reload schema';
+          SQL
+
+      - name: Start local Edge Functions
+        working-directory: tests/supabase-local
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .env <<'EOF'
+          LHI_ALLOWED_ORIGINS=http://localhost:3000
+          LHI_RATE_LIMIT_SALT=local-ci-only-salt-8a4e2e0a7c9b4d6f8a1e3c5b7d9f0a2c
+          EOF
+          nohup supabase functions serve --env-file .env > /tmp/lhi-local-functions.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -X OPTIONS \
+              -H 'Origin: http://localhost:3000' \
+              "$API_URL/functions/v1/lhi-block-status" || true)"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/lhi-local-functions.log
+          exit 1
+
+      - name: Run local Supabase Auth and Edge recovery lifecycle
+        run: node tests/integration/lhi-supabase-edge-e2e.mjs
+
+      - name: Stop local Supabase stack
+        if: always()
+        working-directory: tests/supabase-local
+        run: supabase stop --no-backup
