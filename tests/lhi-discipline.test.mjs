@@ -382,7 +382,7 @@ test("restricted recovery SQL keeps challenges and sessions private to server-si
   assert.match(sql, /ALTER TABLE private\.lhi_recovery_challenges ENABLE ROW LEVEL SECURITY/);
   assert.match(sql, /ALTER TABLE private\.lhi_recovery_sessions ENABLE ROW LEVEL SECURITY/);
   assert.match(sql, /REVOKE ALL ON private\.lhi_recovery_challenges FROM PUBLIC, anon, authenticated, service_role/);
-  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.consume_lhi_recovery_challenge\(text, uuid, text\) TO service_role/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.consume_lhi_recovery_challenge\(text, uuid, text, text\) TO service_role/);
   assert.match(sql, /v_staff\.role IS DISTINCT FROM 'KA_IPSRS'/);
   assert.match(sql, /lower\(coalesce\(v_staff\.status, ''\)\) <> 'aktif'/);
   assert.match(sql, /v_challenge\.ip_hash IS DISTINCT FROM p_ip_hash/);
