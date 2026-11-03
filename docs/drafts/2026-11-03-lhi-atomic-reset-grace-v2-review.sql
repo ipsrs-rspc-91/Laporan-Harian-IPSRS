@@ -1,7 +1,7 @@
 -- REVIEW DRAFT ONLY — NOT A DEPLOYABLE MIGRATION.
 -- Atomic Reset -> 12-hour grace transaction for restricted KA IPSRS recovery.
 -- Depends on:
---   1) 20261103120000_lhi_restricted_recovery_challenges.sql
+--   1) docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql (CLI-generated migration copy before deployment)
 --   2) docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
 --   3) docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
 -- Never execute in production. Validate only in a disposable/non-production
