@@ -426,6 +426,7 @@
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
       case 'apiGetLhiGraceStatus':
+      case 'apiStartLhiGrace':
       case 'apiListEditPermissions':
       case 'apiGetSystemInfo':
         payload.token=token; break;
