@@ -81,3 +81,11 @@ test("atomic Reset refuses unverified employment anchors", () => {
   assert.match(sql, /lhi_active_since IS NULL OR s\.lhi_active_since_verified_at IS NULL/);
   assert.match(sql, /anchor belum diverifikasi HR atau peristiwa reaktivasi/);
 });
+
+test("legacy LOCKED incident reuses its existing pending obligations as the Reset snapshot", () => {
+  assert.match(sql, /FROM public\.lhi_discipline_obligations o[\s\S]*?o\.incident_id = v_incident\.incident_id[\s\S]*?o\.completed_at IS NULL[\s\S]*?count\(DISTINCT o\.required_date\)/);
+  assert.match(sql, /s\.status = 'Aktif'/);
+  assert.match(sql, /LEGACY_OBLIGATION_SNAPSHOT/);
+  assert.match(sql, /IF EXISTS \([\s\S]*?public\.lhi_discipline_obligations o[\s\S]*?ELSE[\s\S]*?lhi_active_since_verified_at/);
+  assert.doesNotMatch(sql, /IF EXISTS \([\s\S]{0,250}lhi_active_since_verified_at[\s\S]{0,250}INSERT INTO public\.lhi_discipline_snapshot_members/);
+});
