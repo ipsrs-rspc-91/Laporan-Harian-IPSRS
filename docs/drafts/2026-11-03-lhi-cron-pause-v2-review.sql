@@ -26,8 +26,7 @@ BEGIN
 
   SELECT jobid, active INTO v_job_id, v_active
   FROM cron.job
-  WHERE jobname = 'lhi-discipline-scheduler-every-5-minutes'
-;
+  WHERE jobname = 'lhi-discipline-scheduler-every-5-minutes';
 
   IF v_active IS DISTINCT FROM true THEN
     RAISE EXCEPTION 'Cron LHI sudah tidak aktif; pause dibatalkan untuk menghindari asumsi.';
