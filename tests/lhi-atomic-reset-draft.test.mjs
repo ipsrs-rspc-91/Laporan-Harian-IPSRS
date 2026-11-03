@@ -58,3 +58,10 @@ test("only service_role can execute the atomic Reset RPC", () => {
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.open_lhi_global_grace_v2\(text\)[\s\S]*FROM PUBLIC, anon, authenticated/);
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.open_lhi_global_grace_v2\(text\)[\s\S]*TO service_role/);
 });
+
+test("a new Reset after grace relock creates a new immutable snapshot cycle", () => {
+  assert.match(sql, /v_incident\.grace_cycle \+ 1/);
+  assert.match(sql, /grace_cycle, staff_id, snapshot_created_at/);
+  assert.match(sql, /AND m\.grace_cycle = v_incident\.grace_cycle \+ 1/);
+  assert.match(sql, /SET status = 'GRACE',[\s\S]*?grace_cycle = v_incident\.grace_cycle \+ 1/);
+});
