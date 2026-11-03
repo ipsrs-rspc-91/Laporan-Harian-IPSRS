@@ -206,12 +206,19 @@ BEGIN
   RAISE EXCEPTION 'Riwayat kewajiban LHI bersifat append-only.';
 END;
 $function$;
+REVOKE ALL ON FUNCTION public.prevent_lhi_obligation_event_mutation()
+  FROM PUBLIC, anon, authenticated, service_role;
 
 DROP TRIGGER IF EXISTS trg_lhi_obligation_events_append_only
   ON public.lhi_discipline_obligation_events;
 CREATE TRIGGER trg_lhi_obligation_events_append_only
 BEFORE UPDATE OR DELETE ON public.lhi_discipline_obligation_events
 FOR EACH ROW EXECUTE FUNCTION public.prevent_lhi_obligation_event_mutation();
+DROP TRIGGER IF EXISTS trg_lhi_obligation_events_no_truncate
+  ON public.lhi_discipline_obligation_events;
+CREATE TRIGGER trg_lhi_obligation_events_no_truncate
+BEFORE TRUNCATE ON public.lhi_discipline_obligation_events
+FOR EACH STATEMENT EXECUTE FUNCTION public.prevent_lhi_obligation_event_mutation();
 
 -- A genuine employment reactivation resets the monitoring anchor. Only an
 -- LHI-caused individual block is cleared; global block is never touched here.
