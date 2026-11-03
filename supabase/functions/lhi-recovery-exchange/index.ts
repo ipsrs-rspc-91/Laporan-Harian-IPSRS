@@ -57,7 +57,9 @@ Deno.serve(async (req: Request) => {
   try {
     const url = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !serviceKey) return response({ ok: false, message: "Recovery service unavailable." }, 503, cors);
+    const rateSalt = Deno.env.get("LHI_RATE_LIMIT_SALT");
+    const clientIp = String(req.headers.get("cf-connecting-ip") || "").trim();
+    if (!url || !serviceKey || !rateSalt || rateSalt.length < 32 || !clientIp) return response({ ok: false, message: "Recovery service unavailable." }, 503, cors);
 
     const authHeader = req.headers.get("authorization") || "";
     const bearer = authHeader.match(/^Bearer\s+(.+)$/i)?.[1] || "";
@@ -79,6 +81,7 @@ Deno.serve(async (req: Request) => {
       return response({ ok: false, message: "Autentikasi KA IPSRS tidak valid." }, 401, cors);
     }
 
+    const ipHash = await sha256(rateSalt + ":" + clientIp);
     const nonceHash = await sha256(challenge);
     const capability = randomToken(32);
     const capabilityHash = await sha256(capability);
@@ -87,6 +90,7 @@ Deno.serve(async (req: Request) => {
       p_nonce_hash: nonceHash,
       p_auth_user_id: authData.user.id,
       p_session_token_hash: capabilityHash,
+      p_ip_hash: ipHash,
     });
 
     if (error || !data?.ok) {
