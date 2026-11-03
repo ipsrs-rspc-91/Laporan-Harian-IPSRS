@@ -125,6 +125,19 @@ test("warning team broadcast contains all names and day-7 notice explains day-8 
 });
 
 
+test("team broadcast keeps the same event but reopens read state only when its message changes", () => {
+  const upserts = sql.split("ON CONFLICT (event_key, recipient_staff_id) DO UPDATE").slice(1, 3);
+  assert.equal(upserts.length, 2);
+  for (const update of upserts) {
+    const end = update.indexOf(";");
+    const clause = update.slice(0, end);
+    assert.ok(clause.includes("read_at = CASE"));
+    assert.ok(clause.includes("public.lhi_discipline_notifications.message IS DISTINCT FROM EXCLUDED.message"));
+    assert.ok(clause.includes("THEN NULL"));
+    assert.ok(clause.includes("ELSE public.lhi_discipline_notifications.read_at"));
+  }
+});
+
 test("scheduler functions are not executable by client roles", () => {
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.run_lhi_discipline_scheduler_v2\(\)[\s\S]*FROM PUBLIC, anon, authenticated, service_role/);
 });
