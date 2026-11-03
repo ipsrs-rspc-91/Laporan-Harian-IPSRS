@@ -20,6 +20,7 @@ DECLARE
   v_token_bad text := repeat('9', 64);
   v_ka uuid := '00000000-0000-0000-0000-000000000001';
   v_ip text := repeat('b', 64);
+  v_wrong_ip text := repeat('f', 64);
   v_nonce_1 text := repeat('a', 64);
   v_token_1 text := repeat('c', 64);
   v_nonce_2 text := repeat('d', 64);
@@ -206,6 +207,12 @@ BEGIN
   SELECT public.create_lhi_recovery_challenge(v_nonce_1, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Recovery challenge creation failed: %', v_result;
+  END IF;
+
+  SELECT public.consume_lhi_recovery_challenge(v_nonce_1, v_ka, v_token_1, v_wrong_ip) INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS TRUE
+     OR v_result ->> 'reason' IS DISTINCT FROM 'CHALLENGE_CLIENT_MISMATCH' THEN
+    RAISE EXCEPTION 'Recovery challenge accepted an exchange from a different client IP: %', v_result;
   END IF;
 
   SELECT public.consume_lhi_recovery_challenge(v_nonce_1, v_ka, v_token_1, v_ip) INTO v_result;
