@@ -692,6 +692,10 @@
           <p>Mulai: ${formatLhiRecoveryDate_(status&&status.started_at)}</p>
           <p>Batas waktu: ${formatLhiRecoveryDate_(status&&status.deadline_at)}</p>
         </div>
+        <section id="lhiRecoveryMembers" aria-label="Daftar kewajiban snapshot" style="margin-top:14px">
+          <h2 style="font-size:16px;margin:0 0 8px;color:#123b67">Daftar Petugas dan Kewajiban LHI</h2>
+          <p style="font-size:13px;color:#64748b">Memuat daftar snapshot dari server...</p>
+        </section>
         <div class="lhi-recovery-actions">
           ${isLocked?'<button type="button" id="lhiRecoveryStart">MULAI GRACE 12 JAM</button>':''}
           <button type="button" id="lhiRecoveryRefresh">PERIKSA STATUS</button>
@@ -699,6 +703,69 @@
         <p class="lhi-recovery-note">Sesi ini hanya memiliki kewenangan membaca status pemulihan dan memulai Reset. Hak akses operasional KA IPSRS kembali setelah proses grace selesai dan server menyatakan blokir tidak aktif.</p>
         <div id="lhiRecoveryMessage" role="status" aria-live="polite" style="margin-top:12px;color:#b42318;font-size:13px"></div>
       </section>`;
+
+    // Render member-level snapshot data using textContent only. Names and
+    // identifiers originate in database rows and must never be interpolated
+    // into HTML markup.
+    const memberHost=document.getElementById('lhiRecoveryMembers');
+    if(memberHost){
+      const grace=status&&status.grace_status;
+      const members=Array.isArray(grace&&grace.members)?grace.members:[];
+      memberHost.innerHTML='';
+      const heading=document.createElement('h2');
+      heading.textContent='Daftar Petugas dan Kewajiban LHI';
+      heading.style.cssText='font-size:16px;margin:0 0 8px;color:#123b67';
+      memberHost.appendChild(heading);
+      if(grace){
+        const summary=document.createElement('p');
+        summary.textContent='Total: '+Number(grace.snapshot_total||0)+' | Terpenuhi: '+Number(grace.completed||0)+' | Belum terpenuhi: '+Number(grace.pending||0)+' | Dikecualikan: '+Number(grace.excluded||0);
+        summary.style.cssText='font-size:12px;color:#475569;margin:0 0 8px';
+        memberHost.appendChild(summary);
+      }
+      if(!members.length){
+        const empty=document.createElement('p');
+        empty.textContent=isLocked
+          ?'Snapshot petugas belum dibuat. Daftar kewajiban akan muncul setelah Reset berhasil dijalankan.'
+          :'Daftar snapshot belum tersedia dari server. Tekan Periksa Status untuk mencoba kembali.';
+        empty.style.cssText='font-size:13px;color:#64748b;margin:6px 0';
+        memberHost.appendChild(empty);
+      }else{
+        const wrap=document.createElement('div');
+        wrap.style.cssText='overflow-x:auto;border:1px solid #dbe4ef;border-radius:10px';
+        const table=document.createElement('table');
+        table.style.cssText='width:100%;border-collapse:collapse;font-size:12px;text-align:left';
+        const thead=document.createElement('thead');
+        const headerRow=document.createElement('tr');
+        for(const label of ['Petugas','Status Kepegawaian','Kewajiban LHI','Waktu Terpenuhi']){
+          const th=document.createElement('th');
+          th.textContent=label;
+          th.style.cssText='padding:9px 8px;background:#f1f5f9;color:#334155;border-bottom:1px solid #dbe4ef;white-space:nowrap';
+          headerRow.appendChild(th);
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        const tbody=document.createElement('tbody');
+        for(const member of members){
+          const tr=document.createElement('tr');
+          const cells=[
+            String(member.nama||member.staff_id||'-')+' ('+String(member.staff_id||'-')+')',
+            String(member.current_employment_status||member.employment_status_at_snapshot||'-'),
+            member.obligation_status==='COMPLETED'?'TERPENUHI':(member.obligation_status==='EXCLUDED_INACTIVE'?'DIKECUALIKAN — STATUS NONAKTIF':'BELUM TERPENUHI'),
+            formatLhiRecoveryDate_(member.completed_at)
+          ];
+          for(const value of cells){
+            const td=document.createElement('td');
+            td.textContent=value;
+            td.style.cssText='padding:9px 8px;border-bottom:1px solid #e2e8f0;color:#334155;vertical-align:top';
+            tr.appendChild(td);
+          }
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        memberHost.appendChild(wrap);
+      }
+    }
 
     const message=document.getElementById('lhiRecoveryMessage');
     const refresh=document.getElementById('lhiRecoveryRefresh');
@@ -721,7 +788,8 @@
           incident_status:result.status,
           incident_id:result.incident_id,
           started_at:result.started_at,
-          deadline_at:result.deadline_at
+          deadline_at:result.deadline_at,
+          grace_status:result.grace_status||null
         });
       }catch(error){
         if(message)message.textContent=String(error&&error.message||'Reset gagal. Blokir global tetap dipertahankan.');
