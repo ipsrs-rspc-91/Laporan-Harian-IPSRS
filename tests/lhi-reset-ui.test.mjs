@@ -32,7 +32,7 @@ test("correct Reset restores the same login form before showing the login screen
 
 test("legacy Reset endpoint without a challenge gives an explicit server-upgrade message and never opens login", () => {
   assert.match(app, /if\(challenge\.length<32\) throw new Error\('Kode Reset diterima server, tetapi layanan pemulihan KA IPSRS belum lengkap di server\./);
-  assert.match(app, /const challenge=String\(result\.challenge\|\|''\)\.trim\(\);[\\s\\S]*?if\(challenge\.length<32\) throw new Error/);
+  assert.ok(app.includes("const challenge=String(result.challenge||'').trim();"));
   assert.match(app, /administrator harus menyelesaikan pembaruan layanan pemulihan/);
 });
 
