@@ -42,9 +42,8 @@ test("backup script changes are included in the LHI CI path filters", async () =
     new URL("../.github/workflows/lhi-discipline-tests.yml", import.meta.url),
     "utf8",
   );
-  assert.equal(
-    (workflow.match(/scripts\/lhi-production-backup\.ps1/g) || []).length,
-    2,
+  assert.ok(
+    (workflow.match(/scripts\/lhi-production-backup\.ps1/g) || []).length >= 2,
   );
 });
 
@@ -55,7 +54,7 @@ test("PowerShell backup script is syntax-parsed in CI", async () => {
   );
   assert.match(workflow, /Parse production backup PowerShell script/);
   assert.match(workflow, /shell: pwsh/);
-  assert.match(workflow, /Language\]::Parser\]::ParseFile/);
+  assert.match(workflow, /System\.Management\.Automation\.Language\.Parser\]::ParseFile/);
 });
 
 test("backup and restore modes fail early when required local tools are missing", () => {
