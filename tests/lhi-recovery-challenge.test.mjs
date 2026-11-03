@@ -19,7 +19,7 @@ test("challenge issuance supports only consistent LOCKED or GRACE/global-lock pa
 
 test("challenge consumption is bound to the original edge-observed client IP", () => {
   assert.match(migration, /p_ip_hash text/);
-  assert.match(migration, /v_challenge\\.ip_hash IS DISTINCT FROM p_ip_hash/);
+  assert.match(migration, /v_challenge\.ip_hash IS DISTINCT FROM p_ip_hash/);
   assert.match(migration, /CHALLENGE_CLIENT_MISMATCH/);
 });
 
