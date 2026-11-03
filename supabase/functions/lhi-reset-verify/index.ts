@@ -97,7 +97,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: setting, error: settingError } = await db
       .from("access_settings").select("value").eq("key", "LHI_RESET_CODE_HASH").maybeSingle();
-    if (settingError || !/^[0-9a-f]{64}$/i.test(String(setting?.value || ""))) {
+    if (settingError || !setting || !/^[0-9a-f]{64}$/i.test(String(setting.value || ""))) {
       return response({ ok: false, valid: false, message: "Reset belum dapat diverifikasi oleh server." }, 503, cors);
     }
 
