@@ -428,6 +428,7 @@
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
+      case 'apiGetLhiAnchorReview':
       case 'apiListEditPermissions':
       case 'apiGetSystemInfo':
         payload.token=token; break;
@@ -479,6 +480,8 @@
         payload.token=token; payload.reviewId=args[0]; payload.status=args[1]||''; payload.note=args[2]||''; payload.correctedName=args[3]||''; break;
       case 'apiSetAccessSetting':
         payload.token=token; payload.key=args[0]||''; payload.value=args[1]||''; break;
+      case 'apiVerifyLhiActiveSince':
+        payload.token=token; payload.staffId=args[0]||''; payload.activeSinceDate=args[1]||''; payload.sourceReference=args[2]||''; break;
       case 'apiSetEditPermission':
         payload.token=token; payload.grantedToStaffId=args[0]||''; payload.targetStaffId=args[1]||''; payload.isActive=args[2]; break;
       case 'apiAdminResetPassword':
