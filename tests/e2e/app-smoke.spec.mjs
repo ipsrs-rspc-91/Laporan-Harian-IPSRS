@@ -532,7 +532,7 @@ test('global LHI block displays Reset modal and keeps login unavailable for an i
   await expect(page.locator('#ipsrsLoginForm')).toHaveCount(0);
 });
 
-test('valid Reset restores the original shared username/password login form', async ({ page }) => {
+test('valid Reset displays the dedicated KA IPSRS login form', async ({ page }) => {
   await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -558,7 +558,9 @@ test('valid Reset restores the original shared username/password login form', as
   await expect(page.locator('#ipsrsLoginForm')).toBeVisible({ timeout: 10000 });
   await expect(page.locator('#loginUsername')).toBeVisible();
   await expect(page.locator('#loginPassword')).toBeVisible();
-  await expect(page.locator('#loginMsg')).toContainText('Kode reset diterima.');
+  await expect(page.locator('.login-title')).toContainText('LOGIN KHUSUS KA IPSRS');
+  await expect(page.locator('#loginMsg')).toContainText('Kode Reset diterima.');
+  await expect(page.locator('#loginBtn')).toContainText('MASUK SEBAGAI KA IPSRS');
   await expect(page.locator('#appShell')).toBeHidden();
   await expect(page.locator('#lhiGlobalBlockReset')).toHaveCount(0);
 });
