@@ -21,6 +21,11 @@ test("authenticated transport sends notification reads and marks with the sessio
   assert.ok(app.includes("payload.notificationId=args[0]||0;"));
 });
 
+test("API authentication fallback extracts and verifies a Bearer token", () => {
+  assert.ok(api.includes("h.match(/^Bearer\\s+(.+)$/i)"));
+  assert.ok(api.includes("ctx.supabaseAdmin.auth.getUser(m[1])"));
+});
+
 test("notification read endpoint is scoped to the authenticated staff recipient", () => {
   const start = api.indexOf('if(a==="apiGetLhiNotifications")');
   const end = api.indexOf('if(a==="apiGetReports")', start);
