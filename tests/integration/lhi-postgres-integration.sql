@@ -25,6 +25,8 @@ DECLARE
   v_nonce_2 text := repeat('d', 64);
   v_token_2 text := repeat('e', 64);
   v_mutation_rejected boolean := false;
+  v_anchor_result jsonb;
+  v_anchor_staff record;
 BEGIN
   SELECT status, lhi_access_status, lhi_active_since
     INTO v_status, v_access, v_anchor_before
@@ -51,11 +53,47 @@ BEGIN
     RAISE EXCEPTION 'Employment reactivation did not reset active_since and clear only the LHI access block.';
   END IF;
 
-  -- Test-only HR reconciliation: all active fixture anchors are explicitly verified.
-  UPDATE public.staff
-  SET lhi_active_since_verified_at = clock_timestamp(),
-      lhi_active_since_source = 'HR_MASTER'
-  WHERE status = 'Aktif';
+  -- Only authenticated KA IPSRS may verify an active-since anchor.
+  v_failed := false;
+  BEGIN
+    PERFORM public.verify_lhi_active_since_v2(
+      'STAFF-TEST',
+      (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date - 10,
+      'TEST-UNAUTHORIZED-HR-REF',
+      '00000000-0000-0000-0000-000000000002'
+    );
+  EXCEPTION WHEN OTHERS THEN
+    v_failed := true;
+  END;
+  IF NOT v_failed THEN
+    RAISE EXCEPTION 'Non-KA account was allowed to verify an HR activation anchor.';
+  END IF;
+
+  -- Test-only HR reconciliation uses the fixture's known activation dates,
+  -- but routes every verification through the same audited KA-only RPC.
+  FOR v_anchor_staff IN
+    SELECT staff_id, (lhi_active_since AT TIME ZONE 'Asia/Jakarta')::date AS active_date
+    FROM public.staff
+    WHERE status = 'Aktif'
+    ORDER BY staff_id
+  LOOP
+    SELECT public.verify_lhi_active_since_v2(
+      v_anchor_staff.staff_id,
+      v_anchor_staff.active_date,
+      'TEST-HR-MASTER-' || v_anchor_staff.staff_id,
+      v_ka
+    ) INTO v_anchor_result;
+    IF COALESCE((v_anchor_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
+      RAISE EXCEPTION 'KA HR anchor verification failed for %: %',
+        v_anchor_staff.staff_id, v_anchor_result;
+    END IF;
+  END LOOP;
+
+  SELECT count(*) INTO v_count
+  FROM public.lhi_active_since_verifications;
+  IF v_count <> (SELECT count(*) FROM public.staff WHERE status = 'Aktif') THEN
+    RAISE EXCEPTION 'Every active test employee must have one append-only HR anchor verification record.';
+  END IF;
 
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
   IF v_result ->> 'mode' IS DISTINCT FROM 'GLOBAL_LOCKED' THEN
