@@ -364,6 +364,7 @@ BEGIN
       '. Status kepegawaian tidak berubah; akses dipisahkan dari status pegawai.'
     FROM public.staff s
     WHERE s.status = 'Aktif'
+      AND COALESCE(s.lhi_access_status, 'NORMAL') <> 'BLOCKED_LHI'
     ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
   END IF;
 
