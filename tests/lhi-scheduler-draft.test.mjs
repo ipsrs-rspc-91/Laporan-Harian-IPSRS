@@ -103,7 +103,7 @@ test("scheduler functions are not executable by client roles", () => {
 });
 
 test("day-8 in-app notification reaches active staff whose access is not blocked", () => {
-  const start = sql.indexOf("'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM'");
+  const start = sql.indexOf("'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM:'");
   assert.notEqual(start, -1);
   const end = sql.indexOf("ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;", start);
   assert.notEqual(end, -1);
