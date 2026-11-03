@@ -185,8 +185,9 @@ export function buildWarningNotifications(evaluations, activeStaff, todayWib) {
       : "Mohon segera mengisi LHI sah dan saling mengingatkan rekan yang tercantum.";
     const message = `${stage.label} (hari ke-${stage.day}; ${stage.day} hari tanpa LHI): ${names.join(", ")}. ${warning}`;
 
+    const fingerprint = delinquents.map((row) => row.staff_id).sort().join(",");
     return [{
-      event_key: `LHI:${todayWib}:${stage.action}:TEAM`,
+      event_key: `LHI:${todayWib}:${stage.action}:TEAM:${fingerprint}`,
       action: stage.action,
       subject: stage.label,
       message,
@@ -223,8 +224,9 @@ export function buildIndividualBlockNotifications(evaluations, activeStaff, toda
   const names = blocked.map((row) => row.nama || row.staff_id);
   const message = `Hak akses aplikasi petugas berikut telah diblokir pada hari ke-8 karena belum mengisi LHI sah selama 7 hari kalender penuh: ${names.join(", ")}. Mohon saling mengingatkan dan membantu petugas yang tercantum untuk melengkapi LHI.`;
 
+  const fingerprint = blocked.map((row) => row.staff_id).sort().join(",");
   return [{
-    event_key: `LHI:${todayWib}:BLOCK_INDIVIDUAL:TEAM`,
+    event_key: `LHI:${todayWib}:BLOCK_INDIVIDUAL:TEAM:${fingerprint}`,
     subject: "Pemberitahuan blokir hak akses LHI hari ke-8",
     message,
     blocked_staff_ids: [...blockedIds],
