@@ -20,6 +20,14 @@ test("employment status and LHI access status are separate columns", () => {
   assert.match(sql, /ADD COLUMN IF NOT EXISTS lhi_access_block_reason text/);
 });
 
+test("legacy status normalization fails closed without an audit-proven Aktif-to-LHI transition", () => {
+  assert.match(sql, /DO \$legacy_status_guard\$/);
+  assert.match(sql, /a\.old_value = 'Aktif'/);
+  assert.match(sql, /a\.new_value = s\.status/);
+  assert.match(sql, /a\.action IN \('BLOCK_LOGIN_LHI_7_HARI', 'DEACTIVATE_LHI_DAY_8'\)/);
+  assert.match(sql, /Backfill status LHI dihentikan/);
+});
+
 test("legacy LHI-only status is normalized to Aktif while LHI access remains blocked", () => {
   assert.match(sql, /lhi_access_status = 'BLOCKED_LHI'/);
   assert.match(sql, /WHERE status IN \('Nonaktif_LHI_HARI_8', 'DIBLOKIR_LHI_7_HARI'\)/);
