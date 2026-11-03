@@ -831,13 +831,16 @@
       }
       return true;
     }catch(err){
+      // Preserve the flow identity before clearSession() clears both the
+      // ordinary app session and the in-memory Reset challenge.
+      const recoveryAttempt=!!pendingLhiRecoveryChallenge_;
       // FAIL-CLOSED: Supabase Auth membuat sesi sebelum pemeriksaan kebijakan
       // backend. Jika apiWhoAmI menolak (mis. blokir global LHI), sesi Auth
       // wajib langsung dicabut agar tidak tertinggal sebagai sesi aktif.
       try{ await client.auth.signOut(); }catch(_signOutError){}
       clearSession();
       try{ resetSupabaseClient_(); }catch(_resetError){}
-      if(pendingLhiRecoveryChallenge_){
+      if(recoveryAttempt){
         // A failed password/role/challenge check never leaves a recovery session.
         pendingLhiRecoveryChallenge_=null;
         setLhiRecoveryCapability_(null);
