@@ -9,6 +9,8 @@ const notifications = await readFile(new URL("../frontend/lhi-discipline-notific
 test("notification module receives the authenticated API wrapper and session reader", () => {
   assert.ok(app.includes("window.authRun = authRun;"));
   assert.ok(app.includes("window.getSession = getSession;"));
+  assert.ok(app.includes("window.__ipsrsLoadLhiNotifications==='function'"));
+  assert.ok(app.includes("await window.__ipsrsLoadLhiNotifications();"));
   assert.ok(notifications.includes("typeof window.authRun!=='function'"));
   assert.ok(notifications.includes("window.authRun('apiGetLhiNotifications')"));
 });
