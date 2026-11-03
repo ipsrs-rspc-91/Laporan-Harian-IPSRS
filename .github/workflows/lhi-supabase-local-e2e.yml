@@ -59,6 +59,7 @@ jobs:
       - name: Prepare isolated local Supabase workdir
         run: |
           mkdir -p tests/supabase-local/supabase/migrations
+          mkdir -p tests/lhi-migration-staging/supabase/migrations
           cat > tests/supabase-local/supabase/config.toml <<'TOML'
           project_id = "ipsrs-lhi-local-ci"
 
@@ -102,9 +103,10 @@ jobs:
           cp -R supabase/functions/lhi-reset-verify tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-recovery-exchange tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-recovery-action tests/supabase-local/supabase/functions/
+          cp tests/supabase-local/supabase/config.toml tests/lhi-migration-staging/supabase/config.toml
 
       - name: Generate isolated CLI migrations (never in deployable project migrations)
-        working-directory: tests/supabase-local
+        working-directory: tests/lhi-migration-staging
         shell: bash
         run: |
           set -euo pipefail
@@ -162,10 +164,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/lhi-postgres-baseline.sql
-          SCHEMA_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)"
-          RECOVERY_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)"
-          SCHEDULER_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)"
-          ATOMIC_MIGRATION="$(find tests/supabase-local/supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)"
+          SCHEMA_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_schema_v2.sql' -print -quit)"
+          RECOVERY_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_restricted_recovery_challenges.sql' -print -quit)"
+          SCHEDULER_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_scheduler_v2.sql' -print -quit)"
+          ATOMIC_MIGRATION="$(find tests/lhi-migration-staging/supabase/migrations -maxdepth 1 -type f -name '*_lhi_atomic_reset_grace_v2.sql' -print -quit)"
           test -n "$SCHEMA_MIGRATION"
           test -n "$RECOVERY_MIGRATION"
           test -n "$SCHEDULER_MIGRATION"
