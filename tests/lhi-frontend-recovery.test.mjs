@@ -25,6 +25,8 @@ test("successful recovery login returns before normal session and dashboard init
   const branchEnd = app.indexOf("const who=await fetch", branch);
   const block = app.slice(branch, branchEnd);
   assert.match(block, /renderLhiRecoveryOnlyScreen_\(recoveryStatus\)/);
+  assert.match(block, /client\.auth\.signOut\(\{scope:'local'\}\)/);
+  assert.ok(block.indexOf("client.auth.signOut({scope:'local'})") < block.indexOf("renderLhiRecoveryOnlyScreen_(recoveryStatus)"));
   assert.match(block, /return true/);
   assert.doesNotMatch(block, /setSession\(|afterAuthReady\(|goPage\(/);
 });
