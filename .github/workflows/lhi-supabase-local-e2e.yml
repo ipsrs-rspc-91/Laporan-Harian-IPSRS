@@ -136,10 +136,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > .env <<'EOF'
-          LHI_ALLOWED_ORIGINS=http://localhost:3000
-          LHI_RATE_LIMIT_SALT=local-ci-only-salt-8a4e2e0a7c9b4d6f8a1e3c5b7d9f0a2c
-          EOF
+          LHI_RATE_LIMIT_SALT="$(openssl rand -hex 32)"
+          {
+            echo "LHI_ALLOWED_ORIGINS=http://localhost:3000"
+            echo "LHI_RATE_LIMIT_SALT=$LHI_RATE_LIMIT_SALT"
+          } > .env
           nohup supabase functions serve --env-file .env > /tmp/lhi-local-functions.log 2>&1 &
           for attempt in $(seq 1 60); do
             status="$(curl -sS -o /dev/null -w '%{http_code}' -X OPTIONS \
