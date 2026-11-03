@@ -27,6 +27,9 @@ test("successful recovery login returns before normal session and dashboard init
   assert.match(block, /renderLhiRecoveryOnlyScreen_\(recoveryStatus\)/);
   assert.match(block, /client\.auth\.signOut\(\{scope:'local'\}\)/);
   assert.ok(block.indexOf("client.auth.signOut({scope:'local'})") < block.indexOf("renderLhiRecoveryOnlyScreen_(recoveryStatus)"));
+  assert.match(block, /CURRENT_SESSION=null/);
+  assert.match(block, /sessionStorage\\.removeItem\\(SESSION_KEY\\)/);
+  assert.ok(block.indexOf("sessionStorage.removeItem(SESSION_KEY)") < block.indexOf("renderLhiRecoveryOnlyScreen_(recoveryStatus)"));
   assert.match(block, /return true/);
   assert.doesNotMatch(block, /setSession\(|afterAuthReady\(|goPage\(/);
 });
