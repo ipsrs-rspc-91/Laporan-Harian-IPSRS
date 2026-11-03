@@ -89,6 +89,7 @@ BEGIN
         SELECT count(*)::integer
         FROM public.lhi_discipline_snapshot_members m
         WHERE m.incident_id = v_incident.incident_id
+          AND m.grace_cycle = v_incident.grace_cycle
       )
     );
   END IF;
@@ -107,12 +108,12 @@ BEGIN
   -- Snapshot is created at Reset, atomically with opening grace, per README.
   -- Include only currently active staff who still meet the day-10 threshold.
   INSERT INTO public.lhi_discipline_snapshot_members (
-    incident_id, staff_id, snapshot_created_at, anchor_input_at,
+    incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
     missed_full_days_at_snapshot, employment_status_at_snapshot,
     obligation_status
   )
   SELECT
-    v_incident.incident_id, e.staff_id, v_now, e.anchor_at,
+    v_incident.incident_id, v_incident.grace_cycle + 1, e.staff_id, v_now, e.anchor_at,
     e.missed_full_days, e.employment_status, 'PENDING'
   FROM public.lhi_discipline_evaluations_v2(v_now) e
   WHERE e.employment_status = 'Aktif'
@@ -138,6 +139,8 @@ BEGIN
     )
   FROM public.lhi_discipline_snapshot_members m
   WHERE m.incident_id = v_incident.incident_id
+    AND m.grace_cycle = v_incident.grace_cycle
+    AND m.grace_cycle = v_incident.grace_cycle + 1
     AND m.snapshot_created_at = v_now;
 
   -- Clear LHI access blocks only. Never modify staff.status (employment).
@@ -153,6 +156,7 @@ BEGIN
 
   UPDATE public.lhi_discipline_incidents
   SET status = 'GRACE',
+      grace_cycle = v_incident.grace_cycle + 1,
       started_at = v_now,
       deadline_at = v_now + interval '12 hours',
       started_by_staff_id = v_staff_id,
