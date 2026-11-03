@@ -425,6 +425,7 @@
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
+      case 'apiGetLhiGraceStatus':
       case 'apiListEditPermissions':
       case 'apiGetSystemInfo':
         payload.token=token; break;
