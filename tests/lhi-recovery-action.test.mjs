@@ -62,5 +62,5 @@ test("recovery status returns snapshot member projection only after capability v
   const projection = source.indexOf('get_lhi_grace_status_v2');
   assert.ok(validation >= 0 && statusAction > validation && projection > statusAction);
   assert.match(source, /grace_status: graceStatus/);
-  assert.match(source, /Daftar kewajiban pemulihan belum dapat dibaca/);
+  assert.match(source, /Status dan daftar kewajiban pemulihan belum dapat dibaca/);
 });
