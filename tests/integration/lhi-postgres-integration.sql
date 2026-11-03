@@ -60,6 +60,48 @@ BEGIN
     RAISE EXCEPTION 'Expected exactly one LOCKED incident; got %.', v_count;
   END IF;
 
+  -- Warning broadcasts reach every active staff member, including the
+  -- delinquent recipients; day-8 block notice excludes users already blocked.
+  SELECT count(*) INTO v_count
+  FROM public.lhi_discipline_notifications
+  WHERE event_key LIKE '%:WARNING_1:TEAM:%'
+    AND message LIKE '%Petugas Hari 4%';
+  IF v_count <> 6 THEN
+    RAISE EXCEPTION 'Day-4 warning was not broadcast to all six active staff; got %.', v_count;
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.lhi_discipline_notifications
+  WHERE event_key LIKE '%:WARNING_2:TEAM:%'
+    AND message LIKE '%Petugas Hari 6%';
+  IF v_count <> 6 THEN
+    RAISE EXCEPTION 'Day-6 warning was not broadcast to all six active staff; got %.', v_count;
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.lhi_discipline_notifications
+  WHERE event_key LIKE '%:WARNING_3:TEAM:%'
+    AND message LIKE '%Petugas Hari 7%';
+  IF v_count <> 6 THEN
+    RAISE EXCEPTION 'Day-7 warning was not broadcast to all six active staff; got %.', v_count;
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.lhi_discipline_notifications
+  WHERE event_key LIKE '%:INDIVIDUAL_BLOCK:TEAM:%';
+  IF v_count <> 4 THEN
+    RAISE EXCEPTION 'Day-8 block notice should reach only the four unblocked active staff; got %.', v_count;
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.lhi_discipline_notifications n
+  JOIN public.staff s ON s.staff_id = n.recipient_staff_id
+  WHERE n.event_key LIKE '%:INDIVIDUAL_BLOCK:TEAM:%'
+    AND s.lhi_access_status = 'BLOCKED_LHI';
+  IF v_count <> 0 THEN
+    RAISE EXCEPTION 'Day-8 block notice was sent to a staff member already blocked.';
+  END IF;
+
   SELECT public.create_lhi_recovery_challenge(v_nonce_1, v_ip) INTO v_result;
   IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'Recovery challenge creation failed: %', v_result;
