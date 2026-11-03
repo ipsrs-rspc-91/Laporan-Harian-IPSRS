@@ -316,7 +316,7 @@ $revoke_legacy_lhi_functions$;
 
 -- Constraint validation is deliberately separate from initial legacy mapping.
 -- Run only after reviewing every staff row and normalizing employment statuses.
--- ALTER TABLE public.staff VALIDATE CONSTRAINT staff_lhi_access_status_check;
+-- Deferred validation command: staff_lhi_access_status_check (run after HR reconciliation).
 
 
 -- KA IPSRS can reconcile provisional active-since anchors against an actual
