@@ -480,3 +480,43 @@ test("day-8 team event key changes when another employee is blocked later the sa
   assert.notEqual(first.event_key, updated.event_key);
   assert.match(updated.message, /Agung, Budi/);
 });
+
+
+test("warning team broadcast keeps one stable event identity as more staff enter the same stage", async () => {
+  const { buildWarningNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const active = [{ staff_id: "A", status: "Aktif" }, { staff_id: "B", status: "Aktif" }];
+  const first = buildWarningNotifications([
+    { staff_id: "A", nama: "Agung", action: "WARNING_1" },
+  ], active, "2026-11-03")[0];
+  const expanded = buildWarningNotifications([
+    { staff_id: "A", nama: "Agung", action: "WARNING_1" },
+    { staff_id: "B", nama: "Budi", action: "WARNING_1" },
+  ], active, "2026-11-03")[0];
+  assert.equal(first.event_key, "LHI:2026-11-03:WARNING_1:TEAM");
+  assert.equal(expanded.event_key, first.event_key);
+  assert.match(expanded.message, /Agung, Budi/);
+});
+
+test("day-8 team broadcast keeps one stable event identity as more staff are blocked", async () => {
+  const { buildIndividualBlockNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const first = buildIndividualBlockNotifications(
+    [{ staff_id: "A", nama: "Agung", action: "BLOCK_INDIVIDUAL_ACCESS" }],
+    [{ staff_id: "A", status: "Aktif", lhi_access_status: "BLOCKED_LHI" }, { staff_id: "B", status: "Aktif", lhi_access_status: "NORMAL" }],
+    "2026-11-03",
+  )[0];
+  const expanded = buildIndividualBlockNotifications(
+    [
+      { staff_id: "A", nama: "Agung", action: "BLOCK_INDIVIDUAL_ACCESS" },
+      { staff_id: "B", nama: "Budi", action: "BLOCK_INDIVIDUAL_ACCESS" },
+    ],
+    [
+      { staff_id: "A", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+      { staff_id: "B", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+      { staff_id: "C", status: "Aktif", lhi_access_status: "NORMAL" },
+    ],
+    "2026-11-03",
+  )[0];
+  assert.equal(first.event_key, "LHI:2026-11-03:BLOCK_INDIVIDUAL:TEAM");
+  assert.equal(expanded.event_key, first.event_key);
+  assert.match(expanded.message, /Agung, Budi/);
+});
