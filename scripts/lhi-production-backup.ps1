@@ -63,6 +63,12 @@ function Assert-BackupFiles {
 $resolvedBackupDirectory = [System.IO.Path]::GetFullPath($BackupDirectory)
 
 if ($Mode -eq "Backup") {
+  foreach ($requiredCommand in @("supabase", "psql", "docker")) {
+    if (-not (Get-Command $requiredCommand -ErrorAction SilentlyContinue)) {
+      throw "Perintah wajib tidak ditemukan: $requiredCommand"
+    }
+  }
+
   if ([string]::IsNullOrWhiteSpace($env:SUPABASE_DB_URL)) {
     throw "Set SUPABASE_DB_URL di terminal privat terlebih dahulu. Jangan kirim URL/password ke chat atau repository."
   }
@@ -116,6 +122,10 @@ if ($Mode -eq "Backup") {
 }
 
 if ($Mode -eq "RestoreTest") {
+  if (-not (Get-Command "psql" -ErrorAction SilentlyContinue)) {
+    throw "Perintah wajib tidak ditemukan: psql"
+  }
+
   if ([string]::IsNullOrWhiteSpace($env:RESTORE_DB_URL)) {
     throw "Set RESTORE_DB_URL ke database uji kosong. Jangan gunakan URL produksi."
   }
