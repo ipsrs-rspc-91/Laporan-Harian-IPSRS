@@ -344,3 +344,88 @@ BEGIN
   RAISE NOTICE 'LHI PostgreSQL integration passed: day-10 lock, KA recovery, idempotent Reset, 12h grace, relock, second snapshot cycle, and completion.';
 END;
 $test$;
+
+
+-- Legacy production recovery bridge: an existing LOCKED incident has a
+-- per-date obligation snapshot but no HR-verified active_since values.
+-- Reset must reuse the existing snapshot rather than guessing from created_at.
+DO $legacy_reset_test$
+DECLARE
+  v_incident bigint;
+  v_result jsonb;
+  v_status text;
+  v_nonce text := repeat('7', 64);
+  v_token text := repeat('8', 64);
+  v_ip text := repeat('6', 64);
+  v_count integer;
+BEGIN
+  UPDATE public.access_settings
+  SET value = 'AKTIF', updated_at = clock_timestamp()
+  WHERE key = 'LHI_GLOBAL_BLOCK';
+
+  INSERT INTO public.lhi_discipline_incidents (
+    started_at, deadline_at, status, started_by_staff_id, started_by_name
+  ) VALUES (
+    clock_timestamp() - interval '3 days',
+    clock_timestamp() - interval '2 days',
+    'LOCKED', 'LEGACY_GLOBAL_LOCK', 'Legacy production lock'
+  )
+  RETURNING incident_id INTO v_incident;
+
+  INSERT INTO public.lhi_discipline_obligations (incident_id, staff_id, required_date)
+  SELECT v_incident, s.staff_id, d.required_date::date
+  FROM public.staff s
+  CROSS JOIN generate_series(
+    (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date - 9,
+    (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date - 1,
+    interval '1 day'
+  ) AS d(required_date)
+  WHERE s.staff_id IN ('LEGACY-TEST', 'STAFF-TEST')
+    AND s.status = 'Aktif'
+  ON CONFLICT (incident_id, staff_id, required_date) DO NOTHING;
+
+  UPDATE public.staff
+  SET lhi_active_since_verified_at = NULL
+  WHERE staff_id IN ('LEGACY-TEST', 'STAFF-TEST');
+
+  SELECT public.create_lhi_recovery_challenge(v_nonce, v_ip) INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'Legacy Reset challenge creation failed: %', v_result;
+  END IF;
+
+  SELECT public.consume_lhi_recovery_challenge(v_nonce, '00000000-0000-0000-0000-000000000001', v_token)
+    INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'Legacy Reset KA exchange failed: %', v_result;
+  END IF;
+
+  SELECT public.open_lhi_global_grace_v2(v_token) INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE
+     OR (v_result ->> 'snapshot_total')::integer IS DISTINCT FROM 2 THEN
+    RAISE EXCEPTION 'Legacy Reset did not reuse the two-staff obligation snapshot: %', v_result;
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM public.lhi_discipline_snapshot_members
+  WHERE incident_id = v_incident
+    AND grace_cycle = 1
+    AND anchor_input_at IS NULL
+    AND obligation_status = 'PENDING';
+  IF v_count <> 2 THEN
+    RAISE EXCEPTION 'Legacy snapshot did not preserve two pending members without invented HR anchors.';
+  END IF;
+
+  SELECT value INTO v_status
+  FROM public.access_settings
+  WHERE key = 'LHI_GLOBAL_BLOCK';
+  IF v_status IS DISTINCT FROM 'NONAKTIF' THEN
+    RAISE EXCEPTION 'Legacy Reset failed to deactivate global lock.';
+  END IF;
+
+  SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
+  IF v_result ->> 'mode' IS DISTINCT FROM 'GRACE'
+     OR COALESCE((v_result ->> 'deadline_reached')::boolean, true) IS NOT FALSE THEN
+    RAISE EXCEPTION 'Scheduler did not continue an existing GRACE incident with provisional HR anchors: %', v_result;
+  END IF;
+END;
+$legacy_reset_test$;
