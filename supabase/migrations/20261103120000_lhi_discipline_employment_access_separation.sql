@@ -202,6 +202,7 @@ DECLARE
   v_staff record;
   v_days integer;
   v_stage integer;
+  v_anchor_date date;
   v_event text;
   v_message text;
   v_recipient record;
@@ -333,11 +334,18 @@ BEGIN
     v_days := public.lhi_days_without_valid_report(v_staff.staff_id,now());
     IF v_days IS NULL THEN CONTINUE; END IF;
 
+    SELECT COALESCE(
+      max((r.created_at AT TIME ZONE 'Asia/Jakarta')::date),
+      (v_staff.lhi_monitoring_since AT TIME ZONE 'Asia/Jakarta')::date
+    ) INTO v_anchor_date
+    FROM public.reports r
+    WHERE r.staff_id = v_staff.staff_id
+      AND r.deleted_at IS NULL
+      AND r.created_at >= v_staff.lhi_monitoring_since;
+
     IF v_days IN (4,6,7) THEN
       v_stage := v_days;
-      v_event := v_staff.staff_id||':'||
-        (v_staff.lhi_monitoring_since AT TIME ZONE 'Asia/Jakarta')::date::text||
-        ':DAY_'||v_stage;
+      v_event := v_staff.staff_id||':'||v_anchor_date::text||':DAY_'||v_stage;
 
       v_message := CASE v_stage
         WHEN 4 THEN 'Peringatan 1: '||v_staff.nama||
@@ -355,11 +363,12 @@ BEGIN
       ON CONFLICT(event_key,recipient_staff_id) DO NOTHING;
       GET DIAGNOSTICS v_notifications = ROW_COUNT;
 
-      INSERT INTO public.lhi_discipline_events(event_type,staff_id,details)
-      VALUES ('WARNING_DAY_'||v_stage,v_staff.staff_id,
-        jsonb_build_object('days_without_lhi',v_days,'anchor_date',
-          (v_staff.lhi_monitoring_since AT TIME ZONE 'Asia/Jakarta')::date,
-          'event_key',v_event));
+      IF v_notifications > 0 THEN
+        INSERT INTO public.lhi_discipline_events(event_type,staff_id,details)
+        VALUES ('WARNING_DAY_'||v_stage,v_staff.staff_id,
+          jsonb_build_object('days_without_lhi',v_days,'anchor_date',v_anchor_date,
+            'event_key',v_event));
+      END IF;
     END IF;
 
     IF v_days >= 8 AND NOT v_staff.lhi_access_blocked THEN
@@ -372,8 +381,7 @@ BEGIN
       GET DIAGNOSTICS v_blocked = ROW_COUNT;
 
       IF v_blocked > 0 THEN
-        v_event := v_staff.staff_id||':'||
-          (v_staff.lhi_monitoring_since AT TIME ZONE 'Asia/Jakarta')::date::text||':DAY_8';
+        v_event := v_staff.staff_id||':'||v_anchor_date::text||':DAY_8';
         INSERT INTO public.lhi_discipline_notifications(event_key,recipient_staff_id,subject,message)
         SELECT v_event,s.staff_id,'Hak akses aplikasi petugas diblokir',
           'Hak akses aplikasi '||v_staff.nama||
