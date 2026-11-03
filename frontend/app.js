@@ -806,6 +806,11 @@
       if(typeof window.showServerDisciplineWarning_==='function'){
         await window.showServerDisciplineWarning_();
       }
+      // Show unread LHI discipline notices immediately after a successful login;
+      // the notification module also refreshes periodically while the app is open.
+      if(typeof window.__ipsrsLoadLhiNotifications==='function'){
+        await window.__ipsrsLoadLhiNotifications();
+      }
       return true;
     }catch(err){
       // FAIL-CLOSED: Supabase Auth membuat sesi sebelum pemeriksaan kebijakan
