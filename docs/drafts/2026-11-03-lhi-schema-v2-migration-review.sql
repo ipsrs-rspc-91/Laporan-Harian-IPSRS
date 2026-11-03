@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS public.lhi_discipline_snapshot_members (
   staff_id text NOT NULL REFERENCES public.staff(staff_id),
   snapshot_created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   anchor_input_at timestamptz,
-  missed_full_days_at_snapshot integer NOT NULL CHECK (missed_full_days_at_snapshot >= 0),
+  missed_full_days_at_snapshot integer CHECK (missed_full_days_at_snapshot >= 0),
   employment_status_at_snapshot text NOT NULL,
   obligation_status text NOT NULL DEFAULT 'PENDING'
     CHECK (obligation_status IN ('PENDING', 'COMPLETED', 'EXCLUDED_INACTIVE')),
