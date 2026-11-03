@@ -295,6 +295,31 @@ BEGIN
     RAISE EXCEPTION 'service_role must execute the restricted recovery validator.';
   END IF;
 
+  IF has_function_privilege('anon', 'public.create_lhi_recovery_challenge(text,text)', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'public.consume_lhi_recovery_challenge(text,uuid,text)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.validate_lhi_recovery_session(text,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'Client roles must not execute restricted recovery RPCs directly.';
+  END IF;
+
+  IF has_table_privilege('anon', 'public.lhi_discipline_snapshot_members', 'SELECT')
+     OR has_table_privilege('authenticated', 'public.lhi_discipline_obligation_events', 'SELECT')
+     OR has_table_privilege('service_role', 'private.lhi_recovery_sessions', 'SELECT')
+     OR has_table_privilege('anon', 'private.lhi_recovery_challenges', 'SELECT') THEN
+    RAISE EXCEPTION 'Direct table access to LHI snapshot/recovery internals must be denied.';
+  END IF;
+
+  IF NOT (
+    SELECT relrowsecurity FROM pg_class WHERE oid = 'public.lhi_discipline_snapshot_members'::regclass
+  ) OR NOT (
+    SELECT relrowsecurity FROM pg_class WHERE oid = 'public.lhi_discipline_obligation_events'::regclass
+  ) OR NOT (
+    SELECT relrowsecurity FROM pg_class WHERE oid = 'private.lhi_recovery_sessions'::regclass
+  ) OR NOT (
+    SELECT relrowsecurity FROM pg_class WHERE oid = 'private.lhi_recovery_challenges'::regclass
+  ) THEN
+    RAISE EXCEPTION 'RLS must be enabled on snapshot and recovery internals.';
+  END IF;
+
   RAISE NOTICE 'LHI PostgreSQL integration passed: day-10 lock, KA recovery, idempotent Reset, 12h grace, relock, second snapshot cycle, and completion.';
 END;
 $test$;
