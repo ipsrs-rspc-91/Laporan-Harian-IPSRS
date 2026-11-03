@@ -562,3 +562,74 @@ test('valid Reset restores the original shared username/password login form', as
   await expect(page.locator('#appShell')).toBeHidden();
   await expect(page.locator('#lhiGlobalBlockReset')).toHaveCount(0);
 });
+
+
+test('KA IPSRS Hak Akses displays provisional HR anchors and submits an audited verification reference', async ({ page }) => {
+  const dialogs = [];
+  page.on('dialog', async dialog => {
+    dialogs.push(dialog.message());
+    await dialog.accept();
+  });
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.__ipsrsOpenAccessPanel === 'function');
+
+  await page.evaluate(async () => {
+    sessionStorage.setItem('ipsrs_session_v1', JSON.stringify({
+      staff_id: 'KA-TEST',
+      username: 'KA-TEST',
+      nama: 'KA IPSRS Test',
+      role: 'KA_IPSRS',
+      status: 'Aktif',
+      token: 'TEST-ONLY'
+    }));
+
+    window.__anchorVerifyCalls = [];
+    window.authRun = async (action, ...args) => {
+      if (action === 'apiGetAccessControl') {
+        return { ok: true, laporan_tim: 'AKTIF', administrasi_edit: 'NONAKTIF', lhi_global_block: 'NONAKTIF' };
+      }
+      if (action === 'apiListStaff') {
+        return { ok: true, data: [{ staff_id: 'HR-001', nama: 'Petugas Uji HR', role: 'STAF', role_label: 'Staf', status: 'Aktif' }] };
+      }
+      if (action === 'apiListEditPermissions') return { ok: true, data: [] };
+      if (action === 'apiGetLhiGraceStatus') return { ok: true, data: null };
+      if (action === 'apiGetLhiAnchorReview') {
+        return {
+          ok: true,
+          data: [{
+            staff_id: 'HR-001',
+            nama: 'Petugas Uji HR',
+            role: 'STAF',
+            status: 'Aktif',
+            lhi_active_since: '2026-09-12T17:00:00.000Z',
+            lhi_active_since_source: 'PROVISIONAL_STAFF_CREATED_AT',
+            lhi_active_since_verified_at: null,
+            verification_reference: null
+          }]
+        };
+      }
+      if (action === 'apiVerifyLhiActiveSince') {
+        window.__anchorVerifyCalls.push(args);
+        return { ok: true, msg: 'Tanggal mulai aktif berhasil diverifikasi.' };
+      }
+      return { ok: true, data: [] };
+    };
+
+    await window.__ipsrsOpenAccessPanel();
+  });
+
+  await expect(page.locator('#accessBg')).toHaveClass(/show/);
+  await expect(page.getByText('Verifikasi Tanggal Mulai Aktif Petugas')).toBeVisible();
+  await expect(page.getByText('Petugas Uji HR')).toBeVisible();
+  await expect(page.getByText('PERLU VERIFIKASI')).toBeVisible();
+
+  const row = page.locator('[data-lhi-anchor-row="0"]');
+  await row.locator('[data-anchor-date]').fill('2026-09-12');
+  await row.locator('[data-anchor-reference]').fill('SK-HR-2026-001');
+  await row.getByRole('button', { name: 'Simpan' }).click();
+
+  await expect.poll(() => page.evaluate(() => window.__anchorVerifyCalls))
+    .toEqual([['HR-001', '2026-09-12', 'SK-HR-2026-001']]);
+  expect(dialogs.some(message => message.includes('sudah dicocokkan dengan dokumen HR'))).toBeTruthy();
+});
