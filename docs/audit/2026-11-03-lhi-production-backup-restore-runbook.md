@@ -111,15 +111,7 @@ Catat waktu restore, versi PostgreSQL, hasil pemeriksaan, jumlah baris aktual da
 3. Baru lanjutkan preflight migrasi: `supabase migration list --linked` dan `supabase db push --dry-run`. Harus tepat empat migrasi LHI v2 yang pending; jangan mengulang dua hotfix keamanan yang sudah tercatat pada riwayat migrasi produksi.
 4. Set secrets Edge Function secara lokal melalui CLI, jangan melalui SQL atau repository:
 
-```powershell
-$salt = -join ((1..32 | ForEach-Object { '{0:x2}' -f (Get-Random -Maximum 256) }))
-supabase secrets set --project-ref tcrmlhfsroyhaxdfwyll `
-  LHI_ALLOWED_ORIGINS="https://laporan-harian-ipsrs.rspc.workers.dev" `
-  LHI_RATE_LIMIT_SALT="$salt"
-Remove-Variable salt
-```
-
-Gunakan generator kriptografis yang tersedia di lingkungan operator sebagai pengganti contoh generator non-kriptografis di atas. Contoh OpenSSL yang disarankan:
+Buat salt dengan generator kriptografis OpenSSL. Jalankan perintah berikut pada terminal privat; nilainya tidak ditampilkan atau disimpan ke repository:
 
 ```sh
 supabase secrets set --project-ref tcrmlhfsroyhaxdfwyll \
