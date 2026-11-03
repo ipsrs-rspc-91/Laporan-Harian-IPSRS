@@ -60,7 +60,7 @@ Kolom minimum:
 - `staff_id` text not null
 - `snapshot_created_at` timestamptz not null
 - `anchor_input_at` timestamptz null
-- `missed_full_days_at_snapshot` integer not null check >= 0
+- `missed_full_days_at_snapshot` nullable integer check >= 0; NULL means no valid legacy LHI input timestamp exists and HR anchor is unverified
 - `employment_status_at_snapshot` text not null
 - `obligation_status` text not null CHECK IN (`PENDING`, `COMPLETED`, `EXCLUDED_INACTIVE`)
 - `completed_at` timestamptz null
