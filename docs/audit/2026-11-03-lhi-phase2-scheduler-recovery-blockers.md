@@ -90,3 +90,29 @@ Lingkup: pemeriksaan kode scheduler dan fungsi pemulihan yang sedang berjalan di
 ## Kesimpulan
 
 Perubahan API pada branch sebelumnya baru memisahkan sebagian pemeriksaan login. Itu belum menyelesaikan mesin disiplin LHI. Scheduler produksi, fungsi pemulihan, trigger, skema, dan frontend masih saling bergantung dan bertentangan dengan README. Jangan deploy branch ini sebelum Tahap 2A–2D selesai dan seluruh uji penerimaan lulus.
+
+## Temuan tambahan — hambatan pembukaan blokir global produksi (3 November 2026)
+
+Pemeriksaan read-only lanjutan menemukan penyebab langsung mengapa Reset produksi belum mengubah blokir global menjadi NONAKTIF:
+
+1. Frontend produksi pada branch `main` hanya memanggil `lhi-reset-verify` untuk memeriksa kode 6 digit. Setelah kode diterima, frontend menyimpan mode `KA_ONLY` dan menampilkan form login. Tidak ditemukan pemanggilan `apiStartLhiGrace` atau `apiGetLhiGraceStatus` di frontend `main`. Akibatnya, transaksi `open_lhi_global_grace` tidak pernah dipicu dari alur Reset.
+2. Backend produksi memang memiliki action `apiStartLhiGrace` dan RPC `open_lhi_global_grace(text,text)`, tetapi UI tidak menyambungkannya. RPC lama hanya dapat dieksekusi oleh `service_role`; role `authenticated` tidak memiliki hak eksekusi langsung.
+3. Status produksi saat pemeriksaan: `LHI_GLOBAL_BLOCK=AKTIF`; insiden 1 berstatus `LOCKED`; tanggal deadline lama sudah lewat tetapi insiden belum berpindah ke `GRACE`; cron masih menjalankan scheduler lama setiap lima menit.
+4. Snapshot legacy insiden 1 memiliki 156 baris kewajiban, 21 petugas unik, dan seluruh 156 baris masih pending. Rinciannya: 20 petugas berstatus `Aktif` (1 ADMINISTRASI, 2 KASIE, 8 PETUGAS_SHIFT, 9 STAF) serta 1 status legacy `Nonaktif_LHI_HARI_8` (KASIE). Tidak ada laporan sah pada jendela grace legacy yang telah berlalu. Nilai ini diperoleh dari SELECT read-only.
+5. KA IPSRS berstatus kepegawaian `Aktif`, akun Auth sudah terhubung, dan memiliki 3 laporan sah dalam tujuh hari kalender terakhir. Ini menunjukkan jalur login normal saat ini mungkin dapat melewati pemeriksaan individual untuk KA, tetapi bukan bukti bahwa Reset global sudah berjalan.
+6. Fungsi lama `open_lhi_global_grace` dapat mengubah status global menjadi NONAKTIF dan memulai grace, tetapi masih mengubah status kepegawaian legacy menjadi `Aktif`. Karena itu, jalur lama tidak boleh dipakai sebagai pengganti perbaikan model status dan sesi pemulihan terbatas yang diwajibkan README.
+
+### Perbaikan branch untuk insiden legacy yang sedang terkunci
+
+- Frontend branch `repair/lhi-status-separation-20261103` telah memiliki alur challenge satu kali, autentikasi password KA IPSRS melalui Supabase Auth, pertukaran challenge menjadi recovery capability terbatas, tampilan recovery-only, serta tombol Reset yang memanggil `lhi-recovery-action`.
+- SQL Reset v2 diperbaiki untuk mengonversi kewajiban legacy yang masih pending menjadi satu snapshot per petugas unik pada siklus Reset. Jalur ini tidak menggunakan `staff.created_at` sebagai tanggal aktivasi HR dan tidak mensyaratkan anchor HR untuk insiden legacy yang sudah mempunyai snapshot.
+- Untuk insiden baru tanpa snapshot legacy, verifikasi anchor HR tetap wajib. Scheduler v2 juga menangani insiden `LOCKED`/`GRACE` sebelum memeriksa anchor untuk siklus baru, sehingga grace yang sedang berjalan tidak gagal hanya karena tanggal aktivasi HR belum direkonsiliasi.
+- Pengujian integrasi PostgreSQL ditambah untuk menguji Reset pada insiden legacy dengan anchor HR belum diverifikasi, memastikan dua anggota snapshot terbentuk, status global berubah ke NONAKTIF dalam transaksi Reset, dan scheduler tetap mempertahankan jendela grace.
+- Patch ini masih berada di branch; belum diterapkan pada Supabase produksi atau Cloudflare Worker.
+
+### Syarat sebelum aktivasi produksi
+
+- Jalankan migrasi schema, scheduler, recovery RPC, dan cron cutover pada lingkungan nonproduksi; pastikan job cron yang sama tetap satu dan cadence tetap lima menit.
+- Verifikasi secret `LHI_ALLOWED_ORIGINS` dan `LHI_RATE_LIMIT_SALT` serta header alamat klien pada Supabase Edge Runtime. Tanpa secret tersebut, endpoint Reset v2 akan fail-closed.
+- Backup database yang dapat dipulihkan dan rollback Worker harus diverifikasi.
+- Setelah itu baru lakukan deployment terkoordinasi; jangan hanya mengubah `access_settings.value` karena scheduler dan insiden lama dapat membuat status kembali AKTIF atau meninggalkan state yang tidak konsisten.
