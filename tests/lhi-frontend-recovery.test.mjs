@@ -39,10 +39,14 @@ test("restricted recovery UI hides app shell and exposes only recovery actions",
   assert.doesNotMatch(block, /apiWhoAmI|apiGetReports|apiCreateReport|goPage\(/);
 });
 
-test("opaque capability is session-scoped and revalidated on same-tab refresh", () => {
-  assert.match(app, /IPSRS_LHI_RECOVERY_CAPABILITY/);
-  assert.match(app, /savedRecoveryCapability/);
-  assert.match(app, /lhiRecoveryAction_\('apiRecoveryStatus'\)/);
+test("opaque recovery capability is memory-only and discarded on refresh", () => {
+  assert.match(app, /let lhiRecoveryCapability_ = null/);
+  assert.match(app, /function setLhiRecoveryCapability_\(value\)\s*\{\s*lhiRecoveryCapability_=String\(value\|\|''\);\s*\}/);
+  assert.match(app, /function clearSession\(\)\s*\{[\s\S]*?lhiRecoveryCapability_ = null/);
+  assert.doesNotMatch(app, /IPSRS_LHI_RECOVERY_CAPABILITY|savedRecoveryCapability/);
+  assert.doesNotMatch(app, /sessionStorage\.(?:setItem|getItem)\([^)]*RECOVERY/i);
+  assert.doesNotMatch(app, /localStorage\.(?:setItem|getItem)\([^)]*RECOVERY/i);
+  assert.match(app, /refresh intentionally drops the memory-only capability/);
 });
 
 test("recovery action endpoint rejects anything beyond status and start-grace", () => {
