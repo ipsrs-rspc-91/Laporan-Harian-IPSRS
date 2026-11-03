@@ -16,6 +16,8 @@ on:
       - "supabase/migrations/**"
       - "docs/drafts/*lhi*.sql"
       - "tests/lhi-*.test.mjs"
+      - "tests/fixtures/**"
+      - "tests/integration/**"
       - ".github/workflows/lhi-discipline-tests.yml"
   pull_request:
     branches:
@@ -41,6 +43,20 @@ permissions:
 jobs:
   lhi-discipline-unit-tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ipsrs_lhi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ipsrs_lhi_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,3 +68,31 @@ jobs:
         run: node --check frontend/app.js && node --check frontend/login-fast.js
       - name: Run LHI discipline and recovery unit tests
         run: node --test tests/lhi-*.test.mjs
+      - name: Install PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Create isolated PostgreSQL baseline
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 \\
+            -f tests/fixtures/lhi-postgres-baseline.sql
+      - name: Apply LHI SQL drafts and run PostgreSQL integration
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for sql_file in \\
+            docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql \\
+            supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql \\
+            docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql \\
+            docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
+          do
+            echo "Applying isolated test SQL: $sql_file"
+            psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 -f "$sql_file"
+          done
+          psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 \\
+            -f tests/integration/lhi-postgres-integration.sql
