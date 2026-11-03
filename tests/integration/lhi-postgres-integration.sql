@@ -392,6 +392,20 @@ BEGIN
     RAISE EXCEPTION 'LHI obligation event DELETE was not rejected.';
   END IF;
 
+  v_mutation_rejected := false;
+  BEGIN
+    TRUNCATE public.lhi_discipline_obligation_events;
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM = 'Riwayat kewajiban LHI bersifat append-only.' THEN
+      v_mutation_rejected := true;
+    ELSE
+      RAISE;
+    END IF;
+  END;
+  IF NOT v_mutation_rejected THEN
+    RAISE EXCEPTION 'LHI obligation event TRUNCATE was not rejected.';
+  END IF;
+
   IF has_function_privilege('anon', 'public.run_lhi_discipline_scheduler_v2()', 'EXECUTE') THEN
     RAISE EXCEPTION 'anon must not execute the LHI scheduler RPC.';
   END IF;
