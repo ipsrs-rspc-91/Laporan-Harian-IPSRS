@@ -101,30 +101,65 @@ BEGIN
     RAISE EXCEPTION 'Reset hanya dapat dijalankan untuk insiden LOCKED dengan blokir global AKTIF.';
   END IF;
 
+  -- Snapshot is created at Reset, atomically with opening grace.
+  -- Legacy production LOCKED incidents already have a per-date obligation
+  -- snapshot. Reuse its distinct pending staff members instead of inventing
+  -- HR activation dates from staff.created_at. This is the safe bridge for
+  -- the currently locked legacy incident and preserves its original duties.
   IF EXISTS (
-    SELECT 1 FROM public.staff s
-    WHERE s.status = 'Aktif'
-      AND (s.lhi_active_since IS NULL OR s.lhi_active_since_verified_at IS NULL)
+    SELECT 1
+    FROM public.lhi_discipline_obligations o
+    WHERE o.incident_id = v_incident.incident_id
+      AND o.completed_at IS NULL
   ) THEN
-    RAISE EXCEPTION 'Reset dibatalkan: terdapat pegawai Aktif dengan anchor belum diverifikasi HR atau peristiwa reaktivasi.';
+    INSERT INTO public.lhi_discipline_snapshot_members (
+      incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
+      missed_full_days_at_snapshot, employment_status_at_snapshot,
+      obligation_status
+    )
+    SELECT
+      v_incident.incident_id,
+      v_incident.grace_cycle + 1,
+      s.staff_id,
+      v_now,
+      NULL,
+      count(DISTINCT o.required_date)::integer,
+      s.status,
+      'PENDING'
+    FROM public.lhi_discipline_obligations o
+    JOIN public.staff s ON s.staff_id = o.staff_id
+    WHERE o.incident_id = v_incident.incident_id
+      AND o.completed_at IS NULL
+      AND s.status = 'Aktif'
+    GROUP BY s.staff_id, s.status
+    ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
+    GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
+  ELSE
+    -- A new-format incident has no legacy obligations. It must use verified
+    -- HR anchors and the single v2 evaluator; provisional account timestamps
+    -- are never accepted as employment start dates.
+    IF EXISTS (
+      SELECT 1 FROM public.staff s
+      WHERE s.status = 'Aktif'
+        AND (s.lhi_active_since IS NULL OR s.lhi_active_since_verified_at IS NULL)
+    ) THEN
+      RAISE EXCEPTION 'Reset dibatalkan: pegawai Aktif memiliki anchor HR yang belum diverifikasi dan tidak tersedia snapshot kewajiban legacy.';
+    END IF;
+
+    INSERT INTO public.lhi_discipline_snapshot_members (
+      incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
+      missed_full_days_at_snapshot, employment_status_at_snapshot,
+      obligation_status
+    )
+    SELECT
+      v_incident.incident_id, v_incident.grace_cycle + 1, e.staff_id, v_now, e.anchor_at,
+      e.missed_full_days, e.employment_status, 'PENDING'
+    FROM public.lhi_discipline_evaluations_v2(v_now) e
+    WHERE e.employment_status = 'Aktif'
+      AND e.missed_full_days >= 9
+    ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
+    GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
   END IF;
-
-  -- Snapshot is created at Reset, atomically with opening grace, per README.
-  -- Include only currently active staff who still meet the day-10 threshold.
-  INSERT INTO public.lhi_discipline_snapshot_members (
-    incident_id, grace_cycle, staff_id, snapshot_created_at, anchor_input_at,
-    missed_full_days_at_snapshot, employment_status_at_snapshot,
-    obligation_status
-  )
-  SELECT
-    v_incident.incident_id, v_incident.grace_cycle + 1, e.staff_id, v_now, e.anchor_at,
-    e.missed_full_days, e.employment_status, 'PENDING'
-  FROM public.lhi_discipline_evaluations_v2(v_now) e
-  WHERE e.employment_status = 'Aktif'
-    AND e.missed_full_days >= 9
-  ON CONFLICT (incident_id, grace_cycle, staff_id) DO NOTHING;
-
-  GET DIAGNOSTICS v_snapshot_count = ROW_COUNT;
 
   IF v_snapshot_count < 1 THEN
     RAISE EXCEPTION 'Snapshot petugas lalai tidak terbentuk. Blokir global tetap aktif.';
@@ -139,7 +174,10 @@ BEGIN
       'incident_id', v_incident.incident_id,
       'missed_full_days', m.missed_full_days_at_snapshot,
       'anchor_input_at', m.anchor_input_at,
-      'snapshot_source', 'KA_IPSRS_RESET'
+      'snapshot_source', CASE
+        WHEN m.anchor_input_at IS NULL THEN 'LEGACY_OBLIGATION_SNAPSHOT'
+        ELSE 'KA_IPSRS_RESET'
+      END
     )
   FROM public.lhi_discipline_snapshot_members m
   WHERE m.incident_id = v_incident.incident_id
