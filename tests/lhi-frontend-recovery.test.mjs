@@ -123,6 +123,9 @@ test("failed Reset authentication keeps the recovery-specific fail-closed messag
   const block = app.slice(recoveryIndex, catchEnd);
   assert.match(block, /Login pemulihan gagal\. Blokir aplikasi tetap aktif/);
   assert.match(block, /setTimeout\(\(\)=>checkAuthAndInit\(\),0\)/);
+  assert.match(app, /let recoveryLoginAttempt=false/);
+  assert.match(app, /recoveryLoginAttempt=true;[\\s\\S]*?pendingLhiRecoveryChallenge_=null/);
+  assert.match(block, /recoveryLoginAttempt\\|\\|!!pendingLhiRecoveryChallenge_/);
 });
 
 
