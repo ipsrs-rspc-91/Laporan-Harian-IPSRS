@@ -105,9 +105,10 @@ BEGIN
   -- Fail closed on incomplete staff migration; never invent an anchor.
   IF EXISTS (
     SELECT 1 FROM public.staff
-    WHERE status = 'Aktif' AND lhi_active_since IS NULL
+    WHERE status = 'Aktif'
+      AND (lhi_active_since IS NULL OR lhi_active_since_verified_at IS NULL)
   ) THEN
-    RAISE EXCEPTION 'Scheduler LHI v2 dihentikan: terdapat pegawai Aktif tanpa lhi_active_since.';
+    RAISE EXCEPTION 'Scheduler LHI v2 dihentikan: terdapat pegawai Aktif dengan anchor belum diverifikasi HR atau peristiwa reaktivasi.';
   END IF;
 
   SELECT value INTO v_lock
