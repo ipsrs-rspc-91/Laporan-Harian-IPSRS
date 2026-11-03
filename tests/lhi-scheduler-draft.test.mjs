@@ -21,6 +21,7 @@ test("discipline anchor uses created_at and Asia/Jakarta", () => {
   assert.match(sql, /max\(r\.created_at\)/);
   assert.match(sql, /AT TIME ZONE 'Asia\/Jakarta'/);
   assert.match(sql, /r\.created_at >= s\.lhi_active_since/);
+  assert.match(sql, /r\.created_at <= p_now/);
   assert.doesNotMatch(sql, /r\.tanggal\s*=/);
 });
 
