@@ -359,6 +359,7 @@ DECLARE
   v_ip text := repeat('6', 64);
   v_anchor_a timestamptz := clock_timestamp() - interval '10 days';
   v_count integer;
+  v_event_count integer;
 BEGIN
   UPDATE public.access_settings
   SET value = 'AKTIF', updated_at = clock_timestamp()
@@ -475,6 +476,31 @@ BEGIN
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
   IF v_result ->> 'mode' IS DISTINCT FROM 'GRACE_COMPLETED' THEN
     RAISE EXCEPTION 'Legacy grace did not complete after all snapshot members submitted LHI: %', v_result;
+  END IF;
+
+  SELECT count(*) INTO v_event_count
+  FROM public.lhi_discipline_obligation_events e
+  JOIN public.lhi_discipline_snapshot_members m ON m.member_id = e.member_id
+  WHERE m.incident_id = v_incident
+    AND m.grace_cycle = 1
+    AND e.event_type = 'GRACE_COMPLETED'
+    AND e.actor_staff_id = 'SYSTEM'
+    AND e.old_status = e.new_status
+    AND e.details ? 'deadline_at';
+  IF v_event_count <> 2 THEN
+    RAISE EXCEPTION 'Grace deadline evaluation did not append one SYSTEM completion event per snapshot member.';
+  END IF;
+
+  SELECT count(*) INTO v_event_count
+  FROM public.lhi_discipline_obligation_events e
+  JOIN public.lhi_discipline_snapshot_members m ON m.member_id = e.member_id
+  WHERE m.incident_id = v_incident
+    AND m.grace_cycle = 1
+    AND e.event_type = 'REPORT_QUALIFIED'
+    AND e.actor_staff_id = 'SYSTEM'
+    AND e.report_id IN ('REPORT-LEGACY-GRACE-A', 'REPORT-LEGACY-GRACE-B');
+  IF v_event_count <> 2 THEN
+    RAISE EXCEPTION 'Valid grace reports were not recorded with report IDs and SYSTEM actor.';
   END IF;
 
   SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
