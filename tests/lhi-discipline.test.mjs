@@ -520,3 +520,15 @@ test("day-8 team broadcast keeps one stable event identity as more staff are blo
   assert.equal(expanded.event_key, first.event_key);
   assert.match(expanded.message, /Agung, Budi/);
 });
+
+
+test("schema-v2 removes legacy LHI triggers and revokes direct execution of orphaned SECURITY DEFINER functions", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const path = fileURLToPath(new URL("../docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql", import.meta.url));
+  const sql = await readFile(path, "utf8");
+  assert.match(sql, /DROP TRIGGER IF EXISTS trg_reactivate_lhi_staff_after_report ON public\.reports/);
+  assert.match(sql, /DROP TRIGGER IF EXISTS trg_protect_lhi_manual_unblock_status ON public\.staff/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.protect_lhi_manual_unblock_status\(\)\s+FROM PUBLIC, anon, authenticated, service_role/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.reactivate_lhi_staff_after_report\(\)\s+FROM PUBLIC, anon, authenticated, service_role/);
+});
