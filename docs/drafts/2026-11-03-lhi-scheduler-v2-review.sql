@@ -360,12 +360,12 @@ BEGIN
   LOOP
     v_names := v_stage.names;
     v_message := CASE v_stage.stage
-      WHEN 'WARNING_1' THEN 'Peringatan 1 LHI: ' || v_names ||
-        ' belum mengisi LHI selama 4 hari kalender penuh.'
-      WHEN 'WARNING_2' THEN 'Peringatan 2 LHI: ' || v_names ||
-        ' belum mengisi LHI selama 6 hari kalender penuh.'
-      ELSE 'Peringatan 3 LHI: ' || v_names ||
-        ' belum mengisi LHI selama 7 hari kalender penuh. Blokir akses individual berlaku pada hari ke-8 jika belum ada LHI sah.'
+      WHEN 'WARNING_1' THEN 'Peringatan 1 LHI (hari ke-4): ' || v_names ||
+        ' belum mengisi LHI selama 3 hari kalender penuh.'
+      WHEN 'WARNING_2' THEN 'Peringatan 2 LHI (hari ke-6): ' || v_names ||
+        ' belum mengisi LHI selama 5 hari kalender penuh.'
+      ELSE 'Peringatan 3 LHI (hari ke-7): ' || v_names ||
+        ' belum mengisi LHI selama 6 hari kalender penuh. Blokir akses individual berlaku pada hari ke-8 jika belum ada LHI sah.'
     END;
 
     INSERT INTO public.lhi_discipline_notifications
