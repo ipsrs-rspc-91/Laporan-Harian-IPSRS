@@ -59,3 +59,10 @@ Koreksi pada branch:
 - Unit test memeriksa ketiga pasangan hari tahap dan jumlah hari kalender penuh.
 
 Tidak ada perubahan threshold evaluator: WARNING_1=3, WARNING_2=5, WARNING_3=6, blokir individual=7, dan blokir global=9 hari kalender penuh. Ini mempertahankan urutan hari tindakan pada README dan hanya membetulkan teks yang sebelumnya tidak akurat.
+
+## Penguatan audit peristiwa dan skenario pembatalan
+
+- Tabel `lhi_discipline_obligation_events` sudah memiliki trigger penolak `UPDATE` dan `DELETE`; penguatan branch menambahkan penolakan `TRUNCATE` dan mencabut EXECUTE langsung atas fungsi trigger dari role aplikasi.
+- Integration test mencoba UPDATE, DELETE, dan TRUNCATE terhadap riwayat audit dan mengharuskan ketiganya ditolak.
+- Integration test tambahan memverifikasi alur penerimaan README: satu LHI sah dalam masa grace mengubah kewajiban menjadi COMPLETED; jika satu-satunya LHI tersebut dibatalkan sebelum tenggat, kewajiban kembali PENDING dan peristiwa REPORT_CANCELLED mencatat report ID serta status sebelum/sesudah; ketika tenggat tiba, global lock aktif kembali.
+- Seluruh perubahan tetap di branch PR #71 dan tidak diterapkan ke Supabase produksi.
