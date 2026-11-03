@@ -71,3 +71,7 @@ test("a new Reset after grace relock creates a new immutable snapshot cycle", as
   assert.doesNotMatch(sql, /AND m\.grace_cycle = v_incident\.grace_cycle\s+AND m\.grace_cycle = v_incident\.grace_cycle \+ 1/);
   assert.match(sql, /SET status = 'GRACE',[\s\S]*?grace_cycle = v_incident\.grace_cycle \+ 1/);
 });
+
+test("atomic Reset rejects null or invalid global lock setting", () => {
+  assert.match(sql, /v_lock IS NULL OR v_lock NOT IN \('AKTIF', 'NONAKTIF'\)/);
+});
