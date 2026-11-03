@@ -432,6 +432,8 @@
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
       case 'apiGetAccessControl':
+      case 'apiGetLhiGraceStatus':
+      case 'apiStartLhiGrace':
       case 'apiListEditPermissions':
       case 'apiGetSystemInfo':
         payload.token=token; break;
@@ -546,6 +548,14 @@
     }
     return json;
   }
+
+  // Recovery completion ends the restricted KA session and returns to the shared login form.
+  window.__ipsrsCompleteLhiRecovery=async function(){
+    try{await getSupabaseClient_().auth.signOut();}catch(_e){}
+    clearSession();
+    resetSupabaseClient_();
+    showLoginScreen('Pemulihan berhasil. Kelonggaran 12 jam sudah dimulai. Silakan login kembali untuk menggunakan aplikasi.');
+  };
 
   // Expose only the existing session reader needed by the reminder module.
   window.getSession = getSession;
