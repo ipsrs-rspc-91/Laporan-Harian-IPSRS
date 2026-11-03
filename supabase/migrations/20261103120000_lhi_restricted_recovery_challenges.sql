@@ -122,6 +122,10 @@ BEGIN
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR UPDATE;
 
+  IF NOT FOUND OR v_lock IS NULL OR v_lock NOT IN ('AKTIF', 'NONAKTIF') THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'GLOBAL_LOCK_STATE_INVALID');
+  END IF;
+
   SELECT incident_id::text, status INTO v_incident_id, v_incident_status
   FROM public.lhi_discipline_incidents
   WHERE status IN ('LOCKED', 'GRACE')
@@ -209,6 +213,10 @@ BEGIN
   FROM public.access_settings
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR UPDATE;
+
+  IF NOT FOUND OR v_lock IS NULL OR v_lock NOT IN ('AKTIF', 'NONAKTIF') THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'GLOBAL_LOCK_STATE_INVALID');
+  END IF;
 
   SELECT status INTO v_incident_status
   FROM public.lhi_discipline_incidents
@@ -302,6 +310,10 @@ BEGIN
   FROM public.access_settings
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR SHARE;
+
+  IF NOT FOUND OR v_lock IS NULL OR v_lock NOT IN ('AKTIF', 'NONAKTIF') THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'GLOBAL_LOCK_STATE_INVALID');
+  END IF;
 
   SELECT * INTO v_incident
   FROM public.lhi_discipline_incidents
