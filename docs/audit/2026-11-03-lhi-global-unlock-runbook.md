@@ -24,7 +24,7 @@ Backend lama mempunyai RPC `open_lhi_global_grace(text,text)`, tetapi jalur lama
 
 1. Ambil backup database produksi yang dapat dipulihkan dan verifikasi prosedur restore. Backup tabel pilihan yang sudah ada bukan pengganti backup database yang dapat dipulihkan.
 2. Simpan rollback checkpoint Cloudflare Worker `laporan-harian-ipsrs` dan catat deployment aktif.
-3. Buat migration aktif melalui Supabase CLI resmi. File SQL di `docs/drafts/` tetap review draft sampai dipindahkan melalui `supabase migration new` dan diuji.
+3. Migration aktif sudah dibuat oleh `supabase migration new` melalui GitHub Actions pada branch ini, dengan urutan timestamp yang diverifikasi: `20261103041836_lhi_schema_v2.sql`, `20261103041839_lhi_restricted_recovery_challenges.sql`, `20261103041842_lhi_scheduler_v2.sql`, `20261103041845_lhi_atomic_reset_grace_v2.sql`. Keempat file aktif telah dibandingkan byte-for-byte dengan draft sumber dan cocok. Jalankan ulang uji migrasi berurutan sebelum rilis; jangan membuat salinan migration kedua.
 4. Set secret Edge Function sebelum deploy:
    ```sh
    supabase secrets set --project-ref tcrmlhfsroyhaxdfwyll \
