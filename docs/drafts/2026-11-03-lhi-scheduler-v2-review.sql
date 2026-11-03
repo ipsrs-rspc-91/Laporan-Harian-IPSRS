@@ -95,7 +95,6 @@ DECLARE
   v_completed integer := 0;
   v_stage record;
   v_names text;
-  v_fingerprint text;
   v_message text;
   v_rows integer := 0;
   v_blocked integer := 0;
@@ -304,8 +303,7 @@ BEGIN
   -- Warning broadcast per stage/date, containing all staff names for that stage.
   FOR v_stage IN
     SELECT x.stage, x.missed_full_days,
-      string_agg(x.nama, ', ' ORDER BY x.nama) AS names,
-      md5(string_agg(x.staff_id, ',' ORDER BY x.staff_id)) AS fingerprint
+      string_agg(x.nama, ', ' ORDER BY x.nama) AS names
     FROM public.lhi_discipline_evaluations_v2(v_now) x
     WHERE x.stage IN ('WARNING_1', 'WARNING_2', 'WARNING_3')
     GROUP BY x.stage, x.missed_full_days
@@ -359,9 +357,8 @@ BEGIN
     WHERE s.lhi_access_status = 'BLOCKED_LHI'
       AND s.lhi_access_blocked_at = v_now;
 
-    SELECT string_agg(s.nama, ', ' ORDER BY s.nama),
-           md5(string_agg(s.staff_id, ',' ORDER BY s.staff_id))
-      INTO v_names, v_fingerprint
+    SELECT string_agg(s.nama, ', ' ORDER BY s.nama)
+      INTO v_names
     FROM public.staff s
     JOIN public.lhi_discipline_evaluations_v2(v_now) e ON e.staff_id = s.staff_id
     WHERE e.missed_full_days >= 7
