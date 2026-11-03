@@ -518,8 +518,11 @@ BEGIN
      OR (v_status ->> 'total')::integer <> 1
      OR (v_status ->> 'completed')::integer <> 1
      OR (v_status ->> 'pending')::integer <> 0
-     OR (v_status ->> 'snapshot_total')::integer <> 1 THEN
-    RAISE EXCEPTION 'Grace status projection returned incorrect v2 snapshot counts: %', v_status;
+     OR (v_status ->> 'snapshot_total')::integer <> 1
+     OR jsonb_array_length(COALESCE(v_status -> 'members', '[]'::jsonb)) <> 1
+     OR v_status #>> '{members,0,staff_id}' IS DISTINCT FROM 'STAFF-TEST'
+     OR v_status #>> '{members,0,obligation_status}' IS DISTINCT FROM 'COMPLETED' THEN
+    RAISE EXCEPTION 'Grace status projection returned incorrect counts or member-level obligation data: %', v_status;
   END IF;
 END;
 $grace_status_projection_check$;
