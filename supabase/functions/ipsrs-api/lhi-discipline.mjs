@@ -183,7 +183,8 @@ export function buildWarningNotifications(evaluations, activeStaff, todayWib) {
     const warning = stage.action === "WARNING_3"
       ? "Jika sampai besok belum mengisi LHI sah, hak akses aplikasi akan diblokir pada hari ke-8."
       : "Mohon segera mengisi LHI sah dan saling mengingatkan rekan yang tercantum.";
-    const message = `${stage.label} (hari ke-${stage.day}; ${stage.day} hari tanpa LHI): ${names.join(", ")}. ${warning}`;
+    const fullDaysWithoutInput = stage.day - 1;
+    const message = `${stage.label} (hari ke-${stage.day}; ${fullDaysWithoutInput} hari kalender penuh tanpa LHI): ${names.join(", ")}. ${warning}`;
 
     return [{
       // Stable team event identity: later staff entering the same stage on the
