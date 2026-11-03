@@ -433,3 +433,50 @@ test("both reset endpoints explicitly disable gateway JWT because they verify th
   assert.match(config, /\[functions\.lhi-recovery-exchange\]\s*verify_jwt = false/);
   assert.match(config, /\[functions\.ipsrs-api\]\s*verify_jwt = true/);
 });
+
+
+test("team warning event key changes when another delinquent joins the same stage", async () => {
+  const { buildWarningNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const first = buildWarningNotifications(
+    [{ staff_id: "A", nama: "Agung", action: "WARNING_1" }],
+    [{ staff_id: "A", status: "Aktif" }, { staff_id: "B", status: "Aktif" }],
+    "2026-11-03",
+  )[0];
+  const updated = buildWarningNotifications(
+    [
+      { staff_id: "A", nama: "Agung", action: "WARNING_1" },
+      { staff_id: "B", nama: "Budi", action: "WARNING_1" },
+    ],
+    [{ staff_id: "A", status: "Aktif" }, { staff_id: "B", status: "Aktif" }],
+    "2026-11-03",
+  )[0];
+  assert.notEqual(first.event_key, updated.event_key);
+  assert.match(updated.message, /Agung, Budi/);
+});
+
+test("day-8 team event key changes when another employee is blocked later the same day", async () => {
+  const { buildIndividualBlockNotifications } = await import("../supabase/functions/ipsrs-api/lhi-discipline.mjs");
+  const first = buildIndividualBlockNotifications(
+    [{ staff_id: "A", nama: "Agung", action: "BLOCK_INDIVIDUAL_ACCESS" }],
+    [
+      { staff_id: "A", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+      { staff_id: "B", status: "Aktif", lhi_access_status: "NORMAL" },
+      { staff_id: "C", status: "Aktif", lhi_access_status: "NORMAL" },
+    ],
+    "2026-11-03",
+  )[0];
+  const updated = buildIndividualBlockNotifications(
+    [
+      { staff_id: "A", nama: "Agung", action: "BLOCK_INDIVIDUAL_ACCESS" },
+      { staff_id: "B", nama: "Budi", action: "BLOCK_INDIVIDUAL_ACCESS" },
+    ],
+    [
+      { staff_id: "A", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+      { staff_id: "B", status: "Aktif", lhi_access_status: "BLOCKED_LHI" },
+      { staff_id: "C", status: "Aktif", lhi_access_status: "NORMAL" },
+    ],
+    "2026-11-03",
+  )[0];
+  assert.notEqual(first.event_key, updated.event_key);
+  assert.match(updated.message, /Agung, Budi/);
+});
