@@ -182,7 +182,8 @@
     document.head.appendChild(style);
     const bg=document.createElement('div');
     bg.id='ipsrsServerDisciplineWarning';
-    const list=names.map(x=>'🔴 '+x.nama).join('<br>');
+    const escapeHtml=(value)=>String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const list=names.map(x=>'🔴 '+escapeHtml(x.nama)).join('<br>');
     bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PERINGATAN DISIPLIN LHI</div><div class="sdw-body">Hak akses aplikasi petugas berikut telah diblokir pada tahap hari ke-8 karena belum mengisi LHI selama 7 hari kalender berturut-turut:<br><br>'+list+'<br><br>Mohon saling mengingatkan dan membantu petugas yang bersangkutan melengkapi LHI.</div><button class="sdw-btn" type="button">OK</button></div>';
     document.body.appendChild(bg);
     bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
