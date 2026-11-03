@@ -1,0 +1,91 @@
+name: Generate LHI migrations with Supabase CLI
+
+on:
+  push:
+    branches:
+      - repair/lhi-status-separation-20261103
+    paths:
+      - "docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql"
+      - "docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql"
+      - "docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql"
+      - "docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql"
+      - ".github/workflows/generate-lhi-cli-migrations.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-lhi-cli-migrations-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Setup pinned Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: "2.122.1"
+
+      - name: Generate timestamped migrations through Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          names=(
+            lhi_schema_v2
+            lhi_restricted_recovery_challenges
+            lhi_scheduler_v2
+            lhi_atomic_reset_grace_v2
+          )
+
+          existing=0
+          for name in "${names[@]}"; do
+            if compgen -G "supabase/migrations/*_${name}.sql" > /dev/null; then
+              existing=$((existing + 1))
+            fi
+          done
+
+          if [ "$existing" -eq "${#names[@]}" ]; then
+            echo "All four CLI-generated LHI migrations already exist; nothing to do."
+            exit 0
+          fi
+
+          if [ "$existing" -ne 0 ]; then
+            echo "::error::Only some LHI migrations exist. Refusing to create duplicate or out-of-order files."
+            exit 1
+          fi
+
+          create_migration() {
+            local name="$1"
+            local source="$2"
+            supabase migration new "$name"
+            local generated
+            generated="$(find supabase/migrations -maxdepth 1 -type f -name "*_${name}.sql" -print | sort | tail -n 1)"
+            if [ -z "$generated" ] || [ ! -f "$source" ]; then
+              echo "::error::Could not locate generated migration or source: $name"
+              exit 1
+            fi
+            cp "$source" "$generated"
+            echo "Created $generated from reviewed source $source"
+          }
+
+          supabase --version
+          create_migration lhi_schema_v2 docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql
+          create_migration lhi_restricted_recovery_challenges docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql
+          create_migration lhi_scheduler_v2 docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql
+          create_migration lhi_atomic_reset_grace_v2 docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/migrations
+          git diff --cached --check
+          git commit -m "build(lhi): add Supabase CLI generated v2 migrations"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
