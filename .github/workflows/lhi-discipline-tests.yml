@@ -70,6 +70,17 @@ jobs:
         run: node --check frontend/app.js && node --check frontend/login-fast.js
       - name: Run LHI discipline and recovery unit tests
         run: node --test tests/lhi-*.test.mjs
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Functions
+        run: |
+          deno check supabase/functions/ipsrs-api/index.ts
+          deno check supabase/functions/lhi-block-status/index.ts
+          deno check supabase/functions/lhi-reset-verify/index.ts
+          deno check supabase/functions/lhi-recovery-exchange/index.ts
+          deno check supabase/functions/lhi-recovery-action/index.ts
       - name: Install PostgreSQL client
         run: |
           if ! command -v psql >/dev/null 2>&1; then
