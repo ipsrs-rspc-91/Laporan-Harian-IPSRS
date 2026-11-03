@@ -12,6 +12,9 @@ DECLARE
   v_second_started timestamptz;
   v_second_deadline timestamptz;
   v_count integer;
+  v_failed boolean;
+  v_nonce_bad text := repeat('f', 64);
+  v_token_bad text := repeat('9', 64);
   v_ka uuid := '00000000-0000-0000-0000-000000000001';
   v_ip text := repeat('b', 64);
   v_nonce_1 text := repeat('a', 64);
@@ -86,6 +89,52 @@ BEGIN
      OR (v_retry ->> 'deadline_at')::timestamptz IS DISTINCT FROM v_first_deadline THEN
     RAISE EXCEPTION 'Reset retry shifted the original grace window: %', v_retry;
   END IF;
+
+  -- Null/unknown lock state must fail closed across challenge, exchange,
+  -- session validation, atomic Reset, and scheduler paths.
+  SELECT public.create_lhi_recovery_challenge(v_nonce_bad, v_ip) INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'Could not prepare negative-test challenge: %', v_result;
+  END IF;
+
+  UPDATE public.access_settings SET value = NULL WHERE key = 'LHI_GLOBAL_BLOCK';
+
+  SELECT public.create_lhi_recovery_challenge(v_nonce_2, v_ip) INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS TRUE THEN
+    RAISE EXCEPTION 'Challenge gate accepted a null global lock state.';
+  END IF;
+
+  SELECT public.consume_lhi_recovery_challenge(v_nonce_bad, v_ka, v_token_bad) INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS TRUE THEN
+    RAISE EXCEPTION 'Challenge exchange accepted a null global lock state.';
+  END IF;
+
+  SELECT public.validate_lhi_recovery_session(v_token_1, 'apiRecoveryStatus') INTO v_result;
+  IF COALESCE((v_result ->> 'ok')::boolean, false) IS TRUE THEN
+    RAISE EXCEPTION 'Recovery validator accepted a null global lock state.';
+  END IF;
+
+  v_failed := false;
+  BEGIN
+    PERFORM public.open_lhi_global_grace_v2(v_token_1);
+  EXCEPTION WHEN OTHERS THEN
+    v_failed := true;
+  END;
+  IF NOT v_failed THEN
+    RAISE EXCEPTION 'Atomic Reset did not fail closed on a null global lock state.';
+  END IF;
+
+  v_failed := false;
+  BEGIN
+    PERFORM public.run_lhi_discipline_scheduler_v2();
+  EXCEPTION WHEN OTHERS THEN
+    v_failed := true;
+  END;
+  IF NOT v_failed THEN
+    RAISE EXCEPTION 'Scheduler did not fail closed on a null global lock state.';
+  END IF;
+
+  UPDATE public.access_settings SET value = 'NONAKTIF' WHERE key = 'LHI_GLOBAL_BLOCK';
 
   SELECT count(*) INTO v_count
   FROM public.lhi_discipline_snapshot_members
