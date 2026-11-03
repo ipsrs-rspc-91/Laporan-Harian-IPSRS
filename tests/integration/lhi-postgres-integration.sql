@@ -109,7 +109,7 @@ BEGIN
 
   SELECT count(*) INTO v_count
   FROM public.lhi_discipline_notifications
-  WHERE event_key LIKE '%:INDIVIDUAL_BLOCK:TEAM';
+  WHERE event_key LIKE '%:BLOCK_INDIVIDUAL:TEAM';
   IF v_count <> 4 THEN
     RAISE EXCEPTION 'Day-8 block notice should reach only the four unblocked active staff; got %.', v_count;
   END IF;
@@ -117,7 +117,7 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM public.lhi_discipline_notifications n
   JOIN public.staff s ON s.staff_id = n.recipient_staff_id
-  WHERE n.event_key LIKE '%:INDIVIDUAL_BLOCK:TEAM'
+  WHERE n.event_key LIKE '%:BLOCK_INDIVIDUAL:TEAM'
     AND s.lhi_access_status = 'BLOCKED_LHI';
   IF v_count <> 0 THEN
     RAISE EXCEPTION 'Day-8 block notice was sent to a staff member already blocked.';
