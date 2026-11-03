@@ -110,7 +110,16 @@ INSERT INTO public.staff (
    clock_timestamp() - interval '10 days', clock_timestamp() - interval '10 days'),
   ('LEGACY-TEST', 'Petugas Legacy Test', 'STAFF', 'Nonaktif_LHI_HARI_8',
    '00000000-0000-0000-0000-000000000003',
-   clock_timestamp() - interval '30 days', clock_timestamp() - interval '1 day');
+   clock_timestamp() - interval '30 days', clock_timestamp() - interval '1 day'),
+  ('WARN-4', 'Petugas Hari 4', 'STAF', 'Aktif',
+   '00000000-0000-0000-0000-000000000004',
+   clock_timestamp() - interval '4 days', clock_timestamp() - interval '4 days'),
+  ('WARN-6', 'Petugas Hari 6', 'STAF', 'Aktif',
+   '00000000-0000-0000-0000-000000000005',
+   clock_timestamp() - interval '6 days', clock_timestamp() - interval '6 days'),
+  ('WARN-7', 'Petugas Hari 7', 'STAF', 'Aktif',
+   '00000000-0000-0000-0000-000000000006',
+   clock_timestamp() - interval '7 days', clock_timestamp() - interval '7 days');
 
 INSERT INTO public.access_settings (key, value)
 VALUES ('LHI_GLOBAL_BLOCK', 'NONAKTIF');
