@@ -279,6 +279,13 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
     () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
     { timeout: 15000 },
   );
+  // The master-area selector is populated asynchronously after startup.
+  // Wait for its canonical static-data entry before rebuilding the picker.
+  await page.waitForFunction(
+    () => [...(document.getElementById('AreaKerja')?.options || [])]
+      .some(option => option.value.trim().toLowerCase() === 'rapat/pertemuan'),
+    { timeout: 15000 },
+  );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
   await page.locator('#loginScreen').evaluate(el => el.remove());
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
