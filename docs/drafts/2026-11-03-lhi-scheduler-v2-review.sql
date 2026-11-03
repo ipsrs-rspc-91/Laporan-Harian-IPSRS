@@ -303,11 +303,11 @@ BEGIN
 
   -- Warning broadcast per stage/date, containing all staff names for that stage.
   FOR v_stage IN
-    SELECT x.stage, x.missed_full_days,
+    SELECT x.stage,
       string_agg(x.nama, ', ' ORDER BY x.nama) AS names
     FROM public.lhi_discipline_evaluations_v2(v_now) x
     WHERE x.stage IN ('WARNING_1', 'WARNING_2', 'WARNING_3')
-    GROUP BY x.stage, x.missed_full_days
+    GROUP BY x.stage
   LOOP
     v_names := v_stage.names;
     v_message := CASE v_stage.stage
