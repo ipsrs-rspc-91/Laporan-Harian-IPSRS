@@ -390,6 +390,13 @@ test('area picker stays open and explains when Item Baru is tapped without selec
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  // Wait for the startup lock check to finish before injecting deterministic
+  // master-area data; otherwise its asynchronous completion can clear the
+  // synthetic option in the middle of this regression test.
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
 
   const setup = await page.evaluate(() => {
