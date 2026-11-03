@@ -381,8 +381,7 @@ BEGIN
     interval '1 day'
   ) AS d(required_date)
   WHERE s.staff_id IN ('LEGACY-TEST', 'STAFF-TEST')
-    AND s.status = 'Aktif'
-  ON CONFLICT (incident_id, staff_id, required_date) DO NOTHING;
+    AND s.status = 'Aktif';
 
   UPDATE public.staff
   SET lhi_active_since_verified_at = NULL
