@@ -650,13 +650,15 @@
       try{ resetSupabaseClient_(); }catch(_resetError){}
       const rawMsg=String(err&&err.message?err.message:err);
       if(msgEl){
-        msgEl.innerText=/MODE FORM BLOK APLIKASI AKTIF|tidak dapat login|blokir aplikasi/i.test(rawMsg)
+        msgEl.innerText=/MODE FORM BLOK APLIKASI AKTIF|blokir global aplikasi/i.test(rawMsg)
           ? 'FORM BLOK APLIKASI AKTIF. Login sementara ditutup oleh KA IPSRS.'
-          : (/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
-              ? 'Anda tidak disiplin mengisi laporan selama 8 hari.'
-              : (/invalid login credentials/i.test(rawMsg)
-                  ? 'Username atau password salah.'
-                  : 'Error: '+rawMsg));
+          : (/HAK_AKSES_LHI_DIBLOKIR|hak akses aplikasi.*diblokir/i.test(rawMsg)
+              ? 'HAK AKSES APLIKASI DIBLOKIR. Anda belum mengisi LHI selama 7 hari kalender penuh. Hubungi KA IPSRS.'
+              : (/tidak aktif/i.test(rawMsg)
+                  ? 'Akun kepegawaian Anda berstatus NONAKTIF. Hubungi administrator IPSRS.'
+                  : (/invalid login credentials/i.test(rawMsg)
+                      ? 'Username atau password salah.'
+                      : 'Error: '+rawMsg)));
       }
       return false;
     }
