@@ -358,7 +358,7 @@ BEGIN
       'Hak akses LHI diblokir untuk: ' || v_names ||
       '. Status kepegawaian tidak berubah; akses dipisahkan dari status pegawai.'
     FROM public.staff s
-    WHERE s.status = 'Aktif' AND s.lhi_access_status <> 'BLOCKED_LHI'
+    WHERE s.status = 'Aktif'
     ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;
   END IF;
 
