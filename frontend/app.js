@@ -6201,11 +6201,29 @@
     }).catch(() => {});
   }
 
+  // Simpan markup login asli sebelum layar blokir menggantinya.
+  // Reset yang valid wajib memulihkan form yang sama, bukan hanya membuka
+  // kembali container login yang isinya sudah tertimpa layar blokir.
+  let originalLhiLoginMarkup_ = null;
+
+  function captureLhiLoginMarkup_(screen){
+    if(originalLhiLoginMarkup_===null && screen && screen.querySelector('#ipsrsLoginForm')){
+      originalLhiLoginMarkup_=screen.innerHTML;
+    }
+  }
+
+  function restoreLhiLoginMarkup_(screen){
+    if(!screen || typeof originalLhiLoginMarkup_!=='string' || !originalLhiLoginMarkup_) return false;
+    screen.innerHTML=originalLhiLoginMarkup_;
+    return !!screen.querySelector('#ipsrsLoginForm');
+  }
+
   function renderLhiGlobalBlockScreen_(message, serverDetails){
     const screen=document.getElementById('loginScreen');
     const shell=document.getElementById('appShell');
     const loading=document.getElementById('authLoading');
     if(!screen) return;
+    captureLhiLoginMarkup_(screen);
     if(loading) loading.classList.add('hidden');
     if(shell) shell.classList.add('hidden');
     screen.classList.remove('hidden');
@@ -6353,8 +6371,11 @@
         });
         const result=await response.json().catch(()=>null);
         if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
+        if(!restoreLhiLoginMarkup_(screen)){
+          throw new Error('Form login KA IPSRS gagal dipulihkan. Muat ulang halaman dan ulangi Reset.');
+        }
+        try{loadRememberedCredentials();}catch(_e){}
         try{sessionStorage.setItem('IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY');}catch(_e){}
-        if(backdrop)backdrop.classList.remove('show');
         showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
       }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
       finally{if(submit){submit.disabled=false;submit.textContent='OK';}}
