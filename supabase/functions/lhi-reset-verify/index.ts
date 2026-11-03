@@ -60,7 +60,27 @@ Deno.serve(async (req: Request) => {
     }
     if (diff !== 0) return response({ ok: true, valid: false, message: "Kode reset tidak benar." });
 
-    return response({ ok: true, valid: true, message: "Kode reset diterima. Silakan login menggunakan akun KA IPSRS." });
+    // The reset code never authenticates a user. It only mints a short-lived,
+    // one-time proof that the backend later binds to an authenticated KA IPSRS account.
+    const random = crypto.getRandomValues(new Uint8Array(32));
+    const recoveryToken = [...random].map((v) => v.toString(16).padStart(2, "0")).join("");
+    const tokenHash = await sha256(recoveryToken);
+    const expiresAt = new Date(now + 10 * 60 * 1000).toISOString();
+
+    const { error: tokenError } = await db.from("lhi_recovery_tokens").insert({
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+      created_at: new Date(now).toISOString(),
+    });
+    if (tokenError) throw tokenError;
+
+    return response({
+      ok: true,
+      valid: true,
+      recovery_token: recoveryToken,
+      expires_at: expiresAt,
+      message: "Kode reset diterima. Silakan autentikasi dengan akun KA IPSRS untuk sesi pemulihan terbatas.",
+    });
   } catch {
     return response({ ok: false, valid: false, message: "Reset belum dapat diverifikasi oleh server." }, 503);
   }
