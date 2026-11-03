@@ -84,7 +84,11 @@
   }
   function clearSession(){
     CURRENT_SESSION = null;
-    try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
+    try{
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem('IPSRS_LHI_RECOVERY_TOKEN');
+      sessionStorage.removeItem('IPSRS_LHI_RESET_AUTH_MODE');
+    }catch(e){}
   }
 
   // ============================================================
@@ -413,6 +417,9 @@
     let token=await getFreshSupabaseAccessToken_();
 
     const payload={};
+    if(CURRENT_SESSION && CURRENT_SESSION.recovery_mode){
+      try{payload.recoveryToken=sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'';}catch(_e){}
+    }
     switch(fnName){
       case 'apiLogout':
       case 'apiWhoAmI':
@@ -589,7 +596,10 @@
       const who=await fetch(window.IPSRS_SUPABASE_API_URL,{
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':window.IPSRS_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},
-        body:JSON.stringify({action:'apiWhoAmI',data:{token:session.access_token}})
+        body:JSON.stringify({action:'apiWhoAmI',data:{
+          token:session.access_token,
+          recoveryToken:(()=>{try{return sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'';}catch(_e){return '';}})()
+        }})
       });
       const whoJson=await who.json().catch(()=>null);
       if(!who.ok || !whoJson || !whoJson.ok) throw new Error((whoJson&&whoJson.msg)||'Akun belum terhubung ke data petugas.');
@@ -601,6 +611,10 @@
         if(msgEl)msgEl.innerText='Reset hanya mengizinkan akun KA IPSRS. Akun ini tidak memiliki kewenangan tersebut.';
         return false;
       }
+      if(resetAuthMode && !whoJson.recovery_mode){
+        await client.auth.signOut().catch(()=>{});
+        throw new Error('Server tidak menerbitkan sesi pemulihan terbatas. Mode Blok Aplikasi tetap aktif.');
+      }
       if(resetAuthMode){try{sessionStorage.removeItem('IPSRS_LHI_RESET_AUTH_MODE');}catch(_e){}}
       // Maintenance gate: hanya role KA_IPSRS yang boleh masuk ke aplikasi.
       // Pemeriksaan dilakukan terhadap identitas Supabase yang sudah terverifikasi,
@@ -611,7 +625,13 @@
         if(autoMode) clearRememberedCredentials();
         return false;
       }
-      setSession(Object.assign({},whoJson,{token:session.access_token,refresh_token:session.refresh_token}));
+      if(whoJson.recovery_mode){
+        try{sessionStorage.setItem('IPSRS_LHI_RECOVERY_TOKEN',sessionStorage.getItem('IPSRS_LHI_RECOVERY_TOKEN')||'');}catch(_e){}
+      }
+      setSession(Object.assign({},whoJson,{
+        token:session.access_token,refresh_token:session.refresh_token,
+        recovery_mode:whoJson.recovery_mode===true
+      }));
       // Simpan preferensi Remember Me hanya setelah password benar dan identitas
       // berhasil diverifikasi. Kredensial disimpan oleh modul login sebagai ciphertext
       // lokal dan, bila didukung browser, juga oleh Password Manager.
@@ -629,6 +649,14 @@
       applyIdentityToUI();
       await afterAuthReady();
       hideLoginScreen();
+      if(CURRENT_SESSION && CURRENT_SESSION.recovery_mode){
+        document.querySelectorAll('.topbar-nav .nav-item').forEach(el=>el.classList.add('hidden'));
+        document.querySelectorAll('#userMenu button').forEach(el=>{
+          if(el.id!=='accessBtn' && !/logout|keluar/i.test(el.textContent||''))el.classList.add('hidden');
+        });
+        if(typeof window.__ipsrsOpenAccessPanel==='function')await window.__ipsrsOpenAccessPanel();
+        return true;
+      }
       goPage('input');
       // Run the overdue-report reminder from the real login path (performLogin is lexical).
       if(typeof window.__ipsrsCheckOldReportReminder==='function'){
@@ -6355,7 +6383,11 @@
         });
         const result=await response.json().catch(()=>null);
         if(!response.ok||!result||result.valid!==true)throw new Error((result&&result.message)||'Kode reset tidak dapat diverifikasi.');
-        try{sessionStorage.setItem('IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY');}catch(_e){}
+        if(!result.recovery_token)throw new Error('Server tidak menerbitkan bukti sesi pemulihan.');
+        try{
+          sessionStorage.setItem('IPSRS_LHI_RECOVERY_TOKEN',String(result.recovery_token));
+          sessionStorage.setItem('IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY');
+        }catch(_e){}
         if(backdrop)backdrop.classList.remove('show');
         showLoginScreen('Kode reset diterima. Silakan login menggunakan akun KA IPSRS.');
       }catch(error){if(msg)msg.textContent=String(error&&error.message||'Reset gagal.');}
