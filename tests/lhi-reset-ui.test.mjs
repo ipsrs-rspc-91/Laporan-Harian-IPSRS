@@ -18,17 +18,21 @@ test("global block replaces the normal login form but captures its exact existin
   assert.match(app, /function captureLhiLoginMarkup_\(screen\)[\s\S]*?originalLhiLoginMarkup_=screen\.innerHTML/);
 });
 
-test("correct Reset restores the same login form before showing the login screen", () => {
+test("correct Reset opens a dedicated KA IPSRS login form", () => {
   const renderStart = app.indexOf("function renderLhiGlobalBlockScreen_");
   const renderEnd = app.indexOf("function removeLhiRecoveryResumeUi_", renderStart);
   const render = app.slice(renderStart, renderEnd);
-  const restore = render.indexOf("restoreLhiLoginMarkup_(screen)");
-  const setChallenge = render.indexOf("pendingLhiRecoveryChallenge_=challenge");
-  const showLogin = render.indexOf("showLoginScreen('Kode reset diterima.");
-  assert.ok(restore >= 0 && setChallenge > restore && showLogin > setChallenge);
-  assert.match(app, /function restoreLhiLoginMarkup_\(screen\)[\s\S]*?screen\.innerHTML=originalLhiLoginMarkup_[\s\S]*?querySelector\('#ipsrsLoginForm'\)/);
-  assert.match(app, /if\(loginScreen && !loginScreen\.querySelector\('#ipsrsLoginForm'\)\)[\s\S]*?restoreLhiLoginMarkup_\(loginScreen\)/);
+  const verify = render.indexOf("if(!response.ok||!result||result.valid!==true)");
+  const setChallenge = render.indexOf("pendingLhiRecoveryChallenge_=challenge", verify);
+  const showKaLogin = render.indexOf("renderLhiKaRecoveryLogin_('Kode Reset diterima.", setChallenge);
+  assert.ok(verify >= 0 && setChallenge > verify && showKaLogin > setChallenge);
+  assert.match(app, /function renderLhiKaRecoveryLogin_\(message\)/);
+  assert.match(app, /LOGIN KHUSUS KA IPSRS/);
+  assert.match(app, /USERNAME KA IPSRS/);
+  assert.match(app, /onsubmit="return doLogin\(event\)"/);
+  assert.match(app, /window\.__IPSRS_LOGIN_BUTTON_CLICKED=true/);
 });
+
 
 test("legacy Reset endpoint without a challenge gives an explicit server-upgrade message and never opens login", () => {
   assert.match(app, /if\(challenge\.length<32\) throw new Error\('Kode Reset diterima server, tetapi layanan pemulihan KA IPSRS belum lengkap di server\./);
@@ -36,16 +40,16 @@ test("legacy Reset endpoint without a challenge gives an explicit server-upgrade
   assert.match(app, /administrator harus menyelesaikan pembaruan layanan pemulihan/);
 });
 
-test("incorrect Reset never restores login or issues a recovery challenge", () => {
+test("incorrect Reset never opens the dedicated KA IPSRS login or issues a challenge", () => {
   const renderStart = app.indexOf("function renderLhiGlobalBlockScreen_");
   const renderEnd = app.indexOf("function removeLhiRecoveryResumeUi_", renderStart);
   const render = app.slice(renderStart, renderEnd);
   const verify = render.indexOf("if(!response.ok||!result||result.valid!==true)");
-  const restore = render.indexOf("restoreLhiLoginMarkup_(screen)");
-  assert.ok(verify >= 0 && restore > verify);
-  const failurePath = render.slice(verify, restore);
+  const setChallenge = render.indexOf("pendingLhiRecoveryChallenge_=challenge", verify);
+  assert.ok(verify >= 0 && setChallenge > verify);
+  const failurePath = render.slice(verify, setChallenge);
   assert.match(failurePath, /throw new Error/);
-  assert.doesNotMatch(failurePath, /pendingLhiRecoveryChallenge_=challenge/);
+  assert.doesNotMatch(failurePath, /renderLhiKaRecoveryLogin_/);
 });
 
 test("Reset challenge is server-issued, single-use, and bound to the authenticated KA identity", () => {
