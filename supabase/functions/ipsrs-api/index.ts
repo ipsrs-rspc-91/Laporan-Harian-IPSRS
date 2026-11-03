@@ -630,7 +630,23 @@ if(a==="apiGetLhiAnchorReview"){
   .select("staff_id,nama,role,status,lhi_active_since,lhi_active_since_source,lhi_active_since_verified_at")
   .eq("status","Aktif").order("nama");
  if(error)throw error;
- return{ok:true,data:data||[]};
+ const {data:history,error:historyError}=await db.from("lhi_active_since_verifications")
+  .select("staff_id,source_reference,verified_by_staff_id,verified_at,verified_active_since")
+  .order("verified_at",{ascending:false}).limit(1000);
+ if(historyError)throw historyError;
+ const latest=new Map<string,any>();
+ for(const item of history||[]){
+   const id=String(item.staff_id||"");
+   if(id&&!latest.has(id))latest.set(id,item);
+ }
+ return{ok:true,data:(data||[]).map((item:any)=>{
+   const proof=latest.get(String(item.staff_id||""));
+   return{...item,
+     verification_reference:proof?.source_reference||null,
+     verification_by_staff_id:proof?.verified_by_staff_id||null,
+     verification_recorded_at:proof?.verified_at||item.lhi_active_since_verified_at||null
+   };
+ })};
 }
 if(a==="apiVerifyLhiActiveSince"){
  if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memverifikasi tanggal mulai aktif petugas."};
