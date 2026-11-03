@@ -59,7 +59,7 @@ test("recovery exchange requires the same edge-observed client IP and server sal
   assert.match(recoveryExchange, /cf-connecting-ip/);
   assert.match(recoveryExchange, /LHI_RATE_LIMIT_SALT/);
   assert.match(recoveryExchange, /p_ip_hash: ipHash/);
-  assert.doesNotMatch(recoveryExchange, /body\\?\\.ip|body\\?\\.ip_hash/);
+  assert.doesNotMatch(recoveryExchange, /body\?\.ip|body\?\.ip_hash/);
 });
 
 test("Reset rate limit trusts only edge-overwritten client IP header", () => {
