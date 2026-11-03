@@ -135,6 +135,28 @@ if(fs.existsSync(indexPath) && fs.existsSync(appPath)){
   fail('Deferred navigation race gate','frontend/index.html or frontend/app.js is missing');
 }
 
+// LHI global-reset login restoration: the lock screen replaces loginScreen.innerHTML.
+// A valid reset must restore the original login form before exposing KA-only login.
+if (fs.existsSync(appPath)) {
+  const source = fs.readFileSync(appPath, 'utf8');
+  const renderStart = source.indexOf('function renderLhiGlobalBlockScreen_(');
+  const captureAt = source.indexOf('captureLhiLoginMarkup_(screen);', renderStart);
+  const blockMarkupAt = source.indexOf('screen.innerHTML=`', renderStart);
+  const resetVerifyAt = source.indexOf("functions/v1/lhi-reset-verify", renderStart);
+  const restoreAt = source.indexOf('restoreLhiLoginMarkup_(screen)', resetVerifyAt);
+  const loginAt = source.indexOf("showLoginScreen('Kode reset diterima.", resetVerifyAt);
+  const hasCaptureHelper = source.includes('function captureLhiLoginMarkup_(screen)');
+  const hasRestoreHelper = source.includes('function restoreLhiLoginMarkup_(screen)');
+  const ordered = renderStart >= 0 && captureAt > renderStart && blockMarkupAt > captureAt &&
+    resetVerifyAt > blockMarkupAt && restoreAt > resetVerifyAt && loginAt > restoreAt;
+  if (hasCaptureHelper && hasRestoreHelper && ordered &&
+      source.includes("IPSRS_LHI_RESET_AUTH_MODE','KA_ONLY'")) {
+    pass('LHI reset restores KA login form','Original login markup is captured before block overlay and restored after valid reset; KA-only guard remains enabled');
+  } else {
+    fail('LHI reset restores KA login form','Reset must restore the captured login form before showing the KA IPSRS login screen');
+  }
+}
+
 function parseLockedProtectedFiles(lockText){
   const lines=lockText.split(/\r?\n/);
   let currentId='', currentStatus='', protectedMode=false;
