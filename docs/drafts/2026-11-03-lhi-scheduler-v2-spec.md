@@ -14,7 +14,7 @@ Scheduler lama terbukti tidak sesuai README karena menggunakan `reports.tanggal`
 Untuk setiap petugas dengan `staff.status = 'Aktif'`:
 
 1. Tentukan `anchor_at`:
-   - LHI sah terakhir dalam periode aktif berjalan: `max(reports.created_at)` dengan `deleted_at IS NULL` dan `created_at >= lhi_active_since`.
+   - LHI sah terakhir dalam periode aktif berjalan: `max(reports.created_at)` dengan `deleted_at IS NULL`, `created_at >= lhi_active_since`, dan `created_at <= p_now` (waktu evaluasi server yang ditangkap sekali). Timestamp masa depan tidak boleh mereset anchor.
    - Jika tidak ada, gunakan `staff.lhi_active_since`.
 2. Konversi tanggal anchor dan tanggal sekarang ke WIB:
    - `anchor_wib_date = (anchor_at AT TIME ZONE 'Asia/Jakarta')::date`
@@ -23,9 +23,10 @@ Untuk setiap petugas dengan `staff.status = 'Aktif'`:
    - `missed_full_days = GREATEST(0, today_wib - anchor_wib_date - 1)`
 4. Abaikan `reports.tanggal` untuk seluruh keputusan disiplin.
 5. Beberapa laporan sah pada tanggal WIB yang sama tetap menghasilkan satu tanggal input aktif; pemilihan timestamp terakhir tidak menggandakan hari.
-6. Laporan soft-delete tidak sah. Bila seluruh laporan pada tanggal terakhir dibatalkan, tanggal anchor bergeser ke tanggal LHI sah sebelumnya.
-7. Semua petugas aktif diproses tanpa pengecualian role. Status akses `BLOCKED_LHI` tidak mengeluarkan petugas dari perhitungan hari ke-10.
-8. Petugas NONAKTIF tidak dihitung. Ketika kembali Aktif, `lhi_active_since` harus di-reset oleh mekanisme perubahan status kepegawaian, bukan oleh scheduler atau trigger laporan.
+6. Laporan dengan `created_at > p_now` belum dianggap sebagai input sah pada saat evaluasi berjalan. Helper JavaScript dan SQL scheduler wajib menerima waktu evaluasi eksplisit agar hasilnya konsisten.
+7. Laporan soft-delete tidak sah. Bila seluruh laporan pada tanggal terakhir dibatalkan, tanggal anchor bergeser ke tanggal LHI sah sebelumnya.
+8. Semua petugas aktif diproses tanpa pengecualian role. Status akses `BLOCKED_LHI` tidak mengeluarkan petugas dari perhitungan hari ke-10.
+9. Petugas NONAKTIF tidak dihitung. Ketika kembali Aktif, `lhi_active_since` harus di-reset oleh mekanisme perubahan status kepegawaian, bukan oleh scheduler atau trigger laporan.
 
 ## 3. Pemetaan tahap — nilai batas eksak
 
@@ -77,7 +78,10 @@ Hari berjalan tidak dihitung. Tahapan tidak boleh dihitung dengan selisih jam at
 SQL berikut hanya ilustrasi query pembacaan untuk implementasi setelah skema v2 tersedia. Jangan jalankan sebagai migration atau query produksi tanpa review:
 
 ```sql
-WITH active_staff AS (
+WITH params AS (
+  SELECT clock_timestamp() AS p_now
+),
+active_staff AS (
   SELECT staff_id, nama, role, status, lhi_active_since, lhi_access_status
   FROM public.staff
   WHERE status = 'Aktif'
@@ -87,25 +91,28 @@ anchors AS (
     s.*,
     COALESCE(last_valid.created_at, s.lhi_active_since) AS anchor_at
   FROM active_staff s
+  CROSS JOIN params p
   LEFT JOIN LATERAL (
     SELECT max(r.created_at) AS created_at
     FROM public.reports r
     WHERE r.staff_id = s.staff_id
       AND r.deleted_at IS NULL
       AND r.created_at >= s.lhi_active_since
+      AND r.created_at <= p.p_now
   ) last_valid ON TRUE
 ),
 evaluated AS (
   SELECT
     a.*,
-    (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date AS today_wib,
+    (p.p_now AT TIME ZONE 'Asia/Jakarta')::date AS today_wib,
     (a.anchor_at AT TIME ZONE 'Asia/Jakarta')::date AS anchor_wib,
     GREATEST(
       0,
-      (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date
+      (p.p_now AT TIME ZONE 'Asia/Jakarta')::date
         - (a.anchor_at AT TIME ZONE 'Asia/Jakarta')::date - 1
     )::integer AS missed_full_days
   FROM anchors a
+  CROSS JOIN params p
 )
 SELECT *,
   CASE
@@ -120,7 +127,7 @@ SELECT *,
 FROM evaluated;
 ```
 
-**Catatan:** dalam fungsi final, simpan `clock_timestamp()` sekali ke variabel `v_now`, lalu turunkan `today_wib` dari timestamp yang sama. Ini mencegah satu eksekusi melintasi tengah malam WIB di antara beberapa statement. Query final juga harus menangani `lhi_active_since IS NULL` sebagai data tidak valid dan mencatat error; jangan diam-diam memakai tanggal buatan.
+**Catatan:** dalam fungsi final, simpan `clock_timestamp()` sekali ke variabel `v_now`, lalu turunkan `today_wib` dari timestamp yang sama. Helper JavaScript `latestValidInputAt`, `complianceAnchorWibDate`, dan `evaluateDiscipline` juga wajib menerima `evaluatedAt` eksplisit serta mengabaikan timestamp laporan yang lebih besar dari waktu tersebut. Ini mencegah satu eksekusi melintasi tengah malam WIB di antara beberapa statement. Query final juga harus menangani `lhi_active_since IS NULL` sebagai data tidak valid dan mencatat error; jangan diam-diam memakai tanggal buatan.
 
 ## 6. Transaksi dan idempotensi scheduler
 
