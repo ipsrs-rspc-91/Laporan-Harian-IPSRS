@@ -147,32 +147,42 @@ BEGIN
     END IF;
 
     -- Employment becoming NONAKTIF permanently excludes the old snapshot row.
-    UPDATE public.lhi_discipline_snapshot_members m
-    SET obligation_status = 'EXCLUDED_INACTIVE',
-        excluded_at = v_now,
-        exclusion_reason = 'EMPLOYMENT_NONACTIVE_DURING_GRACE'
-    FROM public.staff s
-    WHERE s.staff_id = m.staff_id
-      AND m.incident_id = v_grace.incident_id
-      AND m.grace_cycle = v_grace.grace_cycle
-      AND m.obligation_status IN ('PENDING', 'COMPLETED')
-      AND s.status <> 'Aktif';
-
+    -- Capture the exact prior status before changing it; the append-only event
+    -- must not collapse PENDING and COMPLETED into a generic placeholder.
+    WITH to_exclude AS MATERIALIZED (
+      SELECT m.member_id, m.obligation_status AS old_status
+      FROM public.lhi_discipline_snapshot_members m
+      JOIN public.staff s ON s.staff_id = m.staff_id
+      WHERE m.incident_id = v_grace.incident_id
+        AND m.grace_cycle = v_grace.grace_cycle
+        AND m.obligation_status IN ('PENDING', 'COMPLETED')
+        AND s.status <> 'Aktif'
+      FOR UPDATE OF m
+    ),
+    changed AS (
+      UPDATE public.lhi_discipline_snapshot_members m
+      SET obligation_status = 'EXCLUDED_INACTIVE',
+          excluded_at = v_now,
+          exclusion_reason = 'EMPLOYMENT_NONACTIVE_DURING_GRACE'
+      FROM to_exclude x
+      WHERE m.member_id = x.member_id
+      RETURNING m.member_id, x.old_status
+    )
     INSERT INTO public.lhi_discipline_obligation_events
-      (member_id, event_type, event_at, old_status, new_status, details)
-    SELECT m.member_id, 'EXCLUDED_INACTIVE', v_now, 'PENDING_OR_COMPLETED',
-           'EXCLUDED_INACTIVE',
-           jsonb_build_object('reason', m.exclusion_reason)
-    FROM public.lhi_discipline_snapshot_members m
-    WHERE m.incident_id = v_grace.incident_id
-    AND m.grace_cycle = v_grace.grace_cycle
-      AND m.obligation_status = 'EXCLUDED_INACTIVE'
-      AND m.excluded_at = v_now;
+      (member_id, event_type, event_at, old_status, new_status, actor_staff_id, details)
+    SELECT c.member_id, 'EXCLUDED_INACTIVE', v_now, c.old_status,
+           'EXCLUDED_INACTIVE', 'SYSTEM',
+           jsonb_build_object(
+             'reason', 'EMPLOYMENT_NONACTIVE_DURING_GRACE',
+             'detected_by', 'LHI_SCHEDULER_V2'
+           )
+    FROM changed c;
 
     -- Recompute completion from current non-deleted reports. This reverses a
     -- completion if its only qualifying report was deleted/cancelled.
     WITH current_state AS MATERIALIZED (
       SELECT m.member_id, m.obligation_status AS old_status,
+             m.qualifying_report_id AS old_report_id,
              q.report_id, q.created_at
       FROM public.lhi_discipline_snapshot_members m
       JOIN public.staff s ON s.staff_id = m.staff_id
@@ -205,18 +215,24 @@ BEGIN
           OR m.qualifying_report_id IS DISTINCT FROM c.report_id
         )
       RETURNING m.member_id, c.old_status, m.obligation_status AS new_status,
-                c.report_id
+                c.old_report_id, c.report_id AS new_report_id
     )
     INSERT INTO public.lhi_discipline_obligation_events
-      (member_id, event_type, event_at, report_id, old_status, new_status, details)
+      (member_id, event_type, event_at, report_id, old_status, new_status, actor_staff_id, details)
     SELECT c.member_id,
       CASE
         WHEN c.new_status = 'COMPLETED' THEN 'REPORT_QUALIFIED'
         WHEN c.old_status = 'COMPLETED' THEN 'REPORT_CANCELLED'
         ELSE 'OBLIGATION_REOPENED'
       END,
-      v_now, c.report_id, c.old_status, c.new_status,
-      jsonb_build_object('incident_id', v_grace.incident_id)
+      v_now, COALESCE(c.new_report_id, c.old_report_id),
+      c.old_status, c.new_status, 'SYSTEM',
+      jsonb_build_object(
+        'incident_id', v_grace.incident_id,
+        'detected_by', 'LHI_SCHEDULER_V2',
+        'previous_report_id', c.old_report_id,
+        'current_report_id', c.new_report_id
+      )
     FROM changed c;
 
     IF v_now < v_grace.deadline_at THEN
@@ -252,9 +268,14 @@ BEGIN
          'LHI_GLOBAL_BLOCK', 'NONAKTIF', 'AKTIF');
 
       INSERT INTO public.lhi_discipline_obligation_events
-        (member_id, event_type, event_at, old_status, new_status, details)
-      SELECT m.member_id, 'GLOBAL_RELOCKED', v_now, 'PENDING', 'PENDING',
-             jsonb_build_object('incident_id', v_grace.incident_id)
+        (member_id, event_type, event_at, old_status, new_status, actor_staff_id, details)
+      SELECT m.member_id, 'GLOBAL_RELOCKED', v_now, m.obligation_status,
+             m.obligation_status, 'SYSTEM',
+             jsonb_build_object(
+               'incident_id', v_grace.incident_id,
+               'detected_by', 'LHI_SCHEDULER_V2',
+               'deadline_at', v_grace.deadline_at
+             )
       FROM public.lhi_discipline_snapshot_members m
       JOIN public.staff s ON s.staff_id = m.staff_id
       WHERE m.incident_id = v_grace.incident_id
@@ -267,6 +288,24 @@ BEGIN
         'incident_id', v_grace.incident_id, 'pending', v_pending
       );
     END IF;
+
+    -- Append a deadline-evaluation event for every member whose final
+    -- obligation is completed or excluded. This records the system decision
+    -- without overwriting the earlier qualification/exclusion events.
+    INSERT INTO public.lhi_discipline_obligation_events
+      (member_id, event_type, event_at, old_status, new_status, actor_staff_id, details)
+    SELECT m.member_id, 'GRACE_COMPLETED', v_now,
+           m.obligation_status, m.obligation_status, 'SYSTEM',
+           jsonb_build_object(
+             'incident_id', v_grace.incident_id,
+             'deadline_at', v_grace.deadline_at,
+             'evaluated_at', v_now,
+             'detected_by', 'LHI_SCHEDULER_V2'
+           )
+    FROM public.lhi_discipline_snapshot_members m
+    WHERE m.incident_id = v_grace.incident_id
+      AND m.grace_cycle = v_grace.grace_cycle
+      AND m.obligation_status IN ('COMPLETED', 'EXCLUDED_INACTIVE');
 
     UPDATE public.lhi_discipline_incidents
     SET status = 'COMPLETED', completed_at = v_now
