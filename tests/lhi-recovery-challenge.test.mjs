@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const migration = await readFile(
-  new URL("../supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql", import.meta.url),
+  new URL("../docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql", import.meta.url),
   "utf8",
 );
 const resetRpc = await readFile(
