@@ -638,7 +638,7 @@ if(a==="apiVerifyLhiActiveSince"){
  const date=String(d.activeSinceDate||"").trim();
  const reference=String(d.sourceReference||"").trim();
  const actorAuthUserId=String(ctx.userClaims?.sub||"").trim();
- if(!target||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!reference){
+ if(!target||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!reference){
    return{ok:false,msg:"Petugas, tanggal mulai aktif, dan referensi dokumen HR wajib diisi."};
  }
  if(!actorAuthUserId)return{ok:false,msg:"Identitas akun KA IPSRS tidak dapat diverifikasi."};
