@@ -162,3 +162,13 @@ test("KA restricted recovery screen renders the full snapshot without HTML injec
   assert.doesNotMatch(block, /innerHTML\s*=\s*[^;]*member\.(?:nama|staff_id)/);
   assert.match(block, /grace_status:result\.grace_status\|\|null/);
 });
+
+test("normal KA access panel retains the grace snapshot member audit after recovery", () => {
+  assert.match(accessControl, /const graceMembers=graceAvailable&&grace\.data&&Array\.isArray\(grace\.data\.members\)/);
+  assert.match(accessControl, /graceMembers\.map\(m=>/);
+  assert.match(accessControl, /Status Kepegawaian/);
+  assert.match(accessControl, /Kewajiban LHI/);
+  assert.match(accessControl, /DIKECUALIKAN — STATUS NONAKTIF/);
+  assert.match(accessControl, /grace\.data\.started_at/);
+  assert.match(accessControl, /timeZone:'Asia\/Jakarta'/);
+});
