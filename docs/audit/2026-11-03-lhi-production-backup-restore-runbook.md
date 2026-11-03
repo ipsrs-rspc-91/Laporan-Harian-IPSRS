@@ -137,3 +137,33 @@ Jangan pernah menampilkan nilai salt. Setelah secret dipasang, lakukan verifikas
 - Supabase Database Backups: https://supabase.com/docs/guides/platform/backups
 - Supabase CLI `db dump`: https://supabase.com/docs/reference/cli/supabase-db-dump
 - Supabase backup/restore: https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
+
+
+## 9. Script operator untuk backup dan restore rehearsal
+
+Repository menyediakan `scripts/lhi-production-backup.ps1` agar operator tidak perlu menyalin tiga perintah dump secara manual.
+
+Jalankan pada PowerShell komputer admin tepercaya setelah mengatur `SUPABASE_DB_URL` sesuai bagian 2:
+
+```powershell
+$stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
+$backupDir = Join-Path "$HOME\LHI-Production-Backups" $stamp
+.scripts\lhi-production-backup.ps1 -Mode Backup -BackupDirectory $backupDir
+```
+
+Script akan:
+- membuat tiga dump terpisah (roles, schema, data);
+- menghentikan proses bila salah satu file gagal dibuat/kosong;
+- merekam SHA-256 dan jumlah baris enam tabel kritis dalam `manifest.json`;
+- tidak menulis connection string ke manifest;
+- memberi peringatan bahwa Auth, Storage, secrets, dan konfigurasi layanan tetap merupakan backup terpisah.
+
+Setelah database uji kosong tersedia, atur `RESTORE_DB_URL` hanya pada terminal privat lalu jalankan:
+
+```powershell
+.scripts\lhi-production-backup.ps1 -Mode RestoreTest -BackupDirectory $backupDir
+```
+
+Script memverifikasi checksum sebelum restore, meminta operator mengetik `RESTORE-TO-ISOLATED-TEST`, menjalankan restore hanya ke URL yang diberikan operator, lalu membandingkan jumlah baris tabel kritis dengan manifest. Jangan pernah mengarahkan `RESTORE_DB_URL` ke produksi.
+
+**Batas penting:** script dan tes otomatis repository hanya menyiapkan prosedur dan guardrail. Script belum dijalankan terhadap database produksi, restore rehearsal belum dilakukan, dan backup layanan Supabase lengkap belum terbukti. Status baru boleh diubah menjadi RESTORABLE setelah operator menyelesaikan proses di atas dan bukti hasilnya diperiksa.
