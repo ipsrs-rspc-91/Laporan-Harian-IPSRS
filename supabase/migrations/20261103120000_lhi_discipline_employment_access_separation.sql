@@ -34,6 +34,19 @@ ALTER TABLE public.lhi_discipline_obligations
   ADD CONSTRAINT lhi_discipline_obligations_status_check
   CHECK (obligation_status IN ('PENDING','COMPLETED','EXCLUDED'));
 
+-- One-time Reset proof becomes a short-lived, server-validated recovery session.
+CREATE TABLE IF NOT EXISTS public.lhi_recovery_tokens (
+  token_hash text PRIMARY KEY,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  redeemed_at timestamptz,
+  redeemed_by_auth_user_id uuid,
+  completed_at timestamptz
+);
+ALTER TABLE public.lhi_recovery_tokens ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.lhi_recovery_tokens FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.lhi_recovery_tokens TO service_role;
+
 CREATE TABLE IF NOT EXISTS public.lhi_discipline_events (
   event_id bigserial PRIMARY KEY,
   event_type text NOT NULL,
