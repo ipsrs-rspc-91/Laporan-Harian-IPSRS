@@ -35,6 +35,8 @@ test("legacy LHI-only status is normalized to Aktif while LHI access remains blo
   assert.match(sql, /WHERE status IN \('Nonaktif_LHI_HARI_8', 'DIBLOKIR_LHI_7_HARI'\)/);
   assert.match(sql, /SET status = 'Aktif',\s+updated_at = clock_timestamp\(\)/);
   assert.match(sql, /INSERT INTO public\.staff_employment_status_events/);
+  assert.ok(sql.includes("app.lhi_status_change_reason"));
+  assert.ok(sql.includes("Alasan perubahan status tidak disertakan oleh sumber perubahan"));
   assert.match(sql, /'BACKFILL'/);
   assert.match(sql, /lhi_access_before, lhi_access_after/);
   assert.match(sql, /Normalisasi status blokir lama yang dibuat scheduler LHI/);
