@@ -74,6 +74,18 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "apiRecoveryStatus") {
+      // Snapshot internals deny direct table SELECT. Read the member-level
+      // obligation projection only after the recovery capability has passed
+      // server-side identity, role, incident, expiry, and action validation.
+      const { data: graceStatus, error: graceStatusError } = await db.rpc(
+        "get_lhi_grace_status_v2",
+      );
+      if (graceStatusError || !graceStatus) {
+        return response({
+          ok: false,
+          message: "Status dan daftar kewajiban pemulihan belum dapat dibaca. Akses operasional tetap dibatasi.",
+        }, 503, cors);
+      }
       return response({
         ok: true,
         action,
@@ -82,6 +94,7 @@ Deno.serve(async (req: Request) => {
         started_at: validation.started_at,
         deadline_at: validation.deadline_at,
         staff_name: validation.staff_name,
+        grace_status: graceStatus,
       }, 200, cors);
     }
 
@@ -97,6 +110,10 @@ Deno.serve(async (req: Request) => {
       }, 409, cors);
     }
 
+    // The transaction has committed. Fetch the read-only member projection
+    // for the KA recovery screen; a projection failure must not misreport the
+    // already-committed Reset as failed or invite a second grace cycle.
+    const { data: graceStatus } = await db.rpc("get_lhi_grace_status_v2");
     return response({
       ok: true,
       action,
@@ -107,6 +124,7 @@ Deno.serve(async (req: Request) => {
       deadline_at: result.deadline_at,
       snapshot_total: result.snapshot_total,
       individual_access_unblocked: result.individual_access_unblocked,
+      grace_status: graceStatus || null,
     }, 200, cors);
   } catch {
     return response({ ok: false, message: "Permintaan pemulihan gagal diproses." }, 503, cors);
