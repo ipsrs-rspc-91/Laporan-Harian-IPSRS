@@ -77,9 +77,15 @@ test("atomic Reset rejects null or invalid global lock setting", () => {
 });
 
 
-test("atomic Reset refuses unverified employment anchors", () => {
+test("new-format Reset fallback refuses unverified employment anchors", () => {
   assert.match(sql, /lhi_active_since IS NULL OR s\.lhi_active_since_verified_at IS NULL/);
-  assert.match(sql, /anchor belum diverifikasi HR atau peristiwa reaktivasi/);
+  assert.match(sql, /anchor HR yang belum diverifikasi dan tidak tersedia snapshot kewajiban legacy/);
+  const legacyBranch = sql.indexOf("IF EXISTS (\\n    SELECT 1\\n    FROM public.lhi_discipline_obligations o");
+  const fallbackBranch = sql.indexOf("ELSE\\n    -- A new-format incident", legacyBranch);
+  const anchorGuard = sql.indexOf("lhi_active_since_verified_at", fallbackBranch);
+  const fallbackSnapshot = sql.indexOf("INSERT INTO public.lhi_discipline_snapshot_members", fallbackBranch);
+  assert.ok(legacyBranch > 0 && fallbackBranch > legacyBranch);
+  assert.ok(anchorGuard > fallbackBranch && fallbackSnapshot > anchorGuard);
 });
 
 test("legacy LOCKED incident reuses its existing pending obligations as the Reset snapshot", () => {
