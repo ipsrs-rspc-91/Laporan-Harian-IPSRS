@@ -6,7 +6,11 @@ const source = await readFile(
   new URL("../supabase/functions/lhi-recovery-action/index.ts", import.meta.url),
   "utf8",
 );
-const recoveryExchange = await readFile(\n  new URL("../supabase/functions/lhi-recovery-exchange/index.ts", import.meta.url),\n  "utf8",\n);\nconst resetVerify = await readFile(
+const recoveryExchange = await readFile(
+  new URL("../supabase/functions/lhi-recovery-exchange/index.ts", import.meta.url),
+  "utf8",
+);
+const resetVerify = await readFile(
   new URL("../supabase/functions/lhi-reset-verify/index.ts", import.meta.url),
   "utf8",
 );
