@@ -286,9 +286,11 @@ REVOKE ALL ON FUNCTION public.open_lhi_global_grace_v2(text)
 GRANT EXECUTE ON FUNCTION public.open_lhi_global_grace_v2(text)
   TO service_role;
 
--- Read-only status projection for the normal service-role API. Snapshot tables
--- intentionally deny direct SELECT to service_role; this SECURITY DEFINER RPC
--- is the only supported aggregate read surface for the operational panel.
+-- Read-only status projection for KA IPSRS. Snapshot tables intentionally
+-- deny direct SELECT to application roles; this SECURITY DEFINER RPC is the
+-- only supported read surface for aggregate counts and the member-level audit
+-- view required by README. The caller must already be authorized by the
+-- service-role API or a validated restricted recovery capability.
 CREATE OR REPLACE FUNCTION public.get_lhi_grace_status_v2()
 RETURNS jsonb
 LANGUAGE sql
@@ -302,17 +304,45 @@ AS $function$
     ORDER BY incident_id DESC
     LIMIT 1
   ),
-  counts AS (
-    SELECT
-      count(*) FILTER (WHERE m.obligation_status IN ('PENDING', 'COMPLETED'))::integer AS total,
-      count(*) FILTER (WHERE m.obligation_status = 'COMPLETED')::integer AS completed,
-      count(*) FILTER (WHERE m.obligation_status = 'PENDING')::integer AS pending,
-      count(*) FILTER (WHERE m.obligation_status = 'EXCLUDED_INACTIVE')::integer AS excluded,
-      count(*)::integer AS snapshot_total
+  snapshot_rows AS (
+    SELECT m.*, s.nama, s.role, s.status AS current_employment_status
     FROM public.lhi_discipline_snapshot_members m
     JOIN current_incident i
       ON i.incident_id = m.incident_id
      AND i.grace_cycle = m.grace_cycle
+    JOIN public.staff s ON s.staff_id = m.staff_id
+  ),
+  counts AS (
+    SELECT
+      count(*) FILTER (WHERE obligation_status IN ('PENDING', 'COMPLETED'))::integer AS total,
+      count(*) FILTER (WHERE obligation_status = 'COMPLETED')::integer AS completed,
+      count(*) FILTER (WHERE obligation_status = 'PENDING')::integer AS pending,
+      count(*) FILTER (WHERE obligation_status = 'EXCLUDED_INACTIVE')::integer AS excluded,
+      count(*)::integer AS snapshot_total
+    FROM snapshot_rows
+  ),
+  members AS (
+    SELECT COALESCE(
+      jsonb_agg(
+        jsonb_build_object(
+          'staff_id', staff_id,
+          'nama', nama,
+          'role', role,
+          'employment_status_at_snapshot', employment_status_at_snapshot,
+          'current_employment_status', current_employment_status,
+          'obligation_status', obligation_status,
+          'anchor_input_at', anchor_input_at,
+          'missed_full_days_at_snapshot', missed_full_days_at_snapshot,
+          'completed_at', completed_at,
+          'qualifying_report_id', qualifying_report_id,
+          'excluded_at', excluded_at,
+          'exclusion_reason', exclusion_reason
+        )
+        ORDER BY nama, staff_id
+      ),
+      '[]'::jsonb
+    ) AS items
+    FROM snapshot_rows
   )
   SELECT jsonb_build_object(
     'incident_id', i.incident_id,
@@ -324,10 +354,12 @@ AS $function$
     'completed', c.completed,
     'pending', c.pending,
     'excluded', c.excluded,
-    'snapshot_total', c.snapshot_total
+    'snapshot_total', c.snapshot_total,
+    'members', m.items
   )
   FROM current_incident i
-  CROSS JOIN counts c;
+  CROSS JOIN counts c
+  CROSS JOIN members m;
 $function$;
 
 REVOKE ALL ON FUNCTION public.get_lhi_grace_status_v2()
