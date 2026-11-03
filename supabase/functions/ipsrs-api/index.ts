@@ -173,73 +173,58 @@ async function staff(ctx:any,req?:Request){
    }
  }
  if(!uid)throw Error("Sesi tidak valid.");
- let {data,error}=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_manual_unblock_until").eq("auth_user_id",uid).maybeSingle();
+ // Enforce global lock at the API boundary as well as in the login screen.
+ // Direct API calls must not bypass the Form Blok Aplikasi frontend gate.
+ const {data:globalSetting,error:globalError}=await ctx.supabaseAdmin
+   .from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
+ if(globalError)throw globalError;
+ const globalLockState=String(globalSetting?.value||"").toUpperCase();
+ if(globalLockState==="AKTIF"){
+   throw Error("MODE FORM BLOK APLIKASI AKTIF. Login normal ditutup. Hanya KA IPSRS dapat melanjutkan melalui prosedur Reset.");
+ }
+ if(globalLockState!=="NONAKTIF"){
+   throw Error("Status blokir global tidak dapat diverifikasi. Login ditahan sementara.");
+ }
+
+ const staffFields="staff_id,nama,jabatan,role,bidang,status,lhi_access_status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_manual_unblock_until";
+ let {data,error}=await ctx.supabaseAdmin.from("staff").select(staffFields).eq("auth_user_id",uid).maybeSingle();
  if(error)throw error;
  if(!data){
-   const email=String(ctx.userClaims?.email||"").toLowerCase();
    const local=email.split("@")[0];
    const staffId=local==="kaipsrs"?"KAIPSRS":local;
-   const r=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("staff_id",staffId).maybeSingle();
+   const r=await ctx.supabaseAdmin.from("staff").select(staffFields).eq("staff_id",staffId).maybeSingle();
    if(r.error)throw r.error;
    data=r.data;
    if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);
  }
  if(!data)throw Error("Akun Supabase belum terhubung ke data petugas.");
 
- // LHI DISCIPLINE GATE:
- // Setiap petugas aktif yang tidak mempunyai satu pun LHI pada masing-masing
- // dari 7 hari kalender terakhir akan otomatis diblokir. Perhitungan memakai
- // tanggal Asia/Jakarta dan laporan yang belum dihapus.
- const manualUnblockUntil=data.lhi_manual_unblock_until?new Date(data.lhi_manual_unblock_until).getTime():0;
- const manualUnblockActive=manualUnblockUntil>0&&manualUnblockUntil>Date.now();
- if((String(data.status).toLowerCase()==="aktif"||String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI")&&!manualUnblockActive){
-   const todayStr=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
-   const today=new Date(todayStr+"T00:00:00Z");
-   const dates:string[]=[];
-   for(let i=1;i<=7;i++){
-     const d=new Date(today);
-     d.setUTCDate(d.getUTCDate()-i);
-     dates.push(d.toISOString().slice(0,10));
-   }
-   const start=dates[dates.length-1], end=dates[0];
-   const {data:lhis,error:lhiError}=await ctx.supabaseAdmin
-     .from("reports")
-     .select("tanggal")
-     .eq("staff_id",data.staff_id)
-     .is("deleted_at",null)
-     .gte("tanggal",start)
-     .lte("tanggal",end);
-   if(lhiError)throw lhiError;
-   const filled=new Set((lhis||[]).map((r:any)=>String(r.tanggal||"").slice(0,10)));
-   const missed=dates.filter(x=>!filled.has(x));
-   if(missed.length===7){
-     const previousStatus=data.status;
-     const {error:blockError}=await ctx.supabaseAdmin
-       .from("staff")
-       .update({status:"DIBLOKIR_LHI_7_HARI"})
-       .eq("staff_id",data.staff_id)
-       .eq("status","Aktif");
-     if(blockError)throw blockError;
-     await ctx.supabaseAdmin.from("audit_log").insert({
-       username:"SYSTEM",
-       staff_id:data.staff_id,
-       action:"BLOCK_LOGIN_LHI_7_HARI",
-       report_id:null,
-       keterangan:"Akun diblokir otomatis karena tidak mengisi LHI selama 7 hari kalender terakhir.",
-       field_changed:"status",
-       old_value:previousStatus,
-       new_value:"DIBLOKIR_LHI_7_HARI"
-     });
-     data.status="DIBLOKIR_LHI_7_HARI";
+ // Status kepegawaian dan hak akses LHI adalah dua hal yang berbeda.
+ // Scheduler menjadi satu-satunya sumber keputusan disiplin; login tidak
+ // menghitung ulang hari tanpa LHI dan tidak mengubah data kepegawaian.
+ const employmentStatus=String(data.status||"").trim().toLowerCase();
+ if(employmentStatus!=="aktif")throw Error("Akun kepegawaian Anda tidak aktif. Hubungi administrator IPSRS.");
+ const accessStatus=String(data.lhi_access_status||"NORMAL").trim().toUpperCase();
+ if(accessStatus!=="NORMAL"){
+   throw Error("Hak akses aplikasi Anda diblokir karena kewajiban Laporan Harian IPSRS belum dipenuhi. Silakan hubungi KA IPSRS untuk prosedur pemulihan.");
+ }
+
+ // KA IPSRS is intentionally kept out of the operational API while a grace
+ // recovery session is active. Recovery actions use the separate capability
+ // endpoint; this prevents refresh/login from turning the restricted session
+ // into a normal dashboard session.
+ if(String(data.role||"")==="KA_IPSRS"){
+   const {data:graceIncident,error:graceError}=await ctx.supabaseAdmin
+     .from("lhi_discipline_incidents").select("incident_id")
+     .eq("status","GRACE").order("incident_id",{ascending:false}).limit(1).maybeSingle();
+   if(graceError)throw graceError;
+   if(graceIncident){
+     throw Error("Sesi pemulihan KA IPSRS sedang dibatasi. Dashboard dan menu operasional tidak tersedia selama masa grace.");
    }
  }
- if(String(data.status).toUpperCase()==="DIBLOKIR_LHI_7_HARI"&&!manualUnblockActive){
-   throw Error("Anda tidak disiplin mengisi laporan selama 7 hari.");
- }
- if(String(data.status).toLowerCase()!=="aktif")throw Error("Akun petugas tidak aktif.");
  return data
 }
-async function audit(db:any,s:any,a:string,id:string,k:string,v:any={}){
+async function audit(db:any,s:any,a:string,id:string|null,k:string,v:any={}){
  const row={username:s.staff_id,staff_id:s.staff_id,action:a,report_id:id,keterangan:k,field_changed:v.field_changed||null,old_value:v.old_value??null,new_value:v.new_value??null,version_before:v.version_before??null,version_after:v.version_after??null};
  for(let attempt=1;attempt<=2;attempt++){
   try{
@@ -301,7 +286,30 @@ if(a==="apiGetOnlineUsers"){
 }
 if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
 if(a==="apiListStaff"){const {data,error}=await db.from("staff_dropdown").select("staff_id,nama,jabatan,role,bidang,status");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({...x,role_label:label(x.role)}))}}
-if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").select("staff_id,nama").eq("status","DIBLOKIR_LHI_7_HARI").order("nama");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama}))}}
+if(a==="apiGetDisciplineWarning"){const {data,error}=await db.from("staff").select("staff_id,nama").eq("lhi_access_status","BLOCKED_LHI").eq("status","Aktif").order("nama");if(error)throw error;return{ok:true,data:(data||[]).map((x:any)=>({staff_id:x.staff_id,nama:x.nama}))}}
+if(a==="apiGetLhiNotifications"){
+ const {data,error}=await db.from("lhi_discipline_notifications")
+  .select("notification_id,subject,message,created_at,read_at")
+  .eq("recipient_staff_id",s.staff_id)
+  .is("read_at",null)
+  .order("created_at",{ascending:false})
+  .limit(50);
+ if(error)throw error;
+ return{ok:true,data:data||[]};
+}
+if(a==="apiMarkLhiNotificationRead"){
+ const id=Number(d.notificationId);
+ if(!Number.isSafeInteger(id)||id<1)return{ok:false,msg:"ID notifikasi tidak valid."};
+ const {data,error}=await db.from("lhi_discipline_notifications")
+  .update({read_at:new Date().toISOString()})
+  .eq("notification_id",id)
+  .eq("recipient_staff_id",s.staff_id)
+  .is("read_at",null)
+  .select("notification_id")
+  .maybeSingle();
+ if(error)throw error;
+ return{ok:true,marked:Boolean(data)};
+}
 if(a==="apiGetReports"){const mode=String(d.viewMode||"daftar").toLowerCase()==="saya"?"saya":"daftar",z=range(d.bulan),ck=`reports:${mode}:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;const rows=await fetchAllPages(()=>{let q=db.from("reports").select("report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pelapor,pukul,nolk,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit_kind,spare_part_unit_status,spare_part_unit,type,jumlah,unit_status,unit_name,unit_type,unit_jumlah,spare_part_material_status,spare_part_material,spare_part_material_type,spare_part_material_jumlah,created_at,updated_at,created_by_username,created_by_staff_id,created_by_name,created_by_role,updated_by_staff_id,updated_by_name,updated_by_role,version").is("deleted_at",null).gte("tanggal",z.start).lte("tanggal",z.end).order("tanggal",{ascending:false}).order("pukul",{ascending:false}).order("report_id",{ascending:true});if(mode==="saya"){q=q.eq("staff_id",s.staff_id);}else if(d.staffIdFilter){q=q.eq("staff_id",d.staffIdFilter);}if(d.bidangFilter)q=q.eq("bidang_snapshot",d.bidangFilter);return q;});const policy=await reportPolicyBatch(db,s,rows);const visible=[];for(const r of rows){if(policy.visible.has(String(r.report_id)))visible.push(map(r,policy.editable.has(String(r.report_id))));}return cacheSet(ck,{ok:true,data:visible})}
 if(a==="apiGetOverdueReports"){const cutoff=String(d.cutoffDate||"").trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(cutoff))return{ok:false,msg:"Tanggal batas pengingat tidak valid."};const fields="report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pelapor,pukul,nolk,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit_kind,spare_part_unit_status,spare_part_unit,type,jumlah,unit_status,unit_name,unit_type,unit_jumlah,spare_part_material_status,spare_part_material,spare_part_material_type,spare_part_material_jumlah,created_at,updated_at,created_by_username,created_by_staff_id,created_by_name,created_by_role,updated_by_staff_id,updated_by_name,updated_by_role,version";const {data,error}=await db.from("reports").select(fields).is("deleted_at",null).lte("tanggal",cutoff).order("tanggal",{ascending:false}).order("pukul",{ascending:false}).limit(5000);if(error)throw error;const rows=data||[];const policy=await reportPolicyBatch(db,s,rows);const visible=[];for(const r of rows){if(policy.visible.has(String(r.report_id)))visible.push(map(r,policy.editable.has(String(r.report_id))));}return{ok:true,data:visible,cutoffDate:cutoff}}
 if(a==="apiGetReportById"){const {data,error}=await db.from("reports").select("*").eq("report_id",d.reportId).is("deleted_at",null).maybeSingle();if(error)throw error;if(!data)return{ok:false,msg:"Laporan tidak ditemukan."};if(!(await canViewReport(db,s,data)))return{ok:false,msg:"Anda tidak memiliki akses untuk melihat laporan ini."};const ce=await canEditReport(db,s,data);return{ok:true,data:map(data,ce.ok)}}
@@ -380,7 +388,7 @@ if(a==="apiDashboardStats"){
      dashboardPolicy=await reportPolicyBatch(db,s,recentCandidates);
      rr=recentCandidates.filter((r:any)=>dashboardPolicy.visible.has(String(r.report_id)));
    }catch(policyErr){
-     console.error("[DASHBOARD_RECENT_POLICY_FAILED]",String(policyErr?.message||policyErr));
+     console.error("[DASHBOARD_RECENT_POLICY_FAILED]",policyErr instanceof Error ? policyErr.message : String(policyErr));
      rr=[];
    }
  }
@@ -479,7 +487,7 @@ if(a==="apiTambahItem"){
  const rows=await fetchAllPages(()=>db.from("master_data").select("id,name,parent_id,is_active").eq("data_type","ITEM").eq("is_active",true).order("id"),1000);
  const {data:parents,error:pe}=await db.from("master_data").select("id,name,parent_id,data_type,is_active").in("data_type",["AREA","SUBAREA"]).eq("is_active",true).limit(5000);
  if(pe)throw pe;
- const parentById=new Map((parents||[]).map((x:any)=>[Number(x.id),x]));
+ const parentById=new Map<number,any>((parents||[]).map((x:any)=>[Number(x.id),x] as [number,any]));
  const locationOf=(parentId:any)=>{
   const p=parentById.get(Number(parentId));if(!p)return "Lokasi tidak diketahui";
   if(p.data_type==="SUBAREA"){
@@ -517,14 +525,14 @@ if(a==="apiManageMasterData"){
   if(!validTypes.includes(type))return{ok:false,msg:"Jenis master data tidak valid."};
   if(!name||name.length>120)return{ok:false,msg:"Nama wajib diisi (maksimal 120 karakter)."};
   if(["KATEGORI","AREA"].includes(type)&&parentId!==null)return{ok:false,msg:"Kategori dan Area Kerja utama tidak boleh memiliki induk."};
-  if(["SUBAREA","ITEM"].includes(type)&&(!Number.isInteger(parentId)||parentId<1))return{ok:false,msg:type==="SUBAREA"?"Pilih Area Kerja induk.":"Pilih Area Kerja atau Sub Area Kerja induk."};
+  if(["SUBAREA","ITEM"].includes(type)&&(parentId===null||!Number.isInteger(parentId)||parentId<1))return{ok:false,msg:type==="SUBAREA"?"Pilih Area Kerja induk.":"Pilih Area Kerja atau Sub Area Kerja induk."};
   if(type==="SUBAREA"||type==="ITEM"){
-   const {data:p,error:pe}=await db.from("master_data").select("id,name,is_active,data_type").eq("id",parentId).maybeSingle();if(pe)throw pe;
+   const {data:p,error:pe}=await db.from("master_data").select("id,name,is_active,data_type").eq("id",parentId as number).maybeSingle();if(pe)throw pe;
    const validParent=type==="SUBAREA"?p?.data_type==="AREA":(p?.data_type==="AREA"||p?.data_type==="SUBAREA");
    if(!p||!p.is_active||!validParent)return{ok:false,msg:"Data induk tidak ditemukan, tidak aktif, atau jenisnya tidak sesuai."};
   }
   let q=db.from("master_data").select("id,name").eq("data_type",type).ilike("name",name);
-  q=["KATEGORI","AREA"].includes(type)?q.is("parent_id",null):q.eq("parent_id",parentId);
+  q=["KATEGORI","AREA"].includes(type)?q.is("parent_id",null):q.eq("parent_id",parentId as number);
   const {data:dups,error:de}=await q.limit(1);if(de)throw de;if((dups||[]).length)return{ok:false,msg:"Nama sudah digunakan pada kelompok tersebut."};
   const {data:created,error}=await db.from("master_data").insert({data_type:type,parent_id:["SUBAREA","ITEM"].includes(type)?parentId:null,name,sort_order:Number.isInteger(Number(d.sort_order))?Math.max(0,Math.min(9999,Number(d.sort_order))):999,is_active:true,created_by:ctx.userClaims.sub,updated_by:ctx.userClaims.sub}).select("id,data_type,parent_id,name,sort_order,is_active").single();if(error)throw error;
   await audit(db,s,"MASTER_DATA_CREATE",null,"Menambah master data",{new_value:JSON.stringify(created)});
@@ -616,12 +624,56 @@ if(a==="apiReviewMasterItem"){
  return{ok:true,data:updated};
 }
 if(a==="apiGetAccessControl"){if(s.role!=="KA_IPSRS"&&s.role!=="ADMINISTRASI")return{ok:false,msg:"Tidak memiliki akses pengaturan."};const {data,error}=await db.from("access_settings").select("key,value");if(error)throw error;const o:any={};for(const x of data||[])o[String(x.key).toLowerCase()]=x.value;const {data:ep,error:ee}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",s.staff_id).eq("is_active",true).limit(1).maybeSingle();if(ee)throw ee;return{ok:true,laporan_tim:o.laporan_tim||"AKTIF",administrasi_edit:o.administrasi_edit||"NONAKTIF",lhi_global_block:o.lhi_global_block||"NONAKTIF",has_edit_permission:!!ep}}
-if(a==="apiGetLhiGraceStatus"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status kelonggaran LHI."};const {data:incident,error:ie}=await db.from("lhi_discipline_incidents").select("incident_id,started_at,deadline_at,status").order("incident_id",{ascending:false}).limit(1).maybeSingle();if(ie)throw ie;if(!incident)return{ok:true,data:null};const {data:rows,error:oe}=await db.from("lhi_discipline_obligations").select("staff_id,completed_at").eq("incident_id",incident.incident_id);if(oe)throw oe;const grouped=new Map<string,{completed:boolean}>();for(const row of rows||[]){const id=String(row.staff_id||"");if(!id)continue;const current=grouped.get(id);if(!current)grouped.set(id,{completed:!!row.completed_at});else if(!row.completed_at)current.completed=false;}const values=[...grouped.values()];const completed=values.filter(x=>x.completed).length;return{ok:true,data:{incident_id:incident.incident_id,status:incident.status,started_at:incident.started_at,deadline_at:incident.deadline_at,total:values.length,completed,pending:values.length-completed}}}
+if(a==="apiGetLhiAnchorReview"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memverifikasi tanggal mulai aktif petugas."};
+ const {data,error}=await db.from("staff")
+  .select("staff_id,nama,role,status,lhi_active_since,lhi_active_since_source,lhi_active_since_verified_at")
+  .eq("status","Aktif").order("nama");
+ if(error)throw error;
+ const {data:history,error:historyError}=await db.from("lhi_active_since_verifications")
+  .select("staff_id,source_reference,verified_by_staff_id,verified_at,verified_active_since")
+  .order("verified_at",{ascending:false}).limit(1000);
+ if(historyError)throw historyError;
+ const latest=new Map<string,any>();
+ for(const item of history||[]){
+   const id=String(item.staff_id||"");
+   if(id&&!latest.has(id))latest.set(id,item);
+ }
+ return{ok:true,data:(data||[]).map((item:any)=>{
+   const proof=latest.get(String(item.staff_id||""));
+   return{...item,
+     verification_reference:proof?.source_reference||null,
+     verification_by_staff_id:proof?.verified_by_staff_id||null,
+     verification_recorded_at:proof?.verified_at||item.lhi_active_since_verified_at||null
+   };
+ })};
+}
+if(a==="apiVerifyLhiActiveSince"){
+ if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat memverifikasi tanggal mulai aktif petugas."};
+ const target=String(d.staffId||"").trim();
+ const date=String(d.activeSinceDate||"").trim();
+ const reference=String(d.sourceReference||"").trim();
+ const actorAuthUserId=String(ctx.userClaims?.sub||"").trim();
+ if(!target||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!reference){
+   return{ok:false,msg:"Petugas, tanggal mulai aktif, dan referensi dokumen HR wajib diisi."};
+ }
+ if(!actorAuthUserId)return{ok:false,msg:"Identitas akun KA IPSRS tidak dapat diverifikasi."};
+ const {data,error}=await db.rpc("verify_lhi_active_since_v2",{
+   p_staff_id:target,
+   p_active_since_date:date,
+   p_source_reference:reference,
+   p_actor_auth_user_id:actorAuthUserId
+ });
+ if(error)throw error;
+ if(!data||data.ok!==true)return{ok:false,msg:"Verifikasi tanggal mulai aktif gagal."};
+ return{ok:true,data,msg:"Tanggal mulai aktif berhasil diverifikasi berdasarkan referensi HR."};
+}
+if(a==="apiGetLhiGraceStatus"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status kelonggaran LHI."};const {data,error}=await db.rpc("get_lhi_grace_status_v2");if(error)throw error;return{ok:true,data:data||null}}
 if(a==="apiListEditPermissions"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat izin edit."};const {data,error}=await db.from("edit_permissions").select("*").order("created_at",{ascending:false});if(error)throw error;return{ok:true,data:data||[]}}
-if(a==="apiStartLhiGrace"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat membuka blokir dan memulai kelonggaran 12 jam."};const {data,error}=await db.rpc("open_lhi_global_grace",{p_staff_id:s.staff_id,p_staff_name:s.nama});if(error)throw error;if(!data||data.ok!==true)return{ok:false,msg:data?.msg||"Pembukaan blokir gagal. Mode Blok Aplikasi tetap aktif."};return{ok:true,data,msg:data.already_open?"Kelonggaran 12 jam sudah berjalan.":"Blokir global dan seluruh blokir individual berhasil dibuka. Kelonggaran 12 jam dimulai."}}
+if(a==="apiStartLhiGrace"){return{ok:false,msg:"Jalur Reset lama dinonaktifkan. Gunakan restricted recovery session melalui prosedur Reset."}}
 if(a==="apiSetAccessSetting"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengubah pengaturan."};const key=String(d.key||"").trim(),value=String(d.value||"").trim();if(!["LAPORAN_TIM","ADMINISTRASI_EDIT"].includes(key)||!["AKTIF","NONAKTIF"].includes(value))return{ok:false,msg:"Pengaturan tidak valid."};const {error}=await db.from("access_settings").upsert({key,value,updated_at:new Date().toISOString(),updated_by_staff_id:s.staff_id,updated_by_name:s.nama},{onConflict:"key"});if(error)throw error;return{ok:true}}
 if(a==="apiSetEditPermission"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengubah izin."};const g=String(d.grantedToStaffId||"").trim(),t=String(d.targetStaffId||"").trim(),active=!!d.isActive;if(!g||!t||g===t)return{ok:false,msg:"Pemberi dan target harus berbeda."};const {data:target}=await db.from("staff").select("staff_id,nama,role").eq("staff_id",t).maybeSingle();if(!target)return{ok:false,msg:"Target petugas tidak ditemukan."};if(target.role==="KA_IPSRS")return{ok:false,msg:"Laporan KA IPSRS tidak dapat diberi izin edit."};const {data:grant}=await db.from("staff").select("staff_id,nama").eq("staff_id",g).maybeSingle();if(!grant)return{ok:false,msg:"Pemberi izin tidak ditemukan."};const {data:existing,error:existingError}=await db.from("edit_permissions").select("permission_id").eq("granted_to_staff_id",g).eq("target_staff_id",t).limit(1).maybeSingle();if(existingError)throw existingError;const now=new Date().toISOString();if(existing?.permission_id){const {error}=await db.from("edit_permissions").update({granted_to_staff_name:grant.nama,target_staff_name:target.nama,is_active:active,granted_by_staff_id:s.staff_id,granted_by_name:s.nama,updated_at:now}).eq("permission_id",existing.permission_id);if(error)throw error;}else{const permission_id="PERM-"+crypto.randomUUID().replaceAll("-","").slice(0,8).toUpperCase();const {error}=await db.from("edit_permissions").insert({permission_id,granted_to_staff_id:g,granted_to_staff_name:grant.nama,target_staff_id:t,target_staff_name:target.nama,is_active:active,granted_by_staff_id:s.staff_id,granted_by_name:s.nama,created_at:now,updated_at:now});if(error)throw error;}return{ok:true}}
-if(a==="apiAdminUnblockLhi"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat mengaktifkan kembali petugas yang diblokir LHI."};const target=String(d.staffId||"").trim();if(!target)return{ok:false,msg:"Staff wajib dipilih."};const days=Math.max(1,Math.min(30,Number(d.days||7)));const until=new Date(Date.now()+days*86400000).toISOString();const {data:ts,error:te}=await db.from("staff").select("staff_id,nama,role,bidang,status,lhi_manual_unblock_until").eq("staff_id",target).maybeSingle();if(te)throw te;if(!ts)return{ok:false,msg:"Petugas tidak ditemukan."};if(ts.role==="KA_IPSRS")return{ok:false,msg:"KA IPSRS tidak perlu diaktifkan melalui mekanisme ini."};const {error:ue}=await db.from("staff").update({status:"Aktif",lhi_manual_unblock_until:until}).eq("staff_id",target);if(ue)throw ue;await audit(db,s,"ADMIN_UNBLOCK_LHI_7_HARI",null,"KA IPSRS mengaktifkan kembali petugas setelah blokir disiplin LHI.",{field_changed:"status,lhi_manual_unblock_until",old_value:ts.status,new_value:"Aktif sampai "+until});return{ok:true,msg:"Petugas berhasil diaktifkan kembali.",data:{staff_id:target,nama:ts.nama,status:"Aktif",lhi_manual_unblock_until:until}}}
+if(a==="apiAdminUnblockLhi"){if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat menjalankan pemulihan LHI."};return{ok:false,msg:"Pembukaan blokir individual tidak dapat dilakukan secara manual. Gunakan prosedur Reset dan perintah Buka Blokir dan Mulai Kelonggaran 12 Jam agar blokir global dan individual dipulihkan dalam satu transaksi."}}
 if(a==="apiAdminResetPassword"){if(s.role!=="KA_IPSRS"&&s.role!=="ADMINISTRASI")return{ok:false,msg:"Tidak memiliki hak reset password."};const target=String(d.staffId||"").trim(),newp=String(d.newPassword||"");if(!target||newp.length<6)return{ok:false,msg:"Staff dan password baru wajib diisi; minimal 6 karakter."};const {data:ts,error:te}=await db.from("staff").select("staff_id,auth_user_id,role").eq("staff_id",target).maybeSingle();if(te)throw te;if(!ts?.auth_user_id)return{ok:false,msg:"Akun Auth target belum terhubung."};if(s.role==="ADMINISTRASI"&&ts.role==="KA_IPSRS")return{ok:false,msg:"Administrasi tidak dapat reset password KA IPSRS."};const {error}=await db.auth.admin.updateUserById(ts.auth_user_id,{password:newp});if(error)throw error;await audit(db,s,"ADMIN_RESET_PASSWORD",null,"Reset password petugas",{new_value:target});return{ok:true,msg:"Password petugas berhasil direset."}}if(a==="apiChangePassword"){const authUid=String(s.auth_user_id||ctx.userClaims?.sub||"").trim();if(!authUid)return{ok:false,msg:"Akun Auth tidak ditemukan."};const oldp=String(d.oldPassword||""),newp=String(d.newPassword||"");if(newp.length<6)return{ok:false,msg:"Password baru minimal 6 karakter."};const {data:u,error:ue}=await db.auth.admin.getUserById(authUid);if(ue||!u?.user?.email)return{ok:false,msg:"Akun Auth tidak ditemukan."};const pub=JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS")||"{}")["default"];const ac=createClient(Deno.env.get("SUPABASE_URL")!,pub,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});const {error:oe}=await ac.auth.signInWithPassword({email:u.user.email,password:oldp});if(oe)return{ok:false,msg:"Password lama salah."};const {error}=await db.auth.admin.updateUserById(authUid,{password:newp});if(error)throw error;return{ok:true,msg:"Password berhasil diganti."}}
 await db.from("staff").update({last_seen_at:new Date().toISOString()}).eq("staff_id",s.staff_id);return{ok:false,msg:"Action API tidak dikenal: "+a}}
 export default{fetch:withSupabase({auth:"user",cors:{headers:cors}},async(req,ctx)=>{if(req.method==="OPTIONS")return new Response("ok",{headers:cors});try{const b=await req.json();return out(await act(ctx,b.action,b.data||{},req))}catch(e:any){console.error(e);return out({ok:false,msg:e?.message||"Terjadi kesalahan server."},400)}})};

@@ -1,0 +1,105 @@
+name: LHI Discipline and Recovery Tests
+
+on:
+  push:
+    branches:
+      - repair/lhi-status-separation-20261103
+    paths:
+      - "frontend/app.js"
+      - "frontend/login-fast.js"
+      - "supabase/config.toml"
+      - "supabase/functions/ipsrs-api/**"
+      - "supabase/functions/lhi-block-status/**"
+      - "supabase/functions/lhi-reset-verify/**"
+      - "supabase/functions/lhi-recovery-exchange/**"
+      - "supabase/functions/lhi-recovery-action/**"
+      - "supabase/migrations/**"
+      - "docs/drafts/*lhi*.sql"
+      - "docs/audit/*lhi*.sql"
+      - "tests/lhi-*.test.mjs"
+      - "tests/fixtures/**"
+      - "tests/integration/**"
+      - ".github/workflows/lhi-discipline-tests.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "frontend/app.js"
+      - "frontend/login-fast.js"
+      - "supabase/config.toml"
+      - "supabase/functions/ipsrs-api/**"
+      - "supabase/functions/lhi-block-status/**"
+      - "supabase/functions/lhi-reset-verify/**"
+      - "supabase/functions/lhi-recovery-exchange/**"
+      - "supabase/functions/lhi-recovery-action/**"
+      - "supabase/migrations/**"
+      - "docs/drafts/*lhi*.sql"
+      - "docs/audit/*lhi*.sql"
+      - "tests/lhi-*.test.mjs"
+      - "tests/fixtures/**"
+      - "tests/integration/**"
+      - ".github/workflows/lhi-discipline-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lhi-discipline-unit-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ipsrs_lhi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ipsrs_lhi_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check frontend JavaScript syntax
+        run: node --check frontend/app.js && node --check frontend/login-fast.js
+      - name: Run LHI discipline and recovery unit tests
+        run: node --test tests/lhi-*.test.mjs
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Functions
+        run: |
+          deno check supabase/functions/ipsrs-api/index.ts
+          deno check supabase/functions/lhi-block-status/index.ts
+          deno check supabase/functions/lhi-reset-verify/index.ts
+          deno check supabase/functions/lhi-recovery-exchange/index.ts
+          deno check supabase/functions/lhi-recovery-action/index.ts
+      - name: Install PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Create isolated PostgreSQL baseline
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 -f tests/fixtures/lhi-postgres-baseline.sql
+      - name: Apply LHI SQL drafts and run PostgreSQL integration
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for sql_file in docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql; do
+            echo "Applying isolated test SQL: $sql_file"
+            psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 -f "$sql_file"
+          done
+          psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 -f tests/integration/lhi-postgres-integration.sql
