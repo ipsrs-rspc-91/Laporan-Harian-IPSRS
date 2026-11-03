@@ -98,7 +98,7 @@ jobs:
           PGPASSWORD: postgres
         run: |
           set -euo pipefail
-          for sql_file in docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql supabase/migrations/20261103120000_lhi_restricted_recovery_challenges.sql docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql; do
+          for sql_file in docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql docs/drafts/2026-11-03-lhi-restricted-recovery-challenges-review.sql docs/drafts/2026-11-03-lhi-scheduler-v2-review.sql docs/drafts/2026-11-03-lhi-atomic-reset-grace-v2-review.sql; do
             echo "Applying isolated test SQL: $sql_file"
             psql -h 127.0.0.1 -U postgres -d ipsrs_lhi_test -v ON_ERROR_STOP=1 -f "$sql_file"
           done
