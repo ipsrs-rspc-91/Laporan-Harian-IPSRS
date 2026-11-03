@@ -286,6 +286,55 @@ REVOKE ALL ON FUNCTION public.open_lhi_global_grace_v2(text)
 GRANT EXECUTE ON FUNCTION public.open_lhi_global_grace_v2(text)
   TO service_role;
 
+-- Read-only status projection for the normal service-role API. Snapshot tables
+-- intentionally deny direct SELECT to service_role; this SECURITY DEFINER RPC
+-- is the only supported aggregate read surface for the operational panel.
+CREATE OR REPLACE FUNCTION public.get_lhi_grace_status_v2()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  WITH current_incident AS (
+    SELECT incident_id, grace_cycle, status, started_at, deadline_at
+    FROM public.lhi_discipline_incidents
+    ORDER BY incident_id DESC
+    LIMIT 1
+  ),
+  counts AS (
+    SELECT
+      count(*) FILTER (WHERE m.obligation_status IN ('PENDING', 'COMPLETED'))::integer AS total,
+      count(*) FILTER (WHERE m.obligation_status = 'COMPLETED')::integer AS completed,
+      count(*) FILTER (WHERE m.obligation_status = 'PENDING')::integer AS pending,
+      count(*) FILTER (WHERE m.obligation_status = 'EXCLUDED_INACTIVE')::integer AS excluded,
+      count(*)::integer AS snapshot_total
+    FROM public.lhi_discipline_snapshot_members m
+    JOIN current_incident i
+      ON i.incident_id = m.incident_id
+     AND i.grace_cycle = m.grace_cycle
+  )
+  SELECT jsonb_build_object(
+    'incident_id', i.incident_id,
+    'grace_cycle', i.grace_cycle,
+    'status', i.status,
+    'started_at', i.started_at,
+    'deadline_at', i.deadline_at,
+    'total', c.total,
+    'completed', c.completed,
+    'pending', c.pending,
+    'excluded', c.excluded,
+    'snapshot_total', c.snapshot_total
+  )
+  FROM current_incident i
+  CROSS JOIN counts c;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_lhi_grace_status_v2()
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_lhi_grace_status_v2()
+  TO service_role;
+
 COMMIT;
 
 -- Required integration tests before use:
