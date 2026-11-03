@@ -441,6 +441,13 @@ test('direct Area Kerja group selection is retained for Item Baru', async ({ pag
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  // Wait for the asynchronous startup/access check to finish before arranging
+  // the direct-area fixture; otherwise the late master-data load can replace
+  // the synthetic option while the picker is being rebuilt.
+  await page.waitForFunction(
+    () => document.getElementById('authLoading')?.classList.contains('hidden') === true,
+    { timeout: 15000 },
+  );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
   await page.locator('#loginScreen').evaluate(el => el.remove());
 
