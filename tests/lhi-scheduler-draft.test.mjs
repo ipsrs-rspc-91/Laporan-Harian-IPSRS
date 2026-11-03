@@ -81,7 +81,7 @@ test("each grace evaluation is isolated to the active Reset cycle", () => {
 
 test("scheduler refuses inconsistent global lock and missing anchor", () => {
   assert.match(sql, /lhi_active_since IS NULL/);
-  assert.match(sql, /Konfigurasi LHI_GLOBAL_BLOCK tidak ditemukan/);
+  assert.match(sql, /Konfigurasi LHI_GLOBAL_BLOCK tidak ada atau tidak valid/);
   assert.match(sql, /Insiden LOCKED ditemukan tetapi LHI_GLOBAL_BLOCK tidak AKTIF/);
   assert.match(sql, /Incident GRACE ditemukan tetapi LHI_GLOBAL_BLOCK bukan NONAKTIF/);
   assert.match(sql, /LHI_GLOBAL_BLOCK AKTIF tetapi incident LOCKED tidak ditemukan/);
