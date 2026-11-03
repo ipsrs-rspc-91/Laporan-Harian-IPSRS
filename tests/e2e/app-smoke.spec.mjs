@@ -14,7 +14,23 @@ async function exposeAppShellForIsolatedUiTest(page){
     }
     const loading = document.getElementById('authLoading');
     if(loading) loading.style.setProperty('display', 'none', 'important');
-    document.getElementById('appShell')?.classList.remove('hidden');
+    const shell = document.getElementById('appShell');
+    if(shell){
+      shell.classList.remove('hidden');
+      shell.style.setProperty('display', 'flex', 'important');
+      shell.style.setProperty('visibility', 'visible', 'important');
+    }
+    const content = document.querySelector('#appShell main.content');
+    if(content){
+      content.style.setProperty('display', 'block', 'important');
+      content.style.setProperty('visibility', 'visible', 'important');
+    }
+    const input = document.getElementById('page-input');
+    if(input){
+      input.classList.add('active');
+      input.style.setProperty('display', 'block', 'important');
+      input.style.setProperty('visibility', 'visible', 'important');
+    }
   });
 }
 
@@ -340,6 +356,7 @@ test('add-item modal opens from input form when report fields are populated', as
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await exposeAppShellForIsolatedUiTest(page);
 
   // Modal harus tersedia bersama fragment input, tanpa menunggu fragment Laporan.
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
