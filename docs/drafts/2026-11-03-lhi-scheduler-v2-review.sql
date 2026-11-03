@@ -116,8 +116,8 @@ BEGIN
   WHERE key = 'LHI_GLOBAL_BLOCK'
   FOR UPDATE;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Konfigurasi LHI_GLOBAL_BLOCK tidak ditemukan; scheduler dihentikan.';
+  IF NOT FOUND OR v_lock IS NULL OR v_lock NOT IN ('AKTIF', 'NONAKTIF') THEN
+    RAISE EXCEPTION 'Konfigurasi LHI_GLOBAL_BLOCK tidak ada atau tidak valid; scheduler dihentikan.';
   END IF;
 
   -- There may be only one active incident at a time. Multiple LOCKED/GRACE
