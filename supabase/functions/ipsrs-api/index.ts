@@ -289,7 +289,7 @@ if(a==="apiHeartbeat"){
  return{ok:true,last_seen_at:now};
 }
 if(a==="apiGetOnlineUsers"){
- if(s.role!=="KA_IPSRS")return{ok:false,msg:"Hanya KA IPSRS yang dapat melihat status online dan login terakhir."};
+ // Data status petugas dibuka untuk seluruh anggota IPSRS yang sudah terautentikasi.
  const {data,error}=await db.from("staff").select("staff_id,nama,jabatan,role,bidang,status,last_login_at,last_seen_at,last_login_device").eq("status","Aktif").order("nama");
  if(error)throw error;
  const now=Date.now(), threshold=3*60*1000;

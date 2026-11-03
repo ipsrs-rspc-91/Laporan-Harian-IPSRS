@@ -770,7 +770,7 @@
     if(pill) pill.innerText = 'Menampilkan: Semua Petugas';
 
     const onlineNav=document.getElementById('nav-online-users');
-    if(onlineNav) onlineNav.classList.toggle('hidden', CURRENT_SESSION.role !== 'KA_IPSRS');
+    if(onlineNav) onlineNav.classList.remove('hidden');
   }
 
   function canEditReport(report){
@@ -854,7 +854,7 @@
   }
 
   async function loadOnlineUsers(){
-    if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
+    if(!CURRENT_SESSION) return;
     const box=document.getElementById('onlineUsersList');
     const meta=document.getElementById('onlineUsersMeta');
     if(!box) return;
@@ -1102,11 +1102,11 @@
       buildMonthOptions();
     }
     if(name === 'online'){
-      if(!CURRENT_SESSION || CURRENT_SESSION.role!=='KA_IPSRS') return;
+      if(!CURRENT_SESSION) return;
       // Refresh pertama: hanya load data; fungsi sendiri menjaga DOM agar tidak flicker.
       loadOnlineUsers();
       if(IPSRS_ONLINE_REFRESH_TIMER) clearInterval(IPSRS_ONLINE_REFRESH_TIMER);
-      IPSRS_ONLINE_REFRESH_TIMER=setInterval(()=>{ if(CURRENT_SESSION && CURRENT_SESSION.role==='KA_IPSRS' && document.getElementById('page-online')?.classList.contains('active')) loadOnlineUsers(); },30000);
+      IPSRS_ONLINE_REFRESH_TIMER=setInterval(()=>{ if(CURRENT_SESSION && document.getElementById('page-online')?.classList.contains('active')) loadOnlineUsers(); },30000);
     }else if(IPSRS_ONLINE_REFRESH_TIMER){
       clearInterval(IPSRS_ONLINE_REFRESH_TIMER);
       IPSRS_ONLINE_REFRESH_TIMER=null;
