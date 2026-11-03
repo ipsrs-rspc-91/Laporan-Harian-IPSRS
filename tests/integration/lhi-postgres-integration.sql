@@ -426,5 +426,35 @@ BEGIN
      OR COALESCE((v_result ->> 'deadline_reached')::boolean, true) IS NOT FALSE THEN
     RAISE EXCEPTION 'Scheduler did not continue an existing GRACE incident with provisional HR anchors: %', v_result;
   END IF;
+
+  -- Once every legacy snapshot member submits one valid LHI during the
+  -- 12-hour window, the deadline evaluation completes the incident. The next
+  -- cycle must pause cleanly until HR verifies all active_since anchors.
+  UPDATE public.lhi_discipline_incidents
+  SET started_at = clock_timestamp() - interval '13 hours',
+      deadline_at = clock_timestamp() - interval '1 hour'
+  WHERE incident_id = v_incident;
+
+  INSERT INTO public.reports (report_id, staff_id, tanggal, created_at)
+  VALUES
+    ('REPORT-LEGACY-GRACE-A', 'LEGACY-TEST',
+      (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date, clock_timestamp() - interval '12 hours'),
+    ('REPORT-LEGACY-GRACE-B', 'STAFF-TEST',
+      (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date, clock_timestamp() - interval '12 hours');
+
+  SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
+  IF v_result ->> 'mode' IS DISTINCT FROM 'GRACE_COMPLETED' THEN
+    RAISE EXCEPTION 'Legacy grace did not complete after all snapshot members submitted LHI: %', v_result;
+  END IF;
+
+  SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
+  IF v_result ->> 'mode' IS DISTINCT FROM 'ANCHOR_RECONCILIATION_REQUIRED' THEN
+    RAISE EXCEPTION 'New discipline cycle did not pause cleanly pending HR anchors: %', v_result;
+  END IF;
+
+  SELECT value INTO v_status FROM public.access_settings WHERE key = 'LHI_GLOBAL_BLOCK';
+  IF v_status IS DISTINCT FROM 'NONAKTIF' THEN
+    RAISE EXCEPTION 'Global lock was reactivated while the next cycle was waiting for HR anchor reconciliation.';
+  END IF;
 END;
 $legacy_reset_test$;
