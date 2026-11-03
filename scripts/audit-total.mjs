@@ -385,7 +385,7 @@ if (changedJs.length) {
 const functionNames=new Map();
 for (const f of jsFiles) {
   const s=fs.readFileSync(f,'utf8');
-  for (const m of s.matchAll(/(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
+  for (const m of s.matchAll(/(?:^|\n)(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
     const n=m[1]; if(!functionNames.has(n)) functionNames.set(n,[]); functionNames.get(n).push(rel(f));
   }
 }
