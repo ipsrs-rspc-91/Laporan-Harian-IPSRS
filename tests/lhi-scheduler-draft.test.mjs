@@ -67,6 +67,18 @@ test("grace obligations exclude inactive staff and reverse cancelled reports", (
   assert.match(sql, /OBLIGATION_REOPENED/);
 });
 
+test("every grace status transition records exact old/new state, report reference, and system actor", () => {
+  assert.match(sql, /WITH to_exclude AS MATERIALIZED/);
+  assert.match(sql, /RETURNING m\\.member_id, x\\.old_status/);
+  assert.match(sql, /c\\.old_status,\\s*'EXCLUDED_INACTIVE', 'SYSTEM'/);
+  assert.match(sql, /m\\.qualifying_report_id AS old_report_id/);
+  assert.match(sql, /COALESCE\\(c\\.new_report_id, c\\.old_report_id\\)/);
+  assert.match(sql, /'detected_by', 'LHI_SCHEDULER_V2'/);
+  assert.match(sql, /'GRACE_COMPLETED'/);
+  assert.match(sql, /m\\.obligation_status, m\\.obligation_status, 'SYSTEM'/);
+  assert.match(sql, /'deadline_at', v_grace\\.deadline_at/);
+});
+
 test("scheduler creates only a LOCKED incident; snapshot waits for atomic Reset", () => {
   assert.doesNotMatch(sql, /INSERT INTO public\.lhi_discipline_snapshot_members/i);
   assert.match(sql, /locked_at/);
