@@ -59,8 +59,12 @@ test("only service_role can execute the atomic Reset RPC", () => {
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.open_lhi_global_grace_v2\(text\)[\s\S]*TO service_role/);
 });
 
-test("a new Reset after grace relock creates a new immutable snapshot cycle", () => {
-  assert.match(sql, /UNIQUE \(incident_id, grace_cycle, staff_id\)/);
+test("a new Reset after grace relock creates a new immutable snapshot cycle", async () => {
+  const schema = await readFile(
+    new URL("../docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(schema, /UNIQUE \(incident_id, grace_cycle, staff_id\)/);
   assert.match(sql, /ON CONFLICT \(incident_id, grace_cycle, staff_id\) DO NOTHING/);
   assert.match(sql, /v_incident\.grace_cycle \+ 1/);
   assert.match(sql, /WHERE m\.incident_id = v_incident\.incident_id\s+AND m\.grace_cycle = v_incident\.grace_cycle \+ 1\s+AND m\.snapshot_created_at = v_now/);
