@@ -280,7 +280,7 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
     { timeout: 15000 },
   );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
-  await page.locator('#loginScreen').evaluate(el => el.classList.add('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
 
   const setup = await page.evaluate(() => {
@@ -342,7 +342,7 @@ test('add-item modal opens from input form when report fields are populated', as
   // Smoke test berjalan tanpa autentikasi; tampilkan shell seperti tes form mobile
   // agar visibility modal diuji, bukan status hidden pada shell login.
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
-  await page.locator('#loginScreen').evaluate(el => el.classList.add('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
   await expect(page.locator('#itemBaruAreaLabel')).toBeAttached();
   await expect(page.locator('#itemBaruInput')).toBeAttached();
@@ -408,7 +408,7 @@ test('area picker stays open and explains when Item Baru is tapped without selec
     { timeout: 15000 },
   );
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
-  await page.locator('#loginScreen').evaluate(el => el.classList.add('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
 
   const setup = await page.evaluate(() => {
     const area = document.getElementById('AreaKerja');
@@ -442,7 +442,7 @@ test('direct Area Kerja group selection is retained for Item Baru', async ({ pag
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
   await page.locator('#appShell').evaluate(el => el.classList.remove('hidden'));
-  await page.locator('#loginScreen').evaluate(el => el.classList.add('hidden'));
+  await page.locator('#loginScreen').evaluate(el => el.remove());
 
   const setup = await page.evaluate(() => {
     const area = document.getElementById('AreaKerja');
