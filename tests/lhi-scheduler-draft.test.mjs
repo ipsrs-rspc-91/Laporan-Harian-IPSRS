@@ -91,8 +91,8 @@ test("warning team broadcast contains all names and day-7 notice explains day-8 
   assert.match(sql, /string_agg\(x\.nama, ', ' ORDER BY x\.nama\)/);
   assert.match(sql, /Blokir akses individual berlaku pada hari ke-8/);
   assert.match(sql, /:TEAM/);
-  assert.match(sql, /md5\(string_agg\(x\.staff_id, ',' ORDER BY x\.staff_id\)\) AS fingerprint/);
-  assert.match(sql, /:TEAM:' \|\| v_stage\.fingerprint/);
+  assert.match(sql, /:TEAM'/);
+  assert.match(sql, /ON CONFLICT \(event_key, recipient_staff_id\) DO UPDATE/);
   assert.match(sql, /FROM public\.staff s\s+WHERE s\.status = 'Aktif'/);
   assert.doesNotMatch(sql, /:PERSONAL:/);
 });
@@ -103,15 +103,15 @@ test("scheduler functions are not executable by client roles", () => {
 });
 
 test("day-8 in-app notification reaches active staff whose access is not blocked", () => {
-  const start = sql.indexOf("'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM:'");
+  const start = sql.indexOf("'LHI:' || v_today_wib::text || ':INDIVIDUAL_BLOCK:TEAM'");
   assert.notEqual(start, -1);
-  const end = sql.indexOf("ON CONFLICT (event_key, recipient_staff_id) DO NOTHING;", start);
+  const end = sql.indexOf("ON CONFLICT (event_key, recipient_staff_id) DO UPDATE", start);
   assert.notEqual(end, -1);
   const recipientQuery = sql.slice(start, end);
   assert.match(recipientQuery, /WHERE s\.status = 'Aktif'/);
   assert.match(recipientQuery, /COALESCE\(s\.lhi_access_status, 'NORMAL'\) <> 'BLOCKED_LHI'/);
-  assert.match(sql, /md5\(string_agg\(s\.staff_id, ',' ORDER BY s\.staff_id\)\)/);
-  assert.match(sql, /:INDIVIDUAL_BLOCK:TEAM:' \|\| v_fingerprint/);
+  assert.match(sql, /:INDIVIDUAL_BLOCK:TEAM'/);
+  assert.match(sql, /ON CONFLICT \(event_key, recipient_staff_id\) DO UPDATE/);
 });
 
 test("scheduler fails closed when multiple LOCKED or GRACE incidents coexist", () => {
