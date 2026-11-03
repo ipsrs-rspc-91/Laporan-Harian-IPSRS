@@ -614,3 +614,109 @@ BEGIN
   END IF;
 END;
 $legacy_reset_test$;
+
+
+-- README acceptance: cancelling the only grace-period LHI before deadline
+-- must reverse COMPLETED to PENDING and relock the global application.
+DO $cancelled_grace_report_test$
+DECLARE
+  v_incident bigint;
+  v_member bigint;
+  v_result jsonb;
+  v_lock text;
+BEGIN
+  INSERT INTO public.staff (staff_id, nama, role, status)
+  VALUES ('CANCEL-TEST', 'Petugas Uji Pembatalan', 'STAFF', 'Aktif');
+
+  UPDATE public.access_settings
+  SET value = 'NONAKTIF'
+  WHERE key = 'LHI_GLOBAL_BLOCK';
+
+  INSERT INTO public.lhi_discipline_incidents
+    (started_at, deadline_at, status, started_by_staff_id, started_by_name, grace_cycle)
+  VALUES
+    (clock_timestamp() - interval '1 hour',
+     clock_timestamp() + interval '1 hour',
+     'GRACE', 'KA-TEST', 'KA IPSRS Test', 1)
+  RETURNING incident_id INTO v_incident;
+
+  INSERT INTO public.lhi_discipline_snapshot_members
+    (incident_id, grace_cycle, staff_id, snapshot_created_at,
+     anchor_input_at, missed_full_days_at_snapshot,
+     employment_status_at_snapshot, obligation_status)
+  VALUES
+    (v_incident, 1, 'CANCEL-TEST', clock_timestamp() - interval '1 hour',
+     NULL, 9, 'Aktif', 'PENDING')
+  RETURNING member_id INTO v_member;
+
+  INSERT INTO public.reports (report_id, staff_id, tanggal, created_at)
+  VALUES ('REPORT-CANCEL-GRACE', 'CANCEL-TEST',
+          (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date,
+          clock_timestamp() - interval '30 minutes');
+
+  SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
+  IF v_result ->> 'mode' IS DISTINCT FROM 'GRACE'
+     OR COALESCE((v_result ->> 'deadline_reached')::boolean, true) IS NOT FALSE THEN
+    RAISE EXCEPTION 'Valid grace-period report did not remain in GRACE before deadline: %', v_result;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.lhi_discipline_snapshot_members
+    WHERE member_id = v_member
+      AND obligation_status = 'COMPLETED'
+      AND qualifying_report_id = 'REPORT-CANCEL-GRACE'
+  ) THEN
+    RAISE EXCEPTION 'Valid grace-period report did not complete its snapshot obligation.';
+  END IF;
+
+  UPDATE public.reports
+  SET deleted_at = clock_timestamp()
+  WHERE report_id = 'REPORT-CANCEL-GRACE';
+
+  SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
+  IF v_result ->> 'mode' IS DISTINCT FROM 'GRACE'
+     OR COALESCE((v_result ->> 'deadline_reached')::boolean, true) IS NOT FALSE THEN
+    RAISE EXCEPTION 'Cancellation should reopen the obligation while grace remains active: %', v_result;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.lhi_discipline_snapshot_members
+    WHERE member_id = v_member
+      AND obligation_status = 'PENDING'
+      AND qualifying_report_id IS NULL
+      AND completed_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Cancelled sole grace report did not reopen the snapshot obligation.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.lhi_discipline_obligation_events
+    WHERE member_id = v_member
+      AND event_type = 'REPORT_CANCELLED'
+      AND report_id = 'REPORT-CANCEL-GRACE'
+      AND old_status = 'COMPLETED'
+      AND new_status = 'PENDING'
+      AND actor_staff_id = 'SYSTEM'
+  ) THEN
+    RAISE EXCEPTION 'Cancellation did not append the exact REPORT_CANCELLED transition.';
+  END IF;
+
+  UPDATE public.lhi_discipline_incidents
+  SET started_at = clock_timestamp() - interval '13 hours',
+      deadline_at = clock_timestamp() - interval '1 hour'
+  WHERE incident_id = v_incident;
+
+  SELECT public.run_lhi_discipline_scheduler_v2() INTO v_result;
+  IF v_result ->> 'mode' IS DISTINCT FROM 'GLOBAL_RELOCKED'
+     OR COALESCE((v_result ->> 'pending')::integer, 0) <> 1 THEN
+    RAISE EXCEPTION 'Cancelled sole LHI did not cause global relock at the deadline: %', v_result;
+  END IF;
+
+  SELECT value INTO v_lock
+  FROM public.access_settings
+  WHERE key = 'LHI_GLOBAL_BLOCK';
+  IF v_lock IS DISTINCT FROM 'AKTIF' THEN
+    RAISE EXCEPTION 'Global block was not reactivated after cancelled sole grace report.';
+  END IF;
+END;
+$cancelled_grace_report_test$;
