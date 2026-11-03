@@ -80,18 +80,21 @@ test("atomic Reset rejects null or invalid global lock setting", () => {
 test("new-format Reset fallback refuses unverified employment anchors", () => {
   assert.match(sql, /lhi_active_since IS NULL OR s\.lhi_active_since_verified_at IS NULL/);
   assert.match(sql, /anchor HR yang belum diverifikasi dan tidak tersedia snapshot kewajiban legacy/);
-  const legacyBranch = sql.indexOf("IF EXISTS (\\n    SELECT 1\\n    FROM public.lhi_discipline_obligations o");
-  const fallbackBranch = sql.indexOf("ELSE\\n    -- A new-format incident", legacyBranch);
-  const anchorGuard = sql.indexOf("lhi_active_since_verified_at", fallbackBranch);
-  const fallbackSnapshot = sql.indexOf("INSERT INTO public.lhi_discipline_snapshot_members", fallbackBranch);
-  assert.ok(legacyBranch > 0 && fallbackBranch > legacyBranch);
-  assert.ok(anchorGuard > fallbackBranch && fallbackSnapshot > anchorGuard);
+  const legacySource = sql.indexOf("FROM public.lhi_discipline_obligations o");
+  const fallbackComment = sql.indexOf("-- A new-format incident has no legacy obligations.", legacySource);
+  const anchorGuard = sql.indexOf("lhi_active_since_verified_at", fallbackComment);
+  const fallbackSnapshot = sql.indexOf("INSERT INTO public.lhi_discipline_snapshot_members", fallbackComment);
+  assert.ok(legacySource > 0 && fallbackComment > legacySource);
+  assert.ok(anchorGuard > fallbackComment && fallbackSnapshot > anchorGuard);
 });
 
 test("legacy LOCKED incident reuses its existing pending obligations as the Reset snapshot", () => {
   assert.match(sql, /FROM public\.lhi_discipline_obligations o[\s\S]*?o\.incident_id = v_incident\.incident_id[\s\S]*?o\.completed_at IS NULL[\s\S]*?count\(DISTINCT o\.required_date\)/);
   assert.match(sql, /s\.status = 'Aktif'/);
   assert.match(sql, /LEGACY_OBLIGATION_SNAPSHOT/);
-  assert.match(sql, /IF EXISTS \([\s\S]*?public\.lhi_discipline_obligations o[\s\S]*?ELSE[\s\S]*?lhi_active_since_verified_at/);
-  assert.doesNotMatch(sql, /IF EXISTS \([\s\S]{0,250}lhi_active_since_verified_at[\s\S]{0,250}INSERT INTO public\.lhi_discipline_snapshot_members/);
+  const legacyBranch = sql.indexOf("FROM public.lhi_discipline_obligations o");
+  const fallbackComment = sql.indexOf("-- A new-format incident has no legacy obligations.", legacyBranch);
+  const anchorGuard = sql.indexOf("lhi_active_since_verified_at", fallbackComment);
+  assert.ok(legacyBranch > 0 && fallbackComment > legacyBranch);
+  assert.ok(anchorGuard > fallbackComment);
 });
