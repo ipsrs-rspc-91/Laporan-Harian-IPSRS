@@ -388,6 +388,12 @@ BEGIN
   SET lhi_active_since_verified_at = NULL
   WHERE staff_id IN ('LEGACY-TEST', 'STAFF-TEST');
 
+  -- Remove the earlier grace-test report from the historical evidence set so
+  -- STAFF-TEST intentionally has no valid LHI timestamp in this legacy case.
+  UPDATE public.reports
+  SET deleted_at = clock_timestamp()
+  WHERE staff_id = 'STAFF-TEST' AND deleted_at IS NULL;
+
   -- Legacy snapshot must use actual valid LHI created_at values, not the
   -- number of old required_date rows. STAFF-TEST deliberately has no report,
   -- so its unavailable input anchor and missed-day count remain NULL.
