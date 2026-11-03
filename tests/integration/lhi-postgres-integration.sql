@@ -360,6 +360,7 @@ DECLARE
   v_anchor_a timestamptz := clock_timestamp() - interval '10 days';
   v_count integer;
   v_event_count integer;
+  v_snapshot_created_at timestamptz;
 BEGIN
   UPDATE public.access_settings
   SET value = 'AKTIF', updated_at = clock_timestamp()
@@ -419,6 +420,12 @@ BEGIN
     RAISE EXCEPTION 'Legacy Reset did not reuse the two-staff obligation snapshot: %', v_result;
   END IF;
 
+  SELECT snapshot_created_at INTO v_snapshot_created_at
+  FROM public.lhi_discipline_snapshot_members
+  WHERE incident_id = v_incident
+    AND grace_cycle = 1
+    AND staff_id = 'LEGACY-TEST';
+
   SELECT count(*) INTO v_count
   FROM public.lhi_discipline_snapshot_members
   WHERE incident_id = v_incident
@@ -429,13 +436,9 @@ BEGIN
         AND anchor_input_at = v_anchor_a
         AND missed_full_days_at_snapshot = GREATEST(
           0,
-          ((
-            SELECT snapshot_created_at AT TIME ZONE 'Asia/Jakarta'
-            FROM public.lhi_discipline_snapshot_members
-            WHERE incident_id = v_incident AND grace_cycle = 1
-              AND staff_id = 'LEGACY-TEST'
-          )::date - (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date - 1
-        ))
+          (v_snapshot_created_at AT TIME ZONE 'Asia/Jakarta')::date
+            - (v_anchor_a AT TIME ZONE 'Asia/Jakarta')::date - 1
+        )
       OR
       (staff_id = 'STAFF-TEST'
         AND anchor_input_at IS NULL
