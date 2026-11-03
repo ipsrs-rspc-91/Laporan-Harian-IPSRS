@@ -314,6 +314,7 @@ test('area picker Item Baru opens modal and preserves selected item when fields 
   await mockUnblockedLhiStatus(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#page-input')).toBeAttached({ timeout: 10000 });
+  await page.waitForFunction(() => typeof window.buildAreaKerjaPicker_ === 'function', null, { timeout: 10000 });
   await exposeAppShellForIsolatedUiTest(page);
   await expect(page.locator('#itemModalBg')).toBeAttached({ timeout: 10000 });
 
