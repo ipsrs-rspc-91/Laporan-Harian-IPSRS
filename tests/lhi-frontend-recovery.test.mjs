@@ -15,6 +15,16 @@ const accessControl = await readFile(
   "utf8",
 );
 
+test("accepted Reset renders a dedicated KA IPSRS login form and preserves the trusted login guard", () => {
+  assert.match(app, /function renderLhiKaRecoveryLogin_\(message\)/);
+  assert.match(app, /LOGIN KHUSUS KA IPSRS/);
+  assert.match(app, /USERNAME KA IPSRS/);
+  assert.match(app, /onsubmit="return doLogin\(event\)"/);
+  assert.match(app, /window\.__IPSRS_LOGIN_BUTTON_CLICKED=true/);
+  assert.match(app, /renderLhiKaRecoveryLogin_\('Kode Reset diterima\. Silakan login menggunakan akun KA IPSRS\.'\)/);
+  assert.doesNotMatch(app, /restoreLhiLoginMarkup_\(screen\)[\s\S]{0,180}pendingLhiRecoveryChallenge_=challenge/);
+});
+
 test("Reset challenge is kept in memory and exchanged before apiWhoAmI", () => {
   assert.match(app, /const challenge=String\(result\.challenge\|\|''\)\.trim\(\);[\s\S]*?pendingLhiRecoveryChallenge_=challenge/);
   assert.match(app, /exchangeLhiRecoveryChallenge_\(session\.access_token,challenge\)/);
