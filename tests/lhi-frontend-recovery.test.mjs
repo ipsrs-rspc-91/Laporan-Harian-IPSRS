@@ -60,3 +60,15 @@ test("KA can resume restricted recovery from a fresh tab during grace", () => {
   assert.match(app, /pendingLhiRecoveryChallenge_=String\(result\.challenge\|\|''\)/);
   assert.match(app, /status\.grace_active/);
 });
+
+
+test("Cloudflare preview hosts never inherit the production Supabase endpoint", async () => {
+  const config = await readFile(
+    new URL("../frontend/config.js", import.meta.url),
+    "utf8",
+  );
+  assert.match(config, /host\.endsWith\('\.rspc\.workers\.dev'\)/);
+  assert.match(config, /host!=='laporan-harian-ipsrs\.rspc\.workers\.dev'/);
+  assert.match(config, /IPSRS_PREVIEW_BACKEND_DISABLED=true/);
+  assert.match(config, /IPSRS_SUPABASE_URL=''/);
+});
