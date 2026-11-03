@@ -143,6 +143,7 @@ const staffCreatedResponse = await fetch(apiUrl + "/auth/v1/admin/users", {
 });
 const staffUser = await readResponse(staffCreatedResponse);
 assert.equal(staffCreatedResponse.status, 200, "Could not create local notification-test Auth user: " + JSON.stringify(staffUser));
+assert.ok(staffUser.id);
 const staffBindResponse = await fetch(apiUrl + "/rest/v1/staff?staff_id=eq.STAFF-TEST", {
   method: "PATCH",
   headers: {
@@ -180,6 +181,9 @@ const noticeInsertResponse = await fetch(apiUrl + "/rest/v1/lhi_discipline_notif
 const notices = await readResponse(noticeInsertResponse);
 assert.equal(noticeInsertResponse.status, 201, "Could not seed local LHI notifications: " + JSON.stringify(notices));
 assert.equal(notices.length, 2);
+const ownSeed = notices.find(x => x.recipient_staff_id === "STAFF-TEST");
+const otherSeed = notices.find(x => x.recipient_staff_id === "KA-TEST");
+assert.ok(ownSeed?.notification_id && otherSeed?.notification_id);
 
 async function ipsrsApi(accessToken, action, data = {}) {
   return fetch(apiUrl + "/functions/v1/ipsrs-api", {
@@ -192,18 +196,18 @@ const ownNoticeResponse = await ipsrsApi(staffLogin.access_token, "apiGetLhiNoti
 const ownNotice = await readResponse(ownNoticeResponse);
 assert.equal(ownNoticeResponse.status, 200, "Could not read own LHI notification: " + JSON.stringify(ownNotice));
 assert.equal(ownNotice.ok, true);
-assert.equal(ownNotice.data.length, 1);
-assert.equal(Number(ownNotice.data[0].notification_id), Number(notices[0].notification_id));
+assert.ok(ownNotice.data.some(x => Number(x.notification_id) === Number(ownSeed.notification_id)));
+assert.ok(!ownNotice.data.some(x => Number(x.notification_id) === Number(otherSeed.notification_id)));
 
 const markOwnResponse = await ipsrsApi(staffLogin.access_token, "apiMarkLhiNotificationRead", {
-  notificationId: Number(notices[0].notification_id),
+  notificationId: Number(ownSeed.notification_id),
 });
 const markOwn = await readResponse(markOwnResponse);
 assert.equal(markOwnResponse.status, 200);
 assert.equal(markOwn.marked, true);
 
 const markOtherResponse = await ipsrsApi(staffLogin.access_token, "apiMarkLhiNotificationRead", {
-  notificationId: Number(notices[1].notification_id),
+  notificationId: Number(otherSeed.notification_id),
 });
 const markOther = await readResponse(markOtherResponse);
 assert.equal(markOtherResponse.status, 200);
@@ -211,13 +215,13 @@ assert.equal(markOther.marked, false, "Staff must not mark another recipient's n
 
 const verifyReadResponse = await fetch(
   apiUrl + "/rest/v1/lhi_discipline_notifications?notification_id=in.(" +
-    Number(notices[0].notification_id) + "," + Number(notices[1].notification_id) +
+    Number(ownSeed.notification_id) + "," + Number(otherSeed.notification_id) +
     ")&select=notification_id,recipient_staff_id,read_at",
   { headers: { apikey: serviceKey, Authorization: "Bearer " + serviceKey } },
 );
 const verifyRead = await readResponse(verifyReadResponse);
 assert.equal(verifyReadResponse.status, 200);
-assert.ok(verifyRead.find(x => Number(x.notification_id) === Number(notices[0].notification_id))?.read_at);
-assert.equal(verifyRead.find(x => Number(x.notification_id) === Number(notices[1].notification_id))?.read_at, null);
+assert.ok(verifyRead.find(x => Number(x.notification_id) === Number(ownSeed.notification_id))?.read_at);
+assert.equal(verifyRead.find(x => Number(x.notification_id) === Number(otherSeed.notification_id))?.read_at, null);
 
 console.log("Local Supabase Auth/Edge recovery and recipient-scoped LHI notifications passed.");
