@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read = path => readFile(new URL(path, import.meta.url), 'utf8');
 
 test('HR anchor verification is stored as an append-only, server-only record', async () => {
-  const sql = await read('../supabase/migrations/20261103041836_lhi_schema_v2.sql');
+  const sql = await read('../docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql');
   assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.lhi_active_since_verifications/);
   assert.match(sql, /verified_active_since timestamptz NOT NULL/);
   assert.match(sql, /source_reference text NOT NULL/);
@@ -16,7 +16,7 @@ test('HR anchor verification is stored as an append-only, server-only record', a
 });
 
 test('only an authenticated active KA IPSRS can verify a current active employee anchor', async () => {
-  const sql = await read('../supabase/migrations/20261103041836_lhi_schema_v2.sql');
+  const sql = await read('../docs/drafts/2026-11-03-lhi-schema-v2-migration-review.sql');
   assert.match(sql, /CREATE OR REPLACE FUNCTION public\.verify_lhi_active_since_v2/);
   assert.match(sql, /v_actor\.role <> 'KA_IPSRS'/);
   assert.match(sql, /v_actor\.status <> 'Aktif'/);
