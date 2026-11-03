@@ -84,6 +84,8 @@
   }
   function clearSession(){
     CURRENT_SESSION = null;
+    pendingLhiRecoveryChallenge_ = null;
+    lhiRecoveryCapability_ = null;
     try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
   }
 
@@ -568,17 +570,13 @@
     document.getElementById('appShell').classList.remove('hidden');
   }
 
-  // Restricted LHI recovery state. The opaque capability is session-scoped,
-  // stored only in sessionStorage, and accepted only by lhi-recovery-action.
+  // Restricted LHI recovery state. The opaque capability is memory-only,
+  // never written to localStorage/sessionStorage, and accepted only by lhi-recovery-action.
   let pendingLhiRecoveryChallenge_ = null;
   let lhiRecoveryCapability_ = null;
 
   function setLhiRecoveryCapability_(value){
     lhiRecoveryCapability_=String(value||'');
-    try{
-      if(lhiRecoveryCapability_) sessionStorage.setItem('IPSRS_LHI_RECOVERY_CAPABILITY',lhiRecoveryCapability_);
-      else sessionStorage.removeItem('IPSRS_LHI_RECOVERY_CAPABILITY');
-    }catch(_e){}
   }
 
   async function lhiRecoveryAction_(action){
@@ -6617,20 +6615,8 @@
       const key=String(window.IPSRS_SUPABASE_PUBLISHABLE_KEY||'');
       if(!base||!key) throw new Error('Konfigurasi server tidak tersedia.');
 
-      // Resume the restricted recovery-only screen after a same-tab refresh.
-      // The capability is opaque, session-scoped and server-validated on use.
-      let savedRecoveryCapability='';
-      try{savedRecoveryCapability=sessionStorage.getItem('IPSRS_LHI_RECOVERY_CAPABILITY')||'';}catch(_e){}
-      if(savedRecoveryCapability){
-        setLhiRecoveryCapability_(savedRecoveryCapability);
-        try{
-          const recoveryStatus=await lhiRecoveryAction_('apiRecoveryStatus');
-          renderLhiRecoveryOnlyScreen_(recoveryStatus);
-          return;
-        }catch(_recoveryResumeError){
-          setLhiRecoveryCapability_(null);
-        }
-      }
+      // A refresh intentionally drops the memory-only capability. During grace,
+      // KA IPSRS re-enters through Reset and the same username/password form.
 
       const response=await fetch(base+'/functions/v1/lhi-block-status',{method:'GET',headers:{'apikey':key},cache:'no-store'});
       const status=await response.json().catch(()=>null);
