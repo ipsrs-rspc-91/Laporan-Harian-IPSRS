@@ -65,7 +65,7 @@ test("obligation event audit history is protected against UPDATE and DELETE", ()
 });
 
 test("new snapshot and event tables deny direct client access", () => {
-  assert.equal((sql.match(/ENABLE ROW LEVEL SECURITY;/g) || []).length, 3);
+  assert.equal((sql.match(/ENABLE ROW LEVEL SECURITY;/g) || []).length, 4);
   assert.match(sql, /REVOKE ALL ON public\.staff_employment_status_events FROM PUBLIC, anon, authenticated/);
   assert.match(sql, /REVOKE ALL ON public\.lhi_discipline_snapshot_members FROM PUBLIC, anon, authenticated/);
   assert.match(sql, /REVOKE ALL ON public\.lhi_discipline_obligation_events FROM PUBLIC, anon, authenticated/);
