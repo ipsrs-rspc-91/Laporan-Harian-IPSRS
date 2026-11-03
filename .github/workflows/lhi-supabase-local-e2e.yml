@@ -58,7 +58,6 @@ jobs:
           cp supabase/config.toml tests/supabase-local/supabase/config.toml
           sed -i 's/^project_id = .*/project_id = "ipsrs-lhi-local-ci"/' tests/supabase-local/supabase/config.toml
           mkdir -p tests/supabase-local/supabase/functions
-          cp -R supabase/functions/_shared tests/supabase-local/supabase/functions/
           cp -R supabase/functions/ipsrs-api tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-block-status tests/supabase-local/supabase/functions/
           cp -R supabase/functions/lhi-reset-verify tests/supabase-local/supabase/functions/
@@ -160,4 +159,4 @@ jobs:
       - name: Stop local Supabase stack
         if: always()
         working-directory: tests/supabase-local
-        run: supabase stop --no-backup
+        run: supabase stop --no-backup || true
