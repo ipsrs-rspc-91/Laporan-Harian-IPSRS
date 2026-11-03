@@ -621,7 +621,7 @@ test('KA IPSRS Hak Akses displays provisional HR anchors and submits an audited 
 
   await expect(page.locator('#accessBg')).toHaveClass(/show/);
   await expect(page.getByText('Verifikasi Tanggal Mulai Aktif Petugas')).toBeVisible();
-  await expect(page.getByText('Petugas Uji HR')).toBeVisible();
+  await expect(page.locator('[data-lhi-anchor-row="0"]')).toContainText('Petugas Uji HR');
   await expect(page.getByText('PERLU VERIFIKASI')).toBeVisible();
 
   const row = page.locator('[data-lhi-anchor-row="0"]');
