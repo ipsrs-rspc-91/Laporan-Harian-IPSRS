@@ -26,6 +26,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: lhi-local-supabase-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   local-supabase-auth-edge-e2e:
     runs-on: ubuntu-latest
