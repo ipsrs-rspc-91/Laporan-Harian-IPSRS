@@ -885,11 +885,12 @@
       box.innerHTML=rows.map(x=>{
         const status=x.online?'ONLINE':'OFFLINE';
         const device=x.last_login_device?escapeHtml(x.last_login_device):'-';
-        return '<div class="online-user-card">'
-          +'<div class="online-user-main"><div class="online-dot '+(x.online?'is-online':'')+'"></div><div><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
-          +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
-          +'<div class="online-details"><div><b>Login terakhir</b><br>'+formatLoginDateTime_(x.last_login_at)+'</div><div><b>Aktivitas terakhir</b><br>'+formatLastSeen_(x.last_seen_at)+'</div><div><b>Perangkat / browser</b><br><span class="device-text" title="'+device+'">'+device+'</span></div></div>'
-          +'</div>';
+        const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
+        return '<article class="online-user-card">'
+          +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'" aria-hidden="true">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
+          +'<div class="online-status '+(x.online?'is-online':'')+'" aria-label="Status '+status+'">'+status+'</div>'
+          +'<div class="online-details"><div class="online-detail"><b>Login terakhir</b>'+formatLoginDateTime_(x.last_login_at)+'</div><div class="online-detail"><b>Aktivitas terakhir</b>'+formatLastSeen_(x.last_seen_at)+'</div><div class="online-detail online-detail-device"><b>Perangkat / browser</b><span class="device-text" title="'+device+'">'+device+'</span></div></div>'
+          +'</article>';
       }).join('');
     }catch(e){
       // Jangan menghapus daftar terakhir yang masih valid hanya karena satu
