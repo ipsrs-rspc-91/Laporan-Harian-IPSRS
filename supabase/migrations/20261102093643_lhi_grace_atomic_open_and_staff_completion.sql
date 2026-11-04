@@ -77,7 +77,7 @@ BEGIN
   UPDATE public.lhi_discipline_incidents
   SET status = 'GRACE',
       started_at = v_now,
-      deadline_at = v_now + interval '12 hours',
+      deadline_at = v_now + interval '100 hours',
       started_by_staff_id = p_staff_id,
       started_by_name = p_staff_name,
       completed_at = NULL,
@@ -100,7 +100,7 @@ BEGIN
     field_changed, old_value, new_value
   ) VALUES (
     p_staff_id, p_staff_id, 'OPEN_LHI_GLOBAL_GRACE', NULL,
-    'KA IPSRS berhasil membuka blokir global dan seluruh blokir individual LHI secara bersamaan serta memulai kelonggaran 12 jam.',
+    'KA IPSRS berhasil membuka blokir global dan seluruh blokir individual LHI secara bersamaan serta memulai kelonggaran 100 jam.',
     'LHI_GLOBAL_BLOCK,staff.status,lhi_discipline_incidents.status',
     'AKTIF / LOCKED / Nonaktif_LHI_HARI_8',
     'NONAKTIF / GRACE / Aktif'
@@ -112,7 +112,7 @@ BEGIN
     'incident_id', v_incident.incident_id,
     'status', 'GRACE',
     'started_at', v_now,
-    'deadline_at', v_now + interval '12 hours',
+    'deadline_at', v_now + interval '100 hours',
     'total', v_total,
     'reactivated_accounts', v_reactivated
   );
