@@ -885,7 +885,7 @@
       box.innerHTML=rows.map(x=>{
         const status=x.online?'ONLINE':'OFFLINE';
         const device=x.last_login_device?escapeHtml(x.last_login_device):'-';
-        const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
+        const initials=String(x.nama||x.staff_id||'?').trim().split(/\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
         return '<article class="online-user-card">'
           +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'" aria-hidden="true">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
           +'<div class="online-status '+(x.online?'is-online':'')+'" aria-label="Status '+status+'">'+status+'</div>'
