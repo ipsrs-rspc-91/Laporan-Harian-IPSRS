@@ -52,11 +52,6 @@ BEGIN
   IF position(v_old IN v_definition)=0 THEN RAISE EXCEPTION 'Scheduler patch failed: expiry audit text not found.'; END IF;
   v_definition := replace(v_definition,v_old,v_new);
 
-  v_old := 'Masa kelonggaran 12 jam berakhir.';
-  v_new := 'Masa kelonggaran 5 hari (120 jam) berakhir.';
-  IF position(v_old IN v_definition)=0 THEN RAISE EXCEPTION 'Scheduler patch failed: expiry notification text not found.'; END IF;
-  v_definition := replace(v_definition,v_old,v_new);
-
   EXECUTE v_definition;
 END;
 $migration$;
