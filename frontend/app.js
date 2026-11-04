@@ -879,7 +879,7 @@
         const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
         const todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI</span>');
         const streak=Number(l.hari_tidak_isi_berturut_turut||0),blocked=String(l.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI'||streak>=7;
-        return '<article class="online-user-card">'
+        return '<article class="online-user-card '+(x.online?'is-online':'is-offline')+'">'
           +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
           +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
           +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(month)+'</div><div class="online-lhi-grid">'
