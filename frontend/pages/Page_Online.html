@@ -21,6 +21,15 @@
   #page-online .online-status{font-size:10px;font-weight:850;color:#64748b;align-self:start;padding:6px 9px;border-radius:999px;background:#f1f5f9;letter-spacing:.35px}
   #page-online .online-status.is-online{color:#15803d;background:#dcfce7}
   #page-online .online-details{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #page-online .online-lhi{grid-column:1/-1;padding:12px;border:1px solid #dbeafe;border-radius:12px;background:#f0f9ff}
+  #page-online .online-lhi-title{font-size:11px;font-weight:900;color:#075985;margin-bottom:8px}
+  #page-online .online-lhi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  #page-online .online-lhi-item{background:#fff;border:1px solid #e0f2fe;border-radius:9px;padding:8px;min-width:0}
+  #page-online .online-lhi-item b{display:block;font-size:10px;color:#64748b;margin-bottom:4px}
+  #page-online .online-lhi-item span{font-size:13px;font-weight:850;color:#0f172a;overflow-wrap:anywhere}
+  #page-online .online-lhi-item .lhi-done{color:#15803d}
+  #page-online .online-lhi-item .lhi-missing{color:#b45309}
+  #page-online .online-summary-card.lhi-summary{border-color:#bae6fd;background:#f0f9ff}
   #page-online .online-detail{min-width:0;padding:10px 11px;border:1px solid #edf1f5;border-radius:11px;background:#f8fafc;color:#334155;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
   #page-online .online-detail b{display:block;font-size:10px;color:#64748b;font-weight:800;margin-bottom:3px}
   #page-online .online-detail-device{grid-column:1/-1}
@@ -36,6 +45,9 @@
     #page-online .online-meta{font-size:10px}
     #page-online .online-details{gap:7px}
     #page-online .online-detail{padding:9px;font-size:11px}
+    #page-online .online-lhi{padding:10px}
+    #page-online .online-lhi-grid{grid-template-columns:1fr 1fr}
+    #page-online .online-lhi-item:last-child{grid-column:1/-1}
   }
   @media(max-width:370px){
     #page-online .online-user-card{grid-template-columns:minmax(0,1fr) auto}
@@ -46,13 +58,15 @@
 <div class="online-head">
   <div class="online-title">
     <h1>Monitoring Petugas IPSRS</h1>
-    <div class="desc">Seluruh petugas IPSRS dapat memantau status online, waktu login, aktivitas terakhir, dan perangkat rekan satu tim untuk meningkatkan koordinasi serta kedisiplinan pengisian LHI.</div>
+    <div class="desc">Pantau kepatuhan pengisian Laporan Harian IPSRS (LHI) setiap petugas, termasuk status hari ini dan rekap bulan berjalan. Status login ditampilkan sebagai informasi tambahan.</div>
   </div>
   <button class="online-refresh" type="button" onclick="loadOnlineUsers()">↻ Refresh</button>
 </div>
 <div class="online-team-note" role="note" style="margin:0 0 14px;padding:12px 14px;border:1px solid #dbeafe;border-radius:10px;background:#eff6ff;color:#1e3a8a;font-size:12px;line-height:1.6"><strong>Monitoring dan saling mengingatkan</strong><br>Menu ini dapat digunakan seluruh petugas IPSRS untuk melihat kondisi keaktifan rekan kerja dan saling mengingatkan apabila ada rekan yang belum mengisi Laporan Harian IPSRS (LHI). Monitoring merupakan tanggung jawab bersama untuk membantu menjaga kedisiplinan, koordinasi, dan kelancaran pekerjaan. Data laporan rekan hanya untuk dipantau; petugas tidak dapat mengubah atau menghapus LHI milik petugas lain melalui menu ini.</div>
 <div class="online-summary">
   <div class="online-summary-card"><div class="online-summary-label">Status Online</div><div id="onlineUsersMeta" class="online-summary-value" style="font-size:13px;">Memuat...</div></div>
+  <div class="online-summary-card lhi-summary"><div class="online-summary-label">Sudah isi LHI hari ini</div><div id="lhiTodaySummary" class="online-summary-value">Memuat...</div></div>
+  <div class="online-summary-card lhi-summary"><div class="online-summary-label">Belum isi LHI hari ini</div><div id="lhiMissingSummary" class="online-summary-value">Memuat...</div></div>
 </div>
 <div id="onlineUsersList" class="online-list"></div>
 </section>
