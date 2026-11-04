@@ -859,7 +859,7 @@
     if(!box||IPSRS_ONLINE_REQUEST_ACTIVE)return;
     IPSRS_ONLINE_REQUEST_ACTIVE=true;
     try{
-      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta'}).format(new Date()),month=today.slice(0,7);
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta'}).format(new Date()),month=today.slice(0,7),monthLabel=new Intl.DateTimeFormat('en-US',{month:'short',year:'numeric',timeZone:'Asia/Jakarta'}).format(new Date());
       const [onlineResult,lhiResult]=await Promise.all([authRun('apiGetOnlineUsers'),authRun('apiGetStaffMonitoring',month,today)]);
       if(!onlineResult||!onlineResult.ok)throw new Error((onlineResult&&onlineResult.msg)||'Gagal memuat status login.');
       if(!lhiResult||!lhiResult.ok)throw new Error((lhiResult&&lhiResult.msg)||'Gagal memuat monitoring LHI.');
@@ -883,7 +883,7 @@
         return '<article class="online-user-card '+cardColor+'">'
           +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
           +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
-          +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(month)+'</div><div class="online-lhi-grid">'
+          +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(monthLabel)+'</div><div class="online-lhi-grid">'
           +'<div class="online-lhi-item"><b>LHI hari ini</b><span>'+todayStatus+'</span></div>'
           +'<div class="online-lhi-item"><b>Hari sudah isi bulan ini</b><span class="lhi-done">'+Number(l.sudah_isi_hari_bulan_ini||0)+' hari</span></div>'
           +'<div class="online-lhi-item"><b>Hari belum isi bulan ini</b><span class="lhi-missing">'+Number(l.belum_isi_hari_bulan_ini||0)+' hari</span></div>'
