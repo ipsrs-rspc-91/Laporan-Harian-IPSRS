@@ -870,7 +870,7 @@
       const doneEl=document.getElementById('lhiTodaySummary'),missingEl=document.getElementById('lhiMissingSummary');
       if(doneEl)doneEl.innerText=done+' / '+lhiRows.length+' petugas';
       if(missingEl)missingEl.innerText=missing+' petugas';
-      const snapshot=JSON.stringify(rows.map(x=>{const l=lhiByStaff.get(String(x.staff_id||''))||{};return [x.staff_id,x.nama,x.role,x.bidang,!!x.online,x.last_login_at,x.last_seen_at,x.last_login_device,l.status,l.status_hari_ini,l.sudah_isi_hari_bulan_ini,l.belum_isi_hari_bulan_ini,l.hari_tidak_isi_berturut_turut,l.ambang_blokir_7_hari]}));
+      const snapshot=JSON.stringify(rows.map(x=>{const l=lhiByStaff.get(String(x.staff_id||''))||{};return [x.staff_id,x.nama,x.role,x.bidang,!!x.online,x.last_login_at,x.last_seen_at,x.last_login_device,l.status,l.status_hari_ini,l.laporan_hari_ini,l.total_transaksi_bulan_ini,l.sudah_isi_hari_bulan_ini,l.belum_isi_hari_bulan_ini,l.hari_tidak_isi_berturut_turut,l.ambang_blokir_7_hari]}));
       if(snapshot===IPSRS_ONLINE_LAST_SNAPSHOT)return;
       IPSRS_ONLINE_LAST_SNAPSHOT=snapshot;
       if(!rows.length){box.innerHTML=emptyStateHtml('Belum ada petugas terpantau.');return;}
@@ -883,7 +883,7 @@
             ? '<span style="display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#DCFCE7;color:#15803D;font-size:12px;font-weight:800;white-space:nowrap">LOGIN AKTIF</span>'
             : '');
         const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
-        const todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI</span>');
+        const todayCount=Number(l.laporan_hari_ini||0),todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI · '+todayCount+' LHI</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI · 0 LHI</span>');
         const streak=Number(l.hari_tidak_isi_berturut_turut||0),blocked=String(l.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI'||streak>=7;
         const effectiveStreak=streak+(l.status_hari_ini==='BELUM_ISI'?1:0),cardColor=effectiveStreak>7?'lhi-streak-over-7':(effectiveStreak>=4?'lhi-streak-4-7':(effectiveStreak>=1?'lhi-streak-1-3':'lhi-streak-0'));
         return '<article class="online-user-card '+cardColor+'">'
@@ -893,7 +893,7 @@
           +'</div>'
           +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(monthLabel)+'</div><div class="online-lhi-grid">'
           +'<div class="online-lhi-item"><b>LHI hari ini</b><span>'+todayStatus+'</span></div>'
-          +'<div class="online-lhi-item"><b>Hari sudah isi bulan ini</b><span class="lhi-done">'+Number(l.sudah_isi_hari_bulan_ini||0)+' hari</span></div>'
+          +'<div class="online-lhi-item"><b>Total LHI diinput bulan ini</b><span class="lhi-done">'+Number(l.total_transaksi_bulan_ini||0)+' LHI</span></div>'
           +'<div class="online-lhi-item"><b>Hari belum isi bulan ini</b><span class="lhi-missing">'+Number(l.belum_isi_hari_bulan_ini||0)+' hari</span></div>'
           +'<div class="online-lhi-item"><b>Tidak isi berturut-turut</b><span class="'+(effectiveStreak>=4?'lhi-missing':'')+'">'+effectiveStreak+' hari'+(blocked?' · AMBANG BLOKIR':'')+'</span></div>'
           +'</div></div>'
