@@ -855,46 +855,38 @@
 
   async function loadOnlineUsers(){
     if(!CURRENT_SESSION) return;
-    const box=document.getElementById('onlineUsersList');
-    const meta=document.getElementById('onlineUsersMeta');
-    if(!box || IPSRS_ONLINE_REQUEST_ACTIVE) return;
+    const box=document.getElementById('onlineUsersList'),meta=document.getElementById('onlineUsersMeta');
+    if(!box||IPSRS_ONLINE_REQUEST_ACTIVE)return;
     IPSRS_ONLINE_REQUEST_ACTIVE=true;
     try{
-      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta'}).format(new Date());
-      const month=today.slice(0,7);
-      const [onlineResult,lhiResult]=await Promise.all([
-        authRun('apiGetOnlineUsers'),
-        authRun('apiGetStaffMonitoring',month,today)
-      ]);
-      if(!onlineResult||!onlineResult.ok) throw new Error((onlineResult&&onlineResult.msg)||'Gagal memuat status login.');
-      if(!lhiResult||!lhiResult.ok) throw new Error((lhiResult&&lhiResult.msg)||'Gagal memuat monitoring LHI.');
-      const rows=Array.isArray(onlineResult.data)?onlineResult.data:[];
-      const lhiRows=Array.isArray(lhiResult.data)?lhiResult.data:[];
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta'}).format(new Date()),month=today.slice(0,7);
+      const [onlineResult,lhiResult]=await Promise.all([authRun('apiGetOnlineUsers'),authRun('apiGetStaffMonitoring',month,today)]);
+      if(!onlineResult||!onlineResult.ok)throw new Error((onlineResult&&onlineResult.msg)||'Gagal memuat status login.');
+      if(!lhiResult||!lhiResult.ok)throw new Error((lhiResult&&lhiResult.msg)||'Gagal memuat monitoring LHI.');
+      const rows=Array.isArray(onlineResult.data)?onlineResult.data:[],lhiRows=Array.isArray(lhiResult.data)?lhiResult.data:[];
       const lhiByStaff=new Map(lhiRows.map(x=>[String(x.staff_id||''),x]));
-      const onlineCount=rows.filter(x=>x.online).length;
-      const done=lhiRows.filter(x=>x.status_hari_ini==='SUDAH_ISI').length;
-      const missing=lhiRows.filter(x=>x.status_hari_ini==='BELUM_ISI').length;
-      if(meta) meta.innerText=onlineCount+' online dari '+rows.length+' petugas aktif';
+      const onlineCount=rows.filter(x=>x.online).length,done=lhiRows.filter(x=>x.status_hari_ini==='SUDAH_ISI').length,missing=lhiRows.filter(x=>x.status_hari_ini==='BELUM_ISI').length;
+      if(meta)meta.innerText=onlineCount+' online dari '+rows.length+' petugas terpantau';
       const doneEl=document.getElementById('lhiTodaySummary'),missingEl=document.getElementById('lhiMissingSummary');
-      if(doneEl) doneEl.innerText=done+' / '+lhiRows.length+' petugas';
-      if(missingEl) missingEl.innerText=missing+' petugas';
-      const snapshot=JSON.stringify(rows.map(x=>{const l=lhiByStaff.get(String(x.staff_id||''))||{};return [x.staff_id,x.nama,x.role,x.bidang,!!x.online,x.last_login_at,x.last_seen_at,x.last_login_device,l.status_hari_ini,l.sudah_isi_hari_bulan_ini,l.belum_isi_hari_bulan_ini,l.total_transaksi_bulan_ini]}));
-      if(snapshot===IPSRS_ONLINE_LAST_SNAPSHOT) return;
+      if(doneEl)doneEl.innerText=done+' / '+lhiRows.length+' petugas';
+      if(missingEl)missingEl.innerText=missing+' petugas';
+      const snapshot=JSON.stringify(rows.map(x=>{const l=lhiByStaff.get(String(x.staff_id||''))||{};return [x.staff_id,x.nama,x.role,x.bidang,!!x.online,x.last_login_at,x.last_seen_at,x.last_login_device,l.status,l.status_hari_ini,l.sudah_isi_hari_bulan_ini,l.belum_isi_hari_bulan_ini,l.hari_tidak_isi_berturut_turut,l.ambang_blokir_7_hari]}));
+      if(snapshot===IPSRS_ONLINE_LAST_SNAPSHOT)return;
       IPSRS_ONLINE_LAST_SNAPSHOT=snapshot;
-      if(!rows.length){box.innerHTML=emptyStateHtml('Belum ada petugas aktif.');return;}
+      if(!rows.length){box.innerHTML=emptyStateHtml('Belum ada petugas terpantau.');return;}
       box.innerHTML=rows.map(x=>{
-        const l=lhiByStaff.get(String(x.staff_id||''))||{};
-        const status=x.online?'ONLINE':'OFFLINE';
-        const device=x.last_login_device?escapeHtml(x.last_login_device):'-';
+        const l=lhiByStaff.get(String(x.staff_id||''))||{},status=x.online?'ONLINE':'OFFLINE',device=x.last_login_device?escapeHtml(x.last_login_device):'-';
         const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
         const todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI</span>');
+        const streak=Number(l.hari_tidak_isi_berturut_turut||0),blocked=String(l.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI'||streak>=7;
         return '<article class="online-user-card">'
-          +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'" aria-hidden="true">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
+          +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
           +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
           +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(month)+'</div><div class="online-lhi-grid">'
           +'<div class="online-lhi-item"><b>LHI hari ini</b><span>'+todayStatus+'</span></div>'
           +'<div class="online-lhi-item"><b>Hari sudah isi bulan ini</b><span class="lhi-done">'+Number(l.sudah_isi_hari_bulan_ini||0)+' hari</span></div>'
           +'<div class="online-lhi-item"><b>Hari belum isi bulan ini</b><span class="lhi-missing">'+Number(l.belum_isi_hari_bulan_ini||0)+' hari</span></div>'
+          +'<div class="online-lhi-item"><b>Tidak isi berturut-turut (7 hari terakhir)</b><span class="'+(blocked?'lhi-missing':'')+'">'+streak+' / 7 hari'+(blocked?' · AMBANG BLOKIR':'')+'</span></div>'
           +'</div></div>'
           +'<div class="online-details"><div class="online-detail"><b>Login terakhir</b>'+formatLoginDateTime_(x.last_login_at)+'</div><div class="online-detail"><b>Aktivitas terakhir</b>'+formatLastSeen_(x.last_seen_at)+'</div><div class="online-detail online-detail-device"><b>Perangkat / browser</b><span class="device-text" title="'+device+'">'+device+'</span></div></div></article>';
       }).join('');
