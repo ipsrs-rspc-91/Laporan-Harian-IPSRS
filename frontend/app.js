@@ -876,7 +876,7 @@
       if(!rows.length){box.innerHTML=emptyStateHtml('Belum ada petugas terpantau.');return;}
       box.innerHTML=rows.map(x=>{
         const l=lhiByStaff.get(String(x.staff_id||''))||{},status=x.online?'ONLINE':'OFFLINE',device=x.last_login_device?escapeHtml(x.last_login_device):'-';
-        const accountStatus=String(l.status||'').trim().toUpperCase();
+        const accountStatus=String(x.status||l.status||'').trim().toUpperCase();
         const loginAccessBadge=accountStatus==='DIBLOKIR_LHI_7_HARI'
           ? '<span style="display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font-size:12px;font-weight:800;white-space:nowrap">LOGIN DIBLOKIR</span>'
           : (accountStatus==='AKTIF'
