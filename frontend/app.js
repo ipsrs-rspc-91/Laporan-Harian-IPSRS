@@ -887,9 +887,8 @@
         const streak=Number(l.hari_tidak_isi_berturut_turut||0),blocked=String(l.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI'||streak>=7;
         const effectiveStreak=streak+(l.status_hari_ini==='BELUM_ISI'?1:0),cardColor=effectiveStreak>7?'lhi-streak-over-7':(effectiveStreak>=4?'lhi-streak-4-7':(effectiveStreak>=1?'lhi-streak-1-3':'lhi-streak-0'));
         return '<article class="online-user-card '+cardColor+'">'
-          +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
-          +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
-          +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
+          +'<div class="online-user-main"><div style="position:relative;display:inline-flex;flex:0 0 auto" title="'+(x.online?'ONLINE':'OFFLINE')+'"><div class="online-avatar '+(x.online?'is-online':'')+'">'+escapeHtml(initials)+'</div><span aria-label="'+(x.online?'ONLINE':'OFFLINE')+'" style="position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;border-radius:50%;border:2px solid #fff;background:'+(x.online?'#16A34A':'#94A3B8')+';box-sizing:border-box"></span></div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
+          +'<div style="display:flex;align-items:flex-start;justify-content:flex-end;flex-shrink:0">'
           +loginAccessBadge
           +'</div>'
           +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(monthLabel)+'</div><div class="online-lhi-grid">'
