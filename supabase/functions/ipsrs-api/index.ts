@@ -296,7 +296,7 @@ if(a==="apiGetOnlineUsers"){
  return{ok:true,server_time:new Date(now).toISOString(),online_threshold_seconds:180,data:(data||[]).map((x:any)=>{
    const seen=x.last_seen_at?Date.parse(x.last_seen_at):NaN;
    const online=Number.isFinite(seen)&&(now-seen)<=threshold;
-   return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,bidang:x.bidang||"",role_label:label(x.role),online,last_seen_at:x.last_seen_at||null,last_login_at:x.last_login_at||null,last_login_device:x.last_login_device||null};
+   return{staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,bidang:x.bidang||"",status:x.status||"Aktif",role_label:label(x.role),online,last_seen_at:x.last_seen_at||null,last_login_at:x.last_login_at||null,last_login_device:x.last_login_device||null};
  }).sort((a:any,b:any)=>{const onlineDiff=Number(b.online)-Number(a.online);if(onlineDiff)return onlineDiff;const aLogin=a.last_login_at?Date.parse(a.last_login_at):NaN;const bLogin=b.last_login_at?Date.parse(b.last_login_at):NaN;if(Number.isFinite(aLogin)||Number.isFinite(bLogin)){if(!Number.isFinite(aLogin))return 1;if(!Number.isFinite(bLogin))return -1;if(bLogin!==aLogin)return bLogin-aLogin;}return String(a.nama||"").localeCompare(String(b.nama||""),"id")})};
 }
 if(a==="apiLogout"){await db.from("staff").update({last_seen_at:new Date(Date.now()-4*60*1000).toISOString()}).eq("staff_id",s.staff_id);return{ok:true};}
