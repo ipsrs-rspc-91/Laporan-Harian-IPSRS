@@ -877,10 +877,10 @@
       box.innerHTML=rows.map(x=>{
         const l=lhiByStaff.get(String(x.staff_id||''))||{},status=x.online?'ONLINE':'OFFLINE',device=x.last_login_device?escapeHtml(x.last_login_device):'-';
         const accountStatus=String(l.status||'').trim().toUpperCase();
-        const accountBadge=accountStatus==='DIBLOKIR_LHI_7_HARI'
-          ? '<span style="display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font-size:12px;font-weight:800;white-space:nowrap">DIBLOKIR</span>'
+        const loginAccessBadge=accountStatus==='DIBLOKIR_LHI_7_HARI'
+          ? '<span style="display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#FEE2E2;color:#B91C1C;font-size:12px;font-weight:800;white-space:nowrap">LOGIN DIBLOKIR</span>'
           : (accountStatus==='AKTIF'
-            ? '<span style="display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#DCFCE7;color:#15803D;font-size:12px;font-weight:800;white-space:nowrap">AKTIF</span>'
+            ? '<span style="display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:#DCFCE7;color:#15803D;font-size:12px;font-weight:800;white-space:nowrap">LOGIN AKTIF</span>'
             : '');
         const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
         const todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI</span>');
@@ -890,7 +890,7 @@
           +'<div class="online-user-main"><div class="online-avatar '+(x.online?'is-online':'')+'">'+escapeHtml(initials)+'</div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
           +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
           +'<div class="online-status '+(x.online?'is-online':'')+'">'+status+'</div>'
-          +accountBadge
+          +loginAccessBadge
           +'</div>'
           +'<div class="online-lhi"><div class="online-lhi-title">MONITORING PENGISIAN LHI · '+escapeHtml(monthLabel)+'</div><div class="online-lhi-grid">'
           +'<div class="online-lhi-item"><b>LHI hari ini</b><span>'+todayStatus+'</span></div>'
