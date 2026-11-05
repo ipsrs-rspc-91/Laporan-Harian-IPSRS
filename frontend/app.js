@@ -884,8 +884,10 @@
             : '');
         const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
         const todayCount=Number(l.laporan_hari_ini||0),todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI (Total '+todayCount+' LHI)</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI (Total 0 LHI)</span>');
-        const streak=Number(l.hari_tidak_isi_berturut_turut||0),blocked=String(l.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI'||streak>=7;
-        const effectiveStreak=streak+(l.status_hari_ini==='BELUM_ISI'?1:0),cardColor=effectiveStreak>7?'lhi-streak-over-7':(effectiveStreak>=4?'lhi-streak-4-7':(effectiveStreak>=1?'lhi-streak-1-3':'lhi-streak-0'));
+        const streak=Number(l.hari_tidak_isi_berturut_turut||0);
+        const effectiveStreak=streak+(l.status_hari_ini==='BELUM_ISI'?1:0);
+        const blocked=String(l.status||'').toUpperCase()==='DIBLOKIR_LHI_7_HARI'||effectiveStreak>7;
+        const cardColor=effectiveStreak>7?'lhi-streak-over-7':(effectiveStreak>=4?'lhi-streak-4-7':(effectiveStreak>=1?'lhi-streak-1-3':'lhi-streak-0'));
         return '<article class="online-user-card '+cardColor+'">'
           +'<div class="online-user-main"><div title="'+(x.online?'ONLINE':'OFFLINE')+'" style="width:58px;height:58px;flex:0 0 58px;border-radius:18px;background:'+(x.online?'#DCFCE7':'#F1F5F9')+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-sizing:border-box"><span style="font-size:9px;line-height:12px;font-weight:800;letter-spacing:.25px;color:'+(x.online?'#15803D':'#64748B')+'">'+(x.online?'ONLINE':'OFFLINE')+'</span><span style="font-size:25px;line-height:28px;font-weight:800;color:'+(x.online?'#15803D':'#475569')+'">'+escapeHtml(initials)+'</span></div><div class="online-identity"><div class="online-name">'+escapeHtml(x.nama)+'</div><div class="online-meta">'+escapeHtml(x.staff_id)+' · '+escapeHtml(x.role_label||x.role)+(x.bidang?' · '+escapeHtml(x.bidang):'')+'</div></div></div>'
           +'<div style="display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;padding-top:7px">'
