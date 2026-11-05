@@ -897,7 +897,7 @@
           +'<div class="online-lhi-item"><b>Hari belum isi bulan ini</b><span class="lhi-missing">'+Number(l.belum_isi_hari_bulan_ini||0)+' hari</span></div>'
           +'<div class="online-lhi-item"><b>Tidak isi berturut-turut</b><span class="'+(effectiveStreak>=4?'lhi-missing':'')+'">'+effectiveStreak+' hari'+(blocked?' · AMBANG BLOKIR':'')+'</span></div>'
           +'</div></div>'
-          +'<div class="online-details"><div class="online-detail"><b>Login terakhir</b>'+formatLoginDateTime_(x.last_login_at)+'</div><div class="online-detail"><b>Aktivitas terakhir</b>'+formatLastSeen_(x.last_seen_at)+'</div><div class="online-detail online-detail-device"><b>Perangkat / browser</b><span class="device-text" title="'+device+'">'+device+'</span></div></div></article>';
+          +'<div class="online-details"><div class="online-detail"><b>Login terakhir</b>'+formatLoginDateTime_(x.last_login_at)+'</div><div class="online-detail"><b>Aktivitas terakhir</b><span class="online-last-activity">'+formatLastSeen_(x.last_seen_at)+'</span></div><div class="online-detail online-detail-device"><b>Perangkat / browser</b><span class="device-text" title="'+device+'">'+device+'</span></div></div></article>';
       }).join('');
     }catch(e){if(meta)meta.innerText='Gagal memuat monitoring: '+String(e&&e.message||e);}
     finally{IPSRS_ONLINE_REQUEST_ACTIVE=false;}
