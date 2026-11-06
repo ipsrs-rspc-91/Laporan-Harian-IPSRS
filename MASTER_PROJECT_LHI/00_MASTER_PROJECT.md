@@ -186,7 +186,7 @@ Workflow yang ditemukan:
 | Deploy IPSRS Production | `.github/workflows/deploy-production.yml` | Deployment Cloudflare, GitHub Pages, dan Supabase secara kondisional |
 
 Urutan wajib mengikuti `SOP-UPDATE-DAN-DEPLOY.md`:
-1. Perubahan disimpan ke branch `main), kecuali pengguna memberi instruksi eksplisit lain.
+1. Perubahan disimpan ke branch `main`, kecuali pengguna memberi instruksi eksplisit lain.
 2. Push memicu audit gate.
 3. Jika audit gagal, deployment tidak boleh dianggap berhasil.
 4. Jika audit lolos, workflow deployment meneruskan SHA yang diaudit dan memeriksa bahwa SHA masih sesuai.
