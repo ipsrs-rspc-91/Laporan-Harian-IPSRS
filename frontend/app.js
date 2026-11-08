@@ -4675,6 +4675,16 @@
     startCreateReportForm(true);
   }
 
+  // Aksi EDIT dari modal Pengingat Laporan Lama.
+  // UI memakai CanEdit dari backend; endpoint apiGetReportById/apiUpdateReport tetap memvalidasi ulang.
+  window.__ipsrsOpenReportEditFromReminder = async function(report){
+    if(!report || !canEditReport(report)){
+      alert('Anda tidak memiliki hak akses untuk mengedit laporan ini.');
+      return;
+    }
+    await openEditModalForReport(report);
+  };
+
   // ============================================================
   // LAPORAN (tabel + kartu mobile + filter + admin staff picker)
   // ============================================================
