@@ -42,7 +42,8 @@ jobs:
     name: Browser Smoke Regression
     needs: audit-total
     if: needs.audit-total.result == 'success'
-    runs-on: ubuntu-latest
+    # Playwright 1.55 does not support the ubuntu-latest image currently resolving to Ubuntu 26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Checkout audited commit
