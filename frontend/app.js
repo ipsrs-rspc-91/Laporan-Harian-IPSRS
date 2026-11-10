@@ -1495,7 +1495,16 @@
         if(event && typeof event.stopPropagation==='function') event.stopPropagation();
         const currentArea=String(sel.value||'').trim();
         const activeArea=bg.querySelector('.area-item-picker-area.is-active');
-        const areaName=String(activeArea?.dataset.areaValue || bg.dataset.browsingArea || currentArea || '').trim();
+        const activeGroupHead=bg.querySelector('.area-item-picker-group-head[aria-expanded="true"]');
+        const activeGroupName=String(activeGroupHead?.querySelector('span')?.textContent||'').trim().toUpperCase();
+        const isLainnyaGroup=activeGroupName==='LAINNYA';
+        // Khusus kelompok LAINNYA, wajib memilih salah satu sub-menu secara eksplisit.
+        // Jangan gunakan browsingArea atau nilai AreaKerja lama sebagai jalan pintas.
+        const areaName=String(
+          isLainnyaGroup
+            ? (activeArea?.dataset.areaValue||'')
+            : (activeArea?.dataset.areaValue || bg.dataset.browsingArea || currentArea || '')
+        ).trim();
         if(!areaName){
           // Jangan menutup picker tanpa konteks area; pesan harus terlihat di dalam modal.
           const itemList=bg.querySelector('.area-item-picker-item-list');
@@ -1717,14 +1726,16 @@
           const willOpen=body.hidden;
           // Judul LAINNYA juga menjadi akses langsung ke area master LAINNYA.
           // Area itu tidak ditampilkan lagi sebagai subkelompok duplikat.
-          if(groupName==='LAINNYA' && willOpen){
-            const directArea=groups.get(groupName).find(area=>String(area).trim().toUpperCase()==='LAINNYA');
-            if(directArea){
-              // The LAINNYA heading opens the list; it is not a selection.
-              browsingArea = directArea;
-              bg.dataset.browsingArea = directArea;
-              renderItems_(directArea);
-            }
+          if(groupName==='LAINNYA'){
+            // LAINNYA hanya membuka daftar sub-menu. Judul kelompok bukan pilihan
+            // Area Kerja dan tidak boleh otomatis memuat item atau mengaktifkan tambah item.
+            browsingArea = '';
+            bg.dataset.browsingArea = '';
+            list.querySelectorAll('.area-item-picker-area').forEach(areaButton=>{
+              areaButton.classList.remove('is-active');
+              areaButton.setAttribute('aria-pressed','false');
+            });
+            itemList.innerHTML='<div class="area-item-picker-empty">Pilih sub-menu LAINNYA di kolom kiri untuk menampilkan item.</div>';
           }
           // Accordion tunggal: saat kelompok baru dibuka, tutup semua kelompok lain.
           list.querySelectorAll('.area-item-picker-group').forEach(otherGroup=>{
