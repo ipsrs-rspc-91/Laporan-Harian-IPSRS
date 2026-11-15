@@ -630,6 +630,8 @@ Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau run
 | Area | Temuan pada snapshot | Status/kendali |
 |---|---|---|
 | Frontend | `frontend/app.js` masih merupakan file inti besar/shared; sebagian helper mulai dipisahkan, tetapi modularisasi penuh dan isolasi domain belum terbukti | IN PROGRESS |
+| Frontend global namespace | Audit statis 15 November mendeteksi potensi duplikasi nama fungsi global lintas file (`render`, `check`, `injectStyles`, `session`, `ensureModal`, `close`, `load`, `init`, `show`) | WARN; perlu dependency map dan uji urutan pemuatan sebelum refactor |
+| Frontend/backend boundary | Audit statis mendeteksi akses Supabase langsung pada `frontend/app.js`, `frontend/index.html`, dan `frontend/laporan-fast-v2.js` | WARN; evaluasi pemindahan operasi data ke API server-side secara bertahap, tanpa mengubah perilaku sebelum test tersedia |
 | Backend | `supabase/functions/ipsrs-api/index.ts` masih memuat banyak action; pemetaan endpoint, dependensi, dan pembagian domain perlu dilengkapi | IN PROGRESS |
 | Modul terkunci | `LOCK_REGISTER.yaml` menandai Dashboard (DASH) dan Control Book (CONTROL_BOOK) sebagai LOCKED | PROTECTED; tidak boleh ada perubahan perilaku tanpa prosedur dan persetujuan yang berlaku |
 | Regression | `REGRESSION_MATRIX.yaml` masih memiliki banyak skenario PLANNED; status PLANNED bukan bukti test telah dijalankan | OPEN |
@@ -646,6 +648,8 @@ Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau run
 | Project Charter / persetujuan | Dokumen Charter tersedia, tetapi tabel persetujuan Product Owner dan Technical/Operations Owner masih berstatus MENUNGGU | DRAFT / NOT APPROVED |
 | Requirements baseline | SRS tersedia sebagai katalog awal; prioritas masih usulan dan baseline kebutuhan harus dikonfirmasi Product Owner | REVIEW / NOT APPROVED |
 | Business case | Visi dan tujuan sudah tercantum di Master Project; belum ditemukan artefak Business Case terpisah yang memuat manfaat terukur, biaya, opsi, dan justifikasi investasi | GAP DOKUMENTASI; jangan menganggap business case telah disahkan |
+
+**Catatan temuan audit statis:** pada run PR #77 tanggal 15 November 2026, Audit Total selesai SUCCESS tanpa failure, tetapi mengeluarkan WARN untuk potensi duplikasi nama fungsi global dan akses Supabase langsung dari frontend. WARN bukan bukti bahwa telah terjadi collision atau kebocoran; temuan harus dianalisis terhadap konteks pemanggilan, urutan script, boundary keamanan, dan regresi sebelum perubahan dilakukan.
 
 ### 19.3 Aturan membaca status
 
