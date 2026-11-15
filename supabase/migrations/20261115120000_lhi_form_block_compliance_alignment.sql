@@ -188,7 +188,8 @@ AS $function$
     'role', role,
     'employment_status', status,
     'last_lhi_created_at', last_lhi_created_at,
-    'last_lhi_input_date_wib', anchor_date,
+    'last_lhi_input_date_wib', (last_lhi_created_at AT TIME ZONE 'Asia/Jakarta')::date,
+    'discipline_baseline_date_wib', anchor_date,
     'missed_full_calendar_days', GREATEST(0, today_wib - anchor_date - 1),
     'lhi_access_blocked_at', lhi_access_blocked_at
   ) ORDER BY nama, staff_id), '[]'::jsonb)
