@@ -172,7 +172,8 @@ if (fs.existsSync(appPath)) {
     'get_lhi_discipline_status','Asia/Jakarta','r.created_at',
     'lhi_discipline_obligation_events','reject_lhi_obligation_event_mutation',
     'snapshot_missed_days','SNAPSHOT_BACKFILLED','exclude_lhi_obligations_on_deactivation',
-    'STAFF_REACTIVATED_AFTER_EXCLUSION','open_lhi_global_grace_v2',
+    'STAFF_REACTIVATED_AFTER_EXCLUSION','private.lhi_normal_access_allowed',
+    'reports_insert_own','staff_dropdown','open_lhi_global_grace_v2',
     "interval '120 hours'","status = 'Aktif'",
     'IF v_days >= 8','WHERE missed_days >= 10',
     'reject_lhi_obligation_event_mutation'
