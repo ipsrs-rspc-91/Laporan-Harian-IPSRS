@@ -44,3 +44,7 @@ IMPORTANT: This file is a rollback manifest, NOT a database dump. The connected 
 3. For Cloudflare, use the recorded immutable Worker version only after reviewing version/schema compatibility.
 4. For Supabase, restore only from a verified backup/restore point; database restoration can discard later data and cause downtime.
 5. Do not roll back Cloudflare alone if the older Worker expects a different database schema.
+
+
+## Konfirmasi backup Supabase mandiri — 15 November 2026
+Pengguna mengonfirmasi bahwa backup mandiri Supabase telah dilakukan. File backup, waktu pembuatan, cakupan database/Storage, lokasi penyimpanan, dan uji restore tidak diperiksa secara independen oleh asisten; bukti dan status restore tetap perlu dicatat oleh pemilik proyek.
