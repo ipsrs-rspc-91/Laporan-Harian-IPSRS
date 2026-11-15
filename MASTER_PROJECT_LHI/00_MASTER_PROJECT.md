@@ -11,7 +11,6 @@
 | Organisasi/pemilik proses | Instalasi Pemeliharaan Sarana Rumah Sakit (IPSRS), Rumah Sakit Puri Cinere |
 | Repository | `ipsrs-rspc-91/Laporan-Harian-IPSRS` |
 | Dokumen | Master Project LHI |
-| Versi dokumen | 2.0 |
 | Tanggal penyusunan | 15 November 2026 |
 | Status | Draft induk untuk review dan pengesahan pemilik proyek |
 | Status implementasi aplikasi | Existing system; pengembangan dan pematangan dilakukan bertahap |
@@ -584,9 +583,9 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 
 ## Riwayat revisi
 
-| Versi | Tanggal | Perubahan |
-|---|---|---|
-| 1.0 | 2026-11-06 | Peta arsitektur dan inventaris awal repository |
-| 2.0 | 2026-11-15 | Diperluas menjadi Master Project: mandat, visi, tujuan, ruang lingkup, kebutuhan, arsitektur, standar, tata kelola, delivery, risiko, acceptance criteria, dan peta dokumen |
+| Tanggal | Perubahan |
+|---|---|
+| 2026-11-06 | Peta arsitektur dan inventaris awal repository |
+| 2026-11-15 | Penyempurnaan menjadi dokumen induk proyek yang mencakup mandat, visi, tujuan, ruang lingkup, kebutuhan, arsitektur, standar, tata kelola, delivery, risiko, kriteria penerimaan, dan peta dokumen |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
