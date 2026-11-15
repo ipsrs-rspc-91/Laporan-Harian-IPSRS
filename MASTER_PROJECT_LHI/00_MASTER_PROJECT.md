@@ -58,7 +58,7 @@ Mewujudkan sistem pelaporan dan monitoring IPSRS yang terintegrasi, mudah diguna
 ## 3. Tujuan dan hasil yang diharapkan
 
 | ID | Tujuan | Hasil yang diharapkan | Indikator penerimaan |
-|---|---|---|---|---|
+|---|---|---|---|
 | OBJ-01 | Tertib pelaporan harian | Petugas dapat membuat dan melihat laporan sesuai hak akses | Skenario input, validasi, simpan, dan baca lulus |
 | OBJ-02 | Monitoring pelaksanaan | Pimpinan dapat memantau status pengisian dan aktivitas | Angka dan status cocok dengan data sumber |
 | OBJ-03 | Rekapitulasi | Laporan dapat direkap berdasarkan periode dan filter yang ditetapkan | Hasil rekap konsisten dengan data transaksi |
@@ -185,7 +185,7 @@ Tabel FR-01 sampai FR-14 adalah kapabilitas yang telah teridentifikasi pada snap
 Kode `FR-01` sampai `FR-14` pada tabel kapabilitas Master Project adalah pengelompokan kapabilitas tingkat proyek. Kode tersebut **bukan pengganti** ID requirement formal pada SRS. Untuk menghindari dua daftar kebutuhan yang berkembang sendiri-sendiri, gunakan crosswalk berikut:
 
 | Kapabilitas Master Project | Requirement SRS | Modul/domain pada katalog | Catatan cakupan |
-|---|---|---|
+|---|---|---|---|
 | FR-01 Autentikasi | LHI-FR-001 | AUTH | Identitas dan proses login |
 | FR-02 Otorisasi | LHI-FR-002 | AUTH, SECURITY | Pemeriksaan permission server-side |
 | FR-03 Input LHI | LHI-FR-003 | REPORT | Pembuatan laporan harian |
