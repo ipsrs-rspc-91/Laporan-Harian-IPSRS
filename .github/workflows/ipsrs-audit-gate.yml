@@ -30,6 +30,17 @@ jobs:
           node-version: 22
       - name: Run IPSRS Automated Audit
         run: node scripts/audit-total.mjs
+      - name: Setup Deno for Edge Function type checks
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check LHI Edge Functions
+        run: |
+          set -euo pipefail
+          deno check supabase/functions/lhi-reset-verify/index.ts
+          deno check supabase/functions/lhi-block-status/index.ts
+          deno check supabase/functions/lhi-recovery-exchange/index.ts
+          deno check supabase/functions/lhi-recovery-action/index.ts
       - name: Upload static audit checklist
         if: always()
         uses: actions/upload-artifact@v4
