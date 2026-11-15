@@ -198,7 +198,7 @@ async function staff(ctx:any,req?:Request){
  }
  if(String(data.status||"").toLowerCase()!=="aktif")throw Error("Status kepegawaian Anda tidak aktif.");
  if(data.lhi_access_blocked_at){
-   throw Error("Hak akses aplikasi Anda diblokir pada hari ke-8 karena tidak menginput LHI selama 7 hari kalender penuh. Hubungi KA IPSRS untuk prosedur pemulihan.");
+   throw Error("Hak akses aplikasi Anda diblokir pada hari ke-8 karena tidak menginput LHI selama lebih dari 7 hari kalender penuh. Hubungi KA IPSRS untuk prosedur pemulihan.");
  }
  return data
 }
