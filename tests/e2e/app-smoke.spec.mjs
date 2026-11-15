@@ -173,6 +173,7 @@ test('individual LHI access block rejects login after Auth and clears the tempor
     return route.fulfill({status:204,headers:cors});
   });
   await page.route('**/functions/v1/ipsrs-api',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
     operationalCalls++;
     return fulfillJson(route,{
       ok:false,
