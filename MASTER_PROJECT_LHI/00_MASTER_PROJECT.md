@@ -613,12 +613,12 @@ Proyek dapat dinyatakan memenuhi target profesionalisasi setelah seluruh kriteri
 
 ### 19.1 Identitas snapshot dan batas audit
 
-Status di bawah adalah **snapshot dokumentasi/repository per 15 November 2026**, bukan sertifikasi runtime produksi. Identitas ref yang diperiksa:
+Status di bawah adalah **snapshot dokumentasi/repository per 15 November 2026 sebelum revisi tahap 1**, bukan sertifikasi runtime produksi. SHA branch dokumen pada tabel adalah ref yang diaudit sebelum perubahan dokumen tahap 1; commit revisi sesudahnya tercatat pada riwayat GitHub/PR #77.
 
 | Objek | Identitas | Status saat pemeriksaan |
 |---|---|---|
 | Branch utama | `main` — `de77a78a99e566a97d9be320786e47d6675ae94a` | Baseline source utama yang diperiksa |
-| Branch dokumen | `docs/lhi-professionalization-roadmap` — `b9beab3dd45cbe03ff097ef1bd58340e9493514f` | Branch kerja Master Project |
+| Branch dokumen (pre-revisi tahap 1) | `docs/lhi-professionalization-roadmap` — `b9beab3dd45cbe03ff097ef1bd58340e9493514f` | Ref yang diaudit sebelum revisi tahap 1 |
 | PR #77 | Master Project LHI | OPEN / DRAFT; belum merge |
 | PR #76 | Form Blok compliance alignment | OPEN / DRAFT; migration pada PR bukan bukti telah diterapkan ke database |
 | PR #80 | Pelacakan source Edge Functions | OPEN / DRAFT; belum menjadi bagian dari `main` |
@@ -661,7 +661,7 @@ Daftar ini merupakan snapshot temuan dan batas klaim, bukan hasil audit total te
 
 ## 20. Struktur dokumen proyek
 
-Struktur dokumentasi yang dituju (nama/path berikut harus sesuai dengan file repository; roadmap disimpan dengan nama `PROFESSIONALIZATION_ROADMAP.md`, bukan file duplikat bernomor 06):
+Struktur dokumentasi yang ditemukan pada branch kerja saat audit 15 November 2026 (seluruh path di bawah telah diperiksa keberadaannya; roadmap disimpan dengan nama `PROFESSIONALIZATION_ROADMAP.md`, bukan file duplikat bernomor 06):
 
 ```text
 /
@@ -688,7 +688,7 @@ Struktur dokumentasi yang dituju (nama/path berikut harus sesuai dengan file rep
     12_MIGRATION_RECONCILIATION_MANIFEST.md
 ```
 
-Daftar ini adalah struktur target. Dokumen yang belum ada atau belum disetujui tidak boleh dianggap telah selesai. Hindari membuat dokumen duplikat yang mengulang kewenangan Project Control Book.
+Daftar ini adalah inventaris file pada snapshot branch kerja, bukan pernyataan bahwa seluruh dokumen telah disetujui atau seluruh isinya sudah lengkap. Keberadaan file tidak sama dengan persetujuan, implementasi, atau sertifikasi. Nomor 06 tidak digunakan sebagai file placeholder; roadmap tetap memakai nama `PROFESSIONALIZATION_ROADMAP.md`. Hindari membuat dokumen duplikat yang mengulang kewenangan Project Control Book.
 
 ## 21. Inventaris arsitektur existing — snapshot audit
 
