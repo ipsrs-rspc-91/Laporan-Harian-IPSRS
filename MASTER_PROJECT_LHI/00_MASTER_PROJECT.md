@@ -542,6 +542,22 @@ Status test pada `REGRESSION_MATRIX.yaml` tidak boleh diubah menjadi IMPLEMENTED
 
 Roadmap rinci, tanggal target, owner per task, dan estimasi disusun terpisah setelah kapasitas, prioritas, dan dependensi dikonfirmasi. Fase di atas bukan janji tanggal penyelesaian.
 
+### 14.1 Hubungan fase Master Project dan Roadmap Profesionalisasi
+
+Fase P0–P6 pada Master Project adalah fase pengendalian tingkat proyek. Tahap 0–8 pada `PROFESSIONALIZATION_ROADMAP.md` merupakan pemecahan pekerjaan yang lebih rinci; keduanya bukan dua urutan proyek yang saling menggantikan.
+
+| Fase Master Project | Tahap Roadmap rinci |
+|---|---|
+| P0 — Baseline & governance | 0. Baseline & safety |
+| P1 — Discovery & requirements | 1. Requirements & governance; bagian kebutuhan dari 2. Technical discovery |
+| P2 — Architecture & design | Sisa 2. Technical discovery; 3. Architecture pack |
+| P3 — Quality foundation | 4. Quality foundation |
+| P4 — Modularization | 5. Pilot modularization; 6. Incremental migration |
+| P5 — Operational hardening | Hardening keamanan, backup/recovery, performance, dan runbook pada 4, 7, dan 8 |
+| P6 — Release & continuous improvement | 7. Production validation; 8. As-Built & operations |
+
+Urutan aktual dapat beririsan untuk pekerjaan dokumentasi dan discovery, tetapi perubahan produksi tetap tunduk pada gate, lock, persetujuan, dan dependency. Status suatu fase hanya dinyatakan selesai berdasarkan kriteria keluar dan bukti, bukan karena tahap dokumen telah ditulis.
+
 ## 15. Release, deployment, dan operasi
 
 ### 15.1 Release
@@ -1007,5 +1023,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 | 2026-11-15 | Audit tahap 3: menambahkan traceability LHI-FR-013 ke README Form Blok, mengidentifikasi gap regression coverage, dan mempertahankan lock CONTROL_BOOK tanpa mengubah register |
 | 2026-11-15 | Audit tahap 4: menambahkan crosswalk FR-01–FR-14 ke ID formal LHI-FR-001–017 agar Master Project dan SRS memiliki satu jalur traceability |
 | 2026-11-15 | Audit tahap 5: menautkan setiap requirement formal ke ID modul/domain pada Katalog Modul untuk memperjelas ownership dan cakupan lintas modul |
+| 2026-11-15 | Audit tahap 6: menyelaraskan fase P0–P6 Master Project dengan tahap 0–8 Roadmap agar tidak terbaca sebagai dua urutan delivery yang bertentangan |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
