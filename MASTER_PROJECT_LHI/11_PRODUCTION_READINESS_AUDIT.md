@@ -96,11 +96,15 @@ Ini mengurangi risiko pemanggilan langsung oleh client, tetapi audit harus tetap
 
 Supabase Security Advisor melaporkan `auth_leaked_password_protection` pada level WARN: perlindungan terhadap password yang diketahui bocor belum aktif.
 
+Supabase mendokumentasikan fitur Leaked Password Protection sebagai fitur yang tersedia pada paket Pro dan di atasnya. Status paket project harus diverifikasi; jangan mengasumsikan fitur dapat diaktifkan pada semua paket.
+
 Tindak lanjut:
-1. Product Owner dan administrator Auth menilai dampak kebijakan terhadap reset dan penggantian password.
-2. Aktifkan melalui pengaturan Auth yang berwenang setelah konfirmasi administrator.
-3. Uji alur set/reset password dan pesan error.
-4. Catat tanggal, approver, dan bukti konfigurasi.
+1. Verifikasi paket Supabase project dan kelayakan fitur.
+2. Product Owner dan administrator Auth menilai dampak kebijakan terhadap reset dan penggantian password.
+3. Jika tersedia pada paket, aktifkan melalui pengaturan Auth yang berwenang setelah konfirmasi administrator.
+4. Jika belum tersedia, catat gap dan mitigasi sementara; jangan mengklaim perlindungan telah aktif.
+5. Uji alur set/reset password dan pesan error.
+6. Catat tanggal, approver, dan bukti konfigurasi.
 
 Audit ini tidak mengubah pengaturan Auth karena koneksi yang digunakan hanya menyediakan pembacaan Advisor/database, bukan kontrol konfigurasi Auth.
 
