@@ -627,6 +627,7 @@ Struktur dokumentasi yang dituju:
     08_MODULE_CATALOG.md
     09_SECURITY_ASSURANCE_PLAN.md
     10_API_DATABASE_INVENTORY.md
+    11_PRODUCTION_READINESS_AUDIT.md
 ```
 
 Daftar ini adalah struktur target. Dokumen yang belum ada atau belum disetujui tidak boleh dianggap telah selesai. Hindari membuat dokumen duplikat yang mengulang kewenangan Project Control Book.
@@ -716,6 +717,7 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 - [Software Design Specification](04_SOFTWARE_DESIGN_SPECIFICATION.md) — template desain rinci per modul.
 - [As-Built and Operations](07_AS_BUILT_AND_OPERATIONS.md) — inventaris existing, health check, backup, incident, dan runbook.
 - [API dan Database Inventory](10_API_DATABASE_INVENTORY.md) — daftar action backend, objek database, migration snapshot, dan pekerjaan verifikasi.
+- [Production Readiness Audit](11_PRODUCTION_READINESS_AUDIT.md) — hasil audit read-only database, RLS, grants, advisors, dan blocker migration parity.
 - [Professionalization Roadmap](PROFESSIONALIZATION_ROADMAP.md) — rencana tahapan, bukan dokumen induk
 
 ---
