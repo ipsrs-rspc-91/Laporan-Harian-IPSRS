@@ -171,7 +171,8 @@ if (fs.existsSync(appPath)) {
     'lhi_access_blocked_at','lhi_employment_activated_at',
     'get_lhi_discipline_status','Asia/Jakarta','r.created_at',
     'lhi_discipline_obligation_events','reject_lhi_obligation_event_mutation',
-    'snapshot_missed_days','SNAPSHOT_BACKFILLED','open_lhi_global_grace_v2',
+    'snapshot_missed_days','SNAPSHOT_BACKFILLED','exclude_lhi_obligations_on_deactivation',
+    'STAFF_REACTIVATED_AFTER_EXCLUSION','open_lhi_global_grace_v2',
     "interval '120 hours'","status = 'Aktif'",
     'IF v_days >= 8','WHERE missed_days >= 10',
     'reject_lhi_obligation_event_mutation'
