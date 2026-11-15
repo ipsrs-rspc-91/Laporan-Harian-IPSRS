@@ -149,7 +149,30 @@ Dampak:
 - Jangan menghapus atau mengganti function runtime berdasarkan source main yang belum lengkap.
 - Sinkronisasi source tidak sama dengan persetujuan deployment; semua perubahan backend tetap menunggu migration parity dan deployment gate.
 
-## 11. Riwayat
+## 11. Privacy, data residency, dan regulasi Indonesia
+
+Project Supabase yang diperiksa memiliki region `ap-southeast-1`. Karena Aplikasi LHI menyimpan identitas petugas dan metadata aktivitas, data yang diproses perlu dipetakan sebagai data pribadi. Penempatan region di luar Indonesia memerlukan legal/privacy assessment terhadap transfer lintas negara dan peran vendor/subprocessor sesuai UU PDP; audit ini tidak menyimpulkan bahwa penggunaan region tersebut otomatis melanggar hukum.
+
+Pemetaan regulasi:
+- UU 27/2022 tentang Pelindungan Data Pribadi: berlaku; identifikasi controller/processor, tujuan/dasar pemrosesan, hak subjek data, retensi, keamanan, DPIA bila berisiko tinggi, dan transfer lintas negara.
+- PP 71/2019 tentang Penyelenggaraan Sistem dan Transaksi Elektronik: berlaku; evaluasi keandalan, keamanan, tanggung jawab, dan ketersediaan sistem elektronik.
+- Permenkes 24/2022 tentang Rekam Medis: berlaku; hanya diterapkan pada bagian LHI yang benar-benar memproses data rekam medis. LHI pemeliharaan sarana tidak otomatis menjadi sistem rekam medis.
+- PP 33/2026 tentang peraturan pelaksanaan UU PDP: telah ditetapkan; masa berlaku ditentukan enam bulan setelah pengundangan. Fungsi hukum/privasi harus memastikan tanggal efektif dan menyiapkan pemenuhan sebelum berlaku.
+
+Tindakan:
+1. Tetapkan klasifikasi data LHI dan larangan memasukkan identitas pasien/diagnosis/nomor rekam medis ke laporan pemeliharaan.
+2. Verifikasi kontrak, lokasi pemrosesan, subprocessor, transfer data, retensi, penghapusan, dan respons insiden vendor.
+3. Lakukan DPIA bila kriteria risiko tinggi terpenuhi.
+4. Dapatkan keputusan tertulis dari fungsi hukum/privasi rumah sakit atas lokasi Supabase dan layanan Cloudflare.
+5. Catat dasar pemrosesan, owner, dan masa retensi setiap kategori data.
+
+Rujukan resmi awal:
+- UU 27/2022: https://peraturan.bpk.go.id/Details/229798/uu-no-27-tahun-2022-10
+- PP 71/2019: https://peraturan.bpk.go.id/Details/122030/pp-no-71-tahun-2019
+- Permenkes 24/2022: https://jdih.kemkes.go.id/documents/peraturan-menteri-kesehatan-nomor-24-tahun-2022
+- PP 33/2026: https://pemerintahdigital.id/assets/resources/PP33_2026-PeraturanPelaksanaanUU27_2022_PerlindunganDataPribadi.pdf
+
+## 12. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
