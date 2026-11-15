@@ -179,8 +179,8 @@ jobs:
 
   deploy-cloudflare:
     name: Deploy Cloudflare Worker
-    needs: detect-changes
-    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.cloudflare == 'true' }}
+    needs: [detect-changes, deploy-supabase]
+    if: ${{ !cancelled() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.cloudflare == 'true' && ((needs.detect-changes.outputs.supabase == 'false' && needs.deploy-supabase.result == 'skipped') || (needs.detect-changes.outputs.supabase == 'true' && needs.deploy-supabase.result == 'success')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -268,8 +268,8 @@ jobs:
 
   deploy-pages:
     name: Deploy GitHub Pages
-    needs: detect-changes
-    if: ${{ needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' }}
+    needs: [detect-changes, deploy-supabase, deploy-cloudflare]
+    if: ${{ !cancelled() && needs.detect-changes.result == 'success' && needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && ((needs.detect-changes.outputs.supabase == 'false' && needs.deploy-supabase.result == 'skipped') || (needs.detect-changes.outputs.supabase == 'true' && needs.deploy-supabase.result == 'success')) && needs.deploy-cloudflare.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -330,7 +330,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Block failed or skipped required production deployment
-        if: ${{ needs.detect-changes.result == 'failure' || needs.detect-changes.result == 'skipped' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-cloudflare.result != 'success') }}
+        if: ${{ needs.detect-changes.result == 'failure' || needs.detect-changes.result == 'skipped' || needs.deploy-supabase.result == 'failure' || needs.deploy-supabase.result == 'cancelled' || needs.deploy-cloudflare.result == 'failure' || needs.deploy-cloudflare.result == 'cancelled' || needs.deploy-pages.result == 'failure' || needs.deploy-pages.result == 'cancelled' || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.supabase == 'true' && needs.deploy-supabase.result != 'success') || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-pages.result != 'success') || (needs.detect-changes.outputs.deploy_allowed == 'true' && needs.detect-changes.outputs.frontend == 'true' && needs.deploy-cloudflare.result != 'success') }}
         run: |
           echo "❌ IPSRS PRODUCTION DEPLOYMENT FAILED OR WAS SKIPPED"
           echo "A required deployment target failed, was cancelled, or was unexpectedly skipped."
