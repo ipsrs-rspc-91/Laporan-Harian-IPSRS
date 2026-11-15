@@ -752,8 +752,23 @@ BEGIN
     END IF;
   END IF;
 
+  -- A scheduler invocation that handled a GRACE incident must never fall through
+  -- into the daily discipline scan. In particular, when the 120-hour window is
+  -- finalized, the old streak snapshot must not immediately re-lock the app in
+  -- the same invocation. A fresh invocation will recalculate from actual LHI
+  -- created_at values and the latest reset baseline.
+  IF v_active_grace IS NOT NULL THEN
+    RETURN jsonb_build_object(
+      'ok', true,
+      'date_wib', v_today,
+      'processed', true,
+      'grace_incident_id', v_active_grace,
+      'discipline_cycle_skipped', true
+    );
+  END IF;
+
   -- The discipline cycle is paused while the 120-hour recovery window is open.
-  IF v_active_grace IS NULL AND v_lock = 'NONAKTIF' THEN
+  IF v_lock = 'NONAKTIF' THEN
     FOR v_staff IN
       SELECT staff_id, nama, role, status, created_at,
              lhi_employment_activated_at, lhi_discipline_reset_at,
