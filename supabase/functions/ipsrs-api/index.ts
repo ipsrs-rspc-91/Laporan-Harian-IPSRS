@@ -179,7 +179,7 @@ async function staff(ctx:any,req?:Request){
    const email=String(ctx.userClaims?.email||"").toLowerCase();
    const local=email.split("@")[0];
    const staffId=local==="kaipsrs"?"KAIPSRS":local;
-   const r=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device").eq("staff_id",staffId).maybeSingle();
+   const r=await ctx.supabaseAdmin.from("staff").select("staff_id,nama,jabatan,role,bidang,status,auth_user_id,last_login_at,last_seen_at,last_login_device,lhi_access_blocked_at").eq("staff_id",staffId).maybeSingle();
    if(r.error)throw r.error;
    data=r.data;
    if(data)await ctx.supabaseAdmin.from("staff").update({auth_user_id:uid}).eq("staff_id",data.staff_id);
