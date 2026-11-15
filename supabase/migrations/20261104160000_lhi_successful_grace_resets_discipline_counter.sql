@@ -15,7 +15,11 @@ BEGIN
   v_old := 'select staff_id,nama,role,status,lhi_manual_unblock_until';
   v_new := 'select staff_id,nama,role,status,lhi_manual_unblock_until,lhi_discipline_reset_at,created_at';
   IF position(v_old IN v_definition)=0 THEN
-    RAISE EXCEPTION 'LHI reset patch failed: scheduler staff projection not found.';
+    IF position(v_new IN v_definition)>0
+       AND position('set lhi_discipline_reset_at = now()' IN v_definition)>0 THEN
+      RETURN;
+    END IF;
+    RAISE EXCEPTION 'LHI reset patch failed: scheduler staff projection not found and reset baseline is absent.';
   END IF;
   v_definition := replace(v_definition,v_old,v_new);
 
