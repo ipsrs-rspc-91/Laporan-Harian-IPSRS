@@ -71,7 +71,7 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
     .filter(src => {
       const clean = src.split('?')[0].split('#')[0].replace(/^\.\//, '').replace(/^\//, '');
       return clean.endsWith('.js') && [
-        'app.js','config.js','laporan-fast-v2.js','login-fast.js',
+        'app.js','config.js','laporan-fast-v2.js','login-fast.js', 'shared/dom-utils.js','shared/date-utils.js',
         'dashboard-loading-v2.js','access-policy-ui.js','static-data.js',
         'required-fields-ui.js','access-control.js','access-visibility-fix.js',
         'laporan-loading-state.js','js/kategori-modal.js'
@@ -504,4 +504,24 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   // ESTAFET remains inline within the first paragraph and its punctuation.
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
+});
+
+test('shared date utilities preserve legacy formatting contracts', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/date-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, Date, Intl, Number, String, Math };
+  vm.runInNewContext(source, sandbox);
+  const utils = sandbox.window;
+
+  expect(utils.formatTanggalDisplay('2026-09-18')).toBe('18/09/2026');
+  expect(utils.formatTanggalDisplay('2026-09-18T17:00:00.000Z')).toBe('19/09/2026');
+  expect(utils.formatTanggalDisplay('2026-09-18T17:00:00+00:00')).toBe('19/09/2026');
+  expect(utils.formatTanggalDisplay('3/9/2026')).toBe('03/09/2026');
+  expect(utils.formatTanggalDisplay('nilai tidak dikenal')).toBe('nilai tidak dikenal');
+  expect(utils.formatTanggalDisplay('')).toBe('');
+  expect(utils.formatLoginDateTime_(null)).toBe('Belum pernah login');
+  expect(utils.formatLoginDateTime_('invalid-date')).toBe('-');
+  expect(utils.formatLastSeen_(null)).toBe('-');
+  expect(utils.formatLastSeen_(new Date(Date.now()-90*1000).toISOString())).toBe('1 menit lalu');
+  expect(utils.todayLocalISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 });
