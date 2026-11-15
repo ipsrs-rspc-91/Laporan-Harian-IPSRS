@@ -813,35 +813,6 @@
     IPSRS_HEARTBEAT_TIMER=setInterval(beat,60000);
   }
 
-  function formatLoginDateTime_(value){
-    if(!value) return 'Belum pernah login';
-    const d=new Date(value);
-    if(Number.isNaN(d.getTime())) return '-';
-    return d.toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  }
-
-  function formatLastSeen_(value){
-    if(!value) return '-';
-    const d=new Date(value), now=Date.now(), sec=Math.max(0,Math.floor((now-d.getTime())/1000));
-    if(sec<60) return sec+' detik lalu';
-
-    const minTotal=Math.floor(sec/60);
-    const hourTotal=Math.floor(minTotal/60);
-    const dayTotal=Math.floor(hourTotal/24);
-
-    // < 24 jam: tampilkan jam + menit agar aktivitas lebih mudah dibaca.
-    if(hourTotal<24){
-      if(hourTotal===0) return minTotal+' menit lalu';
-      const mins=minTotal%60;
-      return hourTotal+' jam'+(mins ? ' '+mins+' menit' : '')+' lalu';
-    }
-
-    // >= 24 jam: tampilkan hari + jam + menit.
-    const hours=hourTotal%24;
-    const mins=minTotal%60;
-    return dayTotal+' hari'+(hours ? ' '+hours+' jam' : '')+(mins ? ' '+mins+' menit' : '')+' lalu';
-  }
-
   async function loadOnlineUsers(){
     if(!CURRENT_SESSION) return;
     const box=document.getElementById('onlineUsersList'),meta=document.getElementById('onlineUsersMeta');
@@ -1118,53 +1089,6 @@
    * jadi "kemarin" (karena WIB = UTC+7, kemarin belum lewat tengah malam UTC).
    * Akibatnya laporan yang baru dibuat tidak terhitung "hari ini" di monitoring.
    */
-  function todayLocalISO(){
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return y + '-' + m + '-' + day;
-  }
-
-  /** Format 'YYYY-MM-DD' -> 'DD/MM/YYYY' untuk ditampilkan ke user. */
-  function formatTanggalDisplay(value){
-    if(value === undefined || value === null || value === '') return '';
-
-    const text = String(value).trim();
-
-    // Google Apps Script dapat mengirim nilai Date dari Sheets sebagai ISO UTC.
-    // Contoh: 2026-09-18T17:00:00.000Z sebenarnya adalah 19/09/2026
-    // pukul 00:00 WIB. Jangan mengambil YYYY-MM-DD mentah karena itu tanggal UTC.
-    const isoDateTimeMatch = text.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/);
-    if(isoDateTimeMatch){
-      const d = new Date(text);
-      if(!Number.isNaN(d.getTime())){
-        const parts = new Intl.DateTimeFormat('en-GB', {
-          timeZone: 'Asia/Jakarta',
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }).formatToParts(d);
-        const get = type => parts.find(p => p.type === type)?.value || '';
-        return get('day') + '/' + get('month') + '/' + get('year');
-      }
-    }
-
-    // Nilai date-only dari backend: YYYY-MM-DD.
-    const isoDateMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if(isoDateMatch){
-      return isoDateMatch[3] + '/' + isoDateMatch[2] + '/' + isoDateMatch[1];
-    }
-
-    // Fallback untuk tanggal yang sudah berbentuk DD/MM/YYYY.
-    const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if(slashMatch){
-      return slashMatch[1].padStart(2,'0') + '/' + slashMatch[2].padStart(2,'0') + '/' + slashMatch[3];
-    }
-
-    return text;
-  }
-
   function buildMonthOptions(){
     const now = new Date();
     const opts = [];
