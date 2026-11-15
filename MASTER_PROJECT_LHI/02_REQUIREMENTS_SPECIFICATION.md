@@ -27,25 +27,25 @@ Daftar aktor dan role final harus direkonsiliasi dengan implementasi backend, da
 
 ## 4. Kebutuhan fungsional tingkat sistem
 
-| ID | Requirement | Prioritas awal | Acceptance criteria tingkat sistem |
-|---|---|---|---|
-| LHI-FR-001 | Sistem menyediakan autentikasi pengguna | Critical | Identitas valid dapat masuk; identitas tidak valid ditolak; event relevan tercatat |
-| LHI-FR-002 | Sistem menegakkan otorisasi pada server | Critical | Operasi tanpa permission ditolak walau UI dimanipulasi |
-| LHI-FR-003 | Petugas dapat membuat laporan harian | Critical | Data valid tersimpan sekali dan dapat dibaca kembali oleh pihak berwenang |
-| LHI-FR-004 | Pengguna dapat melihat laporan sesuai scope akses | Critical | Filter, owner, dan role tidak membuka data yang tidak berhak |
-| LHI-FR-005 | Edit laporan mengikuti aturan bisnis dan permission | High | Perubahan ditolak bila tidak berwenang dan histori tetap konsisten |
-| LHI-FR-006 | Penghapusan mengikuti kebijakan soft-delete/audit | High | Penghapusan tidak menghilangkan jejak audit dan tidak melanggar retensi |
-| LHI-FR-007 | Master area/item/kategori dapat dikelola | High | Perubahan konsisten antara UI, API, dan database |
-| LHI-FR-008 | Sistem mendeteksi item duplikat atau sangat mirip | High | Aturan pencocokan terdokumentasi; pengguna mendapat informasi sebelum membuat duplikasi |
-| LHI-FR-009 | Klasifikasi spare part/material/unit divalidasi | High | Kategori dan field wajib mengikuti aturan yang disetujui |
-| LHI-FR-010 | Dashboard menyajikan ringkasan operasional | High | Angka dapat direkonsiliasi dengan data sumber dan role |
-| LHI-FR-011 | Rekap tersedia berdasarkan periode | High | Batas periode dan hasil agregasi benar serta konsisten |
-| LHI-FR-012 | Monitoring menyajikan status sesuai definisi resmi | High | Status, waktu, dan pengecualian dihitung sesuai spesifikasi |
-| LHI-FR-013 | Form Blok Aplikasi menegakkan aturan peringatan/blokir/pemulihan | Critical | Transisi status, batas hari, pengecualian, dan recovery sesuai spesifikasi resmi |
-| LHI-FR-014 | Aktivitas penting memiliki audit trail | High | Aktor, waktu, objek, tindakan, dan hasil tercatat tanpa secret |
-| LHI-FR-015 | Pengguna dapat mengekspor laporan sesuai izin | Medium | File hanya memuat data yang boleh diakses dan formatnya tervalidasi |
-| LHI-FR-016 | PWA/cache menyajikan asset versi yang benar | High | Pembaruan versi tidak meninggalkan asset lama yang merusak fungsi |
-| LHI-FR-017 | Sistem mendukung penambahan modul baru | High | Modul dapat ditambahkan melalui kontrak, katalog, test, dan change control tanpa redesign total yang tidak perlu |
+| ID | Requirement | Prioritas awal | Acceptance criteria tingkat sistem | Owner requirement (belum disahkan) |
+|---|---|---|---|---|
+| LHI-FR-001 | Sistem menyediakan autentikasi pengguna | Critical | Identitas valid dapat masuk; identitas tidak valid ditolak; event relevan tercatat | Product Owner (menunggu pengesahan) |
+| LHI-FR-002 | Sistem menegakkan otorisasi pada server | Critical | Operasi tanpa permission ditolak walau UI dimanipulasi | Product Owner (menunggu pengesahan) |
+| LHI-FR-003 | Petugas dapat membuat laporan harian | Critical | Data valid tersimpan sekali dan dapat dibaca kembali oleh pihak berwenang | Product Owner (menunggu pengesahan) |
+| LHI-FR-004 | Pengguna dapat melihat laporan sesuai scope akses | Critical | Filter, owner, dan role tidak membuka data yang tidak berhak | Product Owner (menunggu pengesahan) |
+| LHI-FR-005 | Edit laporan mengikuti aturan bisnis dan permission | High | Perubahan ditolak bila tidak berwenang dan histori tetap konsisten | Product Owner (menunggu pengesahan) |
+| LHI-FR-006 | Penghapusan mengikuti kebijakan soft-delete/audit | High | Penghapusan tidak menghilangkan jejak audit dan tidak melanggar retensi | Product Owner (menunggu pengesahan) |
+| LHI-FR-007 | Master area/item/kategori dapat dikelola | High | Perubahan konsisten antara UI, API, dan database | Product Owner (menunggu pengesahan) |
+| LHI-FR-008 | Sistem mendeteksi item duplikat atau sangat mirip | High | Aturan pencocokan terdokumentasi; pengguna mendapat informasi sebelum membuat duplikasi | Product Owner (menunggu pengesahan) |
+| LHI-FR-009 | Klasifikasi spare part/material/unit divalidasi | High | Kategori dan field wajib mengikuti aturan yang disetujui | Product Owner (menunggu pengesahan) |
+| LHI-FR-010 | Dashboard menyajikan ringkasan operasional | High | Angka dapat direkonsiliasi dengan data sumber dan role | Product Owner (menunggu pengesahan) |
+| LHI-FR-011 | Rekap tersedia berdasarkan periode | High | Batas periode dan hasil agregasi benar serta konsisten | Product Owner (menunggu pengesahan) |
+| LHI-FR-012 | Monitoring menyajikan status sesuai definisi resmi | High | Status, waktu, dan pengecualian dihitung sesuai spesifikasi | Product Owner (menunggu pengesahan) |
+| LHI-FR-013 | Form Blok Aplikasi menegakkan aturan peringatan/blokir/pemulihan | Critical | Transisi status, batas hari, pengecualian, dan recovery sesuai spesifikasi resmi | Product Owner (menunggu pengesahan) |
+| LHI-FR-014 | Aktivitas penting memiliki audit trail | High | Aktor, waktu, objek, tindakan, dan hasil tercatat tanpa secret | Product Owner (menunggu pengesahan) |
+| LHI-FR-015 | Pengguna dapat mengekspor laporan sesuai izin | Medium | File hanya memuat data yang boleh diakses dan formatnya tervalidasi | Product Owner (menunggu pengesahan) |
+| LHI-FR-016 | PWA/cache menyajikan asset versi yang benar | High | Pembaruan versi tidak meninggalkan asset lama yang merusak fungsi | Product Owner (menunggu pengesahan) |
+| LHI-FR-017 | Sistem mendukung penambahan modul baru | High | Modul dapat ditambahkan melalui kontrak, katalog, test, dan change control tanpa redesign total yang tidak perlu | Product Owner (menunggu pengesahan) |
 
 Prioritas di atas merupakan usulan awal untuk disahkan Product Owner; bukan prioritas final yang mengizinkan perubahan produksi.
 
@@ -129,3 +129,4 @@ Gunakan Critical/High/Medium/Low dengan dampak operasional dan keamanan. Priorit
 | 15 November 2026 | Baseline awal kebutuhan sistem LHI |
 | 15 November 2026 | Memperjelas referensi rinci LHI-FR-013, status persetujuan README Form Blok, dan gap regression coverage tanpa mengubah protected control registers |
 | 15 November 2026 | Menautkan SRS ke crosswalk kapabilitas Master Project agar ID requirement formal konsisten |
+| 15 November 2026 | Menambahkan kolom owner requirement pada seluruh 17 requirement formal; owner ditandai menunggu pengesahan agar tidak ada penanggung jawab yang diasumsikan final |
