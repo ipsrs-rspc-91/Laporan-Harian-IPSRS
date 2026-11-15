@@ -13,6 +13,9 @@ Dokumen teknis pendukung:
 - [Software Architecture](MASTER_PROJECT_LHI/03_SOFTWARE_ARCHITECTURE.md)
 - [Quality Assurance Plan](MASTER_PROJECT_LHI/05_QUALITY_ASSURANCE_PLAN.md)
 - [Security Assurance Plan](MASTER_PROJECT_LHI/09_SECURITY_ASSURANCE_PLAN.md)
+- [Project Charter](MASTER_PROJECT_LHI/01_PROJECT_CHARTER.md)
+- [Software Design Specification](MASTER_PROJECT_LHI/04_SOFTWARE_DESIGN_SPECIFICATION.md)
+- [As-Built and Operations](MASTER_PROJECT_LHI/07_AS_BUILT_AND_OPERATIONS.md)
 
 Dokumen tersebut menjelaskan arsitektur existing, peta direktori, katalog modul, backend, CI/CD, status modularisasi, dan rencana refactor bertahap.
 
