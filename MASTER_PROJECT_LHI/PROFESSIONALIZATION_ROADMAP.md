@@ -112,6 +112,8 @@ Baseline ini adalah ringkasan inspeksi repository, bukan audit total atau pernya
 | 7. Production validation | Rilis terkontrol, parity check, smoke, monitoring, rollback readiness | SHA, deployment, dan runtime tervalidasi |
 | 8. As-Built & operations | Dokumentasi aktual, SOP incident, maintenance, recovery drill | Dokumentasi sesuai sistem yang aktif |
 
+Tahap 0–8 pada tabel ini adalah rincian pelaksanaan dari fase pengendalian P0–P6 pada `00_MASTER_PROJECT.md` Bagian 14.1. Jika ada perbedaan tingkat rincian, Master Project mengatur fase proyek dan roadmap menguraikan aktivitasnya; keduanya tidak mengubah kewenangan Project Control Book.
+
 Tidak ada tahap yang otomatis dianggap selesai hanya karena dokumen dibuat.
 
 ## 6. Aturan pemilihan pilot modularisasi
@@ -158,5 +160,6 @@ Setiap implementasi berikutnya harus mengikuti `PROJECT_CONTROL.md`, `LOCK_REGIS
 
 ---
 
-**Status akhir dokumen:** ROADMAP DITULIS; implementasi profesionalisasi belum dinyatakan selesai.  
+**Status akhir dokumen:** ROADMAP DITULIS; implementasi profesionalisasi belum dinyatakan selesai.
+**Catatan sinkronisasi:** tahap 0–8 adalah rincian fase P0–P6 pada Master Project Bagian 14.1.  
 **Langkah teknis berikutnya:** audit dependency graph aktual dan rekonsiliasi baseline source-versus-production sebelum memilih modul pilot.
