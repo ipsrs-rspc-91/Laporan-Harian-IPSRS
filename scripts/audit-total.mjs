@@ -174,7 +174,7 @@ if (fs.existsSync(appPath)) {
     'snapshot_missed_days','SNAPSHOT_BACKFILLED','exclude_lhi_obligations_on_deactivation',
     'STAFF_REACTIVATED_AFTER_EXCLUSION','private.lhi_normal_access_allowed',
     'reports_insert_own','DROP POLICY IF EXISTS reports_select_authorized',
-    'DROP POLICY IF EXISTS access_settings_read_ka','authenticated_read_master_data',
+    'DROP POLICY IF EXISTS access_settings_read_ka','AND key <> \'LHI_GLOBAL_BLOCK\'::text','authenticated_read_master_data',
     'REVOKE ALL ON TABLE public.staff_dropdown','GRANT SELECT ON TABLE public.staff_dropdown TO service_role',
     'staff_dropdown','open_lhi_global_grace_v2',
     "interval '120 hours'","status = 'Aktif'",
@@ -203,15 +203,15 @@ if (fs.existsSync(appPath)) {
     scheduler.includes('r.created_at >= i.started_at') &&
     scheduler.includes('r.created_at < i.deadline_at') &&
     scheduler.includes('Petugas menginput minimal satu LHI sah selama kelonggaran 120 jam.');
-  const pendingCountsPeople=scheduler.includes('count(DISTINCT o.staff_id)') &&
+  const globalLockWriteGuard=(migration.match(/AND key <> 'LHI_GLOBAL_BLOCK'::text/g)||[]).length===5;\n  const pendingCountsPeople=scheduler.includes('count(DISTINCT o.staff_id)') &&
     scheduler.includes('o.completed_at IS NULL') &&
     scheduler.includes('o.excluded_at IS NULL') &&
     scheduler.includes("s.status = 'Aktif'");
   if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal||
      !graceCompletionCannotFallThrough||!graceSuccessKeepsGlobalUnlocked||
-     !graceFailureRelocksOnlyForPending||!graceRequiresValidReport||!pendingCountsPeople)
-    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal+', same-cycle guard='+graceCompletionCannotFallThrough+', all-complete stays unlocked='+graceSuccessKeepsGlobalUnlocked+', pending re-lock='+graceFailureRelocksOnlyForPending+', valid report window='+graceRequiresValidReport+', count per person='+pendingCountsPeople);
-  else pass('LHI database alignment contract','Grace closes with access open only when every active snapshot member has >=1 valid LHI within 120 hours; only remaining pending members cause re-lock; counts people, not daily obligation rows; scheduler cannot re-lock in same invocation');
+     !graceFailureRelocksOnlyForPending||!graceRequiresValidReport||!pendingCountsPeople||!globalLockWriteGuard)
+    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal+', same-cycle guard='+graceCompletionCannotFallThrough+', all-complete stays unlocked='+graceSuccessKeepsGlobalUnlocked+', pending re-lock='+graceFailureRelocksOnlyForPending+', valid report window='+graceRequiresValidReport+', count per person='+pendingCountsPeople+', protected global-lock writes='+globalLockWriteGuard);
+  else pass('LHI database alignment contract','Grace closes with access open only when every active snapshot member has >=1 valid LHI within 120 hours; only remaining pending members cause re-lock; counts people, not daily obligation rows; scheduler cannot re-lock in same invocation; authenticated KA cannot directly write the global lock setting');
 
   const hasRestrictedRecovery=app.includes("functions/v1/lhi-recovery-exchange") &&
     app.includes("functions/v1/lhi-recovery-action") &&
