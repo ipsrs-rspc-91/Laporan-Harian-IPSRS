@@ -643,6 +643,9 @@ Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau run
 | Backup / DR | Checkpoint source tidak sama dengan backup database; restore drill penuh belum tersertifikasi | OPEN / NOT CERTIFIED |
 | Performance | Target dan baseline numerik p50/p95 belum disahkan/dibuktikan | OPEN |
 | SLO / RPO / RTO / retensi | Nilai target resmi belum ditetapkan dan disetujui | TO BE AGREED; jangan mengarang angka |
+| Project Charter / persetujuan | Dokumen Charter tersedia, tetapi tabel persetujuan Product Owner dan Technical/Operations Owner masih berstatus MENUNGGU | DRAFT / NOT APPROVED |
+| Requirements baseline | SRS tersedia sebagai katalog awal; prioritas masih usulan dan baseline kebutuhan harus dikonfirmasi Product Owner | REVIEW / NOT APPROVED |
+| Business case | Visi dan tujuan sudah tercantum di Master Project; belum ditemukan artefak Business Case terpisah yang memuat manfaat terukur, biaya, opsi, dan justifikasi investasi | GAP DOKUMENTASI; jangan menganggap business case telah disahkan |
 
 ### 19.3 Aturan membaca status
 
@@ -687,6 +690,8 @@ Struktur dokumentasi yang ditemukan pada branch kerja saat audit 15 November 202
     11_PRODUCTION_READINESS_AUDIT.md
     12_MIGRATION_RECONCILIATION_MANIFEST.md
 ```
+
+Catatan kelengkapan: visi dan tujuan produk saat ini terintegrasi di `00_MASTER_PROJECT.md`; belum ada file Business Case terpisah pada inventaris ini. Jika manajemen memerlukan business case formal, dokumen tersebut harus disusun dengan manfaat terukur, alternatif, biaya/risiko, dan persetujuan, bukan dianggap sudah tersedia hanya karena visi dan tujuan telah ditulis.
 
 Daftar ini adalah inventaris file pada snapshot branch kerja, bukan pernyataan bahwa seluruh dokumen telah disetujui atau seluruh isinya sudah lengkap. Keberadaan file tidak sama dengan persetujuan, implementasi, atau sertifikasi. Nomor 06 tidak digunakan sebagai file placeholder; roadmap tetap memakai nama `PROFESSIONALIZATION_ROADMAP.md`. Hindari membuat dokumen duplikat yang mengulang kewenangan Project Control Book.
 
