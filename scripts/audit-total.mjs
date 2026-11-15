@@ -189,9 +189,12 @@ if (fs.existsSync(appPath)) {
   const schedulerIncludesKa=scheduler.includes("WHERE s.status = 'Aktif'")&&!/role\s*<>\s*'KA_IPSRS'/i.test(scheduler);
   const daySevenNotBlocked=scheduler.includes('IF v_days >= 8');
   const dayTenGlobal=scheduler.includes('WHERE missed_days >= 10');
-  if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal)
-    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; scheduler created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal);
-  else pass('LHI database alignment contract','Employment/access separation, created_at WIB, KA inclusion, day-8/day-10 thresholds, immutable events, snapshot backfill and 120-hour recovery are defined');
+  const graceCompletionCannotFallThrough=scheduler.includes('IF v_active_grace IS NOT NULL THEN') &&
+    scheduler.includes("'discipline_cycle_skipped', true") &&
+    scheduler.indexOf("'discipline_cycle_skipped', true") < scheduler.indexOf('IF v_lock = \'NONAKTIF\' THEN');
+  if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal||!graceCompletionCannotFallThrough)
+    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; scheduler created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal+', grace completion guard='+graceCompletionCannotFallThrough);
+  else pass('LHI database alignment contract','Employment/access separation, created_at WIB, KA inclusion, day-8/day-10 thresholds, immutable events, snapshot backfill, 120-hour recovery and no same-cycle re-lock after grace completion are defined');
 
   const hasRestrictedRecovery=app.includes("functions/v1/lhi-recovery-exchange") &&
     app.includes("functions/v1/lhi-recovery-action") &&
