@@ -690,6 +690,8 @@ Halaman yang teridentifikasi pada snapshot: `Page_Login.html`, `Page_Dashboard.h
 
 Pemetaan endpoint, tabel, role, policy, dan dependency setiap handler belum dianggap lengkap sampai diverifikasi langsung dari source.
 
+**Temuan parity runtime:** Supabase memiliki 8 Edge Functions ACTIVE, sementara source `main` pada snapshot ini hanya melacak 5. Tiga function aktif (`lhi-block-status`, `lhi-recovery-exchange`, `lhi-recovery-action`) sedang disinkronkan ke repository melalui PR #80. Source aktif dicocokkan exact dengan runtime; PR belum merge/deploy.
+
 ### 21.4 Workflow
 
 | Workflow | Path | Peran |
