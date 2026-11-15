@@ -517,6 +517,7 @@ test('System Info does not publish stale rollback checkpoints or fabricated depl
   expect(html).toContain('BASELINE_REGISTER.yaml');
   expect(html).toContain('ENVIRONMENT BELUM TERVERIFIKASI');
   expect(apiSource).not.toContain('20261001-KATEGORI-SCROLL4');
+  expect(apiSource).not.toContain('20261002-KATEGORI-SCROLL');
   expect(apiSource).not.toContain('ipsrs-api v81');
   expect(apiSource).not.toContain('20260928092227');
   expect(apiSource).not.toContain('628ca81681620769821fe6491ba2aac32d53310d');
