@@ -1223,28 +1223,6 @@
   // Native #AreaKerja tetap dipertahankan sebagai sumber nilai/validasi.
   // UI pilihan menggunakan group collapse agar daftar panjang tidak memenuhi HP.
   // ============================================================
-  function getAreaKerjaGroup_(name){
-    const n=String(name||'').trim();
-    if(/^m\.e\b/i.test(n)) return 'M.E.';
-    if(/^sipil\b/i.test(n)) return 'SIPIL';
-    if(/^elektromedik\b/i.test(n)) return 'ELEKTROMEDIK';
-    if(/^kesling\b/i.test(n)) return 'KESLING';
-    // Normalisasi nama agar variasi spasi/tanda baca dari master data tidak
-    // membuat area utilitas jatuh ke kelompok generik LAINNYA.
-    const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(compact.includes('ceklistutilitas') || compact.includes('ceklistmeutiliti')) return 'CEK LIST UTILITAS';
-    // Administrasi IPSRS menjadi tombol area tersendiri tepat setelah Cek List Utilitas.
-    if(compact === 'administrasiipsrs') return 'ADMINISTRASI IPSRS';
-    // Rapat/Pertemuan adalah tombol kelompok tersendiri.
-    if(compact === 'rapatpertemuan') return 'RAPAT/PERTEMUAN';
-    // Area panel LVMDV pada master data adalah kelompok cek list LVMDP.
-    // Pisahkan dari LAINNYA agar sesuai pengelompokan operasional.
-    if(compact.includes('arearuangpanellvmdvlantai1') || compact.includes('ceklistlvmdp')) return 'CEK LIST LVMDP';
-    if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
-    // Kelompok UMUM / LAINNYA digabung ke kelompok LAINNYA.
-    return 'LAINNYA';
-  }
-
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
