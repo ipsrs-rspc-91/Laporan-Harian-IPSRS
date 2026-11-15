@@ -505,3 +505,17 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
+
+
+test('All active LHI recovery Edge Function sources are tracked in the repository', async () => {
+  const blockStatus = await readFile(new URL('../../supabase/functions/lhi-block-status/index.ts', import.meta.url), 'utf8');
+  const recoveryExchange = await readFile(new URL('../../supabase/functions/lhi-recovery-exchange/index.ts', import.meta.url), 'utf8');
+  const recoveryAction = await readFile(new URL('../../supabase/functions/lhi-recovery-action/index.ts', import.meta.url), 'utf8');
+
+  expect(blockStatus).toContain('Deno.serve');
+  expect(recoveryExchange).toContain('Deno.serve');
+  expect(recoveryAction).toContain('Deno.serve');
+  expect(blockStatus).toContain('LHI_ALLOWED_ORIGINS');
+  expect(recoveryExchange).toContain('LHI_ALLOWED_ORIGINS');
+  expect(recoveryAction).toContain('LHI_ALLOWED_ORIGINS');
+});
