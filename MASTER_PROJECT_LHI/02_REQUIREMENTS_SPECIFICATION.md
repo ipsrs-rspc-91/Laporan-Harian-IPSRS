@@ -67,8 +67,14 @@ Prioritas di atas merupakan usulan awal untuk disahkan Product Owner; bukan prio
 | LHI-NFR-012 | Auditability | Requirement, commit, test, release, dan aktor terlacak | Traceability audit |
 | LHI-NFR-013 | Scalability | Kapasitas diuji pada pola penggunaan representatif | Capacity test |
 | LHI-NFR-014 | Portability | Data dan konfigurasi dapat diekspor sesuai rencana exit | Export/restore test |
+| LHI-NFR-015 | Data residency | Lokasi pemrosesan, vendor, subprocessor, dan transfer lintas negara terinventaris dan disetujui | Data flow, vendor/legal review |
+| LHI-NFR-016 | Regulatory privacy | Kategori data, dasar pemrosesan, retensi, hak subjek data, DPIA bila diperlukan, dan incident response terdokumentasi | Privacy assessment dan evidence review |
 
 Target angka NFR belum dianggap disahkan sampai baseline, rumus, periode, owner, dan approval tersedia.
+
+### 5.1 Batas data pribadi dan data klinis
+
+Aplikasi LHI ditujukan untuk laporan pemeliharaan sarana IPSRS. Secara default, form dan laporan tidak boleh digunakan untuk mencatat nama pasien, nomor rekam medis, diagnosis, foto pasien, atau informasi klinis. Bila ada kebutuhan bisnis yang sah untuk memproses data tersebut, scope, dasar hukum, klasifikasi, akses, retensi, DPIA, dan persetujuan harus ditetapkan terlebih dahulu. Permenkes 24/2022 hanya diterapkan pada fungsi yang benar-benar memproses/menyelenggarakan rekam medis; jangan mengklasifikasikan seluruh LHI sebagai rekam medis tanpa analisis data.
 
 ## 6. Business rules dan spesifikasi modul
 
