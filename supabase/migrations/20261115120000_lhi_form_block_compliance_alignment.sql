@@ -522,8 +522,11 @@ SELECT staff_id, nama, jabatan, role, bidang, status
 FROM public.staff
 WHERE lower(trim(status)) = 'aktif'
   AND upper(trim(role)) <> 'KA_IPSRS'
-  AND private.lhi_normal_access_allowed()
 ORDER BY nama;
+
+-- The backend service role uses this view. Browser roles must not query it directly.
+REVOKE ALL ON TABLE public.staff_dropdown FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.staff_dropdown TO service_role;
 
 CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler()
 RETURNS jsonb
