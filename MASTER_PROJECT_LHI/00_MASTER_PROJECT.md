@@ -624,6 +624,7 @@ Struktur dokumentasi yang dituju:
     05_QUALITY_ASSURANCE_PLAN.md
     06_DEVELOPMENT_ROADMAP.md
     07_AS_BUILT_AND_OPERATIONS.md
+    08_MODULE_CATALOG.md
     PROFESSIONALIZATION_ROADMAP.md
 ```
 
@@ -705,6 +706,7 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 - [SOP Update dan Deploy](../SOP-UPDATE-DAN-DEPLOY.md)
 - [AI Audit Protocol](../AI_AUDIT_PROTOCOL.md)
 - [README Form Blok Aplikasi](../README-FORM-BLOK-APLIKASI.md) — spesifikasi fitur khusus, bukan pengganti Master Project
+- [Katalog Modul](08_MODULE_CATALOG.md) — inventaris modul dinamis, status, batas tanggung jawab, dan template penambahan modul.
 - [Professionalization Roadmap](PROFESSIONALIZATION_ROADMAP.md) — rencana tahapan, bukan dokumen induk
 
 ---
