@@ -171,12 +171,22 @@ if (fs.existsSync(appPath)) {
     'lhi_access_blocked_at','lhi_employment_activated_at',
     'get_lhi_discipline_status','Asia/Jakarta','r.created_at',
     'lhi_discipline_obligation_events','reject_lhi_obligation_event_mutation',
-    'snapshot_missed_days','open_lhi_global_grace_v2',
-    "interval '120 hours'","status = 'Aktif'"
+    'snapshot_missed_days','SNAPSHOT_BACKFILLED','open_lhi_global_grace_v2',
+    "interval '120 hours'","status = 'Aktif'",
+    'IF v_days >= 8','WHERE missed_days >= 10',
+    'reject_lhi_obligation_event_mutation'
   ];
   const missingMigration=migrationContract.filter(token=>!migration.includes(token));
-  if(missingMigration.length)fail('LHI database alignment contract','Migration missing: '+missingMigration.join(', '));
-  else pass('LHI database alignment contract','Employment/access separation, WIB created_at, immutable obligation events, snapshot and 120-hour recovery are defined');
+  const schedulerStart=migration.indexOf('CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler');
+  const schedulerEnd=migration.indexOf('CREATE OR REPLACE FUNCTION public.get_lhi_grace_status_v2',schedulerStart);
+  const scheduler=schedulerStart>=0&&schedulerEnd>schedulerStart?migration.slice(schedulerStart,schedulerEnd):'';
+  const schedulerUsesCreatedAt=scheduler.includes('r.created_at')&&!scheduler.includes('r.tanggal');
+  const schedulerIncludesKa=scheduler.includes("WHERE s.status = 'Aktif'")&&!/role\s*<>\s*'KA_IPSRS'/i.test(scheduler);
+  const daySevenNotBlocked=scheduler.includes('IF v_days >= 8');
+  const dayTenGlobal=scheduler.includes('WHERE missed_days >= 10');
+  if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal)
+    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; scheduler created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal);
+  else pass('LHI database alignment contract','Employment/access separation, created_at WIB, KA inclusion, day-8/day-10 thresholds, immutable events, snapshot backfill and 120-hour recovery are defined');
 
   const hasRestrictedRecovery=app.includes("functions/v1/lhi-recovery-exchange") &&
     app.includes("functions/v1/lhi-recovery-action") &&
