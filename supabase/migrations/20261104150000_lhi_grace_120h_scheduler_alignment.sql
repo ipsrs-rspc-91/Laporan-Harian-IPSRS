@@ -8,9 +8,20 @@ DECLARE
   v_definition text;
   v_old text;
   v_new text;
+  v_status_definition text;
 BEGIN
   SELECT pg_get_functiondef('public.run_lhi_discipline_scheduler()'::regprocedure)
     INTO v_definition;
+
+  -- Production may already contain the equivalent 120-hour patch under its
+  -- independently recorded migration version. Do not re-apply text surgery.
+  SELECT pg_get_functiondef('public.get_lhi_grace_status_v2()'::regprocedure)
+    INTO v_status_definition;
+  IF position('interval ''120 hours''' IN v_definition) > 0
+     AND position('excluded_at IS NULL' IN v_definition) > 0
+     AND position('o.excluded_at' IN v_status_definition) > 0 THEN
+    RETURN;
+  END IF;
 
   v_old := '-- Resolve an existing 12-hour grace window first.';
   v_new := '-- Resolve an existing 120-hour (5-day) grace window first.';
