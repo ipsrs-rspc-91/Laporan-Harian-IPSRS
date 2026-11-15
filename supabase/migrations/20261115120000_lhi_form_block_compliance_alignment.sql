@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_lhi_obligation_events_incident_staff_time
 
 ALTER TABLE public.lhi_discipline_obligation_events ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.lhi_discipline_obligation_events FROM PUBLIC, anon, authenticated;
-GRANT ALL ON TABLE public.lhi_discipline_obligation_events TO service_role;
+GRANT SELECT, INSERT ON TABLE public.lhi_discipline_obligation_events TO service_role;
 GRANT USAGE, SELECT ON SEQUENCE public.lhi_discipline_obligation_events_event_id_seq TO service_role;
 
 CREATE OR REPLACE FUNCTION public.reject_lhi_obligation_event_mutation()
@@ -925,6 +925,10 @@ $function$;
 
 -- Recovery endpoints use service_role only. The public legacy path must not be
 -- callable directly by browser roles.
+REVOKE ALL ON FUNCTION public.run_lhi_discipline_scheduler() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.run_lhi_discipline_scheduler() TO service_role;
+REVOKE ALL ON FUNCTION public.track_lhi_employment_reactivation() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_lhi_employment_reactivation() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.open_lhi_global_grace_v2(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.open_lhi_global_grace_v2(text) TO service_role;
 REVOKE ALL ON FUNCTION public.get_lhi_grace_status_v2() FROM PUBLIC, anon, authenticated;
