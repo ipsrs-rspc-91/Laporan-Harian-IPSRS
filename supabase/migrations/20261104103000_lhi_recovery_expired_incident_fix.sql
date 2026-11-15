@@ -128,3 +128,9 @@ BEGIN
     'total',v_total,'reactivated_accounts',v_reactivated,'previous_incident_status',v_incident.status);
 END;
 $$;
+
+-- Only the server service role may issue or consume recovery challenges.
+REVOKE ALL ON FUNCTION public.create_lhi_recovery_challenge(text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.create_lhi_recovery_challenge(text, text) TO service_role;
+REVOKE ALL ON FUNCTION public.consume_lhi_recovery_challenge(text, uuid, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.consume_lhi_recovery_challenge(text, uuid, text) TO service_role;
