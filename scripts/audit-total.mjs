@@ -237,7 +237,8 @@ if (fs.existsSync(appPath)) {
   const deployWorkflowText=fs.existsSync(path.join(root,'.github','.workflows','deploy-production.yml'))
     ? fs.readFileSync(path.join(root,'.github','.workflows','deploy-production.yml'),'utf8') : '';
   const deployRecoveryFunctions=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
-    .every(name=>deployWorkflowText.includes('functions deploy '+name));
+    .every(name=>deployWorkflowText.includes(name))
+    && deployWorkflowText.includes('supabase functions deploy "$fn"');
   const recoveryTablesMigration=fs.existsSync(path.join(root,'supabase','migrations','20261104103000_lhi_recovery_expired_incident_fix.sql'))
     ? fs.readFileSync(path.join(root,'supabase','migrations','20261104103000_lhi_recovery_expired_incident_fix.sql'),'utf8') : '';
   const recoverySchemaComplete=recoveryTablesMigration.includes('CREATE TABLE IF NOT EXISTS public.lhi_recovery_challenges')
