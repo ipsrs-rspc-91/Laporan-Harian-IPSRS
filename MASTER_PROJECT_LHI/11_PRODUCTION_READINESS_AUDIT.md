@@ -22,6 +22,7 @@ Repository main SHA: `de77a78a99e566a97d9be320786e47d6675ae94a`
 | Performance Advisor | 27 INFO no-primary-key; 10 INFO unused-index | Perlu klasifikasi; jangan hapus otomatis |
 | Health Advisor | Tidak ada lint | Tidak ada temuan pada kategori health saat pemeriksaan |
 | Migration history | 75 remote vs 35 file migration pada repository main | **P0 — parity belum tercapai** |
+| Edge Functions | 8 active di Supabase vs 5 tracked pada main; 3 runtime-only | **P1 — source parity gap; source sync PR #80 pending** |
 
 ## 3. P0 — Migration history tidak sinkron
 
@@ -133,7 +134,22 @@ RLS aktif pada seluruh 24 tabel public yang terinventaris dan grants pada tabel 
 
 **Status kesiapan database untuk perubahan schema produksi: NO-GO sampai DB-01 selesai direkonsiliasi.** Tidak ada migration yang dijalankan dalam audit ini.
 
-## 10. Riwayat
+## 10. Edge Function source parity
+
+Pemeriksaan read-only terhadap Supabase menunjukkan **8 Edge Functions ACTIVE**. Repository main pada snapshot audit hanya melacak 5 folder function. Tiga function aktif tidak ditemukan pada main:
+- `lhi-block-status` — runtime version 3;
+- `lhi-recovery-exchange` — runtime version 1;
+- `lhi-recovery-action` — runtime version 1.
+
+Source aktif ketiga function diambil read-only dari Supabase dan dibandingkan dengan file pada branch koreksi. Exact content match = TRUE untuk ketiganya. Source tersebut diajukan untuk ditambahkan ke repository melalui PR #80. PR tersebut belum merge dan tidak melakukan deployment.
+
+Dampak:
+- Repository main belum sepenuhnya merepresentasikan seluruh function yang aktif di Supabase.
+- Perubahan berikutnya harus membedakan source yang ada di main, source pada PR, dan source runtime.
+- Jangan menghapus atau mengganti function runtime berdasarkan source main yang belum lengkap.
+- Sinkronisasi source tidak sama dengan persetujuan deployment; semua perubahan backend tetap menunggu migration parity dan deployment gate.
+
+## 11. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
