@@ -130,6 +130,19 @@ A separate corrective change is being prepared in PR #78 to:
 
 Until that corrective PR is reviewed, tested, and released, the discrepancy remains a known source issue. No production change is implied.
 
+## 7. Edge Function runtime parity
+
+| Function | Supabase runtime | Tracked on main | Catatan |
+|---|---|---|---|
+| `ipsrs-api` | ACTIVE v114 | Ya | Source exact match pada snapshot |
+| `ipsrs-link-account` | ACTIVE v2 | Ya | Source exact match |
+| `ipsrs-auth-bridge` | ACTIVE v2 | Ya | Source exact match |
+| `ipsrs-bulk-provision-once` | ACTIVE v2 | Ya | Source exact match |
+| `lhi-reset-verify` | ACTIVE v2 | Ya | Source exact match |
+| `lhi-block-status` | ACTIVE v3 | Tidak | Exact source sync diajukan di PR #80 |
+| `lhi-recovery-exchange` | ACTIVE v1 | Tidak | Exact source sync diajukan di PR #80 |
+| `lhi-recovery-action` | ACTIVE v1 | Tidak | Exact source sync diajukan di PR #80 |
+
 ## 7. Verification status
 
 | Area | Status |
