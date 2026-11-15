@@ -262,7 +262,6 @@ AS $function$
     'last_lhi_created_at', last_lhi_created_at,
     'last_lhi_input_date_wib', (last_lhi_created_at AT TIME ZONE 'Asia/Jakarta')::date,
     'discipline_baseline_date_wib', anchor_date,
-    'day_number_since_last_input', GREATEST(0, today_wib - anchor_date),
     'missed_full_calendar_days', GREATEST(0, today_wib - anchor_date - 1),
     'lhi_access_blocked_at', lhi_access_blocked_at
   ) ORDER BY nama, staff_id), '[]'::jsonb)
@@ -287,7 +286,6 @@ DECLARE
   v_last_input_date date;
   v_anchor_date date;
   v_days integer;
-  v_day_number integer;
   v_event text;
   v_message text;
   v_incident bigint;
@@ -525,28 +523,27 @@ BEGIN
         v_last_input_date,
         (v_baseline AT TIME ZONE 'Asia/Jakarta')::date
       );
-      v_day_number := GREATEST(0, v_today - v_anchor_date);
-      v_days := GREATEST(0, v_day_number - 1);
+      v_days := GREATEST(0, v_today - v_anchor_date - 1);
 
-      IF v_day_number IN (4, 6, 7) THEN
-        v_event := v_staff.staff_id || ':' || v_anchor_date::text || ':DAY_' || v_day_number;
-        v_message := CASE v_day_number
-          WHEN 4 THEN 'Peringatan 1 (hari ke-4): ' || v_staff.nama ||
-            ' belum menginput LHI. Mohon segera mengingatkan dan melengkapi LHI.'
-          WHEN 6 THEN 'Peringatan 2 (hari ke-6): ' || v_staff.nama ||
-            ' belum menginput LHI. Mohon segera melengkapi LHI.'
-          ELSE 'Peringatan 3 (hari ke-7): ' || v_staff.nama ||
-            ' belum menginput LHI. Jika sampai hari ke-8 belum menginput LHI, hak akses aplikasinya akan diblokir.'
+      IF v_days IN (4, 6, 7) THEN
+        v_event := v_staff.staff_id || ':' || v_anchor_date::text || ':DAY_' || v_days;
+        v_message := CASE v_days
+          WHEN 4 THEN 'Peringatan 1: ' || v_staff.nama ||
+            ' belum menginput LHI selama 4 hari kalender penuh berturut-turut. Mohon segera mengingatkan dan melengkapi LHI.'
+          WHEN 6 THEN 'Peringatan 2: ' || v_staff.nama ||
+            ' belum menginput LHI selama 6 hari kalender penuh berturut-turut. Mohon segera melengkapi LHI.'
+          ELSE 'Peringatan 3: ' || v_staff.nama ||
+            ' belum menginput LHI selama 7 hari kalender penuh berturut-turut. Jika besok belum menginput LHI, hak akses aplikasinya akan diblokir.'
         END;
 
         INSERT INTO public.lhi_discipline_notifications(event_key, recipient_staff_id, subject, message)
-        SELECT v_event, s.staff_id, 'Peringatan LHI Hari ke-' || v_day_number, v_message
+        SELECT v_event, s.staff_id, 'Peringatan LHI Hari ke-' || v_days, v_message
         FROM public.staff s
         WHERE s.status = 'Aktif'
         ON CONFLICT(event_key, recipient_staff_id) DO NOTHING;
       END IF;
 
-      IF v_day_number >= 8 AND v_staff.lhi_access_blocked_at IS NULL THEN
+      IF v_days >= 8 AND v_staff.lhi_access_blocked_at IS NULL THEN
         UPDATE public.staff
         SET lhi_access_blocked_at = v_now
         WHERE staff_id = v_staff.staff_id
@@ -610,14 +607,13 @@ BEGIN
       LEFT JOIN latest_input li ON li.staff_id = b.staff_id
     ),
     delinquent AS (
-      SELECT *, GREATEST(0, v_today - anchor_date) AS day_number,
-             GREATEST(0, v_today - anchor_date - 1) AS missed_days
+      SELECT *, GREATEST(0, v_today - anchor_date - 1) AS missed_days
       FROM calculated
     )
     SELECT string_agg(nama, ', ' ORDER BY nama), count(*)
     INTO v_trigger_names, v_trigger_count
     FROM delinquent
-    WHERE day_number >= 10;
+    WHERE missed_days >= 10;
 
     IF v_trigger_count > 0
        AND NOT EXISTS (
@@ -680,7 +676,7 @@ BEGIN
         SELECT v_incident, staff_id, v_today, last_lhi_created_at,
                missed_days, 'Aktif', nama, role
         FROM delinquent
-        WHERE day_number >= 10
+        WHERE missed_days >= 10
         ON CONFLICT(incident_id, staff_id, required_date) DO NOTHING
         RETURNING obligation_id, incident_id, staff_id
       )
