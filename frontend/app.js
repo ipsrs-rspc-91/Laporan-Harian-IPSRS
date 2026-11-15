@@ -682,8 +682,8 @@
       if(msgEl){
         msgEl.innerText=/MODE FORM BLOK APLIKASI AKTIF|tidak dapat login|blokir aplikasi/i.test(rawMsg)
           ? 'FORM BLOK APLIKASI AKTIF. Login sementara ditutup oleh KA IPSRS.'
-          : (/tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
-              ? 'Anda tidak disiplin mengisi laporan selama 8 hari.'
+          : (/hak akses aplikasi anda diblokir|tidak disiplin mengisi laporan selama 8 hari/i.test(rawMsg)
+              ? 'HAK AKSES APLIKASI ANDA DIBLOKIR karena belum mengisi LHI lebih dari 7 hari kalender penuh. Hubungi KA IPSRS untuk prosedur pemulihan.'
               : (/invalid login credentials/i.test(rawMsg)
                   ? 'Username atau password salah.'
                   : 'Error: '+rawMsg));
