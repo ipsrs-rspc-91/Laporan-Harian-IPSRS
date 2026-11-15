@@ -135,18 +135,7 @@
     }catch(e){ clearRememberedCredentials(); }
   }
 
-  function escapeHtml(str){
-    return (str===undefined||str===null?'':String(str))
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-  // Empty state seragam -- dipakai di semua tabel/kartu yang datanya kosong,
-  // supaya tampilannya konsisten di seluruh halaman (bukan teks polos beda-beda).
-  function emptyStateHtml(text){
-    return '<div class="empty-state">'
-      + '<svg class="es-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>'
-      + '<div class="es-text">' + text + '</div>'
-      + '</div>';
-  }
+  // escapeHtml() dan emptyStateHtml() dipasok oleh shared/dom-utils.js.
 
   function setMsg(id, text, isErr){
     const el = document.getElementById(id);
@@ -824,35 +813,6 @@
     IPSRS_HEARTBEAT_TIMER=setInterval(beat,60000);
   }
 
-  function formatLoginDateTime_(value){
-    if(!value) return 'Belum pernah login';
-    const d=new Date(value);
-    if(Number.isNaN(d.getTime())) return '-';
-    return d.toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  }
-
-  function formatLastSeen_(value){
-    if(!value) return '-';
-    const d=new Date(value), now=Date.now(), sec=Math.max(0,Math.floor((now-d.getTime())/1000));
-    if(sec<60) return sec+' detik lalu';
-
-    const minTotal=Math.floor(sec/60);
-    const hourTotal=Math.floor(minTotal/60);
-    const dayTotal=Math.floor(hourTotal/24);
-
-    // < 24 jam: tampilkan jam + menit agar aktivitas lebih mudah dibaca.
-    if(hourTotal<24){
-      if(hourTotal===0) return minTotal+' menit lalu';
-      const mins=minTotal%60;
-      return hourTotal+' jam'+(mins ? ' '+mins+' menit' : '')+' lalu';
-    }
-
-    // >= 24 jam: tampilkan hari + jam + menit.
-    const hours=hourTotal%24;
-    const mins=minTotal%60;
-    return dayTotal+' hari'+(hours ? ' '+hours+' jam' : '')+(mins ? ' '+mins+' menit' : '')+' lalu';
-  }
-
   async function loadOnlineUsers(){
     if(!CURRENT_SESSION) return;
     const box=document.getElementById('onlineUsersList'),meta=document.getElementById('onlineUsersMeta');
@@ -1129,53 +1089,6 @@
    * jadi "kemarin" (karena WIB = UTC+7, kemarin belum lewat tengah malam UTC).
    * Akibatnya laporan yang baru dibuat tidak terhitung "hari ini" di monitoring.
    */
-  function todayLocalISO(){
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return y + '-' + m + '-' + day;
-  }
-
-  /** Format 'YYYY-MM-DD' -> 'DD/MM/YYYY' untuk ditampilkan ke user. */
-  function formatTanggalDisplay(value){
-    if(value === undefined || value === null || value === '') return '';
-
-    const text = String(value).trim();
-
-    // Google Apps Script dapat mengirim nilai Date dari Sheets sebagai ISO UTC.
-    // Contoh: 2026-09-18T17:00:00.000Z sebenarnya adalah 19/09/2026
-    // pukul 00:00 WIB. Jangan mengambil YYYY-MM-DD mentah karena itu tanggal UTC.
-    const isoDateTimeMatch = text.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/);
-    if(isoDateTimeMatch){
-      const d = new Date(text);
-      if(!Number.isNaN(d.getTime())){
-        const parts = new Intl.DateTimeFormat('en-GB', {
-          timeZone: 'Asia/Jakarta',
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }).formatToParts(d);
-        const get = type => parts.find(p => p.type === type)?.value || '';
-        return get('day') + '/' + get('month') + '/' + get('year');
-      }
-    }
-
-    // Nilai date-only dari backend: YYYY-MM-DD.
-    const isoDateMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if(isoDateMatch){
-      return isoDateMatch[3] + '/' + isoDateMatch[2] + '/' + isoDateMatch[1];
-    }
-
-    // Fallback untuk tanggal yang sudah berbentuk DD/MM/YYYY.
-    const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if(slashMatch){
-      return slashMatch[1].padStart(2,'0') + '/' + slashMatch[2].padStart(2,'0') + '/' + slashMatch[3];
-    }
-
-    return text;
-  }
-
   function buildMonthOptions(){
     const now = new Date();
     const opts = [];
@@ -1310,28 +1223,6 @@
   // Native #AreaKerja tetap dipertahankan sebagai sumber nilai/validasi.
   // UI pilihan menggunakan group collapse agar daftar panjang tidak memenuhi HP.
   // ============================================================
-  function getAreaKerjaGroup_(name){
-    const n=String(name||'').trim();
-    if(/^m\.e\b/i.test(n)) return 'M.E.';
-    if(/^sipil\b/i.test(n)) return 'SIPIL';
-    if(/^elektromedik\b/i.test(n)) return 'ELEKTROMEDIK';
-    if(/^kesling\b/i.test(n)) return 'KESLING';
-    // Normalisasi nama agar variasi spasi/tanda baca dari master data tidak
-    // membuat area utilitas jatuh ke kelompok generik LAINNYA.
-    const compact=n.toLowerCase().replace(/[^a-z0-9]/g,'');
-    if(compact.includes('ceklistutilitas') || compact.includes('ceklistmeutiliti')) return 'CEK LIST UTILITAS';
-    // Administrasi IPSRS menjadi tombol area tersendiri tepat setelah Cek List Utilitas.
-    if(compact === 'administrasiipsrs') return 'ADMINISTRASI IPSRS';
-    // Rapat/Pertemuan adalah tombol kelompok tersendiri.
-    if(compact === 'rapatpertemuan') return 'RAPAT/PERTEMUAN';
-    // Area panel LVMDV pada master data adalah kelompok cek list LVMDP.
-    // Pisahkan dari LAINNYA agar sesuai pengelompokan operasional.
-    if(compact.includes('arearuangpanellvmdvlantai1') || compact.includes('ceklistlvmdp')) return 'CEK LIST LVMDP';
-    if(/^kitchen\b/i.test(n)) return 'KITCHEN / DAPUR';
-    // Kelompok UMUM / LAINNYA digabung ke kelompok LAINNYA.
-    return 'LAINNYA';
-  }
-
   function getAreaKerjaGroupOrder_(){
     const bidang=String(CURRENT_SESSION?.bidang||'').trim().toLowerCase();
     const mine=bidang==='me'?'M.E.':bidang==='sipil'?'SIPIL':bidang==='elektromedik'?'ELEKTROMEDIK':bidang==='kesling'?'KESLING':null;
@@ -3641,20 +3532,7 @@
     const p=document.getElementById('itemSimilarityCandidates');if(p){p.style.display='none';p.innerHTML='';}
     _itemSimilarityCandidates=[];
   }
-  function normalizeLiveItem_(value){
-    return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('id').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-  }
-  function liveLevenshteinScore_(a,b){
-    if(a===b)return 1;
-    if(!a.length||!b.length)return 0;
-    let prev=Array.from({length:b.length+1},(_,i)=>i);
-    for(let i=1;i<=a.length;i++){
-      const cur=[i];
-      for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
-      prev=cur;
-    }
-    return 1-prev[b.length]/Math.max(a.length,b.length,1);
-  }
+
   function renderLiveItemSuggestions_(){
     const input=document.getElementById('itemBaruInput');
     const areaEl=document.getElementById('AreaKerja');
@@ -3810,83 +3688,6 @@
   let _dateTimeHourSelectedByUser = false;
   let _dateTimeMinuteSelectedByUser = false;
 
-  function pad2_(n){ return String(n).padStart(2,'0'); }
-
-  function parseDateOnly_(value){
-
-    const s=String(value||'').trim();
-
-    if(!s) return null;
-
-    // ISO date-time dari Google Apps Script / Google Sheets.
-    // Contoh:
-    // 2026-09-19T17:00:00.000Z
-    // dikonversi ke tanggal lokal Asia/Jakarta.
-    const isoDateTime =
-      s.match(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})$/
-      );
-
-    if(isoDateTime){
-
-      const parsed=new Date(s);
-
-      if(Number.isNaN(parsed.getTime())){
-        return null;
-      }
-
-      const parts =
-        new Intl.DateTimeFormat(
-          'en-GB',
-          {
-            timeZone:'Asia/Jakarta',
-            year:'numeric',
-            month:'2-digit',
-            day:'2-digit'
-          }
-        ).formatToParts(parsed);
-
-      const get =
-        type =>
-          parts.find(
-            p => p.type === type
-          )?.value || '';
-
-      const year=Number(get('year'));
-      const month=Number(get('month'));
-      const day=Number(get('day'));
-      const d =
-        new Date(
-          year,
-          month-1,
-          day
-        );
-
-      return Number.isNaN(d.getTime())
-        ? null
-        : d;
-    }
-
-    // Format date-only normal:
-    // YYYY-MM-DD
-    const m =
-      s.match(
-        /^(\d{4})-(\d{2})-(\d{2})$/
-      );
-
-    if(!m) return null;
-
-    const d =
-      new Date(
-        Number(m[1]),
-        Number(m[2])-1,
-        Number(m[3])
-      );
-
-    return Number.isNaN(d.getTime())
-      ? null
-      : d;
-  }
 
   function renderDateTimePickerCalendar_(){
     const title=document.getElementById('datetimeMonthTitle'), days=document.getElementById('datetimeDays');

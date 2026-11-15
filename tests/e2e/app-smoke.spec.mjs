@@ -71,14 +71,14 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
     .filter(src => {
       const clean = src.split('?')[0].split('#')[0].replace(/^\.\//, '').replace(/^\//, '');
       return clean.endsWith('.js') && [
-        'app.js','config.js','laporan-fast-v2.js','login-fast.js',
+        'app.js','config.js','laporan-fast-v2.js','login-fast.js', 'shared/dom-utils.js','shared/date-utils.js','shared/master-data-utils.js','shared/item-similarity-utils.js',
         'dashboard-loading-v2.js','access-policy-ui.js','static-data.js',
         'required-fields-ui.js','access-control.js','access-visibility-fix.js',
         'laporan-loading-state.js','js/kategori-modal.js'
       ].includes(clean);
     });
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
-  const assets = ['/index.html', '/export-laporan-excel.js', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
+  const assets = ['/index.html', '/export-laporan-excel.js', '/shared/dom-utils.js', '/shared/date-utils.js', '/shared/master-data-utils.js', '/shared/item-similarity-utils.js', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
@@ -504,4 +504,80 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   // ESTAFET remains inline within the first paragraph and its punctuation.
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
+});
+
+test('shared date utilities preserve legacy formatting contracts', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/date-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, Date, Intl, Number, String, Math };
+  vm.runInNewContext(source, sandbox);
+  const utils = sandbox.window;
+
+  expect(utils.formatTanggalDisplay('2026-09-18')).toBe('18/09/2026');
+  expect(utils.formatTanggalDisplay('2026-09-18T17:00:00.000Z')).toBe('19/09/2026');
+  expect(utils.formatTanggalDisplay('2026-09-18T17:00:00+00:00')).toBe('19/09/2026');
+  expect(utils.formatTanggalDisplay('3/9/2026')).toBe('03/09/2026');
+  expect(utils.formatTanggalDisplay('nilai tidak dikenal')).toBe('nilai tidak dikenal');
+  expect(utils.formatTanggalDisplay('')).toBe('');
+  expect(utils.formatLoginDateTime_(null)).toBe('Belum pernah login');
+  expect(utils.formatLoginDateTime_('invalid-date')).toBe('-');
+  expect(utils.formatLastSeen_(null)).toBe('-');
+  expect(utils.formatLastSeen_(new Date(Date.now()-90*1000).toISOString())).toBe('1 menit lalu');
+  expect(utils.todayLocalISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('shared master-data utilities preserve Area Kerja grouping rules', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/master-data-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, String };
+  vm.runInNewContext(source, sandbox);
+  const group = sandbox.window.getAreaKerjaGroup_;
+
+  expect(group('M.E. Umum')).toBe('M.E.');
+  expect(group('Sipil Gedung A')).toBe('SIPIL');
+  expect(group('Elektromedik')).toBe('ELEKTROMEDIK');
+  expect(group('Kesling')).toBe('KESLING');
+  expect(group('Cek List Utilitas')).toBe('CEK LIST UTILITAS');
+  expect(group('Administrasi IPSRS')).toBe('ADMINISTRASI IPSRS');
+  expect(group('Rapat dan Pertemuan')).toBe('LAINNYA');
+  expect(group('Rapat/Pertemuan')).toBe('RAPAT/PERTEMUAN');
+  expect(group('Area Ruang Panel LVMDV Lantai 1')).toBe('CEK LIST LVMDP');
+  expect(group('Kitchen Dapur')).toBe('KITCHEN / DAPUR');
+  expect(group('Area Tidak Dikenal')).toBe('LAINNYA');
+  expect(group(null)).toBe('LAINNYA');
+});
+
+
+test('shared item similarity utilities preserve normalization and scoring contracts', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/item-similarity-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, String, Array, Math };
+  vm.runInNewContext(source, sandbox);
+  const { normalizeLiveItem_, liveLevenshteinScore_ } = sandbox.window;
+
+  expect(normalizeLiveItem_('  POMPA—Air  25 HP ')).toBe('pompa air 25 hp');
+  expect(normalizeLiveItem_('ELEKTROMÉDIK')).toBe('elektromedik');
+  expect(normalizeLiveItem_(null)).toBe('');
+  expect(liveLevenshteinScore_('pompa', 'pompa')).toBe(1);
+  expect(liveLevenshteinScore_('', 'pompa')).toBe(0);
+  expect(liveLevenshteinScore_('pompa', 'pomba')).toBe(0.8);
+  expect(liveLevenshteinScore_('abc', 'xyz')).toBe(0);
+});
+
+
+test('shared date utilities preserve date parsing and padding contracts', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/date-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, Date, Intl, Number, String, Math };
+  vm.runInNewContext(source, sandbox);
+  const { pad2_, parseDateOnly_ } = sandbox.window;
+
+  expect(pad2_(0)).toBe('00');
+  expect(pad2_(7)).toBe('07');
+  expect(pad2_(12)).toBe('12');
+  expect(parseDateOnly_('')).toBeNull();
+  expect(parseDateOnly_('not-a-date')).toBeNull();
+  expect(parseDateOnly_('2026-09-18').toISOString().slice(0,10)).toBe('2026-09-18');
+  expect(parseDateOnly_('2026-09-18T17:00:00.000Z').toISOString().slice(0,10)).toBe('2026-09-19');
+  expect(parseDateOnly_('2026-09-18T17:00:00+00:00').toISOString().slice(0,10)).toBe('2026-09-19');
 });
