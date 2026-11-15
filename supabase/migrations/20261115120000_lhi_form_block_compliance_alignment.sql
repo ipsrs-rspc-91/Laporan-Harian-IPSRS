@@ -1,6 +1,16 @@
 -- Server-side reset rate limiting and limited recovery-session validation.
 CREATE TABLE IF NOT EXISTS public.lhi_reset_attempts (
-  ip_hash text PRIMARY KEY CHECK (ip_hash ~ '^[0-9a-f]{64}ALTER TABLE public.lhi_reset_attempts ENABLE ROW LEVEL SECURITY;
+  ip_hash text PRIMARY KEY CHECK (ip_hash ~ '^[0-9a-f]{64}$'),
+  window_started_at timestamptz NOT NULL,
+  attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  locked_until timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+-- Production already has this table from the earlier recovery hardening;
+-- add the lock column explicitly because CREATE TABLE IF NOT EXISTS does not alter it.
+ALTER TABLE public.lhi_reset_attempts
+  ADD COLUMN IF NOT EXISTS locked_until timestamptz;
+ALTER TABLE public.lhi_reset_attempts ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.lhi_reset_attempts FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.lhi_reset_attempts TO service_role;
 
