@@ -225,6 +225,36 @@ if (fs.existsSync(appPath)) {
     pass('LHI restricted recovery flow','One-time challenge is exchanged for a limited KA IPSRS capability before normal API login');
   else fail('LHI restricted recovery flow','Reset must use recovery-exchange and recovery-action before any normal apiWhoAmI call');
 
+  const recoveryFunctionPaths=[
+    'supabase/functions/lhi-reset-verify/index.ts',
+    'supabase/functions/lhi-block-status/index.ts',
+    'supabase/functions/lhi-recovery-exchange/index.ts',
+    'supabase/functions/lhi-recovery-action/index.ts'
+  ];
+  const missingRecoveryFunctions=recoveryFunctionPaths.filter(rel=>!fs.existsSync(path.join(root,rel)));
+  const supabaseConfig=fs.existsSync(path.join(root,'supabase','config.toml'))
+    ? fs.readFileSync(path.join(root,'supabase','config.toml'),'utf8') : '';
+  const deployRecoveryFunctions=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
+    .every(name=>deployWorkflow.includes('functions deploy '+name));
+  const recoveryTablesMigration=fs.existsSync(path.join(root,'supabase','migrations','20261104103000_lhi_recovery_expired_incident_fix.sql'))
+    ? fs.readFileSync(path.join(root,'supabase','migrations','20261104103000_lhi_recovery_expired_incident_fix.sql'),'utf8') : '';
+  const recoverySchemaComplete=recoveryTablesMigration.includes('CREATE TABLE IF NOT EXISTS public.lhi_recovery_challenges')
+    && recoveryTablesMigration.includes('CREATE TABLE IF NOT EXISTS public.lhi_recovery_sessions')
+    && migration.includes('CREATE TABLE IF NOT EXISTS public.lhi_reset_attempts')
+    && migration.includes('CREATE OR REPLACE FUNCTION public.register_lhi_reset_attempt')
+    && migration.includes('CREATE OR REPLACE FUNCTION public.validate_lhi_recovery_session');
+  const recoveryJwtConfig=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
+    .every(name=>new RegExp('\\[functions\\.'+name+'\\]\\s+verify_jwt\\s*=\\s*false').test(supabaseConfig));
+  const recoveryActionPath=path.join(root,'supabase','functions','lhi-recovery-action','index.ts');
+  const recoveryActionSource=fs.existsSync(recoveryActionPath)?fs.readFileSync(recoveryActionPath,'utf8'):'';
+  const recoveryResponseMatchesUi=recoveryActionSource.includes('grace_status:data')
+    && app.includes('statusPayload&&statusPayload.grace_status');
+  if(missingRecoveryFunctions.length||!deployRecoveryFunctions||!recoverySchemaComplete||!recoveryJwtConfig||!recoveryResponseMatchesUi)
+    fail('LHI recovery backend completeness','Missing function sources: '+missingRecoveryFunctions.join(', ')
+      +'; deployment functions='+deployRecoveryFunctions+'; recovery schema='+recoverySchemaComplete
+      +'; JWT config='+recoveryJwtConfig+'; response/UI contract='+recoveryResponseMatchesUi);
+  else pass('LHI recovery backend completeness','Reset, block-status, challenge exchange, limited recovery action, database tables/RPCs, deployment and frontend response contracts are present');
+
   const apiContract=api.includes('lhi_access_blocked_at') &&
     api.includes('get_lhi_discipline_status') &&
     api.includes('LHI_GLOBAL_BLOCK') &&
