@@ -617,15 +617,15 @@ Struktur dokumentasi yang dituju:
   AI_AUDIT_PROTOCOL.md
   MASTER_PROJECT_LHI/
     00_MASTER_PROJECT.md
-    01_PROJECT_CHARTER.md
+    01_PROJECT_CHARTER.md                 (belum dibuat)
     02_REQUIREMENTS_SPECIFICATION.md
     03_SOFTWARE_ARCHITECTURE.md
-    04_SOFTWARE_DESIGN_SPECIFICATION.md
+    04_SOFTWARE_DESIGN_SPECIFICATION.md  (belum dibuat)
     05_QUALITY_ASSURANCE_PLAN.md
-    06_DEVELOPMENT_ROADMAP.md
-    07_AS_BUILT_AND_OPERATIONS.md
+    06_DEVELOPMENT_ROADMAP.md            (roadmap pendukung tersedia terpisah)
+    07_AS_BUILT_AND_OPERATIONS.md        (belum dibuat)
     08_MODULE_CATALOG.md
-    PROFESSIONALIZATION_ROADMAP.md
+    09_SECURITY_ASSURANCE_PLAN.md
 ```
 
 Daftar ini adalah struktur target. Dokumen yang belum ada atau belum disetujui tidak boleh dianggap telah selesai. Hindari membuat dokumen duplikat yang mengulang kewenangan Project Control Book.
@@ -707,6 +707,10 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 - [AI Audit Protocol](../AI_AUDIT_PROTOCOL.md)
 - [README Form Blok Aplikasi](../README-FORM-BLOK-APLIKASI.md) — spesifikasi fitur khusus, bukan pengganti Master Project
 - [Katalog Modul](08_MODULE_CATALOG.md) — inventaris modul dinamis, status, batas tanggung jawab, dan template penambahan modul.
+- [Requirements Specification](02_REQUIREMENTS_SPECIFICATION.md) — baseline kebutuhan fungsional/nonfungsional dan traceability.
+- [Software Architecture](03_SOFTWARE_ARCHITECTURE.md) — arsitektur existing/target, trust boundary, data flow, dan ADR.
+- [Quality Assurance Plan](05_QUALITY_ASSURANCE_PLAN.md) — strategi test, UAT, regression, performance, dan release gate.
+- [Security Assurance Plan](09_SECURITY_ASSURANCE_PLAN.md) — threat model, security test, findings, dan security release gate.
 - [Professionalization Roadmap](PROFESSIONALIZATION_ROADMAP.md) — rencana tahapan, bukan dokumen induk
 
 ---
