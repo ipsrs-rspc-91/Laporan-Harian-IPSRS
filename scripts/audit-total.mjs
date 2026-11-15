@@ -173,7 +173,10 @@ if (fs.existsSync(appPath)) {
     'lhi_discipline_obligation_events','reject_lhi_obligation_event_mutation',
     'snapshot_missed_days','SNAPSHOT_BACKFILLED','exclude_lhi_obligations_on_deactivation',
     'STAFF_REACTIVATED_AFTER_EXCLUSION','private.lhi_normal_access_allowed',
-    'reports_insert_own','staff_dropdown','open_lhi_global_grace_v2',
+    'reports_insert_own','DROP POLICY IF EXISTS reports_select_authorized',
+    'DROP POLICY IF EXISTS access_settings_read_ka','authenticated_read_master_data',
+    'REVOKE ALL ON TABLE public.staff_dropdown','GRANT SELECT ON TABLE public.staff_dropdown TO service_role',
+    'staff_dropdown','open_lhi_global_grace_v2',
     "interval '120 hours'","status = 'Aktif'",
     'IF v_days >= 8','WHERE missed_days >= 10',
     'reject_lhi_obligation_event_mutation'
@@ -218,9 +221,25 @@ if (fs.existsSync(appPath)) {
   const readmeContract=readme.includes('created_at') &&
     readme.includes('120 jam') &&
     readme.includes('status kepegawaian') &&
-    readme.includes('append-only');
-  if(readmeContract)pass('LHI README acceptance specification','README defines created_at/WIB, employment/access separation, snapshot history, and 120-hour recovery');
+    readme.includes('append-only') &&
+    readme.includes('Supabase Data API/RLS');
+  if(readmeContract)pass('LHI README acceptance specification','README defines created_at/WIB, employment/access separation, snapshot history, 120-hour recovery, and RLS enforcement');
   else fail('LHI README acceptance specification','README does not fully state the agreed implementation contract');
+
+  const deployWorkflowPath=path.join(root,'.github','workflows','deploy-production.yml');
+  const deployWorkflow=fs.existsSync(deployWorkflowPath)?fs.readFileSync(deployWorkflowPath,'utf8'):'';
+  const cloudflareStart=deployWorkflow.indexOf('  deploy-cloudflare:');
+  const pagesStart=deployWorkflow.indexOf('  deploy-pages:');
+  const resultStart=deployWorkflow.indexOf('  production-result:');
+  const cloudflareJob=cloudflareStart>=0&&pagesStart>cloudflareStart?deployWorkflow.slice(cloudflareStart,pagesStart):'';
+  const pagesJob=pagesStart>=0&&resultStart>pagesStart?deployWorkflow.slice(pagesStart,resultStart):'';
+  const deploymentOrder=cloudflareJob.includes('needs: [detect-changes, deploy-supabase]') &&
+    cloudflareJob.includes("needs.deploy-supabase.result == 'success'") &&
+    pagesJob.includes('needs: [detect-changes, deploy-supabase, deploy-cloudflare]') &&
+    pagesJob.includes("needs.deploy-cloudflare.result == 'success'") &&
+    deployWorkflow.includes("needs.detect-changes.outputs.supabase == 'true' && needs.deploy-supabase.result != 'success'");
+  if(deploymentOrder)pass('Production deployment dependency gate','Cloudflare/Pages wait for Supabase success when backend changes are present');
+  else fail('Production deployment dependency gate','Frontend deployment is not strictly gated behind successful Supabase backend deployment');
 }
 
 function parseLockedProtectedFiles(lockText){
