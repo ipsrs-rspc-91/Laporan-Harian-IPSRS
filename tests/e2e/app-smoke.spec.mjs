@@ -505,3 +505,21 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
+
+
+test('System Info does not publish stale rollback checkpoints or fabricated deployment metadata', async () => {
+  const html = await readFile(new URL('../../frontend/index.html', import.meta.url), 'utf8');
+  const apiSource = await readFile(new URL('../../supabase/functions/ipsrs-api/index.ts', import.meta.url), 'utf8');
+
+  expect(html).not.toContain('checkpoint-2026-10-11-0423');
+  expect(html).not.toContain('3805c05ac3e0b4c7420bc9a52e222360fccb258e');
+  expect(html).not.toContain('05ff467449080e1c287a827a58b1c67da8b084d5');
+  expect(html).toContain('BASELINE_REGISTER.yaml');
+  expect(html).toContain('ENVIRONMENT BELUM TERVERIFIKASI');
+  expect(apiSource).not.toContain('20261001-KATEGORI-SCROLL4');
+  expect(apiSource).not.toContain('ipsrs-api v81');
+  expect(apiSource).not.toContain('20260928092227');
+  expect(apiSource).not.toContain('628ca81681620769821fe6491ba2aac32d53310d');
+  expect(apiSource).toContain('Deno.env.get("LHI_API_VERSION")');
+  expect(apiSource).toContain('Deno.env.get("LHI_DATABASE_MIGRATION")');
+});
