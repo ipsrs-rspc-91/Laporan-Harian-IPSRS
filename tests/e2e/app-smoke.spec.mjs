@@ -563,3 +563,21 @@ test('shared item similarity utilities preserve normalization and scoring contra
   expect(liveLevenshteinScore_('pompa', 'pomba')).toBe(0.8);
   expect(liveLevenshteinScore_('abc', 'xyz')).toBe(0);
 });
+
+
+test('shared date utilities preserve date parsing and padding contracts', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/date-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, Date, Intl, Number, String, Math };
+  vm.runInNewContext(source, sandbox);
+  const { pad2_, parseDateOnly_ } = sandbox.window;
+
+  expect(pad2_(0)).toBe('00');
+  expect(pad2_(7)).toBe('07');
+  expect(pad2_(12)).toBe('12');
+  expect(parseDateOnly_('')).toBeNull();
+  expect(parseDateOnly_('not-a-date')).toBeNull();
+  expect(parseDateOnly_('2026-09-18').toISOString().slice(0,10)).toBe('2026-09-18');
+  expect(parseDateOnly_('2026-09-18T17:00:00.000Z').toISOString().slice(0,10)).toBe('2026-09-19');
+  expect(parseDateOnly_('2026-09-18T17:00:00+00:00').toISOString().slice(0,10)).toBe('2026-09-19');
+});
