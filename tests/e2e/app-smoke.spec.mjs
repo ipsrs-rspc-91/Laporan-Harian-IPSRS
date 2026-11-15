@@ -505,3 +505,11 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
+
+
+test('Production workflow blocks Supabase deploy until migration parity is verified', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/deploy-production.yml', import.meta.url), 'utf8');
+  expect(workflow).toContain('SUPABASE_MIGRATION_PARITY_VERIFIED: ${{ vars.SUPABASE_MIGRATION_PARITY_VERIFIED }}');
+  expect(workflow).toContain('[ "${SUPABASE_MIGRATION_PARITY_VERIFIED:-false}" != "true" ]');
+  expect(workflow).toContain('remote migration history and repository migration files have not been formally reconciled');
+});
