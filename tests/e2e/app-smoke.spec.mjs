@@ -42,6 +42,32 @@ async function exposeAppShellForIsolatedUiTest(page){
   });
 }
 
+
+test('LHI global Reset stores one-time challenge and restores KA login form', async ({ page }) => {
+  const challenge='test-only-recovery-challenge-'.padEnd(48,'x');
+  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ok:true,blocked:true,message:'Mode Blok Aplikasi aktif.',noncompliant_staff:[]})
+  }));
+  await page.route('**/functions/v1/lhi-reset-verify', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ok:true,valid:true,challenge,expires_at:'2026-11-15T12:05:00Z'})
+  }));
+  await page.goto('/', {waitUntil:'domcontentloaded'});
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({timeout:10000});
+  await page.locator('#lhiGlobalBlockReset').click();
+  await expect(page.locator('#lhiResetBackdrop')).toBeVisible();
+  await page.locator('#lhiResetCode').fill('123456');
+  await page.locator('#lhiResetSubmit').click();
+  await expect(page.locator('#ipsrsLoginForm')).toBeAttached({timeout:10000});
+  const resetState=await page.evaluate(()=>({
+    mode:sessionStorage.getItem('IPSRS_LHI_RESET_AUTH_MODE'),
+    challenge:sessionStorage.getItem('IPSRS_LHI_RECOVERY_CHALLENGE')
+  }));
+  expect(resetState.mode).toBe('KA_ONLY');
+  expect(resetState.challenge).toBe(challenge);
+});
+
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', msg => {
