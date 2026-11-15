@@ -22,7 +22,10 @@ Deno.serve(async (req: Request) => {
     const db = createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const {data:setting,error:settingError}=await db.from("access_settings").select("value").eq("key","LHI_GLOBAL_BLOCK").maybeSingle();
     if(settingError || !setting) return json({ok:false,message:"Status blokir belum dapat diverifikasi."},503,headers);
-    const blocked=String(setting.value).toUpperCase()==="AKTIF";
+    const lockValue=String(setting.value||"").toUpperCase();
+    if(!["AKTIF","NONAKTIF"].includes(lockValue))
+      return json({ok:false,message:"Status blokir tidak valid. Akses normal ditahan sampai status server dapat dipastikan."},503,headers);
+    const blocked=lockValue==="AKTIF";
     if(!blocked) return json({ok:true,blocked:false},200,headers);
     const {data:incident,error:incidentError}=await db.from("lhi_discipline_incidents")
       .select("incident_id,status,started_at").in("status",["LOCKED","EXPIRED","GRACE"])
