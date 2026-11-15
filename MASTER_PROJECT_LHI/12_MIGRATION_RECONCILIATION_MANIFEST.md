@@ -139,13 +139,14 @@ Untuk setiap baris REMOTE_ONLY dan LOCAL_ONLY:
 
 ## 6. Schema gaps terkait Form Blok dan recovery
 
-Pemeriksaan `information_schema.columns` terhadap database aktif tidak menemukan:
-- tabel `public.lhi_discipline_obligation_events`;
-- tabel `public.lhi_reset_attempts`;
-- kolom `staff.lhi_access_blocked_at`;
-- kolom `staff.lhi_employment_activated_at`;
-- kolom `lhi_discipline_obligations.snapshot_last_lhi_created_at`;
-- kolom `lhi_discipline_obligations.snapshot_missed_days`.
+Pemeriksaan awal pada snapshot audit menemukan beberapa objek belum tersedia. **Recheck read-only terbaru pada 15 November 2026 sekitar 13:34 UTC** (melalui inventory schema Supabase) mengoreksi satu temuan: tabel `public.lhi_reset_attempts` ternyata sudah ada. Karena itu, daftar gap yang masih terverifikasi saat recheck adalah:
+- tabel `public.lhi_discipline_obligation_events` belum ditemukan;
+- kolom `staff.lhi_access_blocked_at` belum ditemukan;
+- kolom `staff.lhi_employment_activated_at` belum ditemukan;
+- kolom `lhi_discipline_obligations.snapshot_last_lhi_created_at` belum ditemukan;
+- kolom `lhi_discipline_obligations.snapshot_missed_days` belum ditemukan.
+
+Tabel `public.lhi_reset_attempts` **sudah ada** pada recheck, dengan kolom `ip_hash`, `window_started_at`, `attempt_count`, dan `updated_at`. Keberadaan tabel ini tidak membuktikan seluruh recovery flow sudah lengkap atau aman.
 
 Migration `20261115120000_lhi_form_block_compliance_alignment.sql` pada branch PR #76 memuat perubahan terkait objek tersebut dan implementasi penuh `open_lhi_global_grace_v2`. Migration tersebut tidak tercatat sebagai file pada main snapshot dan tidak boleh dianggap telah diterapkan ke database.
 
