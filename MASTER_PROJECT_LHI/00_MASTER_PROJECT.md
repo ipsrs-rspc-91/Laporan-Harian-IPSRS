@@ -686,7 +686,7 @@ Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau run
 | Backup / DR | Checkpoint source tidak sama dengan backup database; restore drill penuh belum tersertifikasi | OPEN / NOT CERTIFIED |
 | Performance | Target dan baseline numerik p50/p95 belum disahkan/dibuktikan | OPEN |
 | SLO / RPO / RTO / retensi | Nilai target resmi belum ditetapkan dan disetujui | TO BE AGREED; jangan mengarang angka |
-| Project Charter / persetujuan | Dokumen Charter tersedia, tetapi tabel persetujuan Product Owner dan Technical/Operations Owner masih berstatus MENUNGGU | DRAFT / NOT APPROVED |
+| Project Charter / persetujuan | Dokumen Charter tersedia, tetapi tabel persetujuan Sponsor/Manajemen, Product Owner, dan Technical/Operations Owner masih berstatus MENUNGGU | DRAFT / NOT APPROVED |
 | Requirements baseline | SRS tersedia sebagai katalog awal; prioritas masih usulan dan baseline kebutuhan harus dikonfirmasi Product Owner | REVIEW / NOT APPROVED |
 | Business case | Visi dan tujuan sudah tercantum di Master Project; belum ditemukan artefak Business Case terpisah yang memuat manfaat terukur, biaya, opsi, dan justifikasi investasi | GAP DOKUMENTASI; jangan menganggap business case telah disahkan |
 
@@ -1024,5 +1024,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 | 2026-11-15 | Audit tahap 4: menambahkan crosswalk FR-01–FR-14 ke ID formal LHI-FR-001–017 agar Master Project dan SRS memiliki satu jalur traceability |
 | 2026-11-15 | Audit tahap 5: menautkan setiap requirement formal ke ID modul/domain pada Katalog Modul untuk memperjelas ownership dan cakupan lintas modul |
 | 2026-11-15 | Audit tahap 6: menyelaraskan fase P0–P6 Master Project dengan tahap 0–8 Roadmap agar tidak terbaca sebagai dua urutan delivery yang bertentangan |
+| 2026-11-15 | Audit tahap 7: merekonsiliasi daftar persetujuan Charter termasuk Sponsor/Manajemen dengan tabel persetujuan dokumen Charter |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
