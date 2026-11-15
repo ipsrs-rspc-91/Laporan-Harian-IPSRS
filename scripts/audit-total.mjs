@@ -203,7 +203,8 @@ if (fs.existsSync(appPath)) {
     scheduler.includes('r.created_at >= i.started_at') &&
     scheduler.includes('r.created_at < i.deadline_at') &&
     scheduler.includes('Petugas menginput minimal satu LHI sah selama kelonggaran 120 jam.');
-  const globalLockWriteGuard=(migration.match(/AND key <> 'LHI_GLOBAL_BLOCK'::text/g)||[]).length===5;\n  const pendingCountsPeople=scheduler.includes('count(DISTINCT o.staff_id)') &&
+  const globalLockWriteGuard=(migration.match(/AND key <> 'LHI_GLOBAL_BLOCK'::text/g)||[]).length===5;
+  const pendingCountsPeople=scheduler.includes('count(DISTINCT o.staff_id)') &&
     scheduler.includes('o.completed_at IS NULL') &&
     scheduler.includes('o.excluded_at IS NULL') &&
     scheduler.includes("s.status = 'Aktif'");
