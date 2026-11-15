@@ -558,7 +558,7 @@ BEGIN
             field_changed, old_value, new_value
           ) VALUES (
             'SYSTEM', v_staff.staff_id, 'BLOCK_LHI_APPLICATION_ACCESS_DAY_8', NULL,
-            'Hak akses aplikasi diblokir pada hari ke-8 tanpa LHI sah. Status kepegawaian tetap AKTIF.',
+            'Hak akses aplikasi diblokir setelah jumlah hari kalender penuh tanpa LHI sah melewati 7 hari. Status kepegawaian tetap AKTIF.',
             'lhi_access_blocked_at,status',
             'NULL / Aktif', v_now::text || ' / Aktif'
           );
@@ -567,7 +567,7 @@ BEGIN
           INSERT INTO public.lhi_discipline_notifications(event_key, recipient_staff_id, subject, message)
           SELECT v_event, s.staff_id, 'Hak akses LHI petugas diblokir',
             'Hak akses aplikasi ' || v_staff.nama ||
-            ' diblokir pada hari ke-8 karena belum menginput LHI selama 7 hari kalender penuh. Status kepegawaiannya tetap AKTIF. Mohon bantu mengingatkan petugas tersebut.'
+            ' diblokir karena belum menginput LHI selama lebih dari 7 hari kalender penuh. Status kepegawaiannya tetap AKTIF. Mohon bantu mengingatkan petugas tersebut.'
           FROM public.staff s
           WHERE s.status = 'Aktif'
             AND s.staff_id <> v_staff.staff_id
