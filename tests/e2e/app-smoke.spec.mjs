@@ -71,14 +71,14 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
     .filter(src => {
       const clean = src.split('?')[0].split('#')[0].replace(/^\.\//, '').replace(/^\//, '');
       return clean.endsWith('.js') && [
-        'app.js','config.js','laporan-fast-v2.js','login-fast.js', 'shared/dom-utils.js','shared/date-utils.js','shared/master-data-utils.js',
+        'app.js','config.js','laporan-fast-v2.js','login-fast.js', 'shared/dom-utils.js','shared/date-utils.js','shared/master-data-utils.js','shared/item-similarity-utils.js',
         'dashboard-loading-v2.js','access-policy-ui.js','static-data.js',
         'required-fields-ui.js','access-control.js','access-visibility-fix.js',
         'laporan-loading-state.js','js/kategori-modal.js'
       ].includes(clean);
     });
   expect(scriptAssets.length, 'Critical frontend asset references found in index.html').toBeGreaterThan(0);
-  const assets = ['/index.html', '/export-laporan-excel.js', '/shared/dom-utils.js', '/shared/date-utils.js', '/shared/master-data-utils.js', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
+  const assets = ['/index.html', '/export-laporan-excel.js', '/shared/dom-utils.js', '/shared/date-utils.js', '/shared/master-data-utils.js', '/shared/item-similarity-utils.js', ...scriptAssets.map(src => src.startsWith('/') ? src : '/'+src.replace(/^\.\//,'')).filter((v,i,a)=>a.indexOf(v)===i)];
   for (const path of assets) {
     const response = await request.get(path);
     expect(response.ok(), path).toBeTruthy();
@@ -545,4 +545,21 @@ test('shared master-data utilities preserve Area Kerja grouping rules', async ()
   expect(group('Kitchen Dapur')).toBe('KITCHEN / DAPUR');
   expect(group('Area Tidak Dikenal')).toBe('LAINNYA');
   expect(group(null)).toBe('LAINNYA');
+});
+
+
+test('shared item similarity utilities preserve normalization and scoring contracts', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/item-similarity-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, String, Array, Math };
+  vm.runInNewContext(source, sandbox);
+  const { normalizeLiveItem_, liveLevenshteinScore_ } = sandbox.window;
+
+  expect(normalizeLiveItem_('  POMPA—Air  25 HP ')).toBe('pompa air 25 hp');
+  expect(normalizeLiveItem_('ELEKTROMÉDIK')).toBe('elektromedik');
+  expect(normalizeLiveItem_(null)).toBe('');
+  expect(liveLevenshteinScore_('pompa', 'pompa')).toBe(1);
+  expect(liveLevenshteinScore_('', 'pompa')).toBe(0);
+  expect(liveLevenshteinScore_('pompa', 'pomba')).toBe(0.8);
+  expect(liveLevenshteinScore_('abc', 'xyz')).toBe(0);
 });
