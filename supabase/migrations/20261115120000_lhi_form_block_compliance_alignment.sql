@@ -75,6 +75,78 @@ FOR EACH ROW EXECUTE FUNCTION public.reject_lhi_obligation_event_mutation();
 
 REVOKE ALL ON FUNCTION public.reject_lhi_obligation_event_mutation() FROM PUBLIC, anon, authenticated;
 
+-- Backfill the current/legacy incident snapshot metadata from the best
+-- auditable point available: the incident's recorded start timestamp.
+-- New incidents capture these fields directly at day-10 snapshot creation.
+WITH snapshot_context AS (
+  SELECT DISTINCT
+    o.incident_id, o.staff_id, i.started_at,
+    s.nama, s.role,
+    GREATEST(
+      COALESCE(s.lhi_employment_activated_at, s.created_at),
+      COALESCE(s.lhi_discipline_reset_at, s.lhi_employment_activated_at, s.created_at)
+    ) AS baseline_at
+  FROM public.lhi_discipline_obligations o
+  JOIN public.lhi_discipline_incidents i ON i.incident_id = o.incident_id
+  JOIN public.staff s ON s.staff_id = o.staff_id
+),
+snapshot_input AS (
+  SELECT c.*,
+    (
+      SELECT max(r.created_at)
+      FROM public.reports r
+      WHERE r.staff_id = c.staff_id
+        AND r.deleted_at IS NULL
+        AND r.created_at >= c.baseline_at
+        AND r.created_at < c.started_at
+    ) AS last_lhi_created_at
+  FROM snapshot_context c
+),
+snapshot_values AS (
+  SELECT *,
+    GREATEST(
+      0,
+      (started_at AT TIME ZONE 'Asia/Jakarta')::date
+      - COALESCE(
+          (last_lhi_created_at AT TIME ZONE 'Asia/Jakarta')::date,
+          (baseline_at AT TIME ZONE 'Asia/Jakarta')::date
+        ) - 1
+    ) AS missed_days_at_snapshot
+  FROM snapshot_input
+),
+updated_snapshot AS (
+  UPDATE public.lhi_discipline_obligations o
+  SET snapshot_last_lhi_created_at = COALESCE(o.snapshot_last_lhi_created_at, v.last_lhi_created_at),
+      snapshot_missed_days = COALESCE(o.snapshot_missed_days, v.missed_days_at_snapshot),
+      snapshot_employment_status = COALESCE(o.snapshot_employment_status, 'Aktif'),
+      snapshot_name = COALESCE(o.snapshot_name, v.nama),
+      snapshot_role = COALESCE(o.snapshot_role, v.role)
+  FROM snapshot_values v
+  WHERE o.incident_id = v.incident_id
+    AND o.staff_id = v.staff_id
+    AND (
+      o.snapshot_missed_days IS NULL
+      OR o.snapshot_employment_status IS NULL
+      OR o.snapshot_name IS NULL
+      OR o.snapshot_role IS NULL
+    )
+  RETURNING o.incident_id, o.obligation_id, o.staff_id
+)
+INSERT INTO public.lhi_discipline_obligation_events(
+  incident_id, obligation_id, staff_id, event_type,
+  previous_status, new_status, event_at, actor_staff_id, actor_name, reason
+)
+SELECT u.incident_id, u.obligation_id, u.staff_id,
+       'SNAPSHOT_BACKFILLED', NULL, 'SNAPSHOT_RECORDED',
+       clock_timestamp(), 'SYSTEM', 'SYSTEM',
+       'Metadata snapshot historis dilengkapi dari created_at LHI sah sebelum waktu mulai insiden yang tercatat.'
+FROM updated_snapshot u
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.lhi_discipline_obligation_events e
+  WHERE e.obligation_id = u.obligation_id
+    AND e.event_type = 'SNAPSHOT_BACKFILLED'
+);
+
 CREATE OR REPLACE FUNCTION public.track_lhi_employment_reactivation()
 RETURNS trigger
 LANGUAGE plpgsql
