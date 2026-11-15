@@ -68,7 +68,10 @@ DECLARE
   v_session public.lhi_recovery_sessions%ROWTYPE;
   v_incident_status text;
 BEGIN
-  IF p_session_token_hash IS NULL OR p_session_token_hash !~ '^[0-9a-f]{64}
+  IF p_session_token_hash IS NULL
+     OR p_session_token_hash !~ '^[0-9a-f]{64}$'
+     OR p_action IS NULL
+     OR p_action NOT IN ('apiRecoveryStatus', 'apiStartLhiGrace') THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INVALID_REQUEST');
   END IF;
 
@@ -89,8 +92,7 @@ BEGIN
   WHERE incident_id = v_session.incident_id;
 
   IF v_incident_status IS NULL
-     OR (p_action = 'apiStartLhiGrace' AND v_incident_status NOT IN ('LOCKED', 'EXPIRED', 'GRACE'))
-     OR (p_action = 'apiRecoveryStatus' AND v_incident_status NOT IN ('LOCKED', 'EXPIRED', 'GRACE')) THEN
+     OR v_incident_status NOT IN ('LOCKED', 'EXPIRED', 'GRACE') THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INCIDENT_NOT_AVAILABLE');
   END IF;
 
@@ -105,6 +107,7 @@ BEGIN
   );
 END;
 $function$;
+
 REVOKE ALL ON FUNCTION public.validate_lhi_recovery_session(text, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.validate_lhi_recovery_session(text, text) TO service_role;
 
