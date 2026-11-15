@@ -83,17 +83,61 @@ jobs:
             test-results/
           retention-days: 30
 
+  postgres-lhi-regression:
+    name: PostgreSQL LHI Grace + Recovery Regression
+    needs: audit-total
+    if: needs.audit-total.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ipsrs_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ipsrs_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout audited commit
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Create isolated Supabase-like schema fixture
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d ipsrs_test -v ON_ERROR_STOP=1 -f tests/sql/lhi-test-fixture.sql
+      - name: Apply recovery challenge prerequisite migration
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d ipsrs_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261104103000_lhi_recovery_expired_incident_fix.sql
+      - name: Apply LHI Form Blok alignment migration
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d ipsrs_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261115120000_lhi_form_block_compliance_alignment.sql
+      - name: Run LHI grace, recovery, void, idempotency and RLS acceptance tests
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d ipsrs_test -v ON_ERROR_STOP=1 -f tests/sql/lhi-grace-acceptance.sql
+
   audit-gate-result:
     name: Deployment Gate
-    needs: [audit-total, browser-regression]
+    needs: [audit-total, browser-regression, postgres-lhi-regression]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Block when audit or browser regression fails
-        if: needs.audit-total.result != 'success' || needs.browser-regression.result != 'success'
+        if: needs.audit-total.result != 'success' || needs.browser-regression.result != 'success' || needs.postgres-lhi-regression.result != 'success'
         run: |
           echo "❌ IPSRS DEPLOYMENT GATE BLOCKED"
-          echo "Static audit atau browser regression menemukan masalah."
+          echo "Static audit, browser regression, atau PostgreSQL LHI regression menemukan masalah."
           exit 1
       - name: Full gate passed
         if: needs.audit-total.result == 'success' && needs.browser-regression.result == 'success'
