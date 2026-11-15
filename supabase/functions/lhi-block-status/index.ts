@@ -34,17 +34,20 @@ Deno.serve(async (req: Request) => {
         .select("staff_id,snapshot_name,snapshot_role,snapshot_missed_days")
         .eq("incident_id",incident.incident_id);
       if(obligationError) return json({ok:false,message:"Snapshot petugas pemicu belum dapat diverifikasi."},503,headers);
-      const ids=[...new Set((obligations||[]).map((x:any)=>String(x.staff_id)))];
+      // Only obligations still pending for currently active employees are shown as triggers.
+      // Compliant or excluded members must not be named as the reason for a reactivated lock.
+      const pending=(obligations||[]).filter((x:any)=>!x.completed_at&&!x.excluded_at);
+      const ids=[...new Set(pending.map((x:any)=>String(x.staff_id)))];
       const {data:staff,error:staffError}=ids.length
-        ? await db.from("staff").select("staff_id,jabatan,nama").in("staff_id",ids)
+        ? await db.from("staff").select("staff_id,jabatan,nama,status").in("staff_id",ids).eq("status","Aktif")
         : {data:[],error:null};
       if(staffError) return json({ok:false,message:"Data petugas pemicu belum dapat diverifikasi."},503,headers);
       const byId=new Map((staff||[]).map((x:any)=>[String(x.staff_id),x]));
-      noncompliant_staff=(obligations||[]).reduce((out:any[],x:any)=>{
-        if(out.some(y=>y.staff_id===x.staff_id)) return out;
+      noncompliant_staff=pending.reduce((out:any[],x:any)=>{
         const s=byId.get(String(x.staff_id)) as any;
-        out.push({staff_id:x.staff_id,nama:x.snapshot_name||s?.nama||"Petugas terkait",
-          jabatan:s?.jabatan||x.snapshot_role||"",kewajiban_belum_selesai:Number(x.snapshot_missed_days)||10});
+        if(!s || out.some(y=>y.staff_id===x.staff_id)) return out;
+        out.push({staff_id:x.staff_id,nama:x.snapshot_name||s.nama||"Petugas terkait",
+          jabatan:s.jabatan||x.snapshot_role||"",kewajiban_belum_selesai:Number(x.snapshot_missed_days)||10});
         return out;
       },[]);
     }
