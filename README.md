@@ -18,6 +18,7 @@ Dokumen teknis pendukung:
 - [As-Built and Operations](MASTER_PROJECT_LHI/07_AS_BUILT_AND_OPERATIONS.md)
 - [API dan Database Inventory](MASTER_PROJECT_LHI/10_API_DATABASE_INVENTORY.md)
 - [Production Readiness Audit](MASTER_PROJECT_LHI/11_PRODUCTION_READINESS_AUDIT.md)
+- [Migration Reconciliation Manifest](MASTER_PROJECT_LHI/12_MIGRATION_RECONCILIATION_MANIFEST.md)
 
 Dokumen tersebut menjelaskan arsitektur existing, peta direktori, katalog modul, backend, CI/CD, status modularisasi, dan rencana refactor bertahap.
 
