@@ -620,6 +620,9 @@ Berdasarkan dokumen repository yang diperiksa untuk penyusunan ini:
 - Dokumentasi mencatat Supabase/PostgreSQL sebagai database aktif; Cloudflare D1 belum boleh dianggap sebagai database produksi pengganti.
 - Pemetaan rinci endpoint, tabel, RLS, global state, event, dan side effect masih memerlukan audit source.
 - Nilai target SLA/SLO, RPO/RTO, dan retensi belum ditetapkan pada baseline dokumen yang diperiksa.
+- Audit database 15 November 2026 menemukan 75 migration remote versus 35 file lokal pada main; migration parity belum selesai dan perubahan schema produksi berstatus NO-GO sampai rekonsiliasi.
+- Supabase menjalankan 8 Edge Functions aktif, sedangkan main hanya melacak 5; tiga source runtime sedang disinkronkan melalui PR #80.
+- Fungsi database `open_lhi_global_grace_v2` saat ini mengembalikan `SAFE_CUTOVER_REQUIRED`, sehingga proses membuka global grace belum dapat dinyatakan operasional; perbaikan memerlukan validasi snapshot v2 dan prosedur recovery.
 
 Temuan tersebut adalah daftar kerja dan batas klaim, bukan hasil audit total terhadap seluruh source maupun runtime pada tanggal ini.
 
