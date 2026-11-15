@@ -157,6 +157,60 @@ if (fs.existsSync(appPath)) {
   }
 }
 
+// LHI Form Blok acceptance contract: keep README, database, API, and UI on one authority.
+{
+  const readmePath=path.join(root,'README-FORM-BLOK-APLIKASI.md');
+  const migrationPath=path.join(root,'supabase','migrations','20261115120000_lhi_form_block_compliance_alignment.sql');
+  const apiPath=path.join(root,'supabase','functions','ipsrs-api','index.ts');
+  const readme=fs.existsSync(readmePath)?fs.readFileSync(readmePath,'utf8'):'';
+  const migration=fs.existsSync(migrationPath)?fs.readFileSync(migrationPath,'utf8'):'';
+  const api=fs.existsSync(apiPath)?fs.readFileSync(apiPath,'utf8'):'';
+  const app=fs.existsSync(appPath)?fs.readFileSync(appPath,'utf8'):'';
+
+  const migrationContract=[
+    'lhi_access_blocked_at','lhi_employment_activated_at',
+    'get_lhi_discipline_status','Asia/Jakarta','r.created_at',
+    'lhi_discipline_obligation_events','reject_lhi_obligation_event_mutation',
+    'snapshot_missed_days','open_lhi_global_grace_v2',
+    "interval '120 hours'","status = 'Aktif'"
+  ];
+  const missingMigration=migrationContract.filter(token=>!migration.includes(token));
+  if(missingMigration.length)fail('LHI database alignment contract','Migration missing: '+missingMigration.join(', '));
+  else pass('LHI database alignment contract','Employment/access separation, WIB created_at, immutable obligation events, snapshot and 120-hour recovery are defined');
+
+  const hasRestrictedRecovery=app.includes("functions/v1/lhi-recovery-exchange") &&
+    app.includes("functions/v1/lhi-recovery-action") &&
+    app.includes("IPSRS_LHI_RECOVERY_CHALLENGE") &&
+    app.includes("renderLhiRecoveryScreen_") &&
+    app.includes("apiStartLhiGrace");
+  const exchangeBeforeOperationalLogin=app.indexOf("functions/v1/lhi-recovery-exchange")>0 &&
+    app.indexOf("functions/v1/lhi-recovery-exchange")<app.indexOf("action:'apiWhoAmI'");
+  if(hasRestrictedRecovery&&exchangeBeforeOperationalLogin)
+    pass('LHI restricted recovery flow','One-time challenge is exchanged for a limited KA IPSRS capability before normal API login');
+  else fail('LHI restricted recovery flow','Reset must use recovery-exchange and recovery-action before any normal apiWhoAmI call');
+
+  const apiContract=api.includes('lhi_access_blocked_at') &&
+    api.includes('get_lhi_discipline_status') &&
+    api.includes('LHI_GLOBAL_BLOCK') &&
+    api.includes('Pemulihan hanya dapat dijalankan melalui Form Blok Aplikasi') &&
+    !api.includes('// LHI DISCIPLINE GATE:');
+  if(apiContract)pass('LHI API enforcement','API fails closed on global lock, enforces dedicated access-block field, and delegates streak to database RPC');
+  else fail('LHI API enforcement','API still contains legacy login-time LHI counting or lacks dedicated access/global-lock enforcement');
+
+  const frontendNoLocalIncrement=!app.includes("streak+(l.status_hari_ini==='BELUM_ISI'?1:0)") &&
+    app.includes('const effectiveStreak=streak;') &&
+    app.includes('lhi_access_blocked_at');
+  if(frontendNoLocalIncrement)pass('LHI monitoring authority','Frontend displays server streak without adding a local day');
+  else fail('LHI monitoring authority','Frontend still calculates/increments the compliance streak locally');
+
+  const readmeContract=readme.includes('created_at') &&
+    readme.includes('120 jam') &&
+    readme.includes('status kepegawaian') &&
+    readme.includes('append-only');
+  if(readmeContract)pass('LHI README acceptance specification','README defines created_at/WIB, employment/access separation, snapshot history, and 120-hour recovery');
+  else fail('LHI README acceptance specification','README does not fully state the agreed implementation contract');
+}
+
 function parseLockedProtectedFiles(lockText){
   const lines=lockText.split(/\r?\n/);
   let currentId='', currentStatus='', protectedMode=false;
