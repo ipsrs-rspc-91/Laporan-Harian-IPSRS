@@ -105,6 +105,8 @@ Cakupan penerimaan FR-013 sekurang-kurangnya harus membuktikan: (1) hitung kalen
 
 ## 7. Requirement traceability
 
+Crosswalk antara kapabilitas tingkat proyek `FR-01`–`FR-14` dan ID formal `LHI-FR-001`–`LHI-FR-017` dipelihara pada `MASTER_PROJECT_LHI/00_MASTER_PROJECT.md` Bagian 6.1.1. SRS ini tetap menjadi daftar ID requirement formal; crosswalk tidak membuat ID baru dan tidak menggantikan acceptance criteria rinci.
+
 Setiap requirement wajib ditautkan pada:
 - stakeholder dan kebutuhan bisnis;
 - use case/acceptance criteria;
@@ -126,3 +128,4 @@ Gunakan Critical/High/Medium/Low dengan dampak operasional dan keamanan. Priorit
 |---|---|
 | 15 November 2026 | Baseline awal kebutuhan sistem LHI |
 | 15 November 2026 | Memperjelas referensi rinci LHI-FR-013, status persetujuan README Form Blok, dan gap regression coverage tanpa mengubah protected control registers |
+| 15 November 2026 | Menautkan SRS ke crosswalk kapabilitas Master Project agar ID requirement formal konsisten |
