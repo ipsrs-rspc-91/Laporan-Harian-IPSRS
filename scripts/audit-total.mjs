@@ -234,7 +234,7 @@ if (fs.existsSync(appPath)) {
   const missingRecoveryFunctions=recoveryFunctionPaths.filter(rel=>!fs.existsSync(path.join(root,rel)));
   const supabaseConfig=fs.existsSync(path.join(root,'supabase','config.toml'))
     ? fs.readFileSync(path.join(root,'supabase','config.toml'),'utf8') : '';
-  const deployWorkflowText=fs.existsSync(path.join(root,'.github','.workflows','deploy-production.yml'))
+  const deployWorkflowText=fs.existsSync(path.join(root,'.github','workflows','deploy-production.yml'))
     ? fs.readFileSync(path.join(root,'.github','.workflows','deploy-production.yml'),'utf8') : '';
   const deployRecoveryFunctions=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
     .every(name=>deployWorkflowText.includes(name))
