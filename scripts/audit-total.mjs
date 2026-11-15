@@ -235,7 +235,7 @@ if (fs.existsSync(appPath)) {
   const supabaseConfig=fs.existsSync(path.join(root,'supabase','config.toml'))
     ? fs.readFileSync(path.join(root,'supabase','config.toml'),'utf8') : '';
   const deployWorkflowText=fs.existsSync(path.join(root,'.github','workflows','deploy-production.yml'))
-    ? fs.readFileSync(path.join(root,'.github','.workflows','deploy-production.yml'),'utf8') : '';
+    ? fs.readFileSync(path.join(root,'.github','workflows','deploy-production.yml'),'utf8') : '';
   const deployRecoveryFunctions=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
     .every(name=>deployWorkflowText.includes(name))
     && deployWorkflowText.includes('supabase functions deploy "$fn"');
