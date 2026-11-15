@@ -38,9 +38,9 @@ END $$;
 
 -- A valid report in the active window must appear COMPLETED even before scheduler refresh.
 INSERT INTO public.reports(report_id,staff_id,created_at,role_snapshot,tanggal)
-VALUES ('A-1','A',clock_timestamp(),NULL,'PETUGAS',current_date);
+VALUES ('A-1','A',clock_timestamp(),'PETUGAS',current_date);
 INSERT INTO public.reports(report_id,staff_id,created_at,role_snapshot,tanggal)
-VALUES ('B-1','B',clock_timestamp(),NULL,'PETUGAS',current_date);
+VALUES ('B-1','B',clock_timestamp(),'PETUGAS',current_date);
 
 DO $$
 DECLARE v_status jsonb;
@@ -106,7 +106,7 @@ BEGIN
 END $$;
 
 INSERT INTO public.reports(report_id,staff_id,created_at,role_snapshot,tanggal)
-VALUES ('A-2','A',clock_timestamp(),NULL,'PETUGAS',current_date);
+VALUES ('A-2','A',clock_timestamp(),'PETUGAS',current_date);
 SELECT public.run_lhi_discipline_scheduler();
 UPDATE public.reports SET deleted_at=now() WHERE report_id='A-2';
 SELECT public.run_lhi_discipline_scheduler();
