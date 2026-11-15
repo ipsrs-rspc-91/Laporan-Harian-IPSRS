@@ -87,6 +87,34 @@ Target numerik seperti waktu respons, availability, RPO, RTO, dan retensi log be
 - Backend/API, database, integrasi, backup, pengujian, deployment, dan dokumentasi.
 - Peningkatan modularitas, keamanan, kinerja, dan maintainability.
 
+
+### 4.3 Pengembangan dan penambahan modul secara berkelanjutan
+
+Aplikasi LHI dirancang sebagai aplikasi yang dapat berkembang mengikuti kebutuhan operasional IPSRS. Daftar modul yang tercantum dalam Master Project, README, katalog modul, atau register teknis merupakan inventaris kondisi dan rencana pada waktu dokumen diperbarui; daftar tersebut **bukan daftar final dan bukan batas maksimum ruang lingkup aplikasi**.
+
+Ketentuan wajib:
+1. Modul baru dapat diusulkan dan dikembangkan secara bertahap berdasarkan kebutuhan bisnis yang disetujui Product Owner. Seluruh modul tidak harus dibangun sekaligus.
+2. Penambahan modul tidak mensyaratkan seluruh modul yang sudah direncanakan selesai terlebih dahulu, sepanjang dependensi, risiko, kapasitas, dan prioritas telah dinilai.
+3. Setiap modul harus memiliki tujuan, ruang lingkup, pemilik proses, batas tanggung jawab, role/permission, data yang dikelola, kontrak API/event, dependensi, acceptance criteria, test, dokumentasi, serta prosedur operasional.
+4. Modul baru wajib mengikuti arsitektur, standar keamanan, standar data, CI/CD, dan tata kelola yang berlaku.
+5. Modul baru tidak boleh mengubah perilaku modul LOCKED atau shared behavior yang dilindungi. Dampak lintas modul harus diuji melalui regression matrix dan prosedur unlock bila perubahan memang menyentuh perilaku yang dikunci.
+6. Penambahan modul dilakukan melalui change control. Persetujuan kebutuhan tidak otomatis berarti persetujuan deployment produksi.
+7. Arsitektur harus mendukung penambahan modul tanpa redesign seluruh aplikasi yang tidak diperlukan. Pemilihan modular monolith atau pemisahan layanan didasarkan pada kebutuhan nyata; microservices bukan pilihan default.
+8. Katalog modul harus memisahkan status EXISTING, IN DEVELOPMENT, PLANNED, PROPOSED, DEPRECATED, dan RETIRED. Status hanya berubah berdasarkan bukti dan persetujuan yang tercatat.
+9. Master Project dan katalog modul diperbarui ketika ada modul baru, perubahan batas tanggung jawab, integrasi, atau penghentian modul.
+10. Modul yang tidak tercantum pada daftar saat ini tetap dapat ditambahkan melalui proses yang sama; tidak diperlukan perubahan identitas proyek hanya karena cakupan modul bertambah.
+
+### 4.4 Klasifikasi status modul
+
+- **EXISTING:** implementasi ditemukan pada source atau runtime; tingkat kelengkapan tetap harus dinilai.
+- **IN DEVELOPMENT:** sedang dikerjakan pada branch atau lingkungan pengembangan.
+- **PLANNED:** telah disetujui sebagai kebutuhan/pekerjaan, tetapi implementasi belum dimulai.
+- **PROPOSED:** usulan yang belum memperoleh persetujuan prioritas.
+- **DEPRECATED:** masih tersedia untuk transisi, tetapi tidak direkomendasikan untuk penggunaan baru.
+- **RETIRED:** sudah dihentikan dengan migrasi/penghapusan yang disetujui dan bukti penutupan.
+
+Status modul pada register teknis tetap mengikuti format dan kewenangan register tersebut. Klasifikasi di sini adalah kosakata proyek, bukan izin untuk mengubah LOCK_REGISTER.
+
 ### 4.2 Di luar ruang lingkup kecuali disetujui sebagai perubahan proyek
 
 - Penggantian total platform/database produksi.
@@ -134,6 +162,28 @@ Daftar berikut merupakan baseline kapabilitas tingkat proyek, bukan pernyataan b
 | FR-12 | Audit trail | Merekam tindakan penting sesuai kebijakan audit | AUDIT_LOG |
 | FR-13 | Ekspor | Menyediakan ekspor laporan sesuai format dan hak akses | REPORT |
 | FR-14 | PWA/cache | Mengelola asset dan pembaruan cache tanpa menampilkan versi usang | PWA |
+
+
+### 6.1 Katalog modul bersifat dinamis
+
+Tabel FR-01 sampai FR-14 adalah kapabilitas yang telah teridentifikasi pada snapshot dokumen, bukan daftar final seluruh modul Aplikasi LHI. Modul baru dapat ditambahkan melalui persetujuan kebutuhan dan change control tanpa menunggu seluruh kapabilitas yang ada selesai. Katalog modul wajib mencatat sekurang-kurangnya:
+- ID dan nama modul yang unik;
+- tujuan bisnis dan proses yang didukung;
+- Product Owner/pemilik proses dan technical owner;
+- status siklus hidup modul;
+- batas tanggung jawab dan fungsi yang tidak menjadi tanggung jawabnya;
+- halaman/UI, service, endpoint, tabel/view, job, dan integrasi terkait;
+- role/permission dan aturan akses;
+- data owner, klasifikasi data, retensi, serta aturan audit;
+- dependensi internal/eksternal dan shared components yang digunakan;
+- acceptance criteria, test suite, regression coverage, dan bukti release;
+- dokumentasi operasional, monitoring, serta prosedur pemulihan.
+
+### 6.2 Siklus hidup modul
+
+Usulan modul → analisis kebutuhan dan dampak → persetujuan prioritas → spesifikasi dan desain → implementasi → pengujian → UAT → release approval → verifikasi operasional → pemeliharaan → deprecation/retirement bila diperlukan.
+
+Tidak semua usulan harus diterima. Keputusan menerima, menunda, menolak, menggabungkan, atau menghentikan modul harus memiliki alasan dan pemilik keputusan. Pengembangan modul dapat dilakukan secara iteratif dan independen selama kontrak integrasi dan dampak lintas modul dikendalikan.
 
 **Aturan definisi:** rincian field, formula, ambang hari, status, transisi, dan pengecualian tiap fitur wajib merujuk dokumen spesifikasi modul yang berwenang. Master Project tidak boleh menjadi sumber aturan alternatif yang bertentangan dengan README/spesifikasi fitur, kontrak API, atau Project Control Book.
 
@@ -250,6 +300,33 @@ docs/
 ```
 
 Pemisahan dilakukan bertahap setelah pemetaan fungsi, event, global state, endpoint, tabel, dan regression test. Tidak boleh melakukan pemindahan massal hanya berdasarkan struktur target.
+
+### 8.5 Arsitektur untuk pertumbuhan modul
+
+Aplikasi harus mendukung penambahan kapabilitas baru secara inkremental. Batas modul ditentukan berdasarkan domain/tanggung jawab bisnis, kepemilikan data, dan kontrak integrasi; bukan semata-mata berdasarkan halaman atau jumlah file.
+
+Ketentuan desain:
+1. Setiap modul memiliki interface publik yang terdokumentasi; akses langsung ke state internal modul lain dihindari.
+2. Modul tidak boleh mengakses atau mengubah tabel milik modul lain tanpa kontrak data dan otorisasi yang disepakati.
+3. Shared component/service hanya digunakan untuk kebutuhan lintas modul yang benar-benar sama dan memiliki owner serta regression test.
+4. Event, callback, global state, cache, dan side effect lintas modul harus terinventarisasi.
+5. Dependency direction harus jelas; circular dependency dicegah.
+6. Modul baru tidak boleh menambah privilege lebih luas daripada kebutuhan fungsinya.
+7. Migrasi dari struktur existing ke struktur modular dilakukan bertahap dengan parity check, feature flag bila sesuai, regression, dan rollback.
+8. Tidak ada kewajiban mengadopsi microservices. Pemisahan proses/service dilakukan hanya jika ada alasan terukur seperti skala, isolasi risiko, kebutuhan deployment independen, atau batas keamanan.
+9. Penambahan modul harus mempertahankan kompatibilitas laporan historis dan API konsumen yang masih didukung.
+10. Setiap modul harus memiliki definisi health/operational signal yang relevan agar gangguan dapat dilokalisasi.
+
+### 8.6 Diagram arsitektur wajib
+
+Dokumentasi arsitektur harus memuat diagram C4 yang relevan:
+- System Context: pengguna, Aplikasi LHI, dan sistem eksternal.
+- Container: browser/frontend, backend/API, database, pipeline CI/CD, dan platform hosting.
+- Component: komponen utama dalam container yang kompleks.
+- Deployment: lingkungan dan penempatan komponen.
+
+Diagram data flow wajib menandai sumber data, tujuan, protokol, trust boundary, data sensitif, autentikasi, dan kontrol keamanan. Diagram harus diperbarui saat perubahan arsitektur material terjadi. Diagram tidak boleh dianggap bukti implementasi tanpa dicocokkan dengan source dan runtime.
+
 
 ## 9. Data, privasi, dan keamanan
 
@@ -631,6 +708,164 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 - [Professionalization Roadmap](PROFESSIONALIZATION_ROADMAP.md) — rencana tahapan, bukan dokumen induk
 
 ---
+
+
+---
+
+# BAGIAN VI — PENGUATAN STANDAR TEKNIS DAN OPERASIONAL
+
+## 23. Threat modeling dan pengelolaan risiko keamanan
+
+Setiap modul baru dan perubahan material pada autentikasi, otorisasi, API, database, integrasi, atau aliran data wajib melalui threat modeling sebelum release.
+
+Threat model sekurang-kurangnya mencatat:
+1. Aset yang dilindungi: akun, sesi/token, laporan, data petugas, master data, audit log, konfigurasi, secret, dan layanan.
+2. Aktor dan tingkat kepercayaan: petugas, admin, Kepala IPSRS, engineer, service account, pihak eksternal, dan penyerang.
+3. Entry point dan attack surface: halaman, endpoint, upload, callback, job, integrasi, pipeline, dan akses database.
+4. Data flow dan trust boundary antar browser, frontend, API, database, dan platform.
+5. Ancaman seperti spoofing, tampering, repudiation, information disclosure, denial of service, dan privilege escalation.
+6. Mitigasi, kontrol yang diuji, residual risk, pemilik risiko, dan persetujuan penerimaan risiko.
+
+Threat model menggunakan metode yang konsisten (misalnya STRIDE) dan diperbarui jika arsitektur, aset, atau pola ancaman berubah. Temuan keamanan harus ditautkan ke issue, test, dan release yang memperbaikinya.
+
+## 24. Target layanan, SLI/SLO, dan kapasitas
+
+Sebelum menetapkan SLA eksternal, proyek harus menyusun Service Level Indicator (SLI) dan Service Level Objective (SLO) berdasarkan baseline pengukuran.
+
+SLI minimum yang dievaluasi:
+- availability frontend, API, dan database;
+- persentase request berhasil dan error rate;
+- latency API (p50, p95, p99) untuk operasi utama;
+- waktu pemuatan halaman kritis;
+- keberhasilan proses simpan laporan;
+- keterlambatan/ketepatan sinkronisasi data;
+- usia backup terakhir dan keberhasilan backup;
+- waktu deteksi dan pemulihan insiden.
+
+Setiap SLO wajib mencantumkan definisi, rumus, sumber metrik, periode pengukuran, target, pengecualian, owner, dan tindakan jika target gagal. Target angka tidak boleh ditetapkan tanpa baseline dan persetujuan pemilik layanan.
+
+Uji kapasitas mencakup load, stress, spike, soak, concurrency, dan batas resource yang relevan. Skenario harus mewakili jumlah petugas, pola input serentak, beban dashboard/rekap, ukuran data historis, serta jam sibuk. Pengujian beban produksi memerlukan izin, jadwal, batas beban, monitoring, dan stop condition.
+
+## 25. Incident management dan problem management
+
+Insiden operasional dan keamanan wajib memiliki prosedur yang dapat dijalankan.
+
+Setiap insiden dicatat dengan:
+- ID, waktu mulai/terdeteksi, pelapor, layanan/modul terdampak;
+- klasifikasi severity dan dampak pengguna/data;
+- incident commander/owner dan pihak yang dihubungi;
+- langkah containment, mitigasi, pemulihan, dan validasi;
+- komunikasi status dan estimasi pembaruan;
+- bukti log, timeline, keputusan, serta perubahan darurat;
+- root cause analysis dan tindakan pencegahan.
+
+Severity sekurang-kurangnya Critical, High, Medium, dan Low dengan definisi dampak dan jalur eskalasi yang disetujui. Insiden Critical/High memerlukan post-incident review tanpa menyalahkan individu, daftar corrective/preventive action, owner, target, dan verifikasi penutupan. Perubahan darurat tetap harus direkonsiliasi ke change control setelah layanan stabil.
+
+## 26. Disaster recovery, backup, dan business continuity
+
+Rencana pemulihan harus menetapkan:
+1. RPO dan RTO per layanan/data berdasarkan dampak bisnis dan persetujuan pemilik.
+2. Jadwal backup, metode, enkripsi, lokasi, retensi, dan akses backup.
+3. Pemisahan backup database dari repository source dan artefak deployment.
+4. Perlindungan terhadap penghapusan, korupsi, ransomware, dan kompromi kredensial.
+5. Urutan pemulihan frontend, backend, database, konfigurasi, dan secret.
+6. Prosedur failover/rollback dan komunikasi kepada pengguna.
+7. Restore drill berkala dengan hasil, durasi, data loss aktual, dan corrective action.
+
+Backup dianggap dapat diandalkan hanya jika integritasnya diperiksa dan restore berhasil dibuktikan. Checkpoint GitHub bukan backup database. Nilai RPO/RTO dan retensi belum berlaku sampai disahkan dalam dokumen operasi.
+
+## 27. API, database, dan tata kelola data
+
+### 27.1 API contract
+Inventaris API wajib memuat endpoint, method, versi, autentikasi, permission, schema request/response, error code, pagination/filter/sort, timeout, retry, idempotency, rate limit, dan konsumen. OpenAPI digunakan untuk kontrak HTTP yang sesuai. Perubahan breaking harus melalui versioning atau strategi kompatibilitas yang disetujui.
+
+### 27.2 Database contract
+Dokumentasi database wajib memuat ERD, data dictionary, nama tabel/kolom, tipe, primary/foreign key, constraint, index, trigger/function, RLS/policy, privilege, owner data, klasifikasi, retensi, dan relasi ke modul/API.
+
+### 27.3 Migration policy
+Setiap migration harus:
+- memiliki tujuan dan issue/change reference;
+- diuji terhadap schema/data representatif;
+- aman untuk data historis;
+- mempertimbangkan lock, durasi, dan backward compatibility;
+- memiliki backup/checkpoint yang sesuai;
+- memiliki strategi rollback atau forward-fix yang terdokumentasi;
+- diverifikasi setelah diterapkan.
+
+### 27.4 Data governance
+Setiap domain data memiliki data owner, definisi, sumber kebenaran, aturan validasi, kualitas, klasifikasi, retensi, dan hak akses. Data duplikat, tidak lengkap, atau tidak konsisten memiliki mekanisme deteksi dan koreksi yang dapat diaudit. Data pribadi dikelola sesuai peraturan yang berlaku dan prinsip minimisasi.
+
+## 28. Requirement traceability, QA, UAT, dan aksesibilitas
+
+Setiap requirement memiliki ID unik dan hubungan yang dapat ditelusuri:
+Requirement → acceptance criteria → design/ADR → module/API/schema → code change/commit → test case/result → release → production verification.
+
+Matriks traceability wajib menunjukkan requirement tanpa implementasi, implementasi tanpa requirement, test yang belum ada, test gagal, serta perubahan yang belum diverifikasi.
+
+Rencana QA wajib menentukan:
+- unit, integration, contract, end-to-end, regression, security, performance, compatibility, dan recovery test;
+- cakupan browser/perangkat yang didukung;
+- test data, environment, setup, teardown, dan data privacy;
+- kriteria lulus/gagal dan bukti hasil;
+- cakupan risiko dan test wajib sebelum release.
+
+UAT dilakukan oleh perwakilan pengguna/pemilik proses dengan skenario operasional, hasil, daftar masalah, persetujuan, dan batasan penerimaan. Training dan panduan pengguna disiapkan untuk perubahan alur yang berdampak.
+
+Antarmuka menargetkan WCAG 2.2 Level AA sejauh relevan untuk aplikasi web, dengan pengujian keyboard, fokus, label, kontras, error identification, zoom/responsiveness, dan screen reader untuk alur utama. Pengecualian harus dicatat.
+
+## 29. Secure SDLC, CI/CD, dan pengelolaan dependensi
+
+Pipeline wajib menerapkan least privilege dan pemisahan environment. Quality gate ditentukan berdasarkan risiko, mencakup:
+- format/lint/type/syntax dan unit/integration/E2E test;
+- SAST dan secret scanning;
+- SCA/dependency vulnerability serta license review;
+- pemeriksaan konfigurasi dan IaC bila digunakan;
+- artifact integrity dan provenance;
+- SBOM untuk release yang relevan;
+- branch protection, pull request review, dan approval;
+- deployment hanya dari commit yang lulus gate;
+- verifikasi hasil deployment dan rollback readiness.
+
+Dependency wajib memiliki owner, versi yang dikendalikan, pemantauan kerentanan, proses upgrade, dan penanganan komponen usang. Lisensi pihak ketiga diperiksa sebelum penggunaan. Secret tidak boleh ditanam pada source, artifact publik, frontend, atau log. Development, staging, dan production dipisahkan sesuai kemampuan platform dan risiko.
+
+## 30. Production Readiness Review dan operational acceptance
+
+Sebelum release besar atau peluncuran modul baru, lakukan Production Readiness Review (PRR) yang mencakup:
+- kebutuhan dan acceptance criteria disetujui;
+- arsitektur, threat model, dan data/API contract diperbarui;
+- test wajib lulus dan bukti tersedia;
+- tidak ada temuan keamanan Critical/High terbuka tanpa risk acceptance resmi;
+- monitoring, alert, dashboard, owner, dan runbook tersedia;
+- backup/restore dan rollback diuji sesuai risiko;
+- kapasitas dan SLO dievaluasi;
+- support, komunikasi, training, dan UAT siap;
+- dependency dan lisensi diperiksa;
+- release SHA, artifact, environment, serta verifikasi pasca-deployment tercatat.
+
+PRR menghasilkan keputusan GO, CONDITIONAL GO, atau NO-GO dengan alasan, persetujuan, risiko residual, owner, dan batas waktu. Deployment gate teknis tidak menggantikan persetujuan bisnis/operasional.
+
+## 31. Pengelolaan risiko, vendor, biaya, dan siklus akhir layanan
+
+### 31.1 Risk register
+Setiap risiko mencatat likelihood, impact, skor inherent, kontrol/mitigasi, residual risk, owner, due date, trigger, contingency, dan status. Risiko tinggi memerlukan persetujuan pemilik risiko.
+
+### 31.2 Vendor dan layanan eksternal
+Untuk layanan pihak ketiga, catat fungsi, data yang diproses, lokasi/ketentuan pemrosesan, SLA/status support, dependency, biaya, batas penggunaan, mekanisme ekspor data, backup/portability, notifikasi insiden, dan exit plan. Perubahan ketentuan vendor harus dievaluasi dampaknya.
+
+### 31.3 Biaya dan kapasitas
+Biaya hosting, database, bandwidth, observability, backup, domain, dan layanan eksternal dipantau. Buat proyeksi pertumbuhan berdasarkan jumlah pengguna, volume laporan, ukuran file/data, trafik, dan retensi. Optimasi tidak boleh mengorbankan keamanan, integritas, atau kemampuan pemulihan.
+
+### 31.4 Technical debt dan standar kode
+Technical debt dicatat dengan dampak, risiko, owner, prioritas, dan rencana penyelesaian. Standar kode, review minimal oleh pihak selain pembuat untuk perubahan berisiko, serta aturan penanganan linting/test exception ditetapkan. Pengecualian harus memiliki alasan dan masa berlaku.
+
+### 31.5 Feature flag dan deprecation
+Feature flag dapat digunakan untuk peluncuran bertahap, pemulihan cepat, dan pembatasan fitur; setiap flag harus memiliki owner, kondisi default yang aman, tanggal evaluasi, dan rencana penghapusan. Deprecation/retirement harus memiliki komunikasi, migrasi data, masa transisi, penghapusan akses/secret, dan bukti bahwa dependensi tidak lagi digunakan.
+
+### 31.6 Knowledge transfer dan akses
+Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Akun, token, key, akses vendor, dan service account yang tidak lagi diperlukan harus dicabut sesuai proses offboarding dan audit. Tidak boleh ada ketergantungan operasional pada satu individu tanpa dokumentasi pemulihan.
+
+---
+
 
 ## Riwayat revisi
 
