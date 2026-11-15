@@ -180,6 +180,30 @@ Tabel FR-01 sampai FR-14 adalah kapabilitas yang telah teridentifikasi pada snap
 - acceptance criteria, test suite, regression coverage, dan bukti release;
 - dokumentasi operasional, monitoring, serta prosedur pemulihan.
 
+### 6.1.1 Crosswalk kapabilitas Master Project dan requirement SRS
+
+Kode `FR-01` sampai `FR-14` pada tabel kapabilitas Master Project adalah pengelompokan kapabilitas tingkat proyek. Kode tersebut **bukan pengganti** ID requirement formal pada SRS. Untuk menghindari dua daftar kebutuhan yang berkembang sendiri-sendiri, gunakan crosswalk berikut:
+
+| Kapabilitas Master Project | Requirement SRS | Catatan cakupan |
+|---|---|---|
+| FR-01 Autentikasi | LHI-FR-001 | Identitas dan proses login |
+| FR-02 Otorisasi | LHI-FR-002 | Pemeriksaan permission server-side |
+| FR-03 Input LHI | LHI-FR-003 | Pembuatan laporan harian |
+| FR-04 Siklus laporan | LHI-FR-004, LHI-FR-005, LHI-FR-006 | Lihat, edit, dan soft-delete sesuai hak akses serta audit |
+| FR-05 Master data | LHI-FR-007 | Area, item, dan kategori |
+| FR-06 Validasi duplikasi | LHI-FR-008 | Deteksi item sama/sangat mirip |
+| FR-07 Klasifikasi pekerjaan/material | LHI-FR-009 | Spare Part, Material, dan Unit |
+| FR-08 Dashboard | LHI-FR-010 | Ringkasan operasional dan rekonsiliasi sumber |
+| FR-09 Rekap bulanan | LHI-FR-011 | Agregasi berdasarkan periode |
+| FR-10 Monitoring | LHI-FR-012 | Definisi status dan aktivitas petugas |
+| FR-11 Form Blok Aplikasi | LHI-FR-013 | Detail aturan merujuk README Form Blok; approval dan regression coverage masih terbuka |
+| FR-12 Audit trail | LHI-FR-014 | Aktor, waktu, objek, tindakan, dan hasil |
+| FR-13 Ekspor | LHI-FR-015 | Ekspor sesuai permission |
+| FR-14 PWA/cache | LHI-FR-016 | Konsistensi versi asset dan cache |
+| Kapabilitas lintas modul / maintainability | LHI-FR-017 | Penambahan modul melalui kontrak, katalog, test, dan change control; bukan satu halaman tunggal |
+
+**Aturan pemeliharaan:** SRS menjadi daftar ID requirement formal. Master Project menyajikan pengelompokan dan crosswalk tingkat proyek. Jika kebutuhan dipecah, digabung, atau dihapus, ID SRS, acceptance criteria, desain, katalog modul, dan test reference harus direkonsiliasi melalui change control; jangan mengubah ID secara diam-diam.
+
 ### 6.2 Siklus hidup modul
 
 Usulan modul → analisis kebutuhan dan dampak → persetujuan prioritas → spesifikasi dan desain → implementasi → pengujian → UAT → release approval → verifikasi operasional → pemeliharaan → deprecation/retirement bila diperlukan.
@@ -981,5 +1005,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 | 2026-11-15 | Penyempurnaan menjadi dokumen induk proyek yang mencakup mandat, visi, tujuan, ruang lingkup, kebutuhan, arsitektur, standar, tata kelola, delivery, risiko, kriteria penerimaan, dan peta dokumen |
 | 2026-11-15 | Audit tahap 1: menambahkan identitas snapshot branch/PR, matriks status teknis, dan aturan interpretasi status agar temuan dokumentasi tidak disalahartikan sebagai sertifikasi produksi |
 | 2026-11-15 | Audit tahap 3: menambahkan traceability LHI-FR-013 ke README Form Blok, mengidentifikasi gap regression coverage, dan mempertahankan lock CONTROL_BOOK tanpa mengubah register |
+| 2026-11-15 | Audit tahap 4: menambahkan crosswalk FR-01–FR-14 ke ID formal LHI-FR-001–017 agar Master Project dan SRS memiliki satu jalur traceability |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
