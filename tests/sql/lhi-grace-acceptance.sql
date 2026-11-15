@@ -232,5 +232,87 @@ BEGIN
   END IF;
 END $$;
 
-SELECT 'PASS: PostgreSQL LHI grace, reset, void/reopen, exclusion, idempotency, rate-limit and RLS regression' AS result;
+-- Threshold acceptance: 4/6/7-day warnings, individual block only after >7,
+-- day 9 remains a waiting stage, and KA IPSRS is included in the day-10 trigger.
+UPDATE public.access_settings SET value='NONAKTIF' WHERE key='LHI_GLOBAL_BLOCK';
+UPDATE public.lhi_discipline_incidents SET status='COMPLETED' WHERE incident_id=2;
+UPDATE public.staff
+SET created_at=now()-interval '1 day',
+    lhi_employment_activated_at=now()-interval '1 day',
+    lhi_discipline_reset_at=NULL
+WHERE staff_id='KA';
+
+INSERT INTO public.staff(staff_id,nama,jabatan,role,status,created_at)
+VALUES
+ ('E','Petugas E','Teknisi','PETUGAS','Aktif',now()-interval '5 days'),
+ ('F','Petugas F','Teknisi','PETUGAS','Aktif',now()-interval '7 days'),
+ ('G','Petugas G','Teknisi','PETUGAS','Aktif',now()-interval '8 days'),
+ ('H','Petugas H','Teknisi','PETUGAS','Aktif',now()-interval '9 days'),
+ ('I','Petugas I','Teknisi','PETUGAS','Aktif',now()-interval '10 days');
+UPDATE public.staff
+SET lhi_employment_activated_at=created_at
+WHERE staff_id IN ('E','F','G','H','I');
+
+SELECT public.run_lhi_discipline_scheduler();
+DO $
+BEGIN
+  IF (SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK') <> 'NONAKTIF' THEN
+    RAISE EXCEPTION 'FAIL: global block activated before any active member reached day 10';
+  END IF;
+  IF (SELECT lhi_access_blocked_at FROM public.staff WHERE staff_id='G') IS NOT NULL THEN
+    RAISE EXCEPTION 'FAIL: exactly 7 full days incorrectly triggered individual block';
+  END IF;
+  IF (SELECT lhi_access_blocked_at FROM public.staff WHERE staff_id='H') IS NULL
+     OR (SELECT lhi_access_blocked_at FROM public.staff WHERE staff_id='I') IS NULL THEN
+    RAISE EXCEPTION 'FAIL: day 8/day 9 individual access block was not applied';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.lhi_discipline_notifications WHERE event_key LIKE 'E:%:DAY_4') THEN
+    RAISE EXCEPTION 'FAIL: day-4 warning was not created';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.lhi_discipline_notifications WHERE event_key LIKE 'F:%:DAY_6') THEN
+    RAISE EXCEPTION 'FAIL: day-6 warning was not created';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.lhi_discipline_notifications WHERE event_key LIKE 'G:%:DAY_7') THEN
+    RAISE EXCEPTION 'FAIL: day-7 warning was not created';
+  END IF;
+END $;
+
+-- A petugas and KA IPSRS now reach day 10; one active member is enough to lock globally.
+UPDATE public.staff
+SET created_at=now()-interval '11 days',
+    lhi_employment_activated_at=now()-interval '11 days'
+WHERE staff_id='KA';
+INSERT INTO public.staff(staff_id,nama,jabatan,role,status,created_at,lhi_employment_activated_at)
+VALUES ('J','Petugas J','Teknisi','PETUGAS','Aktif',now()-interval '11 days',now()-interval '11 days');
+
+DO $
+DECLARE v_result jsonb;
+BEGIN
+  v_result := public.run_lhi_discipline_scheduler();
+  IF (v_result->>'day10_trigger_count')::int <> 2 THEN
+    RAISE EXCEPTION 'FAIL: day-10 trigger must include both KA IPSRS and Petugas J: %',v_result;
+  END IF;
+END $;
+DO $
+DECLARE v_incident bigint;
+BEGIN
+  IF (SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK') <> 'AKTIF' THEN
+    RAISE EXCEPTION 'FAIL: day-10 global block was not activated';
+  END IF;
+  IF (SELECT status FROM public.staff WHERE staff_id='KA') <> 'Aktif'
+     OR (SELECT lhi_access_blocked_at FROM public.staff WHERE staff_id='KA') IS NULL THEN
+    RAISE EXCEPTION 'FAIL: KA IPSRS was not included in active-staff day-10 discipline';
+  END IF;
+  SELECT max(incident_id) INTO v_incident FROM public.lhi_discipline_incidents WHERE status='LOCKED';
+  IF (SELECT count(DISTINCT staff_id) FROM public.lhi_discipline_obligations WHERE incident_id=v_incident) <> 2
+     OR NOT EXISTS (SELECT 1 FROM public.lhi_discipline_obligations WHERE incident_id=v_incident AND staff_id='KA')
+     OR NOT EXISTS (SELECT 1 FROM public.lhi_discipline_obligations WHERE incident_id=v_incident AND staff_id='J') THEN
+    RAISE EXCEPTION 'FAIL: day-10 snapshot must contain only the two triggering active staff';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.lhi_discipline_obligations WHERE incident_id=v_incident AND staff_id IN ('G','H','I')) THEN
+    RAISE EXCEPTION 'FAIL: day-8/day-9 members were incorrectly added to the day-10 snapshot';
+  END IF;
+END $;
+
+SELECT 'PASS: PostgreSQL LHI grace, reset, void/reopen, exclusion, idempotency, rate-limit, RLS and day-4/6/7/8/9/10 thresholds' AS result;
 -- This acceptance suite is executed only against the disposable PostgreSQL CI service.
