@@ -1,0 +1,107 @@
+# REQUIREMENTS SPECIFICATION — APLIKASI LHI
+
+## 1. Tujuan, status, dan kewenangan
+
+Dokumen ini menjadi baseline kebutuhan tingkat sistem yang harus dikonfirmasi Product Owner. Kebutuhan di bawah ini adalah katalog awal hasil dokumentasi proyek; bukan bukti bahwa seluruh fungsi telah diimplementasikan atau diuji. Rincian fitur wajib memiliki spesifikasi modul dan acceptance criteria yang disetujui.
+
+Project Control Book tetap mengatur perubahan, lock, baseline, regression, deployment, migrasi, dan rollback. Perubahan kebutuhan wajib melalui change control.
+
+## 2. Pemangku kepentingan dan aktor
+
+- Petugas IPSRS: membuat dan melihat laporan sesuai hak akses.
+- Admin aplikasi: mengelola akun/master data sesuai permission.
+- Kepala IPSRS/Product Owner: memantau, merekap, menetapkan kebutuhan, dan menerima hasil.
+- Engineer/operator teknis: mengelola source, platform, deployment, dan pemeliharaan sesuai akses.
+- Sistem eksternal/service account: integrasi yang disetujui dan dibatasi kontraknya.
+
+Daftar aktor dan role final harus direkonsiliasi dengan implementasi backend, database, dan kebijakan organisasi.
+
+## 3. Prinsip kebutuhan
+
+- Setiap requirement memiliki ID unik, rationale, priority, owner, acceptance criteria, dan test reference.
+- Kebutuhan baru dapat menambah modul kapan saja melalui persetujuan dan change control.
+- Katalog modul saat ini bukan daftar final.
+- Tidak semua modul harus dikembangkan sekaligus.
+- Kebutuhan tidak boleh bertentangan dengan perilaku LOCKED tanpa prosedur unlock resmi.
+- Requirement harus dibedakan dari solusi teknis agar alternatif desain dapat dievaluasi.
+
+## 4. Kebutuhan fungsional tingkat sistem
+
+| ID | Requirement | Prioritas awal | Acceptance criteria tingkat sistem |
+|---|---|---|---|
+| LHI-FR-001 | Sistem menyediakan autentikasi pengguna | Critical | Identitas valid dapat masuk; identitas tidak valid ditolak; event relevan tercatat |
+| LHI-FR-002 | Sistem menegakkan otorisasi pada server | Critical | Operasi tanpa permission ditolak walau UI dimanipulasi |
+| LHI-FR-003 | Petugas dapat membuat laporan harian | Critical | Data valid tersimpan sekali dan dapat dibaca kembali oleh pihak berwenang |
+| LHI-FR-004 | Pengguna dapat melihat laporan sesuai scope akses | Critical | Filter, owner, dan role tidak membuka data yang tidak berhak |
+| LHI-FR-005 | Edit laporan mengikuti aturan bisnis dan permission | High | Perubahan ditolak bila tidak berwenang dan histori tetap konsisten |
+| LHI-FR-006 | Penghapusan mengikuti kebijakan soft-delete/audit | High | Penghapusan tidak menghilangkan jejak audit dan tidak melanggar retensi |
+| LHI-FR-007 | Master area/item/kategori dapat dikelola | High | Perubahan konsisten antara UI, API, dan database |
+| LHI-FR-008 | Sistem mendeteksi item duplikat atau sangat mirip | High | Aturan pencocokan terdokumentasi; pengguna mendapat informasi sebelum membuat duplikasi |
+| LHI-FR-009 | Klasifikasi spare part/material/unit divalidasi | High | Kategori dan field wajib mengikuti aturan yang disetujui |
+| LHI-FR-010 | Dashboard menyajikan ringkasan operasional | High | Angka dapat direkonsiliasi dengan data sumber dan role |
+| LHI-FR-011 | Rekap tersedia berdasarkan periode | High | Batas periode dan hasil agregasi benar serta konsisten |
+| LHI-FR-012 | Monitoring menyajikan status sesuai definisi resmi | High | Status, waktu, dan pengecualian dihitung sesuai spesifikasi |
+| LHI-FR-013 | Form Blok Aplikasi menegakkan aturan peringatan/blokir/pemulihan | Critical | Transisi status, batas hari, pengecualian, dan recovery sesuai spesifikasi resmi |
+| LHI-FR-014 | Aktivitas penting memiliki audit trail | High | Aktor, waktu, objek, tindakan, dan hasil tercatat tanpa secret |
+| LHI-FR-015 | Pengguna dapat mengekspor laporan sesuai izin | Medium | File hanya memuat data yang boleh diakses dan formatnya tervalidasi |
+| LHI-FR-016 | PWA/cache menyajikan asset versi yang benar | High | Pembaruan versi tidak meninggalkan asset lama yang merusak fungsi |
+| LHI-FR-017 | Sistem mendukung penambahan modul baru | High | Modul dapat ditambahkan melalui kontrak, katalog, test, dan change control tanpa redesign total yang tidak perlu |
+
+Prioritas di atas merupakan usulan awal untuk disahkan Product Owner; bukan prioritas final yang mengizinkan perubahan produksi.
+
+## 5. Kebutuhan nonfungsional
+
+| ID | Area | Requirement | Cara verifikasi |
+|---|---|---|---|
+| LHI-NFR-001 | Security | AuthN/AuthZ server-side dan least privilege | Security negative test, RLS/API review |
+| LHI-NFR-002 | Data integrity | Constraint, validasi, transaksi, dan migrasi aman | DB test dan migration review |
+| LHI-NFR-003 | Privacy | Minimisasi data dan perlindungan data pribadi | Data flow/privacy review |
+| LHI-NFR-004 | Availability | SLO ditetapkan dari baseline terukur | Monitoring dan SLO report |
+| LHI-NFR-005 | Performance | Latency dan kapasitas diukur untuk alur kritis | Load/stress/soak test |
+| LHI-NFR-006 | Reliability | Error dan partial failure ditangani aman | Failure-path/integration test |
+| LHI-NFR-007 | Maintainability | Modul dan kontrak memiliki batas yang jelas | Architecture/code review |
+| LHI-NFR-008 | Compatibility | Browser/perangkat didukung dinyatakan | Compatibility matrix |
+| LHI-NFR-009 | Accessibility | Alur utama menargetkan WCAG 2.2 AA | Manual/automated accessibility review |
+| LHI-NFR-010 | Observability | Log, metric, alert, dan owner tersedia | Monitoring/alert drill |
+| LHI-NFR-011 | Recoverability | RPO/RTO dan restore diuji | Restore drill |
+| LHI-NFR-012 | Auditability | Requirement, commit, test, release, dan aktor terlacak | Traceability audit |
+| LHI-NFR-013 | Scalability | Kapasitas diuji pada pola penggunaan representatif | Capacity test |
+| LHI-NFR-014 | Portability | Data dan konfigurasi dapat diekspor sesuai rencana exit | Export/restore test |
+
+Target angka NFR belum dianggap disahkan sampai baseline, rumus, periode, owner, dan approval tersedia.
+
+## 6. Business rules dan spesifikasi modul
+
+Aturan rinci berikut tidak boleh didefinisikan ulang secara informal di dokumen ini:
+- aturan Form Blok Aplikasi LHI;
+- aturan hari kalender, grace period, pengecualian, dan recovery;
+- role/permission dan edit/delete;
+- definisi status laporan dan monitoring;
+- duplicate detection item;
+- klasifikasi spare part/material/unit;
+- periode dan formula rekap.
+
+Masing-masing harus mengacu pada spesifikasi resmi modul dan diuji dengan positive serta negative test. Bila ada konflik antar dokumen, hentikan perubahan terkait dan selesaikan melalui change control.
+
+## 7. Requirement traceability
+
+Setiap requirement wajib ditautkan pada:
+- stakeholder dan kebutuhan bisnis;
+- use case/acceptance criteria;
+- desain, API, data model, dan ADR;
+- modul dan source path;
+- test case dan hasil;
+- issue/PR, commit SHA, workflow run;
+- release dan production verification.
+
+Requirement tanpa owner/acceptance criteria tidak siap untuk implementasi. Kode tanpa requirement atau alasan teknis harus ditinjau sebagai potensi scope creep/technical debt.
+
+## 8. Prioritas dan perubahan
+
+Gunakan Critical/High/Medium/Low dengan dampak operasional dan keamanan. Prioritas ditetapkan Product Owner setelah analisis effort, dependency, risiko, dan kapasitas. Penambahan requirement/modul tidak harus menunggu seluruh backlog selesai, tetapi harus melewati change control.
+
+## 9. Riwayat
+
+| Tanggal | Perubahan |
+|---|---|
+| 15 November 2026 | Baseline awal kebutuhan sistem LHI |
