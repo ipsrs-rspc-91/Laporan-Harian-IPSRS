@@ -207,13 +207,13 @@ UPDATE public.staff SET lhi_access_blocked_at=NULL WHERE staff_id='A';
 BEGIN;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
 SET LOCAL ROLE authenticated;
-DO $
+DO $$
 DECLARE v_count integer;
 BEGIN
   SELECT count(*) INTO v_count FROM public.reports;
   IF v_count < 1 THEN RAISE EXCEPTION 'FAIL: normal user could not read reports after both locks were cleared'; END IF;
   INSERT INTO public.reports(report_id,staff_id,created_at) VALUES ('RLS-NORMAL','A',now());
-END $;
+END $$;
 RESET ROLE;
 COMMIT;
 
@@ -225,7 +225,7 @@ SET LOCAL ROLE authenticated;
 UPDATE public.access_settings SET value='NONAKTIF' WHERE key='LHI_GLOBAL_BLOCK';
 RESET ROLE;
 COMMIT;
-DO $
+DO $$
 BEGIN
   IF (SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK') <> 'AKTIF' THEN
     RAISE EXCEPTION 'FAIL: authenticated KA changed the server-owned global lock';
