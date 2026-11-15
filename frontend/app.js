@@ -913,7 +913,7 @@
             : '');
         const initials=String(x.nama||x.staff_id||'?').trim().split(/\\s+/).slice(0,2).map(part=>part.charAt(0)).join('').toUpperCase();
         const todayCount=Number(l.laporan_hari_ini||0),todayStatus=l.status_hari_ini==='SUDAH_ISI'?'<span class="lhi-done">SUDAH ISI (Total '+todayCount+' LHI)</span>':(l.status_hari_ini==='BELUM_TERJADI'?'BELUM TERJADI':'<span class="lhi-missing">BELUM ISI (Total 0 LHI)</span>');
-        const streak=Number(l.hari_tidak_isi_berturut_turut||0);
+        const streak=Number(l.hari_ke_tanpa_lhi??l.hari_tidak_isi_berturut_turut??0);
         // Angka streak berasal dari server (created_at WIB); frontend tidak menambah hari berjalan.
         const effectiveStreak=streak;
         const blocked=accessBlocked;
