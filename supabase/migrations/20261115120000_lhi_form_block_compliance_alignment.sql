@@ -144,7 +144,7 @@ SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
 AS $function$
   WITH clock AS (
-    SELECT (clock_timestamp() AT TIME ZONE 'Asia/Jakarta')::date AS today_wib
+    SELECT (now() AT TIME ZONE 'Asia/Jakarta')::date AS today_wib
   ),
   staff_base AS (
     SELECT
