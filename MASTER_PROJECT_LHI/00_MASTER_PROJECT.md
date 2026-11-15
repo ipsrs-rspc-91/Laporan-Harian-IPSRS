@@ -58,7 +58,7 @@ Mewujudkan sistem pelaporan dan monitoring IPSRS yang terintegrasi, mudah diguna
 ## 3. Tujuan dan hasil yang diharapkan
 
 | ID | Tujuan | Hasil yang diharapkan | Indikator penerimaan |
-|---|---|---|---|
+|---|---|---|---|---|
 | OBJ-01 | Tertib pelaporan harian | Petugas dapat membuat dan melihat laporan sesuai hak akses | Skenario input, validasi, simpan, dan baca lulus |
 | OBJ-02 | Monitoring pelaksanaan | Pimpinan dapat memantau status pengisian dan aktivitas | Angka dan status cocok dengan data sumber |
 | OBJ-03 | Rekapitulasi | Laporan dapat direkap berdasarkan periode dan filter yang ditetapkan | Hasil rekap konsisten dengan data transaksi |
@@ -184,23 +184,23 @@ Tabel FR-01 sampai FR-14 adalah kapabilitas yang telah teridentifikasi pada snap
 
 Kode `FR-01` sampai `FR-14` pada tabel kapabilitas Master Project adalah pengelompokan kapabilitas tingkat proyek. Kode tersebut **bukan pengganti** ID requirement formal pada SRS. Untuk menghindari dua daftar kebutuhan yang berkembang sendiri-sendiri, gunakan crosswalk berikut:
 
-| Kapabilitas Master Project | Requirement SRS | Catatan cakupan |
+| Kapabilitas Master Project | Requirement SRS | Modul/domain pada katalog | Catatan cakupan |
 |---|---|---|
-| FR-01 Autentikasi | LHI-FR-001 | Identitas dan proses login |
-| FR-02 Otorisasi | LHI-FR-002 | Pemeriksaan permission server-side |
-| FR-03 Input LHI | LHI-FR-003 | Pembuatan laporan harian |
-| FR-04 Siklus laporan | LHI-FR-004, LHI-FR-005, LHI-FR-006 | Lihat, edit, dan soft-delete sesuai hak akses serta audit |
-| FR-05 Master data | LHI-FR-007 | Area, item, dan kategori |
-| FR-06 Validasi duplikasi | LHI-FR-008 | Deteksi item sama/sangat mirip |
-| FR-07 Klasifikasi pekerjaan/material | LHI-FR-009 | Spare Part, Material, dan Unit |
-| FR-08 Dashboard | LHI-FR-010 | Ringkasan operasional dan rekonsiliasi sumber |
-| FR-09 Rekap bulanan | LHI-FR-011 | Agregasi berdasarkan periode |
-| FR-10 Monitoring | LHI-FR-012 | Definisi status dan aktivitas petugas |
-| FR-11 Form Blok Aplikasi | LHI-FR-013 | Detail aturan merujuk README Form Blok; approval dan regression coverage masih terbuka |
-| FR-12 Audit trail | LHI-FR-014 | Aktor, waktu, objek, tindakan, dan hasil |
-| FR-13 Ekspor | LHI-FR-015 | Ekspor sesuai permission |
-| FR-14 PWA/cache | LHI-FR-016 | Konsistensi versi asset dan cache |
-| Kapabilitas lintas modul / maintainability | LHI-FR-017 | Penambahan modul melalui kontrak, katalog, test, dan change control; bukan satu halaman tunggal |
+| FR-01 Autentikasi | LHI-FR-001 | AUTH | Identitas dan proses login |
+| FR-02 Otorisasi | LHI-FR-002 | AUTH, SECURITY | Pemeriksaan permission server-side |
+| FR-03 Input LHI | LHI-FR-003 | REPORT | Pembuatan laporan harian |
+| FR-04 Siklus laporan | LHI-FR-004, LHI-FR-005, LHI-FR-006 | REPORT, AUDIT_LOG | Lihat, edit, dan soft-delete sesuai hak akses serta audit |
+| FR-05 Master data | LHI-FR-007 | MASTER, KAT | Area, item, dan kategori |
+| FR-06 Validasi duplikasi | LHI-FR-008 | MASTER | Deteksi item sama/sangat mirip |
+| FR-07 Klasifikasi pekerjaan/material | LHI-FR-009 | SPARE_MATERIAL_UNIT | Spare Part, Material, dan Unit |
+| FR-08 Dashboard | LHI-FR-010 | DASH | Ringkasan operasional dan rekonsiliasi sumber |
+| FR-09 Rekap bulanan | LHI-FR-011 | REKAP | Agregasi berdasarkan periode |
+| FR-10 Monitoring | LHI-FR-012 | MONITORING | Definisi status dan aktivitas petugas |
+| FR-11 Form Blok Aplikasi | LHI-FR-013 | LHI_DISCIPLINE_RECOVERY, AUTH, MONITORING | Detail aturan merujuk README Form Blok; approval dan regression coverage masih terbuka |
+| FR-12 Audit trail | LHI-FR-014 | AUDIT_LOG | Aktor, waktu, objek, tindakan, dan hasil |
+| FR-13 Ekspor | LHI-FR-015 | REPORT | Ekspor sesuai permission |
+| FR-14 PWA/cache | LHI-FR-016 | PWA | Konsistensi versi asset dan cache |
+| Kapabilitas lintas modul / maintainability | LHI-FR-017 | CROSS-CUTTING | Penambahan modul melalui kontrak, katalog, test, dan change control; bukan satu halaman tunggal |
 
 **Aturan pemeliharaan:** SRS menjadi daftar ID requirement formal. Master Project menyajikan pengelompokan dan crosswalk tingkat proyek. Jika kebutuhan dipecah, digabung, atau dihapus, ID SRS, acceptance criteria, desain, katalog modul, dan test reference harus direkonsiliasi melalui change control; jangan mengubah ID secara diam-diam.
 
@@ -1006,5 +1006,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 | 2026-11-15 | Audit tahap 1: menambahkan identitas snapshot branch/PR, matriks status teknis, dan aturan interpretasi status agar temuan dokumentasi tidak disalahartikan sebagai sertifikasi produksi |
 | 2026-11-15 | Audit tahap 3: menambahkan traceability LHI-FR-013 ke README Form Blok, mengidentifikasi gap regression coverage, dan mempertahankan lock CONTROL_BOOK tanpa mengubah register |
 | 2026-11-15 | Audit tahap 4: menambahkan crosswalk FR-01–FR-14 ke ID formal LHI-FR-001–017 agar Master Project dan SRS memiliki satu jalur traceability |
+| 2026-11-15 | Audit tahap 5: menautkan setiap requirement formal ke ID modul/domain pada Katalog Modul untuk memperjelas ownership dan cakupan lintas modul |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
