@@ -617,13 +617,13 @@ Struktur dokumentasi yang dituju:
   AI_AUDIT_PROTOCOL.md
   MASTER_PROJECT_LHI/
     00_MASTER_PROJECT.md
-    01_PROJECT_CHARTER.md                 (belum dibuat)
+    01_PROJECT_CHARTER.md
     02_REQUIREMENTS_SPECIFICATION.md
     03_SOFTWARE_ARCHITECTURE.md
-    04_SOFTWARE_DESIGN_SPECIFICATION.md  (belum dibuat)
+    04_SOFTWARE_DESIGN_SPECIFICATION.md
     05_QUALITY_ASSURANCE_PLAN.md
-    06_DEVELOPMENT_ROADMAP.md            (roadmap pendukung tersedia terpisah)
-    07_AS_BUILT_AND_OPERATIONS.md        (belum dibuat)
+    06_DEVELOPMENT_ROADMAP.md            (lihat PROFESSIONALIZATION_ROADMAP.md)
+    07_AS_BUILT_AND_OPERATIONS.md
     08_MODULE_CATALOG.md
     09_SECURITY_ASSURANCE_PLAN.md
 ```
@@ -711,6 +711,9 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 - [Software Architecture](03_SOFTWARE_ARCHITECTURE.md) — arsitektur existing/target, trust boundary, data flow, dan ADR.
 - [Quality Assurance Plan](05_QUALITY_ASSURANCE_PLAN.md) — strategi test, UAT, regression, performance, dan release gate.
 - [Security Assurance Plan](09_SECURITY_ASSURANCE_PLAN.md) — threat model, security test, findings, dan security release gate.
+- [Project Charter](01_PROJECT_CHARTER.md) — mandat, peran, ruang lingkup, dan persetujuan proyek.
+- [Software Design Specification](04_SOFTWARE_DESIGN_SPECIFICATION.md) — template desain rinci per modul.
+- [As-Built and Operations](07_AS_BUILT_AND_OPERATIONS.md) — inventaris existing, health check, backup, incident, dan runbook.
 - [Professionalization Roadmap](PROFESSIONALIZATION_ROADMAP.md) — rencana tahapan, bukan dokumen induk
 
 ---
