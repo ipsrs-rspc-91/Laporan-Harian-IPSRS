@@ -395,7 +395,7 @@ Setiap temuan wajib memiliki ID, aset/endpoint terdampak, bukti reproduksi yang 
 - Hasil pengujian harus memuat cakupan, tanggal, metode, keterbatasan, temuan, bukti, retest, dan kesimpulan risiko residual.
 - Tidak boleh menyatakan aplikasi aman atau bebas peretasan. Pernyataan yang diperbolehkan adalah ruang lingkup tertentu telah diuji pada tanggal tertentu dan temuan yang diketahui telah ditangani sesuai kriteria penerimaan.
 
-### 9.8 Pemetaan regulasi, privasi, dan lokasi pemrosesan data
+### 9.7 Pemetaan regulasi, privasi, dan lokasi pemrosesan data
 
 Aplikasi LHI wajib memiliki legal/privacy assessment yang disetujui pihak rumah sakit yang berwenang. Pemetaan awal sekurang-kurangnya mencakup:
 
@@ -420,7 +420,7 @@ Rujukan awal:
 - Permenkes 24/2022: https://jdih.kemkes.go.id/documents/peraturan-menteri-kesehatan-nomor-24-tahun-2022
 - PP 33/2026: https://pemerintahdigital.id/assets/resources/PP33_2026-PeraturanPelaksanaanUU27_2022_PerlindunganDataPribadi.pdf
 
-### 9.7 Aturan keselamatan pengujian
+### 9.8 Aturan keselamatan pengujian
 
 Pengujian aktif hanya dilakukan pada sistem dan akun yang secara tertulis diotorisasi. Utamakan staging atau lingkungan uji yang representatif. Dilarang melakukan brute force, denial-of-service, eksploitasi destruktif, pengambilan data pengguna, atau pengujian yang berpotensi mengganggu layanan produksi tanpa persetujuan eksplisit, rencana mitigasi, jendela pengujian, pemantauan, dan prosedur penghentian. Data produksi tidak boleh disalin ke lingkungan uji tanpa kontrol perlindungan data yang sesuai.
 
@@ -632,7 +632,7 @@ Temuan tersebut adalah daftar kerja dan batas klaim, bukan hasil audit total ter
 
 ## 20. Struktur dokumen proyek
 
-Struktur dokumentasi yang dituju:
+Struktur dokumentasi yang dituju (nama/path berikut harus sesuai dengan file repository; roadmap disimpan dengan nama `PROFESSIONALIZATION_ROADMAP.md`, bukan file duplikat bernomor 06):
 
 ```text
 /
@@ -650,7 +650,7 @@ Struktur dokumentasi yang dituju:
     03_SOFTWARE_ARCHITECTURE.md
     04_SOFTWARE_DESIGN_SPECIFICATION.md
     05_QUALITY_ASSURANCE_PLAN.md
-    06_DEVELOPMENT_ROADMAP.md            (lihat PROFESSIONALIZATION_ROADMAP.md)
+    PROFESSIONALIZATION_ROADMAP.md      (roadmap pengembangan; bukan status implementasi)
     07_AS_BUILT_AND_OPERATIONS.md
     08_MODULE_CATALOG.md
     09_SECURITY_ASSURANCE_PLAN.md
