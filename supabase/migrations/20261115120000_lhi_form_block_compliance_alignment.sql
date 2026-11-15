@@ -1129,12 +1129,33 @@ AS $function$
       max(o.snapshot_employment_status) AS employment_status_at_snapshot,
       max(o.snapshot_last_lhi_created_at) AS last_lhi_created_at_at_snapshot,
       max(o.snapshot_missed_days) AS missed_days_at_snapshot,
-      max(o.completed_at) FILTER (WHERE o.completed_at IS NOT NULL) AS completed_at,
+      CASE
+        WHEN bool_or(
+          o.excluded_at IS NULL
+          AND s.status = 'Aktif'
+          AND EXISTS (
+            SELECT 1
+            FROM public.reports r
+            WHERE r.staff_id = o.staff_id
+              AND r.deleted_at IS NULL
+              AND r.created_at >= i.started_at
+              AND r.created_at < i.deadline_at
+          )
+        ) THEN max(o.completed_at)
+        ELSE NULL
+      END AS completed_at,
       bool_or(
-        o.completed_at IS NULL
-        AND o.excluded_at IS NULL
+        o.excluded_at IS NULL
         AND s.status = 'Aktif'
-      ) AS has_pending,
+        AND EXISTS (
+          SELECT 1
+          FROM public.reports r
+          WHERE r.staff_id = o.staff_id
+            AND r.deleted_at IS NULL
+            AND r.created_at >= i.started_at
+            AND r.created_at < i.deadline_at
+        )
+      ) AS has_valid_grace_report,
       bool_and(
         o.excluded_at IS NOT NULL
         OR s.status IS DISTINCT FROM 'Aktif'
@@ -1148,8 +1169,8 @@ AS $function$
     SELECT *,
       CASE
         WHEN COALESCE(all_excluded, false) THEN 'EXCLUDED_INACTIVE'
-        WHEN COALESCE(has_pending, false) THEN 'PENDING'
-        ELSE 'COMPLETED'
+        WHEN COALESCE(has_valid_grace_report, false) THEN 'COMPLETED'
+        ELSE 'PENDING'
       END AS obligation_status
     FROM members
   )
@@ -1288,16 +1309,38 @@ BEGIN
     'NONAKTIF / individual unblocked / GRACE'
   );
 
+  -- Start each non-excluded snapshot obligation as PENDING for this new
+  -- 120-hour window. Old completed_at values belong to the previous locked
+  -- period and must never make a member look compliant before a new LHI exists.
+  WITH prior AS MATERIALIZED (
+    SELECT o.obligation_id, o.incident_id, o.staff_id, o.excluded_at, o.completed_at,
+      CASE
+        WHEN o.excluded_at IS NOT NULL THEN 'EXCLUDED_INACTIVE'
+        WHEN o.completed_at IS NOT NULL THEN 'COMPLETED'
+        ELSE 'PENDING'
+      END AS previous_status
+    FROM public.lhi_discipline_obligations o
+    WHERE o.incident_id = v_incident.incident_id
+  ),
+  reset AS (
+    UPDATE public.lhi_discipline_obligations o
+    SET completed_at = NULL
+    FROM prior p
+    WHERE o.obligation_id = p.obligation_id
+      AND p.excluded_at IS NULL
+    RETURNING o.obligation_id
+  )
   INSERT INTO public.lhi_discipline_obligation_events(
     incident_id, obligation_id, staff_id, event_type,
     previous_status, new_status, event_at, actor_staff_id, actor_name, reason
   )
-  SELECT o.incident_id, o.obligation_id, o.staff_id,
-         'RECOVERY_STARTED', 'LOCKED', 'GRACE',
+  SELECT p.incident_id, p.obligation_id, p.staff_id,
+         'RECOVERY_STARTED', p.previous_status,
+         CASE WHEN p.excluded_at IS NOT NULL THEN 'EXCLUDED_INACTIVE' ELSE 'PENDING' END,
          v_now, v_session.staff_id, v_session.staff_name,
-         'KA IPSRS memulai masa kelonggaran 120 jam melalui sesi pemulihan terbatas.'
-  FROM public.lhi_discipline_obligations o
-  WHERE o.incident_id = v_incident.incident_id;
+         'KA IPSRS memulai masa kelonggaran 120 jam. Status TERPENUHI periode sebelumnya direset; kewajiban hanya terpenuhi oleh LHI sah yang dibuat pada periode kelonggaran baru.'
+  FROM prior p
+  LEFT JOIN reset r ON r.obligation_id = p.obligation_id;
 
   RETURN jsonb_build_object(
     'ok', true, 'already_open', false,
