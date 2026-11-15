@@ -1,3 +1,36 @@
+-- Recovery storage must exist before the SECURITY DEFINER RPCs below are compiled.
+CREATE TABLE IF NOT EXISTS public.lhi_recovery_challenges (
+  nonce_hash text PRIMARY KEY CHECK (nonce_hash ~ '^[0-9a-f]{64}$'),
+  ip_hash text NOT NULL CHECK (ip_hash ~ '^[0-9a-f]{64}$'),
+  incident_id bigint NOT NULL REFERENCES public.lhi_discipline_incidents(incident_id),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  expires_at timestamptz NOT NULL,
+  consumed_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_lhi_recovery_challenges_expiry
+  ON public.lhi_recovery_challenges(expires_at);
+
+CREATE TABLE IF NOT EXISTS public.lhi_recovery_sessions (
+  session_token_hash text PRIMARY KEY CHECK (session_token_hash ~ '^[0-9a-f]{64}$'),
+  auth_user_id uuid NOT NULL,
+  staff_id text NOT NULL REFERENCES public.staff(staff_id),
+  staff_name text NOT NULL,
+  role text NOT NULL CHECK (role = 'KA_IPSRS'),
+  incident_id bigint NOT NULL REFERENCES public.lhi_discipline_incidents(incident_id),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  expires_at timestamptz NOT NULL,
+  revoked_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_lhi_recovery_sessions_expiry
+  ON public.lhi_recovery_sessions(expires_at);
+
+ALTER TABLE public.lhi_recovery_challenges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lhi_recovery_sessions ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.lhi_recovery_challenges, public.lhi_recovery_sessions
+  FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.lhi_recovery_challenges TO service_role;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.lhi_recovery_sessions TO service_role;
+
 -- Perbaikan jalur Reset LHI untuk insiden yang sudah EXPIRED.
 -- Hanya mengizinkan recovery challenge dan pembukaan oleh role KA IPSRS
 -- setelah kode Reset diverifikasi dan login KA IPSRS berhasil.
