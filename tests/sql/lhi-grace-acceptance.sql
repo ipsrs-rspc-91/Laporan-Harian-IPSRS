@@ -233,3 +233,4 @@ BEGIN
 END $$;
 
 SELECT 'PASS: PostgreSQL LHI grace, reset, void/reopen, exclusion, idempotency, rate-limit and RLS regression' AS result;
+-- This acceptance suite is executed only against the disposable PostgreSQL CI service.
