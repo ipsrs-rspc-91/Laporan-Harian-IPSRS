@@ -167,3 +167,24 @@ Fungsi `open_lhi_global_grace_v2` yang saat ini ada di database masih mengembali
 | Tanggal | Perubahan |
 |---|---|
 | 15 November 2026 | Snapshot read-only 75 remote migrations vs 35 local migration files; klasifikasi hanya berdasarkan version/timestamp, belum content equivalence. |
+
+
+## 9. Pemeriksaan tambahan terhadap branch dan riwayat GitHub (15 November 2026)
+
+Pemeriksaan direktori `supabase/migrations` pada beberapa ref yang tersedia memberikan hasil:
+- `docs/lhi-professionalization-roadmap`: 35 file SQL.
+- `checkpoint/2026-11-06-pre-modularization`: 35 file SQL.
+- `backup/rollback-2026-11-15`: 35 file SQL.
+- `checkpoint/production-main-2026-11-15`: 35 file SQL.
+- `checkpoint-2026-10-13-0605`: 21 file SQL.
+- `checkpoint-2026-10-12-1627`: 21 file SQL.
+- `fix/lhi-form-block-compliance-2026-11-15`: 36 file SQL, termasuk migration compliance PR #76 yang belum diterapkan.
+
+Pemeriksaan GitHub commit-path untuk tiga contoh migration remote-only (`20261031194743_lhi_form_block_tables_20261101.sql`, `20260922190106_create_master_data.sql`, dan `20261013015853_allow_subarea_master_data.sql`) mengembalikan daftar kosong. Ini menunjukkan tidak ditemukan riwayat file dengan path tersebut pada endpoint yang diperiksa; ini **tidak** membuktikan SQL-nya tidak pernah dibuat atau dijalankan di luar repository.
+
+### Kesimpulan sementara
+
+- Tidak ditemukan bukti bahwa 60 remote-only migration dapat dipulihkan sebagai file dengan nama/path yang sama dari ref GitHub yang diperiksa.
+- Tidak ditemukan file source SQL untuk sebagian migration awal/core dan batch Form Blok pada snapshot repository yang diperiksa.
+- Migration history Supabase hanya memberikan version dan name; tool audit read-only yang tersedia tidak mengembalikan body SQL historis. Karena itu, content-level equivalence dan checksum tidak dapat dibuktikan dari metadata tersebut.
+- Rekonsiliasi tetap **BLOCKED / NOT RECONCILED**. Langkah aman selanjutnya adalah memperoleh arsip SQL historis dari backup resmi/riwayat deployment atau export schema yang disetujui, lalu melakukan semantic diff pada database staging/isolated. Jangan merekonstruksi migration lama dari tebakan nama atau schema saat ini, dan jangan menjalankan `migration repair`.
