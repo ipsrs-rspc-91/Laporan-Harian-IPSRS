@@ -178,7 +178,7 @@ Rujukan resmi awal:
 
 ## 12. Status runtime Form Blok dan recovery LHI
 
-**Recheck schema read-only 15 November 2026 sekitar 13:34 UTC:** inventory terbaru menunjukkan 24 tabel pada schema public. Tabel `public.lhi_reset_attempts` sudah tersedia (5 rows; kolom `ip_hash`, `window_started_at`, `attempt_count`, `updated_at`). Dengan demikian, catatan snapshot awal yang menyebut tabel tersebut belum ada telah dikoreksi pada Migration Reconciliation Manifest. Recheck masih menemukan gap: tabel `lhi_discipline_obligation_events), kolom `staff.lhi_access_blocked_at`, `staff.lhi_employment_activated_at`, `lhi_discipline_obligations.snapshot_last_lhi_created_at`, dan `snapshot_missed_days` belum tersedia. Keberadaan `lhi_reset_attempts` saja tidak membuktikan recovery flow lengkap atau lulus.
+**Recheck schema read-only 15 November 2026 sekitar 13:34 UTC:** inventory terbaru menunjukkan 24 tabel pada schema public. Tabel `public.lhi_reset_attempts` sudah tersedia (5 rows; kolom `ip_hash`, `window_started_at`, `attempt_count`, `updated_at`). Dengan demikian, catatan snapshot awal yang menyebut tabel tersebut belum ada telah dikoreksi pada Migration Reconciliation Manifest. Recheck masih menemukan gap: tabel `lhi_discipline_obligation_events`, kolom `staff.lhi_access_blocked_at`, `staff.lhi_employment_activated_at`, `lhi_discipline_obligations.snapshot_last_lhi_created_at`, dan `snapshot_missed_days` belum tersedia. Keberadaan `lhi_reset_attempts` saja tidak membuktikan recovery flow lengkap atau lulus.
 
 Pemeriksaan read-only pada snapshot database menunjukkan:
 - `LHI_GLOBAL_BLOCK = NONAKTIF`;
@@ -211,3 +211,4 @@ Implikasi:
 | Tanggal | Perubahan |
 |---|---|
 | 15 November 2026 | Audit read-only database, RLS, grants, functions, advisors, dan migration parity |
+| 15 November 2026 | Koreksi typo nama tabel obligation events; tidak mengubah temuan atau status runtime |
