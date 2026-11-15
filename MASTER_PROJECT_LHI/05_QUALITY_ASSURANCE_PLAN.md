@@ -4,7 +4,7 @@
 
 Dokumen ini menetapkan cara merencanakan, menjalankan, mencatat, dan menerima pengujian Aplikasi LHI. Dokumen ini adalah rencana dan standar QA; keberadaan dokumen atau test script tidak membuktikan bahwa aplikasi telah lulus. Hasil hanya boleh dinyatakan PASS jika ada bukti eksekusi pada commit dan environment yang dapat diidentifikasi.
 
-Status dokumen: baseline QA awal untuk review Product Owner dan QA owner. Lingkup ini tidak mengubah kode, database, konfigurasi, atau produksi.
+Status dokumen: baseline QA awal untuk review Product Owner dan QA owner. Lingkup ini tidak mengubah kode, database, konfigurasi, atau produksi. Cakupan Form Blok/Recovery ditambahkan sebagai kebutuhan pengujian yang belum tersertifikasi.
 
 ## 2. Prinsip QA
 
@@ -67,6 +67,9 @@ Regression matrix repository tetap menjadi register status test. Prioritas cakup
 9. PWA: asset version, service worker update, cache invalidation.
 10. SECURITY: API authorization, RLS, audit safety, deletion safety.
 11. GLOBAL: production smoke, source/deployment parity, backend parity.
+12. FORM BLOCK/RECOVERY (LHI-FR-013): hitung hari kalender/WIB; warning 4/6/7; blokir individual hari 8; masa tunggu hari 9; global block hari 10; Reset dan pembatasan KA IPSRS; pemulihan terpadu; grace 120 jam; snapshot, NONAKTIF/reaktivasi, pembatalan LHI; append-only audit; atomicity, idempotency, retry, dan API/RLS negative tests.
+
+Cakupan FORM BLOCK/RECOVERY di atas adalah kebutuhan test yang harus dirancang, bukan test yang telah tersedia atau lulus. Karena REGRESSION_MATRIX.yaml merupakan protected file pada CONTROL_BOOK LOCKED, pencatatan ID dan status test ke matrix hanya boleh dilakukan setelah prosedur unlock/change control dan persetujuan yang diwajibkan.
 
 Test ID, status, dan gate harus disinkronkan melalui proses perubahan resmi pada REGRESSION_MATRIX.yaml. Jangan mengubah dokumen kontrol yang LOCKED tanpa prosedur unlock.
 
