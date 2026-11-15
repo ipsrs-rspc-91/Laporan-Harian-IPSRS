@@ -395,6 +395,31 @@ Setiap temuan wajib memiliki ID, aset/endpoint terdampak, bukti reproduksi yang 
 - Hasil pengujian harus memuat cakupan, tanggal, metode, keterbatasan, temuan, bukti, retest, dan kesimpulan risiko residual.
 - Tidak boleh menyatakan aplikasi aman atau bebas peretasan. Pernyataan yang diperbolehkan adalah ruang lingkup tertentu telah diuji pada tanggal tertentu dan temuan yang diketahui telah ditangani sesuai kriteria penerimaan.
 
+### 9.8 Pemetaan regulasi, privasi, dan lokasi pemrosesan data
+
+Aplikasi LHI wajib memiliki legal/privacy assessment yang disetujui pihak rumah sakit yang berwenang. Pemetaan awal sekurang-kurangnya mencakup:
+
+1. **UU Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi:** identifikasi peran pengendali/prosesor, tujuan dan dasar pemrosesan, kategori data pribadi, hak subjek data, retensi, keamanan, penanganan insiden, dan transfer data lintas negara. Data kesehatan termasuk kategori data pribadi yang bersifat spesifik; nama, identitas petugas, dan metadata aktivitas dapat termasuk data pribadi umum.
+2. **PP Nomor 71 Tahun 2019 tentang Penyelenggaraan Sistem dan Transaksi Elektronik:** evaluasi kewajiban penyelenggaraan sistem elektronik yang andal, aman, bertanggung jawab, serta menjaga ketersediaan, keutuhan, keotentikan, kerahasiaan, dan keteraksesan informasi.
+3. **Permenkes Nomor 24 Tahun 2022 tentang Rekam Medis:** diterapkan pada bagian sistem yang benar-benar memproses/menyelenggarakan data rekam medis. Aplikasi LHI untuk pemeliharaan sarana tidak otomatis merupakan sistem rekam medis. Data pasien, diagnosis, atau informasi klinis tidak boleh dimasukkan ke LHI kecuali ada kebutuhan, dasar, persetujuan, dan pengendalian yang secara resmi ditetapkan.
+4. **PP Nomor 33 Tahun 2026 tentang Peraturan Pelaksanaan UU PDP:** telah ditetapkan pada 2026 dan memuat masa mulai berlaku enam bulan setelah pengundangan. Tim hukum/privasi wajib memverifikasi tanggal efektif dan menyiapkan pemenuhan sebelum berlaku.
+
+**Lokasi pemrosesan dan transfer data:** snapshot project Supabase yang diperiksa menunjukkan region `ap-southeast-1`. Infrastruktur Cloudflare dapat memproses trafik melalui jaringan global. Rumah sakit wajib menilai data apa yang dikirim/disimpan di luar wilayah Indonesia, peran vendor, lokasi pemrosesan, mekanisme perlindungan transfer, kontrak pemrosesan, subprocessor, retensi, dan mekanisme penghapusan. Temuan ini memerlukan legal/privacy review; bukan kesimpulan otomatis bahwa pemrosesan saat ini melanggar hukum.
+
+**Kontrol wajib:**
+- Katalog data dan data flow menandai data pribadi, data kesehatan spesifik, dan data operasional non-pribadi.
+- Form LHI memberi peringatan agar petugas tidak memasukkan nama pasien, nomor rekam medis, diagnosis, foto pasien, atau informasi klinis.
+- Data pribadi dibatasi sesuai tujuan, akses, retensi, dan kebutuhan operasional.
+- Penilaian dampak pelindungan data (DPIA) dilakukan bila pemrosesan berpotensi berisiko tinggi.
+- Transfer lintas negara/vendor harus ditinjau dan disetujui oleh fungsi hukum/privasi sebelum dinyatakan memenuhi ketentuan.
+- Kontrak, perjanjian pemrosesan, subprocessor, dan mekanisme respons insiden vendor harus terdokumentasi.
+
+Rujukan awal:
+- UU 27/2022: https://peraturan.bpk.go.id/Details/229798/uu-no-27-tahun-2022-10
+- PP 71/2019: https://peraturan.bpk.go.id/Details/122030/pp-no-71-tahun-2019
+- Permenkes 24/2022: https://jdih.kemkes.go.id/documents/peraturan-menteri-kesehatan-nomor-24-tahun-2022
+- PP 33/2026: https://pemerintahdigital.id/assets/resources/PP33_2026-PeraturanPelaksanaanUU27_2022_PerlindunganDataPribadi.pdf
+
 ### 9.7 Aturan keselamatan pengujian
 
 Pengujian aktif hanya dilakukan pada sistem dan akun yang secara tertulis diotorisasi. Utamakan staging atau lingkungan uji yang representatif. Dilarang melakukan brute force, denial-of-service, eksploitasi destruktif, pengambilan data pengguna, atau pengujian yang berpotensi mengganggu layanan produksi tanpa persetujuan eksplisit, rencana mitigasi, jendela pengujian, pemantauan, dan prosedur penghentian. Data produksi tidak boleh disalin ke lingkungan uji tanpa kontrol perlindungan data yang sesuai.
