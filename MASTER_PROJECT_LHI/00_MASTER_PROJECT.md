@@ -611,22 +611,49 @@ Proyek dapat dinyatakan memenuhi target profesionalisasi setelah seluruh kriteri
 
 ## 19. Status baseline dan gap yang diketahui
 
-Berdasarkan dokumen repository yang diperiksa untuk penyusunan ini:
+### 19.1 Identitas snapshot dan batas audit
 
-- `frontend/app.js` masih merupakan file inti besar/shared; modularisasi penuh belum terbukti.
-- Backend utama `supabase/functions/ipsrs-api/index.ts` masih terkonsentrasi; pemetaan endpoint dan dependensi perlu dilengkapi.
-- Beberapa script dan halaman sudah dipisah, tetapi pemisahan file belum membuktikan isolasi modul.
-- `LOCK_REGISTER.yaml` menandai Dashboard dan Control Book sebagai LOCKED; aturan tersebut tetap berlaku.
-- `REGRESSION_MATRIX.yaml` masih mencatat banyak skenario sebagai PLANNED; status tidak boleh dinaikkan tanpa bukti test.
-- Dokumentasi mencatat Supabase/PostgreSQL sebagai database aktif; Cloudflare D1 belum boleh dianggap sebagai database produksi pengganti.
-- Pemetaan rinci endpoint, tabel, RLS, global state, event, dan side effect masih memerlukan audit source.
-- Nilai target SLA/SLO, RPO/RTO, dan retensi belum ditetapkan pada baseline dokumen yang diperiksa.
-- Audit database 15 November 2026 menemukan 75 migration remote versus 35 file lokal pada main; migration parity belum selesai dan perubahan schema produksi berstatus NO-GO sampai rekonsiliasi.
-- Supabase menjalankan 8 Edge Functions aktif, sedangkan main hanya melacak 5; tiga source runtime sedang disinkronkan melalui PR #80.
-- Fungsi database `open_lhi_global_grace_v2` saat ini mengembalikan `SAFE_CUTOVER_REQUIRED`, sehingga proses membuka global grace belum dapat dinyatakan operasional; perbaikan memerlukan validasi snapshot v2 dan prosedur recovery.
-- Form Blok Aplikasi/Recovery memiliki requirement tersendiri (LHI-FR-013), tetapi belum tercatat sebagai modul terpisah pada snapshot `LOCK_REGISTER.yaml` yang terakhir direview 4 Oktober 2026. Katalog menandainya `NOT LISTED IN LOCK_REGISTER SNAPSHOT`; ini bukan status lock baru. Penetapan kontrol modul harus dilakukan melalui change control sebelum perubahan perilaku/produksi.
+Status di bawah adalah **snapshot dokumentasi/repository per 15 November 2026**, bukan sertifikasi runtime produksi. Identitas ref yang diperiksa:
 
-Temuan tersebut adalah daftar kerja dan batas klaim, bukan hasil audit total terhadap seluruh source maupun runtime pada tanggal ini.
+| Objek | Identitas | Status saat pemeriksaan |
+|---|---|---|
+| Branch utama | `main` — `de77a78a99e566a97d9be320786e47d6675ae94a` | Baseline source utama yang diperiksa |
+| Branch dokumen | `docs/lhi-professionalization-roadmap` — `b9beab3dd45cbe03ff097ef1bd58340e9493514f` | Branch kerja Master Project |
+| PR #77 | Master Project LHI | OPEN / DRAFT; belum merge |
+| PR #76 | Form Blok compliance alignment | OPEN / DRAFT; migration pada PR bukan bukti telah diterapkan ke database |
+| PR #80 | Pelacakan source Edge Functions | OPEN / DRAFT; belum menjadi bagian dari `main` |
+
+Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau runtime produksi. Semua identitas SHA dan status PR adalah snapshot pada tanggal pemeriksaan dan wajib diperbarui ketika dokumen direvisi kembali.
+
+### 19.2 Status teknis dan gap yang teridentifikasi
+
+| Area | Temuan pada snapshot | Status/kendali |
+|---|---|---|
+| Frontend | `frontend/app.js` masih merupakan file inti besar/shared; sebagian helper mulai dipisahkan, tetapi modularisasi penuh dan isolasi domain belum terbukti | IN PROGRESS |
+| Backend | `supabase/functions/ipsrs-api/index.ts` masih memuat banyak action; pemetaan endpoint, dependensi, dan pembagian domain perlu dilengkapi | IN PROGRESS |
+| Modul terkunci | `LOCK_REGISTER.yaml` menandai Dashboard (DASH) dan Control Book (CONTROL_BOOK) sebagai LOCKED | PROTECTED; tidak boleh ada perubahan perilaku tanpa prosedur dan persetujuan yang berlaku |
+| Regression | `REGRESSION_MATRIX.yaml` masih memiliki banyak skenario PLANNED; status PLANNED bukan bukti test telah dijalankan | OPEN |
+| Database/platform | Supabase/PostgreSQL masih merupakan database aktif yang didokumentasikan; Cloudflare D1 belum terbukti menggantikan database produksi | NOT MIGRATED / NOT CERTIFIED |
+| Migration parity | Snapshot audit mencatat 75 migration remote dan 35 file migration pada `main`; branch PR #76 memiliki file tambahan yang belum berarti diterapkan | BLOCKED / NOT RECONCILED; perubahan schema produksi NO-GO |
+| Edge Functions | Snapshot runtime mencatat 8 function aktif, sedangkan `main` melacak 5; PR #80 masih OPEN/DRAFT untuk sinkronisasi source tambahan | PARTIAL; belum boleh diklaim source/runtime parity penuh |
+| Form Blok / Recovery | `open_lhi_global_grace_v2` masih mengembalikan `SAFE_CUTOVER_REQUIRED` menurut manifest audit; proses global recovery belum dapat dinyatakan operasional | FAIL-CLOSED / NOT CERTIFIED |
+| Kontrol Form Blok | Requirement khusus tersedia pada `README-FORM-BLOK-APLIKASI.md`; pada snapshot LOCK_REGISTER yang dirujuk dokumen, fitur ini belum tercatat sebagai modul terkunci tersendiri | NOT LISTED IN LOCK_REGISTER SNAPSHOT; bukan status LOCKED atau izin untuk mengubah produksi |
+| Security / RLS | Source review dan inventory tersedia, tetapi sertifikasi live schema, grants, RLS, dan seluruh jalur authorization belum lengkap | OPEN / NOT CERTIFIED |
+| Cloudflare | Source/deployment parity dan production smoke belum memiliki bukti lengkap pada dokumen audit yang dirujuk | OPEN / NOT CERTIFIED |
+| Backup / DR | Checkpoint source tidak sama dengan backup database; restore drill penuh belum tersertifikasi | OPEN / NOT CERTIFIED |
+| Performance | Target dan baseline numerik p50/p95 belum disahkan/dibuktikan | OPEN |
+| SLO / RPO / RTO / retensi | Nilai target resmi belum ditetapkan dan disetujui | TO BE AGREED; jangan mengarang angka |
+
+### 19.3 Aturan membaca status
+
+1. **EXISTING** berarti implementasi ditemukan pada source atau runtime; bukan otomatis lengkap, aman, atau lulus UAT.
+2. **IN PROGRESS** berarti ada pekerjaan aktif yang dapat ditunjukkan melalui branch/PR atau artefak kerja; bukan bukti siap produksi.
+3. **OPEN** berarti verifikasi atau keputusan belum selesai.
+4. **BLOCKED / NO-GO** berarti tindakan yang bergantung pada gap tersebut tidak boleh diteruskan ke produksi.
+5. **PASS / CERTIFIED** hanya boleh diberikan jika bukti sesuai tersedia, relevan dengan SHA/environment yang benar, dan dapat ditelusuri.
+6. Status dokumen tidak boleh dipakai sebagai pengganti status source, test, deployment, database, atau runtime.
+
+Daftar ini merupakan snapshot temuan dan batas klaim, bukan hasil audit total terhadap seluruh source maupun runtime. Untuk perubahan berikutnya, lakukan recheck terhadap branch, PR, register kontrol, workflow, dan bukti runtime sebelum memperbarui status.
 
 ---
 
@@ -920,5 +947,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 |---|---|
 | 2026-11-06 | Peta arsitektur dan inventaris awal repository |
 | 2026-11-15 | Penyempurnaan menjadi dokumen induk proyek yang mencakup mandat, visi, tujuan, ruang lingkup, kebutuhan, arsitektur, standar, tata kelola, delivery, risiko, kriteria penerimaan, dan peta dokumen |
+| 2026-11-15 | Audit tahap 1: menambahkan identitas snapshot branch/PR, matriks status teknis, dan aturan interpretasi status agar temuan dokumentasi tidak disalahartikan sebagai sertifikasi produksi |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
