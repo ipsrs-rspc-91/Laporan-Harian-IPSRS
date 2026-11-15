@@ -172,7 +172,35 @@ Rujukan resmi awal:
 - Permenkes 24/2022: https://jdih.kemkes.go.id/documents/peraturan-menteri-kesehatan-nomor-24-tahun-2022
 - PP 33/2026: https://pemerintahdigital.id/assets/resources/PP33_2026-PeraturanPelaksanaanUU27_2022_PerlindunganDataPribadi.pdf
 
-## 12. Riwayat
+## 12. Status runtime Form Blok dan recovery LHI
+
+Pemeriksaan read-only pada snapshot database menunjukkan:
+- `LHI_GLOBAL_BLOCK = NONAKTIF`;
+- incident: 1 berstatus GRACE dan 2 berstatus COMPLETED;
+- total obligation snapshot: 370;
+- recovery challenge tercatat: 8;
+- recovery session: 0 aktif dan 0 total pada saat query.
+
+Fungsi database `open_lhi_global_grace_v2` berstatus SECURITY DEFINER, menggunakan `search_path=public, pg_temp`, dan hanya dapat dieksekusi service_role. Namun isi fungsi saat pemeriksaan selalu mengembalikan:
+- `ok=false`;
+- `reason=SAFE_CUTOVER_REQUIRED`;
+- pesan bahwa pembukaan blokir ditahan sampai snapshot v2 dan prosedur recovery produksi tervalidasi.
+
+Implikasi:
+1. Recovery exchange dapat membuat sesi hanya setelah challenge, Supabase access token, role KA IPSRS aktif, incident yang sesuai, dan global lock aktif diverifikasi.
+2. Tetapi tindakan untuk membuka global grace melalui `open_lhi_global_grace_v2` saat ini sengaja ditahan oleh database function.
+3. Karena itu, jangan menyatakan seluruh recovery flow sudah operasional atau sudah lulus.
+4. Jangan mengubah function tersebut menjadi selalu sukses atau menghapus SAFE_CUTOVER_REQUIRED tanpa rekonsiliasi snapshot/obligation, spesifikasi state transition, regression test, backup, dan persetujuan.
+5. Status global lock saat query adalah NONAKTIF; audit ini tidak mengubah lock, incident, obligation, challenge, atau session.
+
+| ID | Prioritas | Tindakan | Status |
+|---|---|---|---|
+| LHI-REC-01 | P0 | Definisikan dan verifikasi safe cutover snapshot v2 dan obligation reconciliation | OPEN |
+| LHI-REC-02 | P0 | Implementasikan/validasi state transition open global grace dengan test positif/negatif | BLOCKED oleh SAFE_CUTOVER_REQUIRED |
+| LHI-REC-03 | P1 | Uji end-to-end challenge, exchange, capability expiry/revoke, recovery status, dan failure path | OPEN |
+| LHI-REC-04 | P1 | Verifikasi UI dan API menampilkan status yang sama dengan database | OPEN |
+
+## 13. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
