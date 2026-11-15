@@ -88,6 +88,15 @@ Target numerik seperti waktu respons, availability, RPO, RTO, dan retensi log be
 - Peningkatan modularitas, keamanan, kinerja, dan maintainability.
 
 
+### 4.2 Di luar ruang lingkup kecuali disetujui sebagai perubahan proyek
+
+- Penggantian total platform/database produksi.
+- Migrasi penuh dari Supabase ke Cloudflare D1.
+- Perubahan proses bisnis IPSRS yang belum disetujui pemilik proses.
+- Integrasi dengan SIMRS atau sistem rumah sakit lain yang belum memiliki spesifikasi dan persetujuan.
+- Pengadaan perangkat keras/jaringan di luar kebutuhan operasional aplikasi.
+- Perubahan perilaku modul berstatus LOCKED tanpa prosedur unlock resmi.
+
 ### 4.3 Pengembangan dan penambahan modul secara berkelanjutan
 
 Aplikasi LHI dirancang sebagai aplikasi yang dapat berkembang mengikuti kebutuhan operasional IPSRS. Daftar modul yang tercantum dalam Master Project, README, katalog modul, atau register teknis merupakan inventaris kondisi dan rencana pada waktu dokumen diperbarui; daftar tersebut **bukan daftar final dan bukan batas maksimum ruang lingkup aplikasi**.
@@ -115,14 +124,6 @@ Ketentuan wajib:
 
 Status modul pada register teknis tetap mengikuti format dan kewenangan register tersebut. Klasifikasi di sini adalah kosakata proyek, bukan izin untuk mengubah LOCK_REGISTER.
 
-### 4.2 Di luar ruang lingkup kecuali disetujui sebagai perubahan proyek
-
-- Penggantian total platform/database produksi.
-- Migrasi penuh dari Supabase ke Cloudflare D1.
-- Perubahan proses bisnis IPSRS yang belum disetujui pemilik proses.
-- Integrasi dengan SIMRS atau sistem rumah sakit lain yang belum memiliki spesifikasi dan persetujuan.
-- Pengadaan perangkat keras/jaringan di luar kebutuhan operasional aplikasi.
-- Perubahan perilaku modul berstatus LOCKED tanpa prosedur unlock resmi.
 
 ## 5. Pemangku kepentingan dan peran
 
