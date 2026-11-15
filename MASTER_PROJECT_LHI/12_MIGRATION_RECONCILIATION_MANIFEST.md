@@ -14,11 +14,13 @@ Repository main SHA saat snapshot: `de77a78a99e566a97d9be320786e47d6675ae94a`
 |---|---:|
 | Remote migration history | 75 |
 | Local SQL files | 35 |
-| Exact version match | 15 |
+| Exact version/timestamp match | 15 |
 | Remote-only (timestamp tidak ada di main) | 60 |
 | Local-only (timestamp tidak ada di remote) | 20 |
 
-**Status: NOT RECONCILED.** Tidak boleh menjalankan `supabase db push`, `migration repair`, menghapus history, atau mengubah schema produksi sebelum manifest ini direview dan status setiap migration diputuskan.
+**PENTING:** istilah *exact version/timestamp match* hanya berarti 14-digit version pada nama file lokal sama dengan version di migration history Supabase. Ini **BUKAN** hasil pembandingan isi SQL atau checksum. Belum ada klaim bahwa 15 pasangan tersebut identik secara konten. Status SQL equivalence seluruh pasangan masih **NOT VERIFIED**.
+
+**Status keseluruhan: NOT RECONCILED.** Tidak boleh menjalankan `supabase db push`, `migration repair`, menghapus history, atau mengubah schema produksi sebelum manifest ini direview dan status setiap migration diputuskan.
 
 ## 3. Remote migration history
 
@@ -42,33 +44,33 @@ Repository main SHA saat snapshot: `de77a78a99e566a97d9be320786e47d6675ae94a`
 | `20260923085810` | `add_login_device_tracking` | — | REMOTE_ONLY |
 | `20260923103309` | `perf_reports_date_index_20260923` | — | REMOTE_ONLY |
 | `20260923103534` | `perf_remove_unused_date_index_20260923` | — | REMOTE_ONLY |
-| `20260924021155` | `permanent_report_privacy_hardening_20260924` | `20260924021155_permanent_report_privacy_hardening_20260924.sql` | EXACT_VERSION_MATCH |
-| `20260924035728` | `harden_public_api_and_indexes` | `20260924035728_harden_public_api_and_indexes.sql` | EXACT_VERSION_MATCH |
-| `20260924035824` | `close_anon_default_privileges` | `20260924035824_close_anon_default_privileges.sql` | EXACT_VERSION_MATCH |
-| `20260924040217` | `align_report_update_rls` | `20260924040217_align_report_update_rls.sql` | EXACT_VERSION_MATCH |
+| `20260924021155` | `permanent_report_privacy_hardening_20260924` | `20260924021155_permanent_report_privacy_hardening_20260924.sql` | VERSION_MATCH_ONLY |
+| `20260924035728` | `harden_public_api_and_indexes` | `20260924035728_harden_public_api_and_indexes.sql` | VERSION_MATCH_ONLY |
+| `20260924035824` | `close_anon_default_privileges` | `20260924035824_close_anon_default_privileges.sql` | VERSION_MATCH_ONLY |
+| `20260924040217` | `align_report_update_rls` | `20260924040217_align_report_update_rls.sql` | VERSION_MATCH_ONLY |
 | `20260926112505` | `create_rollback_snapshot_20260926_1816` | — | REMOTE_ONLY |
-| `20260926152613` | `harden_staff_data_access_and_admin_edit` | `20260926152613_harden_staff_data_access_and_admin_edit.sql` | EXACT_VERSION_MATCH |
-| `20260926235410` | `20260927000000_soft_delete_reports` | `20260926235410_soft_delete_reports.sql` | EXACT_VERSION_MATCH |
+| `20260926152613` | `harden_staff_data_access_and_admin_edit` | `20260926152613_harden_staff_data_access_and_admin_edit.sql` | VERSION_MATCH_ONLY |
+| `20260926235410` | `20260927000000_soft_delete_reports` | `20260926235410_soft_delete_reports.sql` | VERSION_MATCH_ONLY |
 | `20260928092227` | `fix_target_specific_edit_permission` | — | REMOTE_ONLY |
 | `20261002231924` | `remove_dummy_add_master_items_20261002` | — | REMOTE_ONLY |
 | `20261004233054` | `add_spmu_dual_side_schema_only_20261005` | — | REMOTE_ONLY |
 | `20261008082850` | `add_lhi_manual_unblock_until` | — | REMOTE_ONLY |
 | `20261008082953` | `activate_heri_lhi_manual_unblock` | — | REMOTE_ONLY |
 | `20261008082958` | `audit_heri_lhi_manual_unblock` | — | REMOTE_ONLY |
-| `20261010091828` | `reorganize_sipil_master_data_20261010` | `20261010091828_reorganize_sipil_master_data_20261010.sql` | EXACT_VERSION_MATCH |
+| `20261010091828` | `reorganize_sipil_master_data_20261010` | `20261010091828_reorganize_sipil_master_data_20261010.sql` | VERSION_MATCH_ONLY |
 | `20261010094055` | `rename_sipil_item_akrilik_meja_20261010` | — | REMOTE_ONLY |
 | `20261010094650` | `rename_kitchen_area_to_me_kitchen_20261010` | — | REMOTE_ONLY |
 | `20261010095657` | `move_ceklist_me_utiliti_below_kesling_20261010` | — | REMOTE_ONLY |
 | `20261010141447` | `prevent_duplicate_master_items` | — | REMOTE_ONLY |
 | `20261010152312` | `remove_ruang_anggrek_utility_checklist_20261010` | — | REMOTE_ONLY |
 | `20261010152815` | `add_meteran_air_deep_well_utility_checklist_20261010` | — | REMOTE_ONLY |
-| `20261011005510` | `lock_final_12_standard_categories` | `20261011005510_lock_final_12_standard_categories.sql` | EXACT_VERSION_MATCH |
-| `20261011005549` | `enforce_final_kategori_on_new_reports` | `20261011005549_enforce_final_kategori_on_new_reports.sql` | EXACT_VERSION_MATCH |
-| `20261011153018` | `secure_backup_snapshot_tables_rls_20261011` | `20261011153018_secure_backup_snapshot_tables_rls_20261011.sql` | EXACT_VERSION_MATCH |
-| `20261011153827` | `harden_trigger_function_search_path_20261011` | `20261011153827_harden_trigger_function_search_path_20261011.sql` | EXACT_VERSION_MATCH |
-| `20261013010650` | `master_item_review_queue` | `20261013010650_master_item_review_queue.sql` | EXACT_VERSION_MATCH |
+| `20261011005510` | `lock_final_12_standard_categories` | `20261011005510_lock_final_12_standard_categories.sql` | VERSION_MATCH_ONLY |
+| `20261011005549` | `enforce_final_kategori_on_new_reports` | `20261011005549_enforce_final_kategori_on_new_reports.sql` | VERSION_MATCH_ONLY |
+| `20261011153018` | `secure_backup_snapshot_tables_rls_20261011` | `20261011153018_secure_backup_snapshot_tables_rls_20261011.sql` | VERSION_MATCH_ONLY |
+| `20261011153827` | `harden_trigger_function_search_path_20261011` | `20261011153827_harden_trigger_function_search_path_20261011.sql` | VERSION_MATCH_ONLY |
+| `20261013010650` | `master_item_review_queue` | `20261013010650_master_item_review_queue.sql` | VERSION_MATCH_ONLY |
 | `20261013015853` | `allow_subarea_master_data` | — | REMOTE_ONLY |
-| `20261013052926` | `guard_report_item_required_on_write` | `20261013052926_guard_report_item_required_on_write.sql` | EXACT_VERSION_MATCH |
+| `20261013052926` | `guard_report_item_required_on_write` | `20261013052926_guard_report_item_required_on_write.sql` | VERSION_MATCH_ONLY |
 | `20261013085608` | `fix_master_item_review_submitter_identity` | — | REMOTE_ONLY |
 | `20261013092327` | `secure_report_elektromedik_snapshot_rls_20261013` | — | REMOTE_ONLY |
 | `20261016103823` | `secure_elektromedik_snapshot_client_grants` | — | REMOTE_ONLY |
@@ -86,8 +88,8 @@ Repository main SHA saat snapshot: `de77a78a99e566a97d9be320786e47d6675ae94a`
 | `20261101114007` | `normalize_global_item_duplicate_guard_20261101` | — | REMOTE_ONLY |
 | `20261102023802` | `fix_lhi_discipline_daily_obligation_rollover_20261102` | — | REMOTE_ONLY |
 | `20261102031051` | `backup_lhi_access_before_agung_unblock_20261102` | — | REMOTE_ONLY |
-| `20261102093643` | `lhi_grace_atomic_open_and_staff_completion` | `20261102093643_lhi_grace_atomic_open_and_staff_completion.sql` | EXACT_VERSION_MATCH |
-| `20261102114305` | `secure_lhi_backup_tables_and_reset_hash_20261102` | `20261102114305_secure_lhi_backup_tables_and_reset_hash_20261102.sql` | EXACT_VERSION_MATCH |
+| `20261102093643` | `lhi_grace_atomic_open_and_staff_completion` | `20261102093643_lhi_grace_atomic_open_and_staff_completion.sql` | VERSION_MATCH_ONLY |
+| `20261102114305` | `secure_lhi_backup_tables_and_reset_hash_20261102` | `20261102114305_secure_lhi_backup_tables_and_reset_hash_20261102.sql` | VERSION_MATCH_ONLY |
 | `20261103050231` | `revoke_legacy_lhi_trigger_rpc_execute_20261103` | — | REMOTE_ONLY |
 | `20261103052214` | `restrict_lhi_discipline_tables_to_service_role_20261103` | — | REMOTE_ONLY |
 | `20261103173358` | `lhi_secure_recovery_challenge_v2` | — | REMOTE_ONLY |
@@ -164,4 +166,4 @@ Fungsi `open_lhi_global_grace_v2` yang saat ini ada di database masih mengembali
 
 | Tanggal | Perubahan |
 |---|---|
-| 15 November 2026 | Snapshot read-only 75 remote migrations vs 35 local migration files |
+| 15 November 2026 | Snapshot read-only 75 remote migrations vs 35 local migration files; klasifikasi hanya berdasarkan version/timestamp, belum content equivalence. |
