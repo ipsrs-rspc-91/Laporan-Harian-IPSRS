@@ -578,7 +578,7 @@ Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak 
 - [SOP Update dan Deploy](../SOP-UPDATE-DAN-DEPLOY.md)
 - [AI Audit Protocol](../AI_AUDIT_PROTOCOL.md)
 - [README Form Blok Aplikasi](../README-FORM-BLOK-APLIKASI.md) — spesifikasi fitur khusus, bukan pengganti Master Project
-- [Development Roadmap](06_DEVELOPMENT_ROADMAP.md) — rencana tahapan, bukan dokumen induk
+- [Professionalization Roadmap](PROFESSIONALIZATION_ROADMAP.md) — rencana tahapan, bukan dokumen induk
 
 ---
 
