@@ -8,6 +8,7 @@
 5. Setelah deployment, verifikasi job **Deploy GitHub Pages** dan **Post-deployment smoke check** sukses. Verifikasi pula target backend/Worker jika memang berubah dan kredensial deployment tersedia.
 6. Pastikan SHA yang di-deploy sama dengan commit perubahan terbaru yang telah lulus audit. Jangan menyatakan produksi sudah diperbarui hanya berdasarkan commit atau audit yang sukses.
 7. Setelah verifikasi, beri tahu pengguna secara ringkas: perubahan yang dilakukan, SHA commit, status deployment, dan tautan workflow. Jika masih berjalan, nyatakan belum selesai dan pantau hingga hasil final.
+8. Jika satu rilis mengubah Supabase sekaligus frontend, urutan wajib adalah migration/Edge Function Supabase berhasil terlebih dahulu, baru Cloudflare Worker dan GitHub Pages. Jika Supabase gagal atau belum terverifikasi, deployment frontend wajib dilewati agar frontend baru tidak berjalan dengan backend/schema lama.
 
 ## Alur otomatis
 - Push ke `main` memicu `IPSRS Automated Audit Gate`.
