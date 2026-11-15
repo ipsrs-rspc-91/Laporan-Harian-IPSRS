@@ -34,6 +34,7 @@ Snapshot berikut diturunkan dari `LOCK_REGISTER.yaml` yang terakhir diperiksa pa
 | CONTROL_BOOK | Project Control Book / Control Registers | LOCKED | Tata kelola perubahan, lock, baseline, regression, dan protokol |
 | REKAP | Rekap Bulanan / Month Picker | STABLE_CANDIDATE | Rekap laporan bulanan dan pemilihan periode |
 | MONITORING | Monitoring Staf / Page Online | STABLE_CANDIDATE | Status petugas dan aktivitas online |
+| LHI_DISCIPLINE_RECOVERY | Form Blok Aplikasi & Recovery LHI | NOT LISTED IN LOCK_REGISTER SNAPSHOT | Aturan disiplin LHI, blokir individual/global, snapshot kewajiban, grace period, dan pemulihan administratif; implementasi harus mengikuti README-FORM-BLOK-APLIKASI.md |
 | AUDIT_LOG | Audit Log / History | STABLE_CANDIDATE | Histori perubahan dan audit aktivitas |
 | CLOUDFLARE | Cloudflare Runtime / Worker / Assets | STABLE_CANDIDATE | Penyajian frontend dan runtime Worker |
 | CICD | CI/CD / Audit Gate | STABLE_CANDIDATE | Audit otomatis, regression gate, dan deployment gate |
@@ -43,6 +44,7 @@ Catatan:
 2. Modul STABLE_CANDIDATE belum otomatis berarti seluruh acceptance criteria, regression, dan verifikasi produksi telah lulus.
 3. Status DASH dan CONTROL_BOOK yang LOCKED wajib dipertahankan sesuai prosedur kontrol.
 4. Domain baru dapat ditambahkan melalui proses pada Bab 4, 6, dan 8 Master Project.
+5. Domain Form Blok/Recovery dicantumkan sebagai domain kebutuhan karena memiliki requirement tersendiri, tetapi tidak tercatat sebagai modul terpisah pada snapshot `LOCK_REGISTER.yaml` tanggal 4 Oktober 2026. Label `NOT LISTED IN LOCK_REGISTER SNAPSHOT` bukan status lock baru dan tidak memberikan izin perubahan. Status kontrolnya wajib ditetapkan melalui change control; implementasi recovery tetap BLOCKED selama temuan `SAFE_CUTOVER_REQUIRED` belum ditutup.
 
 ## 4. Katalog modul baru
 
