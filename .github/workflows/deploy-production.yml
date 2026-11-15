@@ -147,12 +147,15 @@ jobs:
           set -euo pipefail
           supabase db push --project-ref "$SUPABASE_PROJECT_REF" --yes
 
-      - name: Deploy managed Edge Function
+      - name: Deploy IPSRS API and LHI recovery Edge Functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
-          supabase functions deploy ipsrs-api --project-ref "$SUPABASE_PROJECT_REF"
+          for fn in ipsrs-api lhi-reset-verify lhi-block-status lhi-recovery-exchange lhi-recovery-action; do
+            echo "Deploying $fn"
+            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
+          done
 
       - name: Verify Supabase deployment
         env:
