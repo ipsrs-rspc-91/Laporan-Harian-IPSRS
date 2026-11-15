@@ -145,6 +145,52 @@ test('LHI recovery login uses limited capability and never opens operational API
   expect(normalApiCalls).toBe(0);
 });
 
+
+test('individual LHI access block rejects login after Auth and clears the temporary Auth session', async ({ page }) => {
+  const cors={
+    'access-control-allow-origin':'*',
+    'access-control-allow-methods':'GET,POST,OPTIONS',
+    'access-control-allow-headers':'authorization, apikey, content-type, x-client-info',
+    'content-type':'application/json'
+  };
+  const fulfillJson=(route,body,status=200)=>route.fulfill({status,headers:cors,body:JSON.stringify(body)});
+  let signOutCalls=0;
+  let operationalCalls=0;
+  await page.route('**/functions/v1/lhi-block-status',route=>fulfillJson(route,{ok:true,blocked:false}));
+  await page.route('**/auth/v1/token?grant_type=password',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    return fulfillJson(route,{
+      access_token:'individual-block-test-access-token',
+      token_type:'bearer',
+      expires_in:3600,
+      refresh_token:'individual-block-test-refresh-token',
+      user:{id:'22222222-2222-4222-8222-222222222222',aud:'authenticated',role:'authenticated',email:'petugas@example.test',app_metadata:{provider:'email',providers:['email']},user_metadata:{},created_at:'2026-11-15T00:00:00Z'}
+    });
+  });
+  await page.route('**/auth/v1/logout*',route=>{
+    signOutCalls++;
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    return route.fulfill({status:204,headers:cors});
+  });
+  await page.route('**/functions/v1/ipsrs-api',route=>{
+    operationalCalls++;
+    return fulfillJson(route,{
+      ok:false,
+      msg:'Hak akses aplikasi Anda diblokir pada hari ke-8 karena tidak menginput LHI selama lebih dari 7 hari kalender penuh. Hubungi KA IPSRS untuk prosedur pemulihan.'
+    },403);
+  });
+
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  await expect(page.locator('#ipsrsLoginForm')).toBeAttached({timeout:10000});
+  await page.locator('#loginUsername').fill('petugas');
+  await page.locator('#loginPassword').fill('test-password');
+  await page.locator('#loginBtn').click();
+  await expect(page.locator('#loginMsg')).toContainText('HAK AKSES APLIKASI ANDA DIBLOKIR',{timeout:10000});
+  await expect(page.locator('#appShell')).toHaveClass(/hidden/);
+  expect(operationalCalls).toBe(1);
+  expect(signOutCalls).toBeGreaterThan(0);
+});
+
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', msg => {
