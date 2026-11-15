@@ -6,6 +6,8 @@ Aplikasi operasional IPSRS. Repository ini merupakan sumber kode utama dan riway
 
 **Dokumen induk dan peta proyek:** [MASTER PROJECT LHI](MASTER_PROJECT_LHI/00_MASTER_PROJECT.md)
 
+**Katalog modul:** [Katalog Modul LHI](MASTER_PROJECT_LHI/08_MODULE_CATALOG.md) — daftar modul bersifat dinamis dan dapat bertambah melalui change control.
+
 Dokumen tersebut menjelaskan arsitektur existing, peta direktori, katalog modul, backend, CI/CD, status modularisasi, dan rencana refactor bertahap.
 
 ## Arsitektur singkat
