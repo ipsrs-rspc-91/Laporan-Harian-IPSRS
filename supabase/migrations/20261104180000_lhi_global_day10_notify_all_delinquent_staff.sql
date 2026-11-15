@@ -7,6 +7,12 @@ BEGIN
   SELECT pg_get_functiondef('public.run_lhi_discipline_scheduler()'::regprocedure)
   INTO v_def;
 
+  -- The production scheduler may already have the all-delinquent aggregation.
+  IF position('v_trigger_names text;' IN v_def)>0
+     AND position('string_agg(s.nama' IN v_def)>0 THEN
+    RETURN;
+  END IF;
+
   v_old := '  v_message text;' || E'\n';
   v_new := '  v_message text;' || E'\n' || '  v_trigger_names text;' || E'\n';
   IF position(v_old in v_def) = 0 THEN
