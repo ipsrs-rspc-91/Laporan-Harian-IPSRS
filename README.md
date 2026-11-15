@@ -19,6 +19,7 @@ Dokumen teknis pendukung:
 - [API dan Database Inventory](MASTER_PROJECT_LHI/10_API_DATABASE_INVENTORY.md)
 - [Production Readiness Audit](MASTER_PROJECT_LHI/11_PRODUCTION_READINESS_AUDIT.md)
 - [Migration Reconciliation Manifest](MASTER_PROJECT_LHI/12_MIGRATION_RECONCILIATION_MANIFEST.md)
+- [Professionalization Roadmap](MASTER_PROJECT_LHI/PROFESSIONALIZATION_ROADMAP.md) — tahapan penguatan proyek; bukan bukti implementasi atau deployment.
 
 Dokumen tersebut menjelaskan arsitektur existing, peta direktori, katalog modul, backend, CI/CD, status modularisasi, dan rencana refactor bertahap.
 
