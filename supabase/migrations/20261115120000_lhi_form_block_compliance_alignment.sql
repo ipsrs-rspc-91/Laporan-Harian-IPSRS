@@ -333,6 +333,198 @@ $function$;
 REVOKE ALL ON FUNCTION public.get_lhi_discipline_status() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_lhi_discipline_status() TO service_role;
 
+-- Enforce global and individual LHI blocks at the Data API/RLS layer too.
+-- The recovery Edge Functions use service_role and therefore remain available.
+CREATE OR REPLACE FUNCTION private.lhi_normal_access_allowed()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public', 'private', 'auth', 'pg_temp'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.staff s
+    JOIN public.access_settings a
+      ON a.key = 'LHI_GLOBAL_BLOCK'
+    WHERE s.auth_user_id = auth.uid()
+      AND s.status = 'Aktif'
+      AND s.lhi_access_blocked_at IS NULL
+      AND upper(COALESCE(a.value, '')) = 'NONAKTIF'
+  );
+$function$;
+
+REVOKE ALL ON FUNCTION private.lhi_normal_access_allowed() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION private.lhi_normal_access_allowed() TO authenticated;
+
+DROP POLICY IF EXISTS reports_insert_own ON public.reports;
+CREATE POLICY reports_insert_own ON public.reports
+FOR INSERT TO authenticated
+WITH CHECK (
+  staff_id = (SELECT private.current_staff_id())
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+DROP POLICY IF EXISTS reports_select_authorized ON public.reports;
+CREATE POLICY reports_select_authorized ON public.reports
+FOR SELECT TO authenticated
+USING (
+  deleted_at IS NULL
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND (SELECT private.can_view_report(reports.staff_id, reports.role_snapshot))
+);
+
+DROP POLICY IF EXISTS reports_update_authorized ON public.reports;
+CREATE POLICY reports_update_authorized ON public.reports
+FOR UPDATE TO authenticated
+USING (
+  deleted_at IS NULL
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND (SELECT private.can_edit_report(reports.staff_id, reports.role_snapshot))
+)
+WITH CHECK (
+  deleted_at IS NULL
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND (SELECT private.can_edit_report(reports.staff_id, reports.role_snapshot))
+);
+
+DROP POLICY IF EXISTS report_history_select_authorized ON public.report_history;
+CREATE POLICY report_history_select_authorized ON public.report_history
+FOR SELECT TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = ANY (ARRAY['KA_IPSRS'::text, 'ADMINISTRASI'::text])
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND EXISTS (
+    SELECT 1
+    FROM public.reports r
+    WHERE r.report_id = report_history.report_id
+      AND (SELECT private.can_view_report(r.staff_id, r.role_snapshot))
+  )
+);
+
+DROP POLICY IF EXISTS audit_log_select_authorized ON public.audit_log;
+CREATE POLICY audit_log_select_authorized ON public.audit_log
+FOR SELECT TO authenticated
+USING (
+  (SELECT private.lhi_normal_access_allowed())
+  AND (
+    (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+    OR (
+      (SELECT private.current_staff_role()) = 'ADMINISTRASI'::text
+      AND (
+        report_id IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM public.reports r
+          WHERE r.report_id = audit_log.report_id
+            AND (SELECT private.can_view_report(r.staff_id, r.role_snapshot))
+        )
+      )
+    )
+  )
+);
+
+DROP POLICY IF EXISTS access_settings_delete_ka ON public.access_settings;
+CREATE POLICY access_settings_delete_ka ON public.access_settings
+FOR DELETE TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND key <> 'LHI_RESET_CODE_HASH'::text
+);
+
+DROP POLICY IF EXISTS access_settings_insert_ka ON public.access_settings;
+CREATE POLICY access_settings_insert_ka ON public.access_settings
+FOR INSERT TO authenticated
+WITH CHECK (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND key <> 'LHI_RESET_CODE_HASH'::text
+);
+
+DROP POLICY IF EXISTS access_settings_read_ka ON public.access_settings;
+CREATE POLICY access_settings_read_ka ON public.access_settings
+FOR SELECT TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND key <> 'LHI_RESET_CODE_HASH'::text
+);
+
+DROP POLICY IF EXISTS access_settings_update_ka ON public.access_settings;
+CREATE POLICY access_settings_update_ka ON public.access_settings
+FOR UPDATE TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND key <> 'LHI_RESET_CODE_HASH'::text
+)
+WITH CHECK (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+  AND key <> 'LHI_RESET_CODE_HASH'::text
+);
+
+DROP POLICY IF EXISTS edit_permissions_delete_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_delete_ka ON public.edit_permissions
+FOR DELETE TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+DROP POLICY IF EXISTS edit_permissions_insert_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_insert_ka ON public.edit_permissions
+FOR INSERT TO authenticated
+WITH CHECK (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+DROP POLICY IF EXISTS edit_permissions_read_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_read_ka ON public.edit_permissions
+FOR SELECT TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+DROP POLICY IF EXISTS edit_permissions_update_ka ON public.edit_permissions;
+CREATE POLICY edit_permissions_update_ka ON public.edit_permissions
+FOR UPDATE TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+)
+WITH CHECK (
+  (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+DROP POLICY IF EXISTS migration_errors_read_admins ON public.migration_errors;
+CREATE POLICY migration_errors_read_admins ON public.migration_errors
+FOR SELECT TO authenticated
+USING (
+  (SELECT private.current_staff_role()) = ANY (ARRAY['KA_IPSRS'::text, 'ADMINISTRASI'::text])
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+DROP POLICY IF EXISTS authenticated_read_master_data ON public.master_data;
+CREATE POLICY authenticated_read_master_data ON public.master_data
+FOR SELECT TO authenticated
+USING (
+  is_active = true
+  AND (SELECT private.lhi_normal_access_allowed())
+);
+
+CREATE OR REPLACE VIEW public.staff_dropdown AS
+SELECT staff_id, nama, jabatan, role, bidang, status
+FROM public.staff
+WHERE lower(trim(status)) = 'aktif'
+  AND upper(trim(role)) <> 'KA_IPSRS'
+  AND private.lhi_normal_access_allowed()
+ORDER BY nama;
+
 CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler()
 RETURNS jsonb
 LANGUAGE plpgsql
