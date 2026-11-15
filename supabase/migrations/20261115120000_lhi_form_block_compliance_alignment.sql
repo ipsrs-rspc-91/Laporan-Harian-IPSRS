@@ -1,3 +1,120 @@
+-- Server-side reset rate limiting and limited recovery-session validation.
+CREATE TABLE IF NOT EXISTS public.lhi_reset_attempts (
+  ip_hash text PRIMARY KEY CHECK (ip_hash ~ '^[0-9a-f]{64}$'),
+  window_started_at timestamptz NOT NULL,
+  attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+  locked_until timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+ALTER TABLE public.lhi_reset_attempts ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.lhi_reset_attempts FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.lhi_reset_attempts TO service_role;
+
+CREATE OR REPLACE FUNCTION public.register_lhi_reset_attempt(p_ip_hash text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_row public.lhi_reset_attempts%ROWTYPE;
+  v_now timestamptz := clock_timestamp();
+BEGIN
+  IF p_ip_hash IS NULL OR p_ip_hash !~ '^[0-9a-f]{64}$' THEN
+    RETURN jsonb_build_object('allowed', false);
+  END IF;
+
+  INSERT INTO public.lhi_reset_attempts(ip_hash, window_started_at, attempt_count, updated_at)
+  VALUES (p_ip_hash, v_now, 1, v_now)
+  ON CONFLICT (ip_hash) DO UPDATE
+  SET window_started_at = CASE
+        WHEN public.lhi_reset_attempts.window_started_at <= v_now - interval '15 minutes'
+          THEN v_now
+        ELSE public.lhi_reset_attempts.window_started_at
+      END,
+      attempt_count = CASE
+        WHEN public.lhi_reset_attempts.window_started_at <= v_now - interval '15 minutes'
+          THEN 1
+        WHEN public.lhi_reset_attempts.locked_until > v_now
+          THEN public.lhi_reset_attempts.attempt_count
+        ELSE public.lhi_reset_attempts.attempt_count + 1
+      END,
+      locked_until = CASE
+        WHEN public.lhi_reset_attempts.locked_until > v_now
+          THEN public.lhi_reset_attempts.locked_until
+        WHEN public.lhi_reset_attempts.window_started_at <= v_now - interval '15 minutes'
+          THEN NULL
+        WHEN public.lhi_reset_attempts.attempt_count + 1 >= 5
+          THEN v_now + interval '15 minutes'
+        ELSE NULL
+      END,
+      updated_at = v_now
+  RETURNING * INTO v_row;
+
+  RETURN jsonb_build_object(
+    'allowed', v_row.locked_until IS NULL,
+    'attempts', v_row.attempt_count,
+    'retry_at', v_row.locked_until
+  );
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.register_lhi_reset_attempt(text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.register_lhi_reset_attempt(text) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.validate_lhi_recovery_session(
+  p_session_token_hash text,
+  p_action text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_session public.lhi_recovery_sessions%ROWTYPE;
+  v_incident_status text;
+BEGIN
+  IF p_session_token_hash IS NULL OR p_session_token_hash !~ '^[0-9a-f]{64}$'
+     OR p_action NOT IN ('apiRecoveryStatus', 'apiStartLhiGrace') THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'INVALID_REQUEST');
+  END IF;
+
+  SELECT * INTO v_session
+  FROM public.lhi_recovery_sessions
+  WHERE session_token_hash = p_session_token_hash
+    AND role = 'KA_IPSRS'
+    AND revoked_at IS NULL
+    AND expires_at > clock_timestamp()
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'RECOVERY_SESSION_INVALID');
+  END IF;
+
+  SELECT status INTO v_incident_status
+  FROM public.lhi_discipline_incidents
+  WHERE incident_id = v_session.incident_id;
+
+  IF v_incident_status IS NULL
+     OR (p_action = 'apiStartLhiGrace' AND v_incident_status NOT IN ('LOCKED', 'EXPIRED', 'GRACE'))
+     OR (p_action = 'apiRecoveryStatus' AND v_incident_status NOT IN ('LOCKED', 'EXPIRED', 'GRACE')) THEN
+    RETURN jsonb_build_object('ok', false, 'reason', 'INCIDENT_NOT_AVAILABLE');
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'staff_id', v_session.staff_id,
+    'staff_name', v_session.staff_name,
+    'role', v_session.role,
+    'incident_id', v_session.incident_id,
+    'expires_at', v_session.expires_at,
+    'action', p_action
+  );
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.validate_lhi_recovery_session(text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.validate_lhi_recovery_session(text, text) TO service_role;
+
 -- Align LHI discipline with README-FORM-BLOK-APLIKASI.md.
 -- Employment status and application access are stored independently.
 -- This migration is intentionally additive and preserves existing incident history.
