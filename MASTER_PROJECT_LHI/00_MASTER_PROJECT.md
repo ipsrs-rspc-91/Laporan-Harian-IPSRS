@@ -273,6 +273,57 @@ Pemisahan dilakukan bertahap setelah pemetaan fungsi, event, global state, endpo
 - Log tidak boleh memuat password, token, secret, atau data sensitif yang tidak diperlukan.
 - Proses reset akun, blokir, dan pemulihan harus memiliki audit trail dan kontrol otorisasi.
 
+### 9.3 Program audit dan pengujian keamanan
+
+Aplikasi LHI wajib memiliki program Security Assurance yang memeriksa ketahanan aplikasi terhadap akses tidak sah, pencurian akun, kebocoran data, manipulasi transaksi, dan gangguan layanan. Pemeriksaan keamanan merupakan persyaratan proyek dan release gate, bukan pekerjaan opsional.
+
+Ruang lingkup minimum pemeriksaan:
+
+1. **Authentication & account security:** brute-force dan credential-stuffing resistance, kebijakan password, proses reset akun, MFA bila ditetapkan, enumerasi akun, serta perlindungan terhadap pengambilalihan akun.
+2. **Session & token security:** penerbitan, penyimpanan, masa berlaku, rotasi, invalidasi logout, pencabutan sesi, refresh token, replay, dan pencurian token.
+3. **Authorization & privilege escalation:** akses horizontal/vertical antarpetugas, admin, dan Kepala IPSRS; IDOR/BOLA; pemeriksaan permission pada setiap endpoint; serta bypass kontrol UI.
+4. **Web application security:** OWASP Top 10 yang relevan, termasuk injection, XSS, CSRF, SSRF bila ada jalur yang memungkinkan, insecure deserialization, security misconfiguration, dan file/upload handling bila fitur tersedia.
+5. **API security:** OWASP API Security Top 10 yang relevan, termasuk broken object/property/function-level authorization, autentikasi, konsumsi resource, rate limiting, dan inventory endpoint.
+6. **Database & Supabase security:** RLS untuk seluruh tabel yang terekspos, privilege/grant, akses anon/authenticated/service role, Edge Functions, SQL injection, kebocoran secret, serta pembatasan akses langsung.
+7. **Infrastructure & deployment security:** GitHub Actions permissions, dependency/supply-chain risk, secret handling, Cloudflare configuration, CORS, security headers, environment separation, dan konfigurasi Supabase.
+8. **Data protection & auditability:** paparan data, minimisasi data, enkripsi saat transit dan saat tersimpan sesuai kemampuan platform, log aktivitas, alert, retensi, serta larangan mencatat password/token/secret.
+9. **Availability & abuse resistance:** rate limiting, abuse control, resource exhaustion, dan ketahanan terhadap pola trafik tidak wajar; uji beban harus terkoordinasi agar tidak mengganggu layanan produksi.
+
+### 9.4 Standar acuan dan metode
+
+- **OWASP ASVS** digunakan untuk menetapkan dan memverifikasi persyaratan keamanan aplikasi berdasarkan tingkat risiko.
+- **OWASP Top 10** digunakan sebagai daftar risiko utama aplikasi web.
+- **OWASP API Security Top 10** digunakan untuk evaluasi risiko API.
+- **OWASP Web Security Testing Guide (WSTG)** digunakan sebagai panduan metode pengujian aplikasi web.
+- Pengujian otomatis dapat mencakup SAST, dependency/SCA scanning, secret scanning, konfigurasi, dan DAST sesuai teknologi serta risiko.
+- Penetration test dilakukan oleh personel kompeten atau pihak independen dengan ruang lingkup, otorisasi tertulis, aturan pelaksanaan, dan laporan temuan.
+
+Acuan tersebut merupakan kerangka pemeriksaan; pemilihan kontrol dan tingkat verifikasi harus disesuaikan dengan risiko dan arsitektur aktual LHI. Tidak boleh mengklaim sertifikasi atau kepatuhan penuh hanya karena menggunakan daftar acuan tersebut.
+
+### 9.5 Frekuensi dan pemicu pemeriksaan
+
+1. Security review dilakukan sebelum release besar dan sebelum perubahan pada autentikasi, otorisasi, sesi/token, database/RLS, API, atau infrastruktur.
+2. Vulnerability scanning dilakukan berkala sesuai jadwal QA/security yang disetujui dan setelah perubahan dependensi atau konfigurasi yang signifikan.
+3. Penetration testing dilakukan sebelum penetapan kesiapan produksi/penilaian keamanan awal, kemudian berkala berbasis risiko dan setelah perubahan arsitektur atau kontrol keamanan yang material.
+4. Pengujian tambahan dilakukan setelah insiden keamanan, indikasi akun dibobol, kebocoran data, atau temuan kerentanan kritis.
+5. Jadwal, cakupan, penanggung jawab, lingkungan, dan bukti pelaksanaan dicatat dalam Security Test Plan dan laporan pengujian.
+
+### 9.6 Pengelolaan temuan dan kriteria kelulusan
+
+Setiap temuan wajib memiliki ID, aset/endpoint terdampak, bukti reproduksi yang aman, tingkat keparahan, dampak, rekomendasi, penanggung jawab, target penyelesaian, status, dan bukti retest. Tingkat risiko diklasifikasikan sekurang-kurangnya menjadi Critical, High, Medium, dan Low menggunakan metodologi yang konsisten (misalnya CVSS ditambah konteks dampak bisnis).
+
+- Temuan Critical dan High harus diperbaiki dan diuji ulang sebelum release; pengecualian hanya melalui penerimaan risiko tertulis oleh pejabat berwenang, disertai mitigasi dan batas waktu.
+- Temuan Medium dan Low harus masuk backlog dengan prioritas, pemilik, dan target penyelesaian yang terdokumentasi.
+- Penutupan temuan membutuhkan bukti retest; status fixed tidak boleh ditetapkan hanya berdasarkan klaim pengembang.
+- Hasil pengujian harus memuat cakupan, tanggal, metode, keterbatasan, temuan, bukti, retest, dan kesimpulan risiko residual.
+- Tidak boleh menyatakan aplikasi aman atau bebas peretasan. Pernyataan yang diperbolehkan adalah ruang lingkup tertentu telah diuji pada tanggal tertentu dan temuan yang diketahui telah ditangani sesuai kriteria penerimaan.
+
+### 9.7 Aturan keselamatan pengujian
+
+Pengujian aktif hanya dilakukan pada sistem dan akun yang secara tertulis diotorisasi. Utamakan staging atau lingkungan uji yang representatif. Dilarang melakukan brute force, denial-of-service, eksploitasi destruktif, pengambilan data pengguna, atau pengujian yang berpotensi mengganggu layanan produksi tanpa persetujuan eksplisit, rencana mitigasi, jendela pengujian, pemantauan, dan prosedur penghentian. Data produksi tidak boleh disalin ke lingkungan uji tanpa kontrol perlindungan data yang sesuai.
+
+---
+
 ## 10. Integrasi, dependensi, dan kontrak
 
 Setiap integrasi wajib didokumentasikan dengan:
