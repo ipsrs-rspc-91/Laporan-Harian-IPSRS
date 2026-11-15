@@ -348,7 +348,6 @@ if(a==="apiGetStaffMonitoring"){
      else if(inputToday)statusHari="SUDAH_ISI";
      const disciplineRow=disciplineByStaff.get(String(x.staff_id))||{};
      const missedStreak=Number(disciplineRow.missed_full_calendar_days||0);
-     const dayNumber=Number(disciplineRow.day_number_since_last_input||0);
      const blocked=!!(x.lhi_access_blocked_at||disciplineRow.lhi_access_blocked_at);
      return{
        staff_id:x.staff_id,nama:x.nama,jabatan:x.jabatan||"",role:x.role,role_label:label(x.role),
@@ -357,8 +356,7 @@ if(a==="apiGetStaffMonitoring"){
        sudah_isi_hari_bulan_ini:done,belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),
        total_transaksi_bulan_ini:total[x.staff_id]||0,
        hari_tidak_isi_berturut_turut:missedStreak,
-       hari_ke_tanpa_lhi:dayNumber,
-       ambang_blokir_7_hari:blocked||dayNumber>7,
+       ambang_blokir_7_hari:blocked||missedStreak>7,
        last_lhi_created_at:disciplineRow.last_lhi_created_at||null,
        last_lhi_input_date_wib:disciplineRow.last_lhi_input_date_wib||null
      };
