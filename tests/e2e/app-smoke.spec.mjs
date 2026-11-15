@@ -68,6 +68,83 @@ test('LHI global Reset stores one-time challenge and restores KA login form', as
   expect(resetState.challenge).toBe(challenge);
 });
 
+
+test('LHI recovery login uses limited capability and never opens operational API before Reset', async ({ page }) => {
+  const challenge='browser-regression-challenge-'.padEnd(48,'c');
+  const capability='limited-recovery-capability-token-'.padEnd(48,'r');
+  const cors={
+    'access-control-allow-origin':'*',
+    'access-control-allow-methods':'GET,POST,OPTIONS',
+    'access-control-allow-headers':'authorization, apikey, content-type, x-client-info',
+    'content-type':'application/json'
+  };
+  const fulfillJson=(route,body,status=200)=>route.fulfill({status,headers:cors,body:JSON.stringify(body)});
+  let normalApiCalls=0;
+  await page.route('**/functions/v1/lhi-block-status',route=>fulfillJson(route,{ok:true,blocked:true,message:'Mode Blok Aplikasi aktif.',noncompliant_staff:[]}));
+  await page.route('**/functions/v1/lhi-reset-verify',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    return fulfillJson(route,{ok:true,valid:true,challenge,expires_at:'2026-11-15T12:05:00Z'});
+  });
+  await page.route('**/auth/v1/token?grant_type=password',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    return fulfillJson(route,{
+      access_token:'browser-test-access-token',
+      token_type:'bearer',
+      expires_in:3600,
+      refresh_token:'browser-test-refresh-token',
+      user:{id:'11111111-1111-4111-8111-111111111111',aud:'authenticated',role:'authenticated',email:'kaipsrs@example.test',app_metadata:{provider:'email',providers:['email']},user_metadata:{},created_at:'2026-11-15T00:00:00Z'}
+    });
+  });
+  await page.route('**/auth/v1/logout*',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    return route.fulfill({status:204,headers:cors});
+  });
+  await page.route('**/functions/v1/lhi-recovery-exchange',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    const body=route.request().postDataJSON();
+    expect(body.challenge).toBe(challenge);
+    return fulfillJson(route,{ok:true,recovery_capability:capability,expires_at:'2026-11-15T12:10:00Z',staff_name:'KA IPSRS',role:'KA_IPSRS',incident_id:3});
+  });
+  await page.route('**/functions/v1/lhi-recovery-action',route=>{
+    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
+    const body=route.request().postDataJSON();
+    if(body.action==='apiRecoveryStatus')return fulfillJson(route,{
+      ok:true,action:'apiRecoveryStatus',incident_id:3,incident_status:'LOCKED',
+      grace_status:{incident_id:3,status:'LOCKED',snapshot_total:2,completed:0,pending:2,excluded:0,members:[
+        {staff_id:'P001',nama:'Petugas Satu',current_employment_status:'Aktif',obligation_status:'PENDING'},
+        {staff_id:'P002',nama:'Petugas Dua',current_employment_status:'Aktif',obligation_status:'PENDING'}
+      ]}
+    });
+    if(body.action==='apiStartLhiGrace')return fulfillJson(route,{
+      ok:true,action:'apiStartLhiGrace',incident_id:3,status:'GRACE',
+      started_at:'2026-11-15T00:00:00Z',deadline_at:'2026-11-20T00:00:00Z',
+      grace_status:{incident_id:3,status:'GRACE',snapshot_total:2,pending:2,completed:0,excluded:0,members:[]}
+    });
+    return fulfillJson(route,{ok:false,message:'Unexpected recovery action'},400);
+  });
+  await page.route('**/functions/v1/ipsrs-api',route=>{
+    normalApiCalls++;
+    return fulfillJson(route,{ok:false,msg:'Operational API must not be called during recovery'},403);
+  });
+
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({timeout:10000});
+  await page.locator('#lhiGlobalBlockReset').click();
+  await page.locator('#lhiResetCode').fill('123456');
+  await page.locator('#lhiResetSubmit').click();
+  await expect(page.locator('#ipsrsLoginForm')).toBeAttached({timeout:10000});
+  await page.locator('#loginUsername').fill('kaipsrs');
+  await page.locator('#loginPassword').fill('test-password');
+  await page.locator('#loginBtn').click();
+  await expect(page.getByText('SESI PEMULIHAN TERBATAS')).toBeVisible({timeout:10000});
+  await expect(page.getByText('Petugas Satu')).toBeVisible();
+  await expect(page.locator('#lhiRecoveryStart')).toBeVisible();
+  expect(normalApiCalls).toBe(0);
+  await page.locator('#lhiRecoveryStart').click();
+  await expect(page.getByText('PEMULIHAN BERHASIL')).toBeVisible({timeout:10000});
+  expect(normalApiCalls).toBe(0);
+});
+
 test('IPSRS unauthenticated startup smoke test', async ({ page }) => {
   const consoleErrors = [];
   page.on('console', msg => {
