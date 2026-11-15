@@ -3689,9 +3689,7 @@
   let _dateTimeMinuteSelectedByUser = false;
 
 
-  function parseDateOnly_(value){
-
-    const s=String(val  function renderDateTimePickerCalendar_(){
+  function renderDateTimePickerCalendar_(){
     const title=document.getElementById('datetimeMonthTitle'), days=document.getElementById('datetimeDays');
     if(!title||!days||!_dateTimePickerMonth) return;
     title.textContent=new Intl.DateTimeFormat('id-ID',{month:'long',year:'numeric'}).format(_dateTimePickerMonth);
