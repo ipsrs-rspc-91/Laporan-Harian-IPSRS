@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
       if (error || !data) return json({ ok:false, message:"Snapshot kewajiban belum dapat dibaca." },503,headers);
       if (Number(data.incident_id) !== Number(auth.incident_id))
         return json({ ok:false, message:"Insiden pemulihan tidak cocok dengan sesi." },409,headers);
-      return json({ ok:true, ...data },200,headers);
+      return json({ ok:true, grace_status:data },200,headers);
     }
 
     const { data, error } = await db.rpc("open_lhi_global_grace_v2", {
