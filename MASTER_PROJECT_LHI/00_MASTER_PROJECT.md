@@ -639,6 +639,7 @@ Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau run
 | Migration parity | Snapshot audit mencatat 75 migration remote dan 35 file migration pada `main`; branch PR #76 memiliki file tambahan yang belum berarti diterapkan | BLOCKED / NOT RECONCILED; perubahan schema produksi NO-GO |
 | Edge Functions | Snapshot runtime mencatat 8 function aktif, sedangkan `main` melacak 5; PR #80 masih OPEN/DRAFT untuk sinkronisasi source tambahan | PARTIAL; belum boleh diklaim source/runtime parity penuh |
 | Form Blok / Recovery | `open_lhi_global_grace_v2` masih mengembalikan `SAFE_CUTOVER_REQUIRED` menurut manifest audit; proses global recovery belum dapat dinyatakan operasional | FAIL-CLOSED / NOT CERTIFIED |
+| Form Blok regression coverage | `REGRESSION_MATRIX.yaml` tidak memiliki kelompok test Form Blok/Recovery pada snapshot yang diperiksa; matrix merupakan protected file karena CONTROL_BOOK berstatus LOCKED | COVERAGE GAP; jangan ubah matrix tanpa change control/unlock |
 | Kontrol Form Blok | Requirement khusus tersedia pada `README-FORM-BLOK-APLIKASI.md`; pada snapshot LOCK_REGISTER yang dirujuk dokumen, fitur ini belum tercatat sebagai modul terkunci tersendiri | NOT LISTED IN LOCK_REGISTER SNAPSHOT; bukan status LOCKED atau izin untuk mengubah produksi |
 | Security / RLS | Source review dan inventory tersedia, tetapi sertifikasi live schema, grants, RLS, dan seluruh jalur authorization belum lengkap | OPEN / NOT CERTIFIED |
 | Cloudflare | Source/deployment parity dan production smoke belum memiliki bukti lengkap pada dokumen audit yang dirujuk | OPEN / NOT CERTIFIED |
@@ -885,6 +886,28 @@ Requirement → acceptance criteria → design/ADR → module/API/schema → cod
 
 Matriks traceability wajib menunjukkan requirement tanpa implementasi, implementasi tanpa requirement, test yang belum ada, test gagal, serta perubahan yang belum diverifikasi.
 
+### 28.1 Traceability khusus Form Blok Aplikasi LHI
+
+| Requirement | Rujukan aturan rinci | Cakupan acceptance yang wajib dibuktikan | Status bukti pada snapshot |
+|---|---|---|---|
+| LHI-FR-013 | `README-FORM-BLOK-APLIKASI.md` Bagian 1–12 | Penghitungan hari berdasarkan `created_at` WIB dan status kepegawaian; peringatan hari ke-4/6/7; blokir individual hari ke-8; masa tunggu hari ke-9; blokir global hari ke-10; Reset dan autentikasi KA IPSRS; pemulihan terpadu; kelonggaran 120 jam; snapshot, pengecualian NONAKTIF, pembatalan LHI, audit append-only, dan kegagalan/percobaan ulang yang aman | Requirement teridentifikasi; persetujuan Product Owner belum tercatat; implementasi/runtime belum tersertifikasi |
+| LHI-FR-013 / test | `REGRESSION_MATRIX.yaml` | Test unit, integration, API/security negative, E2E, concurrency/idempotency, dan recovery sesuai skenario penerimaan | Belum ada kelompok test Form Blok/Recovery pada snapshot matrix yang diperiksa; jangan mengklaim regression coverage tersedia |
+
+**Batas kewenangan dan kontrol:** README Form Blok saat ini berstatus dokumen konsep/acuan kebutuhan dan secara eksplisit belum menjadi persetujuan perubahan script, database, konfigurasi, atau deployment. Karena itu, rincian Bagian 1–12 menjadi referensi analisis kebutuhan, tetapi harus dikonfirmasi dan disahkan Product Owner sebelum dianggap sebagai baseline requirement final. `LHI-FR-013` adalah identitas requirement dalam SRS, bukan bukti fitur sudah dibangun atau disetujui untuk produksi.
+
+**Kendali register terkunci:** `REGRESSION_MATRIX.yaml` termasuk protected file di bawah modul `CONTROL_BOOK` yang berstatus LOCKED pada `LOCK_REGISTER.yaml`. Master Project dan SRS ini hanya mencatat gap coverage dan kebutuhan test; keduanya **tidak mengubah** regression matrix, lock, atau baseline. Penambahan test ke matrix memerlukan prosedur unlock/change control yang berlaku dan persetujuan eksplisit sesuai Project Control Book.
+
+Usulan kelompok skenario untuk dianalisis sebelum dimasukkan ke regression matrix:
+1. Perhitungan kalender/WIB, aktivasi ulang pegawai, dan pembatalan LHI.
+2. Peringatan tahap 4/6/7 serta deduplikasi notifikasi.
+3. Blokir individual hari 8, hari 9, dan trigger global hari 10 oleh satu petugas.
+4. Form global, Reset salah/benar, role KA IPSRS, dan akses terbatas.
+5. Pemulihan terpadu, snapshot, grace 120 jam, pengecualian NONAKTIF, serta reaktivasi.
+6. Append-only audit, kegagalan parsial, idempotency, dan retry setelah respons hilang.
+7. Pengujian negatif API/RLS, session, bypass UI, dan isolasi role.
+
+Daftar di atas adalah cakupan yang diusulkan, bukan test yang sudah ada atau telah lulus.
+
 Rencana QA wajib menentukan:
 - unit, integration, contract, end-to-end, regression, security, performance, compatibility, dan recovery test;
 - cakupan browser/perangkat yang didukung;
@@ -957,5 +980,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 | 2026-11-06 | Peta arsitektur dan inventaris awal repository |
 | 2026-11-15 | Penyempurnaan menjadi dokumen induk proyek yang mencakup mandat, visi, tujuan, ruang lingkup, kebutuhan, arsitektur, standar, tata kelola, delivery, risiko, kriteria penerimaan, dan peta dokumen |
 | 2026-11-15 | Audit tahap 1: menambahkan identitas snapshot branch/PR, matriks status teknis, dan aturan interpretasi status agar temuan dokumentasi tidak disalahartikan sebagai sertifikasi produksi |
+| 2026-11-15 | Audit tahap 3: menambahkan traceability LHI-FR-013 ke README Form Blok, mengidentifikasi gap regression coverage, dan mempertahankan lock CONTROL_BOOK tanpa mengubah register |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
