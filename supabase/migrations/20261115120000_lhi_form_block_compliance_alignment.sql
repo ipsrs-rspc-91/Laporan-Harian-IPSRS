@@ -175,6 +175,53 @@ CREATE TRIGGER trg_track_lhi_employment_reactivation
 BEFORE UPDATE OF status ON public.staff
 FOR EACH ROW EXECUTE FUNCTION public.track_lhi_employment_reactivation();
 
+CREATE OR REPLACE FUNCTION public.exclude_lhi_obligations_on_deactivation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_now timestamptz := clock_timestamp();
+BEGIN
+  IF lower(COALESCE(OLD.status, '')) = 'aktif'
+     AND lower(COALESCE(NEW.status, '')) <> 'aktif' THEN
+    WITH candidates AS (
+      SELECT o.obligation_id, o.incident_id, o.staff_id,
+        CASE WHEN o.completed_at IS NULL THEN 'PENDING' ELSE 'COMPLETED' END AS old_status
+      FROM public.lhi_discipline_obligations o
+      JOIN public.lhi_discipline_incidents i ON i.incident_id = o.incident_id
+      WHERE o.staff_id = NEW.staff_id
+        AND i.status IN ('LOCKED', 'GRACE')
+        AND o.excluded_at IS NULL
+    ),
+    changed AS (
+      UPDATE public.lhi_discipline_obligations o
+      SET excluded_at = v_now
+      FROM candidates c
+      WHERE o.obligation_id = c.obligation_id
+      RETURNING o.obligation_id
+    )
+    INSERT INTO public.lhi_discipline_obligation_events(
+      incident_id, obligation_id, staff_id, event_type,
+      previous_status, new_status, event_at, actor_staff_id, actor_name, reason
+    )
+    SELECT c.incident_id, c.obligation_id, c.staff_id,
+      'OBLIGATION_EXCLUDED_INACTIVE', c.old_status,
+      'EXCLUDED_INACTIVE', v_now, 'SYSTEM', 'SYSTEM',
+      'Status kepegawaian berubah menjadi NONAKTIF; kewajiban snapshot dikecualikan secara permanen, termasuk bila petugas diaktifkan kembali.'
+    FROM candidates c
+    JOIN changed u ON u.obligation_id = c.obligation_id;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_exclude_lhi_obligations_on_deactivation ON public.staff;
+CREATE TRIGGER trg_exclude_lhi_obligations_on_deactivation
+AFTER UPDATE OF status ON public.staff
+FOR EACH ROW EXECUTE FUNCTION public.exclude_lhi_obligations_on_deactivation();
+
 CREATE OR REPLACE FUNCTION public.audit_lhi_employment_reactivation()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -185,6 +232,21 @@ BEGIN
   IF OLD.status IS DISTINCT FROM NEW.status
      AND lower(COALESCE(OLD.status, '')) <> 'aktif'
      AND lower(COALESCE(NEW.status, '')) = 'aktif' THEN
+    INSERT INTO public.lhi_discipline_obligation_events(
+      incident_id, obligation_id, staff_id, event_type,
+      previous_status, new_status, event_at, actor_staff_id, actor_name, reason
+    )
+    SELECT o.incident_id, o.obligation_id, o.staff_id,
+      'STAFF_REACTIVATED_AFTER_EXCLUSION',
+      'EXCLUDED_INACTIVE', 'EXCLUDED_INACTIVE',
+      clock_timestamp(), 'SYSTEM', 'SYSTEM',
+      'Status kepegawaian AKTIF kembali; titik awal kepatuhan di-reset, tetapi kewajiban snapshot yang telah dikecualikan tidak diaktifkan kembali.'
+    FROM public.lhi_discipline_obligations o
+    JOIN public.lhi_discipline_incidents i ON i.incident_id = o.incident_id
+    WHERE o.staff_id = NEW.staff_id
+      AND o.excluded_at IS NOT NULL
+      AND i.status IN ('LOCKED', 'GRACE');
+
     INSERT INTO public.audit_log(
       username, staff_id, action, report_id, keterangan,
       field_changed, old_value, new_value
@@ -928,6 +990,7 @@ $function$;
 REVOKE ALL ON FUNCTION public.run_lhi_discipline_scheduler() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.run_lhi_discipline_scheduler() TO service_role;
 REVOKE ALL ON FUNCTION public.track_lhi_employment_reactivation() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.exclude_lhi_obligations_on_deactivation() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.audit_lhi_employment_reactivation() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.open_lhi_global_grace_v2(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.open_lhi_global_grace_v2(text) TO service_role;
