@@ -192,9 +192,26 @@ if (fs.existsSync(appPath)) {
   const graceCompletionCannotFallThrough=scheduler.includes('IF v_active_grace IS NOT NULL THEN') &&
     scheduler.includes("'discipline_cycle_skipped', true") &&
     scheduler.indexOf("'discipline_cycle_skipped', true") < scheduler.indexOf('IF v_lock = \'NONAKTIF\' THEN');
-  if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal||!graceCompletionCannotFallThrough)
-    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; scheduler created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal+', grace completion guard='+graceCompletionCannotFallThrough);
-  else pass('LHI database alignment contract','Employment/access separation, created_at WIB, KA inclusion, day-8/day-10 thresholds, immutable events, snapshot backfill, 120-hour recovery and no same-cycle re-lock after grace completion are defined');
+  const graceSuccessKeepsGlobalUnlocked=scheduler.includes('IF v_now >= v_deadline AND v_pending = 0 THEN') &&
+    scheduler.includes("SET status = 'COMPLETED', completed_at = v_now") &&
+    scheduler.includes("SET value = 'NONAKTIF', updated_at = v_now");
+  const graceFailureRelocksOnlyForPending=scheduler.includes('ELSIF v_now >= v_deadline THEN') &&
+    scheduler.includes("SET status = 'EXPIRED', reactivated_at = v_now") &&
+    scheduler.includes("SET value = 'AKTIF', updated_at = v_now") &&
+    scheduler.includes('v_pending || \' kewajiban LHI yang belum dipenuhi');
+  const graceRequiresValidReport=scheduler.includes("r.deleted_at IS NULL") &&
+    scheduler.includes('r.created_at >= i.started_at') &&
+    scheduler.includes('r.created_at < i.deadline_at') &&
+    scheduler.includes('Petugas menginput minimal satu LHI sah selama kelonggaran 120 jam.');
+  const pendingCountsPeople=scheduler.includes('count(DISTINCT o.staff_id)') &&
+    scheduler.includes('o.completed_at IS NULL') &&
+    scheduler.includes('o.excluded_at IS NULL') &&
+    scheduler.includes("s.status = 'Aktif'");
+  if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal||
+     !graceCompletionCannotFallThrough||!graceSuccessKeepsGlobalUnlocked||
+     !graceFailureRelocksOnlyForPending||!graceRequiresValidReport||!pendingCountsPeople)
+    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal+', same-cycle guard='+graceCompletionCannotFallThrough+', all-complete stays unlocked='+graceSuccessKeepsGlobalUnlocked+', pending re-lock='+graceFailureRelocksOnlyForPending+', valid report window='+graceRequiresValidReport+', count per person='+pendingCountsPeople);
+  else pass('LHI database alignment contract','Grace closes with access open only when every active snapshot member has >=1 valid LHI within 120 hours; only remaining pending members cause re-lock; counts people, not daily obligation rows; scheduler cannot re-lock in same invocation');
 
   const hasRestrictedRecovery=app.includes("functions/v1/lhi-recovery-exchange") &&
     app.includes("functions/v1/lhi-recovery-action") &&
