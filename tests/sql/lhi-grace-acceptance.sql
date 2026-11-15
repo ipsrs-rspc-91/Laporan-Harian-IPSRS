@@ -165,8 +165,9 @@ END $$;
 -- RLS: an individually blocked user and a globally blocked user cannot read or write reports.
 UPDATE public.access_settings SET value='NONAKTIF' WHERE key='LHI_GLOBAL_BLOCK';
 UPDATE public.staff SET lhi_access_blocked_at=now() WHERE staff_id='A';
+BEGIN;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
-SET ROLE authenticated;
+SET LOCAL ROLE authenticated;
 DO $$
 DECLARE v_count integer; v_denied boolean:=false;
 BEGIN
@@ -179,11 +180,13 @@ BEGIN
   IF NOT v_denied THEN RAISE EXCEPTION 'FAIL: individual block did not deny report writes'; END IF;
 END $$;
 RESET ROLE;
+COMMIT;
 
 UPDATE public.staff SET lhi_access_blocked_at=NULL WHERE staff_id='A';
 UPDATE public.access_settings SET value='AKTIF' WHERE key='LHI_GLOBAL_BLOCK';
+BEGIN;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
-SET ROLE authenticated;
+SET LOCAL ROLE authenticated;
 DO $$
 DECLARE v_count integer; v_denied boolean:=false;
 BEGIN
@@ -196,13 +199,33 @@ BEGIN
   IF NOT v_denied THEN RAISE EXCEPTION 'FAIL: global block did not deny report writes'; END IF;
 END $$;
 RESET ROLE;
+COMMIT;
+
+-- Normal access is restored once both global and individual locks are cleared.
+UPDATE public.access_settings SET value='NONAKTIF' WHERE key='LHI_GLOBAL_BLOCK';
+UPDATE public.staff SET lhi_access_blocked_at=NULL WHERE staff_id='A';
+BEGIN;
+SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',true);
+SET LOCAL ROLE authenticated;
+DO $
+DECLARE v_count integer;
+BEGIN
+  SELECT count(*) INTO v_count FROM public.reports;
+  IF v_count < 1 THEN RAISE EXCEPTION 'FAIL: normal user could not read reports after both locks were cleared'; END IF;
+  INSERT INTO public.reports(report_id,staff_id,created_at) VALUES ('RLS-NORMAL','A',now());
+END $;
+RESET ROLE;
+COMMIT;
 
 -- KA IPSRS cannot bypass the server-owned global lock through Data API writes.
+UPDATE public.access_settings SET value='AKTIF' WHERE key='LHI_GLOBAL_BLOCK';
+BEGIN;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
-SET ROLE authenticated;
+SET LOCAL ROLE authenticated;
 UPDATE public.access_settings SET value='NONAKTIF' WHERE key='LHI_GLOBAL_BLOCK';
 RESET ROLE;
-DO $$
+COMMIT;
+DO $
 BEGIN
   IF (SELECT value FROM public.access_settings WHERE key='LHI_GLOBAL_BLOCK') <> 'AKTIF' THEN
     RAISE EXCEPTION 'FAIL: authenticated KA changed the server-owned global lock';
