@@ -143,7 +143,7 @@ Until that corrective PR is reviewed, tested, and released, the discrepancy rema
 | `lhi-recovery-exchange` | ACTIVE v1 | Tidak | Exact source sync diajukan di PR #80 |
 | `lhi-recovery-action` | ACTIVE v1 | Tidak | Exact source sync diajukan di PR #80 |
 
-## 7. Verification status
+## 8. Verification status
 
 | Area | Status |
 |---|---|
@@ -157,7 +157,7 @@ Until that corrective PR is reviewed, tested, and released, the discrepancy rema
 | Per-action negative tests | NOT VERIFIED |
 | Runtime API health/security | NOT VERIFIED |
 
-## 8. Riwayat
+## 9. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
