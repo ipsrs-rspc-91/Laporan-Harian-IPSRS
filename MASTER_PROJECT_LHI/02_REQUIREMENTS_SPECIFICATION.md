@@ -89,6 +89,20 @@ Aturan rinci berikut tidak boleh didefinisikan ulang secara informal di dokumen 
 
 Masing-masing harus mengacu pada spesifikasi resmi modul dan diuji dengan positive serta negative test. Bila ada konflik antar dokumen, hentikan perubahan terkait dan selesaikan melalui change control.
 
+### 6.1 Referensi rinci LHI-FR-013 — Form Blok Aplikasi
+
+Requirement `LHI-FR-013` merujuk pada `README-FORM-BLOK-APLIKASI.md` Bagian 1–12 untuk rincian aturan penghitungan, tahapan peringatan, notifikasi, blokir individual/global, Reset, kewenangan KA IPSRS, grace period 120 jam, snapshot kewajiban, pengecualian status NONAKTIF, audit, skenario penerimaan, dan tata kelola implementasi.
+
+README tersebut saat ini menyatakan dirinya sebagai dokumen konsep/acuan kebutuhan dan belum menjadi persetujuan perubahan script, database, konfigurasi, atau deployment. Dengan demikian:
+- Aturan pada README adalah bahan spesifikasi rinci untuk dikonfirmasi Product Owner, bukan persetujuan otomatis untuk implementasi.
+- Prioritas Critical pada tabel LHI-FR-013 adalah prioritas usulan awal, bukan izin perubahan produksi.
+- Detail bisnis tidak boleh disalin sebagai aturan alternatif ke dokumen lain; perubahan/penyelesaian konflik harus melalui change control.
+- Implementasi, status runtime, dan kesiapan recovery harus dinilai terpisah dari kelengkapan dokumen.
+
+Cakupan penerimaan FR-013 sekurang-kurangnya harus membuktikan: (1) hitung kalender/WIB dan status kepegawaian; (2) notifikasi hari ke-4/6/7; (3) blokir individual hari ke-8, masa tunggu hari ke-9, dan trigger global hari ke-10; (4) Reset serta autentikasi dan pembatasan KA IPSRS; (5) pemulihan terpadu dan grace period 120 jam; (6) snapshot, pengecualian NONAKTIF, reaktivasi, dan pembatalan LHI; (7) audit append-only; serta (8) failure atomicity, idempotency, dan retry aman.
+
+**Gap pengujian:** snapshot `REGRESSION_MATRIX.yaml` yang diperiksa belum memiliki kelompok test Form Blok/Recovery. File tersebut tercatat sebagai protected file di bawah CONTROL_BOOK LOCKED. Penambahan skenario ke matrix harus mengikuti prosedur unlock/change control dan persetujuan yang berlaku; dokumen SRS ini tidak mengubah register tersebut.
+
 ## 7. Requirement traceability
 
 Setiap requirement wajib ditautkan pada:
@@ -111,3 +125,4 @@ Gunakan Critical/High/Medium/Low dengan dampak operasional dan keamanan. Priorit
 | Tanggal | Perubahan |
 |---|---|
 | 15 November 2026 | Baseline awal kebutuhan sistem LHI |
+| 15 November 2026 | Memperjelas referensi rinci LHI-FR-013, status persetujuan README Form Blok, dan gap regression coverage tanpa mengubah protected control registers |
