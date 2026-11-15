@@ -356,7 +356,7 @@ if(a==="apiGetStaffMonitoring"){
        sudah_isi_hari_bulan_ini:done,belum_isi_hari_bulan_ini:Math.max(0,requiredDays-done),
        total_transaksi_bulan_ini:total[x.staff_id]||0,
        hari_tidak_isi_berturut_turut:missedStreak,
-       ambang_blokir_7_hari:blocked||missedStreak>=7,
+       ambang_blokir_7_hari:blocked||missedStreak>7,
        last_lhi_created_at:disciplineRow.last_lhi_created_at||null,
        last_lhi_input_date_wib:disciplineRow.last_lhi_input_date_wib||null
      };
