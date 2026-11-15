@@ -38,11 +38,9 @@ END $$;
 
 -- A valid report in the active window must appear COMPLETED even before scheduler refresh.
 INSERT INTO public.reports(report_id,staff_id,created_at,role_snapshot,tanggal)
-SELECT 'A-1','A',started_at+interval '1 minute','PETUGAS',current_date
-FROM public.lhi_discipline_incidents WHERE incident_id=1;
+VALUES ('A-1','A',clock_timestamp(),NULL,'PETUGAS',current_date);
 INSERT INTO public.reports(report_id,staff_id,created_at,role_snapshot,tanggal)
-SELECT 'B-1','B',started_at+interval '2 minutes','PETUGAS',current_date
-FROM public.lhi_discipline_incidents WHERE incident_id=1;
+VALUES ('B-1','B',clock_timestamp(),NULL,'PETUGAS',current_date);
 
 DO $$
 DECLARE v_status jsonb;
@@ -70,7 +68,7 @@ END $$;
 
 -- At the deadline, all active snapshot members are complete and the inactive member is excluded:
 -- global access must stay open.
-UPDATE public.lhi_discipline_incidents SET deadline_at=now()-interval '1 second' WHERE incident_id=1;
+UPDATE public.lhi_discipline_incidents SET deadline_at=clock_timestamp() WHERE incident_id=1;
 SELECT public.run_lhi_discipline_scheduler();
 DO $$
 BEGIN
@@ -108,8 +106,7 @@ BEGIN
 END $$;
 
 INSERT INTO public.reports(report_id,staff_id,created_at,role_snapshot,tanggal)
-SELECT 'A-2','A',started_at+interval '1 minute','PETUGAS',current_date
-FROM public.lhi_discipline_incidents WHERE incident_id=2;
+VALUES ('A-2','A',clock_timestamp(),NULL,'PETUGAS',current_date);
 SELECT public.run_lhi_discipline_scheduler();
 UPDATE public.reports SET deleted_at=now() WHERE report_id='A-2';
 SELECT public.run_lhi_discipline_scheduler();
@@ -126,7 +123,7 @@ BEGIN
   END IF;
 END $$;
 
-UPDATE public.lhi_discipline_incidents SET deadline_at=now()-interval '1 second' WHERE incident_id=2;
+UPDATE public.lhi_discipline_incidents SET deadline_at=clock_timestamp() WHERE incident_id=2;
 SELECT public.run_lhi_discipline_scheduler();
 DO $$
 BEGIN
