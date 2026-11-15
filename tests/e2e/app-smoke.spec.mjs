@@ -71,7 +71,7 @@ test('IPSRS critical frontend assets are reachable', async ({ request }) => {
     .filter(src => {
       const clean = src.split('?')[0].split('#')[0].replace(/^\.\//, '').replace(/^\//, '');
       return clean.endsWith('.js') && [
-        'app.js','config.js','laporan-fast-v2.js','login-fast.js', 'shared/dom-utils.js','shared/date-utils.js',
+        'app.js','config.js','laporan-fast-v2.js','login-fast.js', 'shared/dom-utils.js','shared/date-utils.js','shared/master-data-utils.js',
         'dashboard-loading-v2.js','access-policy-ui.js','static-data.js',
         'required-fields-ui.js','access-control.js','access-visibility-fix.js',
         'laporan-loading-state.js','js/kategori-modal.js'
@@ -524,4 +524,25 @@ test('shared date utilities preserve legacy formatting contracts', async () => {
   expect(utils.formatLastSeen_(null)).toBe('-');
   expect(utils.formatLastSeen_(new Date(Date.now()-90*1000).toISOString())).toBe('1 menit lalu');
   expect(utils.todayLocalISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('shared master-data utilities preserve Area Kerja grouping rules', async () => {
+  const vm = await import('node:vm');
+  const source = await readFile(new URL('../../frontend/shared/master-data-utils.js', import.meta.url), 'utf8');
+  const sandbox = { window: {}, String };
+  vm.runInNewContext(source, sandbox);
+  const group = sandbox.window.getAreaKerjaGroup_;
+
+  expect(group('M.E. Umum')).toBe('M.E.');
+  expect(group('Sipil Gedung A')).toBe('SIPIL');
+  expect(group('Elektromedik')).toBe('ELEKTROMEDIK');
+  expect(group('Kesling')).toBe('KESLING');
+  expect(group('Cek List Utilitas')).toBe('CEK LIST UTILITAS');
+  expect(group('Administrasi IPSRS')).toBe('ADMINISTRASI IPSRS');
+  expect(group('Rapat dan Pertemuan')).toBe('LAINNYA');
+  expect(group('Rapat/Pertemuan')).toBe('RAPAT/PERTEMUAN');
+  expect(group('Area Ruang Panel LVMDV Lantai 1')).toBe('CEK LIST LVMDP');
+  expect(group('Kitchen Dapur')).toBe('KITCHEN / DAPUR');
+  expect(group('Area Tidak Dikenal')).toBe('LAINNYA');
+  expect(group(null)).toBe('LAINNYA');
 });
