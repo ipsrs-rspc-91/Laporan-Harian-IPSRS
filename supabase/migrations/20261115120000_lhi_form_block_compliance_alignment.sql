@@ -431,6 +431,7 @@ USING (
   (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
   AND (SELECT private.lhi_normal_access_allowed())
   AND key <> 'LHI_RESET_CODE_HASH'::text
+  AND key <> 'LHI_GLOBAL_BLOCK'::text
 );
 
 DROP POLICY IF EXISTS access_settings_insert_ka ON public.access_settings;
@@ -440,6 +441,7 @@ WITH CHECK (
   (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
   AND (SELECT private.lhi_normal_access_allowed())
   AND key <> 'LHI_RESET_CODE_HASH'::text
+  AND key <> 'LHI_GLOBAL_BLOCK'::text
 );
 
 DROP POLICY IF EXISTS access_settings_read_ka ON public.access_settings;
@@ -449,6 +451,7 @@ USING (
   (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
   AND (SELECT private.lhi_normal_access_allowed())
   AND key <> 'LHI_RESET_CODE_HASH'::text
+  AND key <> 'LHI_GLOBAL_BLOCK'::text
 );
 
 DROP POLICY IF EXISTS access_settings_update_ka ON public.access_settings;
@@ -458,11 +461,13 @@ USING (
   (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
   AND (SELECT private.lhi_normal_access_allowed())
   AND key <> 'LHI_RESET_CODE_HASH'::text
+  AND key <> 'LHI_GLOBAL_BLOCK'::text
 )
 WITH CHECK (
   (SELECT private.current_staff_role()) = 'KA_IPSRS'::text
   AND (SELECT private.lhi_normal_access_allowed())
   AND key <> 'LHI_RESET_CODE_HASH'::text
+  AND key <> 'LHI_GLOBAL_BLOCK'::text
 );
 
 DROP POLICY IF EXISTS edit_permissions_delete_ka ON public.edit_permissions;
