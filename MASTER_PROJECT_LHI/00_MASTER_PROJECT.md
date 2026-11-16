@@ -196,7 +196,7 @@ Kode `FR-01` sampai `FR-14` pada tabel kapabilitas Master Project adalah pengelo
 | FR-08 Dashboard | LHI-FR-010 | DASH | Ringkasan operasional dan rekonsiliasi sumber |
 | FR-09 Rekap bulanan | LHI-FR-011 | REKAP | Agregasi berdasarkan periode |
 | FR-10 Monitoring | LHI-FR-012 | MONITORING | Definisi status dan aktivitas petugas |
-| FR-11 Form Blok Aplikasi | LHI-FR-013 | LHI_DISCIPLINE_RECOVERY, AUTH, MONITORING | Detail aturan merujuk README Form Blok; approval dan regression coverage masih terbuka |
+| FR-11 Form Blok Aplikasi | LHI-FR-013 | LHI_DISCIPLINE_RECOVERY, AUTH, MONITORING | README menyatakan spesifikasi approved for implementation; PR #76 full regression gate PASS; production migration/recovery belum tersertifikasi |
 | FR-12 Audit trail | LHI-FR-014 | AUDIT_LOG | Aktor, waktu, objek, tindakan, dan hasil |
 | FR-13 Ekspor | LHI-FR-015 | REPORT | Ekspor sesuai permission |
 | FR-14 PWA/cache | LHI-FR-016 | PWA | Konsistensi versi asset dan cache |
@@ -837,7 +837,7 @@ Pemetaan endpoint, tabel, role, policy, dan dependency setiap handler belum dian
 | IPSRS Automated Audit Gate | `.github/workflows/ipsrs-audit-gate.yml` | Audit statis dan browser regression |
 | Deploy IPSRS Production | `.github/workflows/deploy-production.yml` | Deployment Cloudflare, GitHub Pages, dan Supabase secara kondisional |
 
-Status workflow harus diperiksa berdasarkan run yang relevan. Dokumen ini tidak menyatakan workflow tertentu sedang PASS.
+Status workflow harus diperiksa berdasarkan run yang relevan. Pada 16 November 2026, workflow PR #76 `43835446297` berstatus SUCCESS untuk SHA `eafb67e` (static audit, Deno type-check, PostgreSQL, browser 20/20, dan deployment-gate audit). Bukti ini hanya berlaku untuk branch/CI tersebut, bukan production deployment.
 
 ## 22. Dokumen dan register rujukan
 
