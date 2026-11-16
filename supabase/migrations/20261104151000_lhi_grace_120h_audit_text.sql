@@ -8,7 +8,8 @@ BEGIN
   SELECT pg_get_functiondef('public.run_lhi_discipline_scheduler()'::regprocedure)
     INTO v_definition;
   IF position(v_old IN v_definition)=0 THEN
-    RAISE EXCEPTION 'Scheduler audit text patch failed: old 12-hour text not found.';
+    IF position(v_new IN v_definition)>0 THEN RETURN; END IF;
+    RAISE EXCEPTION 'Scheduler audit text patch failed: old 12-hour text not found and 120-hour text is absent.';
   END IF;
   v_definition := replace(v_definition,v_old,v_new);
   EXECUTE v_definition;

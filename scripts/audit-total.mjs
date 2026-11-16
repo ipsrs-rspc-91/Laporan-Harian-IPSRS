@@ -157,6 +157,147 @@ if (fs.existsSync(appPath)) {
   }
 }
 
+// LHI Form Blok acceptance contract: keep README, database, API, and UI on one authority.
+{
+  const readmePath=path.join(root,'README-FORM-BLOK-APLIKASI.md');
+  const migrationPath=path.join(root,'supabase','migrations','20261115120000_lhi_form_block_compliance_alignment.sql');
+  const apiPath=path.join(root,'supabase','functions','ipsrs-api','index.ts');
+  const readme=fs.existsSync(readmePath)?fs.readFileSync(readmePath,'utf8'):'';
+  const migration=fs.existsSync(migrationPath)?fs.readFileSync(migrationPath,'utf8'):'';
+  const api=fs.existsSync(apiPath)?fs.readFileSync(apiPath,'utf8'):'';
+  const app=fs.existsSync(appPath)?fs.readFileSync(appPath,'utf8'):'';
+
+  const migrationContract=[
+    'lhi_access_blocked_at','lhi_employment_activated_at',
+    'get_lhi_discipline_status','Asia/Jakarta','r.created_at',
+    'lhi_discipline_obligation_events','reject_lhi_obligation_event_mutation',
+    'snapshot_missed_days','SNAPSHOT_BACKFILLED','exclude_lhi_obligations_on_deactivation',
+    'STAFF_REACTIVATED_AFTER_EXCLUSION','private.lhi_normal_access_allowed',
+    'reports_insert_own','DROP POLICY IF EXISTS reports_select_authorized',
+    'DROP POLICY IF EXISTS access_settings_read_ka','AND key <> \'LHI_GLOBAL_BLOCK\'::text','authenticated_read_master_data',
+    'REVOKE ALL ON TABLE public.staff_dropdown','GRANT SELECT ON TABLE public.staff_dropdown TO service_role',
+    'staff_dropdown','open_lhi_global_grace_v2',
+    "interval '120 hours'","status = 'Aktif'",
+    'IF v_days >= 8','WHERE missed_days >= 10',
+    'reject_lhi_obligation_event_mutation'
+  ];
+  const missingMigration=migrationContract.filter(token=>!migration.includes(token));
+  const schedulerStart=migration.indexOf('CREATE OR REPLACE FUNCTION public.run_lhi_discipline_scheduler');
+  const schedulerEnd=migration.indexOf('CREATE OR REPLACE FUNCTION public.get_lhi_grace_status_v2',schedulerStart);
+  const scheduler=schedulerStart>=0&&schedulerEnd>schedulerStart?migration.slice(schedulerStart,schedulerEnd):'';
+  const schedulerUsesCreatedAt=scheduler.includes('r.created_at')&&!scheduler.includes('r.tanggal');
+  const schedulerIncludesKa=scheduler.includes("WHERE s.status = 'Aktif'")&&!/role\s*<>\s*'KA_IPSRS'/i.test(scheduler);
+  const daySevenNotBlocked=scheduler.includes('IF v_days >= 8');
+  const dayTenGlobal=scheduler.includes('WHERE missed_days >= 10');
+  const graceCompletionCannotFallThrough=scheduler.includes('IF v_active_grace IS NOT NULL THEN') &&
+    scheduler.includes("'discipline_cycle_skipped', true") &&
+    scheduler.indexOf("'discipline_cycle_skipped', true") < scheduler.indexOf('IF v_lock = \'NONAKTIF\' THEN');
+  const graceSuccessKeepsGlobalUnlocked=scheduler.includes('IF v_now >= v_deadline AND v_pending = 0 THEN') &&
+    scheduler.includes("SET status = 'COMPLETED', completed_at = v_now") &&
+    scheduler.includes("SET value = 'NONAKTIF', updated_at = v_now");
+  const graceFailureRelocksOnlyForPending=scheduler.includes('ELSIF v_now >= v_deadline THEN') &&
+    scheduler.includes("SET status = 'EXPIRED', reactivated_at = v_now") &&
+    scheduler.includes("SET value = 'AKTIF', updated_at = v_now") &&
+    scheduler.includes('v_pending || \' kewajiban LHI yang belum dipenuhi');
+  const graceRequiresValidReport=scheduler.includes("r.deleted_at IS NULL") &&
+    scheduler.includes('r.created_at >= i.started_at') &&
+    scheduler.includes('r.created_at < i.deadline_at') &&
+    scheduler.includes('Petugas menginput minimal satu LHI sah selama kelonggaran 120 jam.');
+  const globalLockWriteGuard=(migration.match(/AND key <> 'LHI_GLOBAL_BLOCK'::text/g)||[]).length===5;
+  const pendingCountsPeople=scheduler.includes('count(DISTINCT o.staff_id)') &&
+    scheduler.includes('o.completed_at IS NULL') &&
+    scheduler.includes('o.excluded_at IS NULL') &&
+    scheduler.includes("s.status = 'Aktif'");
+  if(missingMigration.length||!schedulerUsesCreatedAt||!schedulerIncludesKa||!daySevenNotBlocked||!dayTenGlobal||
+     !graceCompletionCannotFallThrough||!graceSuccessKeepsGlobalUnlocked||
+     !graceFailureRelocksOnlyForPending||!graceRequiresValidReport||!pendingCountsPeople||!globalLockWriteGuard)
+    fail('LHI database alignment contract','Missing: '+missingMigration.join(', ')+'; created_at='+schedulerUsesCreatedAt+', includes KA='+schedulerIncludesKa+', day8='+daySevenNotBlocked+', day10='+dayTenGlobal+', same-cycle guard='+graceCompletionCannotFallThrough+', all-complete stays unlocked='+graceSuccessKeepsGlobalUnlocked+', pending re-lock='+graceFailureRelocksOnlyForPending+', valid report window='+graceRequiresValidReport+', count per person='+pendingCountsPeople+', protected global-lock writes='+globalLockWriteGuard);
+  else pass('LHI database alignment contract','Grace closes with access open only when every active snapshot member has >=1 valid LHI within 120 hours; only remaining pending members cause re-lock; counts people, not daily obligation rows; scheduler cannot re-lock in same invocation; authenticated KA cannot directly write the global lock setting');
+
+  const hasRestrictedRecovery=app.includes("functions/v1/lhi-recovery-exchange") &&
+    app.includes("functions/v1/lhi-recovery-action") &&
+    app.includes("IPSRS_LHI_RECOVERY_CHALLENGE") &&
+    app.includes("renderLhiRecoveryScreen_") &&
+    app.includes("apiStartLhiGrace");
+  const exchangeBeforeOperationalLogin=app.indexOf("functions/v1/lhi-recovery-exchange")>0 &&
+    app.indexOf("functions/v1/lhi-recovery-exchange")<app.indexOf("action:'apiWhoAmI'");
+  if(hasRestrictedRecovery&&exchangeBeforeOperationalLogin)
+    pass('LHI restricted recovery flow','One-time challenge is exchanged for a limited KA IPSRS capability before normal API login');
+  else fail('LHI restricted recovery flow','Reset must use recovery-exchange and recovery-action before any normal apiWhoAmI call');
+
+  const recoveryFunctionPaths=[
+    'supabase/functions/lhi-reset-verify/index.ts',
+    'supabase/functions/lhi-block-status/index.ts',
+    'supabase/functions/lhi-recovery-exchange/index.ts',
+    'supabase/functions/lhi-recovery-action/index.ts'
+  ];
+  const missingRecoveryFunctions=recoveryFunctionPaths.filter(rel=>!fs.existsSync(path.join(root,rel)));
+  const supabaseConfig=fs.existsSync(path.join(root,'supabase','config.toml'))
+    ? fs.readFileSync(path.join(root,'supabase','config.toml'),'utf8') : '';
+  const deployWorkflowText=fs.existsSync(path.join(root,'.github','workflows','deploy-production.yml'))
+    ? fs.readFileSync(path.join(root,'.github','workflows','deploy-production.yml'),'utf8') : '';
+  const deployRecoveryFunctions=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
+    .every(name=>deployWorkflowText.includes(name))
+    && deployWorkflowText.includes('supabase functions deploy "$fn"');
+  const recoveryTablesMigration=fs.existsSync(path.join(root,'supabase','migrations','20261104103000_lhi_recovery_expired_incident_fix.sql'))
+    ? fs.readFileSync(path.join(root,'supabase','migrations','20261104103000_lhi_recovery_expired_incident_fix.sql'),'utf8') : '';
+  const recoverySchemaComplete=recoveryTablesMigration.includes('CREATE TABLE IF NOT EXISTS public.lhi_recovery_challenges')
+    && recoveryTablesMigration.includes('CREATE TABLE IF NOT EXISTS public.lhi_recovery_sessions')
+    && migration.includes('CREATE TABLE IF NOT EXISTS public.lhi_reset_attempts')
+    && migration.includes('CREATE OR REPLACE FUNCTION public.register_lhi_reset_attempt')
+    && migration.includes('CREATE OR REPLACE FUNCTION public.validate_lhi_recovery_session');
+  const recoveryJwtConfig=['lhi-reset-verify','lhi-block-status','lhi-recovery-exchange','lhi-recovery-action']
+    .every(name=>new RegExp('\\[functions\\.'+name+'\\]\\s+verify_jwt\\s*=\\s*false').test(supabaseConfig));
+  const recoveryActionPath=path.join(root,'supabase','functions','lhi-recovery-action','index.ts');
+  const recoveryActionSource=fs.existsSync(recoveryActionPath)?fs.readFileSync(recoveryActionPath,'utf8'):'';
+  const recoveryResponseMatchesUi=(
+      recoveryActionSource.includes('grace_status:data') ||
+      recoveryActionSource.includes('grace_status: graceStatus')
+    ) && app.includes('statusPayload&&statusPayload.grace_status');
+  if(missingRecoveryFunctions.length||!deployRecoveryFunctions||!recoverySchemaComplete||!recoveryJwtConfig||!recoveryResponseMatchesUi)
+    fail('LHI recovery backend completeness','Missing function sources: '+missingRecoveryFunctions.join(', ')
+      +'; deployment functions='+deployRecoveryFunctions+'; recovery schema='+recoverySchemaComplete
+      +'; JWT config='+recoveryJwtConfig+'; response/UI contract='+recoveryResponseMatchesUi);
+  else pass('LHI recovery backend completeness','Reset, block-status, challenge exchange, limited recovery action, database tables/RPCs, deployment and frontend response contracts are present');
+
+  const apiContract=api.includes('lhi_access_blocked_at') &&
+    api.includes('get_lhi_discipline_status') &&
+    api.includes('LHI_GLOBAL_BLOCK') &&
+    api.includes('Pemulihan hanya dapat dijalankan melalui Form Blok Aplikasi') &&
+    !api.includes('// LHI DISCIPLINE GATE:');
+  if(apiContract)pass('LHI API enforcement','API fails closed on global lock, enforces dedicated access-block field, and delegates streak to database RPC');
+  else fail('LHI API enforcement','API still contains legacy login-time LHI counting or lacks dedicated access/global-lock enforcement');
+
+  const frontendNoLocalIncrement=!app.includes("streak+(l.status_hari_ini==='BELUM_ISI'?1:0)") &&
+    app.includes('const effectiveStreak=streak;') &&
+    app.includes('lhi_access_blocked_at');
+  if(frontendNoLocalIncrement)pass('LHI monitoring authority','Frontend displays server streak without adding a local day');
+  else fail('LHI monitoring authority','Frontend still calculates/increments the compliance streak locally');
+
+  const readmeContract=readme.includes('created_at') &&
+    readme.includes('120 jam') &&
+    readme.includes('status kepegawaian') &&
+    readme.includes('append-only') &&
+    readme.includes('Supabase Data API/RLS');
+  if(readmeContract)pass('LHI README acceptance specification','README defines created_at/WIB, employment/access separation, snapshot history, 120-hour recovery, and RLS enforcement');
+  else fail('LHI README acceptance specification','README does not fully state the agreed implementation contract');
+
+  const deployWorkflowPath=path.join(root,'.github','workflows','deploy-production.yml');
+  const deployWorkflow=fs.existsSync(deployWorkflowPath)?fs.readFileSync(deployWorkflowPath,'utf8'):'';
+  const cloudflareStart=deployWorkflow.indexOf('  deploy-cloudflare:');
+  const pagesStart=deployWorkflow.indexOf('  deploy-pages:');
+  const resultStart=deployWorkflow.indexOf('  production-result:');
+  const cloudflareJob=cloudflareStart>=0&&pagesStart>cloudflareStart?deployWorkflow.slice(cloudflareStart,pagesStart):'';
+  const pagesJob=pagesStart>=0&&resultStart>pagesStart?deployWorkflow.slice(pagesStart,resultStart):'';
+  const deploymentOrder=cloudflareJob.includes('needs: [detect-changes, deploy-supabase]') &&
+    cloudflareJob.includes("needs.deploy-supabase.result == 'success'") &&
+    pagesJob.includes('needs: [detect-changes, deploy-supabase, deploy-cloudflare]') &&
+    pagesJob.includes("needs.deploy-cloudflare.result == 'success'") &&
+    deployWorkflow.includes("needs.detect-changes.outputs.supabase == 'true' && needs.deploy-supabase.result != 'success'");
+  if(deploymentOrder)pass('Production deployment dependency gate','Cloudflare/Pages wait for Supabase success when backend changes are present');
+  else fail('Production deployment dependency gate','Frontend deployment is not strictly gated behind successful Supabase backend deployment');
+}
+
 function parseLockedProtectedFiles(lockText){
   const lines=lockText.split(/\r?\n/);
   let currentId='', currentStatus='', protectedMode=false;

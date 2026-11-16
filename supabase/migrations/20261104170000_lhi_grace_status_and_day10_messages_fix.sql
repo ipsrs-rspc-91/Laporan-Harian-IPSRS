@@ -10,7 +10,14 @@ BEGIN
 
   v_old := 'REACTIVATE_LHI_STAFF_DAY_9';
   v_new := 'REACTIVATE_LHI_STAFF_DAY_10';
-  IF position(v_old IN v_definition)=0 THEN RAISE EXCEPTION 'Expected day-9 reactivation audit action not found'; END IF;
+  IF position(v_old IN v_definition)=0 THEN
+    IF position(v_new IN v_definition)>0
+       AND position('ACTIVATE_LHI_GLOBAL_BLOCK_DAY_10' IN v_definition)>0
+       AND position('mencapai 10 hari kalender tanpa LHI' IN v_definition)>0 THEN
+      RETURN;
+    END IF;
+    RAISE EXCEPTION 'Expected day-9 reactivation audit action not found and day-10 state is absent';
+  END IF;
   v_definition := replace(v_definition,v_old,v_new);
 
   v_old := 'ACTIVATE_LHI_GLOBAL_BLOCK_DAY_9';
