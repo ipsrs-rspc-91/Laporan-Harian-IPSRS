@@ -162,7 +162,7 @@ Fungsi `open_lhi_global_grace_v2` yang saat ini ada di database masih mengembali
 - Repository variable `SUPABASE_MIGRATION_PARITY_VERIFIED` hanya boleh diset `true` setelah rekonsiliasi selesai, bukti disimpan, dan approval diberikan.
 - Setelah parity disetujui, deployment tetap memerlukan backup, checkpoint, regression, migration review, dan production verification.
 
-## 8. Riwayat
+## 8. Riwayat snapshot awal
 
 | Tanggal | Perubahan |
 |---|---|
