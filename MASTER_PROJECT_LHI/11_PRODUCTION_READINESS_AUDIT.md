@@ -206,7 +206,44 @@ Implikasi:
 | LHI-REC-03 | P1 | Uji end-to-end challenge, exchange, capability expiry/revoke, recovery status, dan failure path | OPEN |
 | LHI-REC-04 | P1 | Verifikasi UI dan API menampilkan status yang sama dengan database | OPEN |
 
-## 13. Riwayat
+## 13. Recheck read-only dan branch regression — 16 November 2026
+
+### 13.1 Kondisi production yang dikonfirmasi
+
+Pemeriksaan read-only terhadap schema dan runtime Supabase pada 16 November 2026 mengonfirmasi:
+- Migration history remote masih berjumlah 75 versi; migration alignment PR #76 belum tercatat sebagai migration production.
+- Kolom staff.lhi_access_blocked_at dan staff.lhi_employment_activated_at belum tersedia.
+- Kolom snapshot_last_lhi_created_at dan snapshot_missed_days pada lhi_discipline_obligations belum tersedia.
+- Tabel lhi_discipline_obligation_events belum tersedia.
+- Function production open_lhi_global_grace_v2 masih mengembalikan SAFE_CUTOVER_REQUIRED setelah memvalidasi recovery session.
+- LHI_GLOBAL_BLOCK NONAKTIF; satu incident GRACE aktif dengan deadline 19 November 2026 pukul 18.17 WIB.
+- Pada saat query terdapat 22 staff Aktif, 18 Nonaktif, dan 42 baris obligation yang masih pending. Angka pending adalah baris obligation, bukan jumlah orang unik.
+
+Tidak ada SQL DDL/DML, migration, function deployment, Auth setting, lock, incident, atau obligation yang diubah selama recheck.
+
+### 13.2 Bukti branch PR #76
+
+PR #76 pada SHA eafb67ed0a39432ead7610ac56c6ecd8b60fc61b telah menyelesaikan GitHub Actions workflow 43835446297 dengan status SUCCESS:
+- IPSRS Automated Audit Gate: static audit PASS dan Deno Edge Function type-check PASS.
+- PostgreSQL LHI Grace + Recovery Regression: PASS.
+- Browser Smoke Regression: 20/20 PASS.
+- Deployment Gate audit: PASS.
+
+Ini membuktikan source dan test pada branch PR #76 lulus gate otomatis yang tercantum, bukan bahwa migration atau Edge Function telah diterapkan ke production. PR masih OPEN/DRAFT.
+
+### 13.3 Keputusan kesiapan
+
+| Area | Status terbaru | Keputusan |
+|---|---|---|
+| Branch Form Blok / Recovery | FULL AUTOMATED REGRESSION PASS | Siap untuk review perubahan; belum release |
+| Schema production | Belum mengikuti migration alignment | NO-GO untuk klaim production-ready |
+| Recovery production | SAFE_CUTOVER_REQUIRED masih aktif | FAIL-CLOSED; jangan bypass guard |
+| Migration parity | 75 remote vs 35 file pada main snapshot; belum direkonsiliasi | P0 deployment blocker tetap berlaku |
+| Active grace incident | GRACE sampai 19 November 2026 18.17 WIB | Wajib dipertahankan; cutover tidak boleh reset deadline |
+
+Deployment database hanya boleh dipertimbangkan setelah migration reconciliation, review SQL, backup/checkpoint, test isolated, dan persetujuan yang berlaku. Full CI PASS pada branch tidak membatalkan deployment blocker migration parity.
+
+## 14. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
