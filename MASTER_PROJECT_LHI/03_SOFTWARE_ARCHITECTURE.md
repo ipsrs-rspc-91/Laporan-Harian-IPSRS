@@ -163,13 +163,14 @@ Arsitektur dianggap sesuai bila:
 
 Snapshot source `main` yang diperiksa 16 November 2026 menunjukkan alur peringatan disiplin belum membentuk satu jalur end-to-end:
 - `frontend/login-fast.js` memanggil `apiGetDisciplineWarning`, lalu hanya menampilkan nama dengan `missed_days >= 9`.
-- Backend `apiGetDisciplineWarning` pada `supabase/functions/ipsrs-api/index.ts` hanya mengembalikan `staff_id` dan `nama`; field `missed_days` tidak disediakan. Karena filter frontend membutuhkan nilai tersebut, daftar peringatan tidak dapat terbentuk dari response yang ada.
+- Database PostgreSQL memiliki `run_lhi_discipline_scheduler()` yang dijalankan cron aktif setiap 5 menit. Scheduler menghasilkan event `DAY_4`, `DAY_6`, dan `DAY_7` ke `lhi_discipline_notifications`; database produksi menunjukkan 521 row `DAY_4` dari 18 event. Namun Edge Function `ipsrs-api` aktif v114 belum memiliki action inbox/read yang dipanggil frontend.
+- Action lama `apiGetDisciplineWarning` hanya mengembalikan `staff_id` dan `nama`; frontend `login-fast.js` mengharapkan `missed_days >= 9`, sehingga jalur modal lama juga tidak cocok.
 - `frontend/lhi-discipline-notifications.js` meminta `apiGetLhiNotifications` dan menandai baca melalui `apiMarkLhiNotificationRead`; kedua action tersebut tidak ditemukan pada inventory action backend `ipsrs-api/index.ts` yang diperiksa.
 - Backend gate login menghitung tujuh tanggal sebelumnya dari kolom `reports.tanggal` dan melakukan blokir saat tujuh tanggal itu kosong. Ini berbeda dari acuan README Form Blok yang menetapkan `created_at` dikonversi ke WIB dan menghitung tanggal kalender penuh tanpa input.
 
-**Implikasi arsitektur:** event/policy engine untuk tahap hari ke-4/6/7, notification persistence/delivery, dan perhitungan disiplin terpusat belum terbukti terhubung. Frontend saat ini tidak boleh dianggap sebagai sumber hitungan atau otorisasi. Rancangan target harus menempatkan kalkulasi dan transisi di backend/database dengan deduplikasi/idempotency; frontend hanya menyajikan hasil server.
+**Implikasi arsitektur:** event generation dan persistence server-side sudah ada; yang terputus adalah API inbox/read antara frontend dan tabel notifikasi. Frontend tidak boleh menghitung sendiri atau membaca tabel secara langsung. PR #77 menambahkan API terautentikasi yang membatasi pembacaan/penandaan ke `recipient_staff_id` milik sesi.
 
-**Status:** SOURCE-LEVEL GAP CONFIRMED; production runtime impact NOT VERIFIED. Tidak ada perubahan runtime pada audit ini. Implementasi memerlukan persetujuan Product Owner, desain transaksi/event, skema yang disetujui, backup/checkpoint, regression, dan deployment approval.
+**Status:** DATABASE SCHEDULER + DAY_4 PERSISTENCE VERIFIED IN PRODUCTION; INBOX API MISSING IN ACTIVE EDGE FUNCTION v114; API FIX ADDED TO PR #77, NOT DEPLOYED. Tidak ada perubahan runtime produksi. Implementasi memerlukan persetujuan Product Owner, desain transaksi/event, skema yang disetujui, backup/checkpoint, regression, dan deployment approval.
 
 ## 16. Riwayat
 
