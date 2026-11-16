@@ -69,9 +69,11 @@ Regression matrix repository tetap menjadi register status test. Prioritas cakup
 11. GLOBAL: production smoke, source/deployment parity, backend parity.
 12. FORM BLOCK/RECOVERY (LHI-FR-013): hitung hari kalender/WIB; warning 4/6/7; blokir individual hari 8; masa tunggu hari 9; global block hari 10; Reset dan pembatasan KA IPSRS; pemulihan terpadu; grace 120 jam; snapshot, NONAKTIF/reaktivasi, pembatalan LHI; append-only audit; atomicity, idempotency, retry, dan API/RLS negative tests.
 
-Cakupan FORM BLOCK/RECOVERY di atas adalah kebutuhan test yang harus dirancang, bukan test yang telah tersedia atau lulus. Karena REGRESSION_MATRIX.yaml merupakan protected file pada CONTROL_BOOK LOCKED, pencatatan ID dan status test ke matrix hanya boleh dilakukan setelah prosedur unlock/change control dan persetujuan yang diwajibkan.
+Cakupan FORM BLOCK/RECOVERY di atas merupakan kebutuhan test. Sebagian implementasinya kini tersedia pada branch PR #76 melalui `tests/sql/lhi-grace-acceptance.sql` dan `tests/e2e/app-smoke.spec.mjs`. Full regression gate PR #76 lulus pada SHA `eafb67ed0a39432ead7610ac56c6ecd8b60fc61b` (workflow run `43835446297`): static audit + Deno type-check PASS, PostgreSQL LHI regression PASS, Browser regression 20/20 PASS, dan deployment-gate audit PASS. Hasil ini hanya membuktikan test pada branch dan environment terisolasi, bukan UAT atau production verification.
 
-Test ID, status, dan gate harus disinkronkan melalui proses perubahan resmi pada REGRESSION_MATRIX.yaml. Jangan mengubah dokumen kontrol yang LOCKED tanpa prosedur unlock.
+`REGRESSION_MATRIX.yaml` tetap merupakan register formal status test dan merupakan protected file pada CONTROL_BOOK LOCKED. Kelompok Form Blok/Recovery belum ditambahkan ke matrix; pencatatan ID dan status test ke matrix hanya boleh dilakukan setelah prosedur unlock/change control dan persetujuan yang diwajibkan.
+
+Test ID, status, dan gate harus disinkronkan melalui proses perubahan resmi pada `REGRESSION_MATRIX.yaml`. Jangan mengubah dokumen kontrol yang LOCKED tanpa prosedur unlock.
 
 ## 6.1 Regression cases khusus temuan warning/notifikasi LHI
 
@@ -105,6 +107,18 @@ Batas bukti: kedua test menggunakan data sintetis dan mock `authRun`; keduanya m
 | LHI-WARN-014 | Petugas memiliki `lhi_discipline_reset_at` setelah recovery; laporan terakhir sebelum reset | Monitoring streak dimulai setelah tanggal reset dalam WIB dan tidak menampilkan hari kosong sebelum reset; tanggal kejadian tidak menggantikan `created_at` untuk streak |
 
 Sebelum menjalankan kasus, QA harus menyetujui kontrak event/API, test data, clock/timezone strategy, dan environment. Test hari ke-8/10 tidak boleh dieksekusi terhadap akun atau data produksi tanpa persetujuan dan prosedur aman.
+
+### 6.3 Bukti regression Form Blok/Recovery — PR #76
+
+| Area | Bukti | Hasil |
+|---|---|---|
+| Static audit | IPSRS Automated Audit Gate, SHA `eafb67e` | PASS |
+| Deno Edge Function type-check | Empat LHI Edge Functions | PASS |
+| PostgreSQL | Grace, recovery, void/reopen, idempotency, RLS acceptance | PASS |
+| Browser | Reset challenge, limited KA recovery, individual access block, dan smoke test aplikasi | 20/20 PASS |
+| Deployment gate audit | Workflow run `43835446297` | PASS |
+
+Batas bukti: test berjalan pada branch PR #76 dan database test terisolasi. Production migration, live recovery cutover, UAT pengguna, dan production smoke setelah release belum dilakukan. Tidak ada izin untuk mengubah production hanya berdasarkan hasil CI ini.
 
 ## 7. Kriteria penerimaan test
 
