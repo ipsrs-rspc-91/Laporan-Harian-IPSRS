@@ -292,11 +292,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.lhi_discipline_notifications WHERE event_key LIKE 'G:%:DAY_7') THEN
     RAISE EXCEPTION 'FAIL: day-7 warning was not created';
   END IF;
-END $;
+END $$;
 
 -- Re-running the 5-minute scheduler must not duplicate the same day-4 stage.
 SELECT public.run_lhi_discipline_scheduler();
-DO $
+DO $$
 BEGIN
   IF (
     SELECT count(*) FROM public.lhi_discipline_notifications
@@ -304,7 +304,7 @@ BEGIN
   ) <> (SELECT count(*) FROM public.staff WHERE status='Aktif') THEN
     RAISE EXCEPTION 'FAIL: repeated scheduler run duplicated or lost day-4 recipients';
   END IF;
-END $;
+END $$;
 
 -- A petugas and KA IPSRS now reach day 10; one active member is enough to lock globally.
 UPDATE public.staff
