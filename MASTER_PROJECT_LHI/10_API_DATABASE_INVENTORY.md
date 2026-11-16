@@ -130,6 +130,22 @@ A separate corrective change is being prepared in PR #78 to:
 
 Until that corrective PR is reviewed, tested, and released, the discrepancy remains a known source issue. No production change is implied.
 
+## 7. Source discrepancy — LHI warning and notification actions
+
+Audit source `main` tanggal 16 November 2026 menemukan ketidaksesuaian berikut:
+
+| Komponen | Bukti source | Temuan | Dampak |
+|---|---|---|---|
+| `apiGetDisciplineWarning` | `supabase/functions/ipsrs-api/index.ts` | Response hanya memuat `staff_id` dan `nama`; tidak memuat `missed_days` atau tahap peringatan | Frontend `login-fast.js` memfilter `missed_days >= 9`, sehingga response yang tersedia tidak dapat memenuhi filter tersebut |
+| `apiGetLhiNotifications` | Dicari pada seluruh `ipsrs-api/index.ts` yang diperiksa | Action tidak ditemukan | Modul notifikasi tidak memiliki action backend yang teridentifikasi untuk membaca inbox |
+| `apiMarkLhiNotificationRead` | Dicari pada seluruh `ipsrs-api/index.ts` yang diperiksa | Action tidak ditemukan | Penandaan notifikasi dibaca tidak memiliki action backend yang teridentifikasi |
+| Warning generator hari 4/6/7 | Backend action inventory dan login gate | Tidak ditemukan generator/persistensi peristiwa tahap 4/6/7 | Ketentuan README belum terbukti diimplementasikan |
+| Perhitungan login gate | `apiWhoAmI`/discipline gate | Menggunakan `reports.tanggal` pada tujuh tanggal sebelumnya; tidak menggunakan `created_at` WIB | Tidak sesuai dengan dasar hitung README Form Blok |
+
+Frontend `lhi-discipline-notifications.js` memanggil kedua action inbox di atas dan hanya menulis kegagalan ke `console.warn`. `login-fast.js` memanggil `apiGetDisciplineWarning`, mengharapkan `missed_days`, lalu hanya menampilkan nama dengan nilai minimal 9. Ini merupakan mismatch kontrak yang terverifikasi pada source snapshot, bukan bukti langsung keadaan runtime/notification delivery di production.
+
+**Prioritas:** P0/P1 untuk rekonsiliasi requirement dan desain; implementasi belum diotorisasi oleh audit ini. Sebelum perubahan: konfirmasi Product Owner, audit seluruh caller/legacy transport, desain schema dan migration, status runtime functions, backup/checkpoint, dan regression matrix sesuai change control. Jangan membuat tabel atau action baru sebelum data model dan prosedur perubahan disetujui.
+
 ## 7. Edge Function runtime parity
 
 | Function | Supabase runtime | Tracked on main | Catatan |
