@@ -75,7 +75,7 @@ Test ID, status, dan gate harus disinkronkan melalui proses perubahan resmi pada
 
 ## 6.1 Regression cases khusus temuan warning/notifikasi LHI
 
-Kasus berikut ditambahkan berdasarkan mismatch source yang ditemukan 16 November 2026. Semua berstatus **PROPOSED / NOT RUN**; belum ada perubahan pada `REGRESSION_MATRIX.yaml` yang terkunci.
+Kasus berikut ditambahkan berdasarkan mismatch source yang ditemukan 16 November 2026. Requirement LHI-WARN-001–009 tetap berstatus **PROPOSED / NOT RUN** sebagai suite lengkap. Dua regression test UI/API inbox khusus telah ditambahkan dan dijalankan pada PR #77; hasilnya dicatat terpisah di bawah. `REGRESSION_MATRIX.yaml` tetap terkunci dan tidak diubah.
 
 | ID usulan | Skenario | Expected result |
 |---|---|---|
@@ -88,6 +88,16 @@ Kasus berikut ditambahkan berdasarkan mismatch source yang ditemukan 16 November
 | LHI-WARN-007 | Backend/API/notification delivery gagal sementara | Peristiwa tidak hilang; retry aman, idempotent, dan kegagalan tercatat |
 | LHI-WARN-008 | LHI tanggal kejadian lama tetapi dibuat pada tanggal input berbeda | Kepatuhan mengikuti `created_at` WIB sesuai README, bukan tanggal kejadian |
 | LHI-WARN-009 | LHI dibatalkan atau seluruh input pada tanggal tertentu dibatalkan | Tanggal tersebut tidak dihitung sebagai hari aktif input jika tidak ada LHI sah pengganti |
+
+### 6.2 Bukti eksekusi terbatas — PR #77
+
+| Test | Hasil | Commit / bukti |
+|---|---|---|
+| Inbox menampilkan notifikasi belum dibaca untuk sesi terautentikasi; tombol konfirmasi menandai notifikasi tersebut dibaca | PASS | `tests/e2e/app-smoke.spec.mjs` test 18; commit `0f303f2d46fb83095f82865ba64442a76af344c8` |
+| Inbox tidak memanggil API bila sesi tidak tersedia | PASS | `tests/e2e/app-smoke.spec.mjs` test 19; commit `0f303f2d46fb83095f82865ba64442a76af344c8` |
+| Browser smoke regression total | 19 passed | [GitHub Actions run 43804612562](https://github.com/ipsrs-rspc-91/Laporan-Harian-IPSRS/actions/runs/43804612562) |
+
+Batas bukti: kedua test menggunakan data sintetis dan mock `authRun`; keduanya membuktikan perilaku UI dan guard sesi, bukan integrasi live Supabase, recipient isolation pada service-role API, kalkulasi scheduler hari 4/6/7, atau deployment production. Deployment Gate CI PASS hanya untuk commit PR tersebut; bukan persetujuan bisnis/operasional atau izin deploy.
 | LHI-WARN-010 | Peralihan hari WIB pukul 00.00 | Jumlah hari tanpa input berubah hanya setelah tanggal kalender penuh selesai |
 | LHI-WARN-011 | Status kepegawaian NONAKTIF lalu AKTIF kembali | Hitungan baru dimulai dari tanggal aktivasi kembali sesuai README |
 | LHI-WARN-012 | Hak akses individual hari ke-8 dan pemicu global hari ke-10 | Status pegawai dan status akses dipisahkan; blokir individual tidak menghilangkan pemicu global |
