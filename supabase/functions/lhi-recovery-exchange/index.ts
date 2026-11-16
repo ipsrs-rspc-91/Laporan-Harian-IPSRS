@@ -1,53 +1,109 @@
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-const enc = new TextEncoder();
-const cors = (origin: string | null) => {
-  const allowed = new Set(String(Deno.env.get("LHI_ALLOWED_ORIGINS") || "").split(",").map(x => x.trim()).filter(Boolean));
-  if (!origin || (allowed.size && !allowed.has(origin))) return null;
-  return { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Max-Age": "600", Vary: "Origin" };
-};
-const json = (body: unknown, status: number, headers: Record<string,string>) =>
-  new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type":"application/json",
-    "Cache-Control":"no-store, max-age=0", Pragma:"no-cache" } });
-const sha256 = async (s: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)))]
-  .map(b => b.toString(16).padStart(2,"0")).join("");
-const randomToken = () => {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  let raw = ""; for (const b of bytes) raw += String.fromCharCode(b);
-  return btoa(raw).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
-};
+const encoder = new TextEncoder();
+
+function allowedOrigins() {
+  return new Set(
+    String(Deno.env.get("LHI_ALLOWED_ORIGINS") || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+}
+
+function corsFor(origin: string | null) {
+  const allowed = allowedOrigins();
+  if (!origin || (allowed.size > 0 && !allowed.has(origin))) return null;
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "600",
+    "Vary": "Origin",
+  };
+}
+
+function response(body: unknown, status: number, cors: Record<string, string>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...cors,
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store, max-age=0",
+      "Pragma": "no-cache",
+    },
+  });
+}
+
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function randomToken(bytes = 32) {
+  const value = new Uint8Array(bytes);
+  crypto.getRandomValues(value);
+  let binary = "";
+  for (const byte of value) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
 
 Deno.serve(async (req: Request) => {
-  const headers = cors(req.headers.get("origin"));
-  if (!headers) return new Response("Forbidden origin.", { status:403 });
-  if (req.method === "OPTIONS") return new Response("ok", { headers });
-  if (req.method !== "POST") return json({ ok:false, message:"Method not allowed." },405,headers);
+  const cors = corsFor(req.headers.get("origin"));
+  if (!cors) return new Response("Forbidden origin.", { status: 403 });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return response({ ok: false, message: "Method not allowed." }, 405, cors);
+
   try {
-    const url = Deno.env.get("SUPABASE_URL") || "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const publicKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
-    const bearer = String(req.headers.get("authorization") || "").replace(/^Bearer\s+/i,"").trim();
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !serviceKey) return response({ ok: false, message: "Recovery service unavailable." }, 503, cors);
+
+    const authHeader = req.headers.get("authorization") || "";
+    const bearer = authHeader.match(/^Bearer\s+(.+)$/i)?.[1] || "";
     const body = await req.json().catch(() => ({}));
     const challenge = String(body?.challenge || "").trim();
-    if (!url || !serviceKey || !publicKey || !bearer || !/^[A-Za-z0-9_-]{40,50}$/.test(challenge))
-      return json({ ok:false, message:"Autentikasi pemulihan tidak valid." },401,headers);
 
-    const authClient = createClient(url, publicKey, { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } });
-    const { data:userData, error:userError } = await authClient.auth.getUser(bearer);
-    if (userError || !userData?.user?.id) return json({ ok:false, message:"Sesi login tidak valid." },401,headers);
+    if (!bearer || challenge.length < 32 || challenge.length > 256) {
+      return response({ ok: false, message: "Autentikasi atau challenge tidak valid." }, 401, cors);
+    }
 
-    const capability = randomToken();
-    const db = createClient(url, serviceKey, { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } });
-    const { data, error } = await db.rpc("consume_lhi_recovery_challenge", {
-      p_nonce_hash: await sha256(challenge),
-      p_auth_user_id: userData.user.id,
-      p_session_token_hash: await sha256(capability)
+    const db = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    if (error || !data?.ok) return json({ ok:false, message:"Akun tidak berhak menggunakan pemulihan. Hanya KA IPSRS yang dapat melanjutkan." },403,headers);
-    return json({ ok:true, recovery_capability:capability, expires_at:data.expires_at,
-      staff_name:data.staff_name, role:data.role },200,headers);
+
+    // Verify the Supabase access token with Auth; never decode the JWT locally
+    // and never trust staff_id or role values supplied by the browser.
+    const { data: authData, error: authError } = await db.auth.getUser(bearer);
+    if (authError || !authData?.user?.id) {
+      return response({ ok: false, message: "Autentikasi KA IPSRS tidak valid." }, 401, cors);
+    }
+
+    const nonceHash = await sha256(challenge);
+    const capability = randomToken(32);
+    const capabilityHash = await sha256(capability);
+
+    const { data, error } = await db.rpc("consume_lhi_recovery_challenge", {
+      p_nonce_hash: nonceHash,
+      p_auth_user_id: authData.user.id,
+      p_session_token_hash: capabilityHash,
+    });
+
+    if (error || !data?.ok) {
+      // Deliberately avoid disclosing whether the challenge, incident, role,
+      // or employment status caused the rejection.
+      return response({ ok: false, message: "Sesi pemulihan tidak dapat diterbitkan. Periksa akun KA IPSRS dan ulangi prosedur Reset." }, 403, cors);
+    }
+
+    return response({
+      ok: true,
+      recovery_capability: capability,
+      expires_at: data.expires_at,
+      staff_name: data.staff_name,
+      role: data.role,
+      incident_id: data.incident_id,
+    }, 200, cors);
   } catch {
-    return json({ ok:false, message:"Layanan autentikasi pemulihan sedang tidak tersedia." },503,headers);
+    return response({ ok: false, message: "Sesi pemulihan tidak dapat diterbitkan oleh server." }, 503, cors);
   }
 });
