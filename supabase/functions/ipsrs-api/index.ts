@@ -323,8 +323,15 @@ if(a==="apiMarkLhiNotificationRead"){
    .select("notification_id")
    .maybeSingle();
  if(error)throw error;
- if(!data)return{ok:false,msg:"Notifikasi tidak ditemukan atau sudah dibaca."};
- return{ok:true,notification_id:data.notification_id};
+ if(data)return{ok:true,notification_id:data.notification_id,already_read:false};
+ const {data:existing,error:lookupError}=await db.from("lhi_discipline_notifications")
+   .select("notification_id,read_at")
+   .eq("notification_id",notificationId)
+   .eq("recipient_staff_id",s.staff_id)
+   .maybeSingle();
+ if(lookupError)throw lookupError;
+ if(!existing)return{ok:false,msg:"Notifikasi tidak ditemukan."};
+ return{ok:true,notification_id:existing.notification_id,already_read:!!existing.read_at};
 }
 if(a==="apiGetReports"){const mode=String(d.viewMode||"daftar").toLowerCase()==="saya"?"saya":"daftar",z=range(d.bulan),ck=`reports:${mode}:${z.month}:${d.staffIdFilter||""}:${d.bidangFilter||""}:${s.staff_id}`,hit=cacheGet(ck);if(hit)return hit;const rows=await fetchAllPages(()=>{let q=db.from("reports").select("report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pelapor,pukul,nolk,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit_kind,spare_part_unit_status,spare_part_unit,type,jumlah,unit_status,unit_name,unit_type,unit_jumlah,spare_part_material_status,spare_part_material,spare_part_material_type,spare_part_material_jumlah,created_at,updated_at,created_by_username,created_by_staff_id,created_by_name,created_by_role,updated_by_staff_id,updated_by_name,updated_by_role,version").is("deleted_at",null).gte("tanggal",z.start).lte("tanggal",z.end).order("tanggal",{ascending:false}).order("pukul",{ascending:false}).order("report_id",{ascending:true});if(mode==="saya"){q=q.eq("staff_id",s.staff_id);}else if(d.staffIdFilter){q=q.eq("staff_id",d.staffIdFilter);}if(d.bidangFilter)q=q.eq("bidang_snapshot",d.bidangFilter);return q;});const policy=await reportPolicyBatch(db,s,rows);const visible=[];for(const r of rows){if(policy.visible.has(String(r.report_id)))visible.push(map(r,policy.editable.has(String(r.report_id))));}return cacheSet(ck,{ok:true,data:visible})}
 if(a==="apiGetOverdueReports"){const cutoff=String(d.cutoffDate||"").trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(cutoff))return{ok:false,msg:"Tanggal batas pengingat tidak valid."};const fields="report_id,staff_id,nama_snapshot,bidang_snapshot,role_snapshot,tanggal,pelapor,pukul,nolk,ruang,masalah_kegiatan,tindakan,status,keterangan,kategori,area_kerja,item,spare_part_unit_kind,spare_part_unit_status,spare_part_unit,type,jumlah,unit_status,unit_name,unit_type,unit_jumlah,spare_part_material_status,spare_part_material,spare_part_material_type,spare_part_material_jumlah,created_at,updated_at,created_by_username,created_by_staff_id,created_by_name,created_by_role,updated_by_staff_id,updated_by_name,updated_by_role,version";const {data,error}=await db.from("reports").select(fields).is("deleted_at",null).lte("tanggal",cutoff).order("tanggal",{ascending:false}).order("pukul",{ascending:false}).limit(5000);if(error)throw error;const rows=data||[];const policy=await reportPolicyBatch(db,s,rows);const visible=[];for(const r of rows){if(policy.visible.has(String(r.report_id)))visible.push(map(r,policy.editable.has(String(r.report_id))));}return{ok:true,data:visible,cutoffDate:cutoff}}
