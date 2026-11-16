@@ -421,6 +421,10 @@
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
       case 'apiGetDisciplineWarning':
+      case 'apiGetLhiNotifications':
+        payload.token=token; break;
+      case 'apiMarkLhiNotificationRead':
+        payload.token=token; payload.notificationId=args[0]; break;
       case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
@@ -541,6 +545,9 @@
     }
     return json;
   }
+
+  // Expose the authenticated API wrapper for isolated notification/reminder modules.
+  window.authRun = authRun;
 
   // Expose only the existing session reader needed by the reminder module.
   window.getSession = getSession;

@@ -505,3 +505,46 @@ test('server notice keeps ESTAFET inline and paragraph text justified', async ()
   expect(appSource).toContain('secara <strong style="color:#c00000;font-weight:900">ESTAFET</strong>.');
   expect(appSource).toContain('text-align:justify;text-align-last:left;');
 });
+
+
+test('LHI day-4 inbox renders only unread notifications for authenticated session', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.__ipsrsLoadLhiNotifications === 'function');
+  await page.evaluate(() => {
+    window.getSession = () => ({ staff_id: 'TEST-RECIPIENT' });
+    window.__lhiNotificationApiCalls = [];
+    window.authRun = async (action, id) => {
+      window.__lhiNotificationApiCalls.push([action, id ?? null]);
+      if (action === 'apiGetLhiNotifications') return { ok: true, data: [
+        { notification_id: 4101, subject: 'Peringatan LHI Hari ke-4', message: 'Peringatan 1: Petugas Uji belum mengisi LHI selama 4 hari kalender berturut-turut.', created_at: '2026-11-16T09:00:00+07:00', read_at: null },
+        { notification_id: 4100, subject: 'Peringatan lama', message: 'Sudah dibaca', created_at: '2026-11-15T09:00:00+07:00', read_at: '2026-11-15T10:00:00+07:00' }
+      ] };
+      if (action === 'apiMarkLhiNotificationRead') return { ok: true, notification_id: id };
+      throw new Error('Unexpected action: ' + action);
+    };
+  });
+  await page.evaluate(() => window.__ipsrsLoadLhiNotifications());
+  await expect(page.locator('#lhiDisciplineNotice')).toBeVisible();
+  await expect(page.locator('#lhiDisciplineNotice')).toContainText('Peringatan LHI Hari ke-4');
+  await expect(page.locator('#lhiDisciplineNotice')).toContainText('Petugas Uji');
+  await expect(page.locator('#lhiDisciplineNotice')).not.toContainText('Sudah dibaca');
+  await page.locator('#lhiNoticeClose').click();
+  await expect(page.locator('#lhiDisciplineNotice')).toHaveCount(0);
+  const calls = await page.evaluate(() => window.__lhiNotificationApiCalls);
+  expect(calls).toContainEqual(['apiGetLhiNotifications', null]);
+  expect(calls).toContainEqual(['apiMarkLhiNotificationRead', 4101]);
+  expect(calls).not.toContainEqual(['apiMarkLhiNotificationRead', 4100]);
+});
+
+test('LHI notification inbox does not call API when no authenticated session exists', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.__ipsrsLoadLhiNotifications === 'function');
+  await page.evaluate(() => {
+    window.getSession = () => null;
+    window.__lhiNotificationApiCalls = [];
+    window.authRun = async (...args) => { window.__lhiNotificationApiCalls.push(args); return { ok: true, data: [] }; };
+  });
+  await page.evaluate(() => window.__ipsrsLoadLhiNotifications());
+  const calls = await page.evaluate(() => window.__lhiNotificationApiCalls);
+  expect(calls).toEqual([]);
+});

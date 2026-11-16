@@ -6,6 +6,21 @@ Aplikasi operasional IPSRS. Repository ini merupakan sumber kode utama dan riway
 
 **Dokumen induk dan peta proyek:** [MASTER PROJECT LHI](MASTER_PROJECT_LHI/00_MASTER_PROJECT.md)
 
+**Katalog modul:** [Katalog Modul LHI](MASTER_PROJECT_LHI/08_MODULE_CATALOG.md) — daftar modul bersifat dinamis dan dapat bertambah melalui change control.
+
+Dokumen teknis pendukung:
+- [Requirements Specification](MASTER_PROJECT_LHI/02_REQUIREMENTS_SPECIFICATION.md)
+- [Software Architecture](MASTER_PROJECT_LHI/03_SOFTWARE_ARCHITECTURE.md)
+- [Quality Assurance Plan](MASTER_PROJECT_LHI/05_QUALITY_ASSURANCE_PLAN.md)
+- [Security Assurance Plan](MASTER_PROJECT_LHI/09_SECURITY_ASSURANCE_PLAN.md)
+- [Project Charter](MASTER_PROJECT_LHI/01_PROJECT_CHARTER.md)
+- [Software Design Specification](MASTER_PROJECT_LHI/04_SOFTWARE_DESIGN_SPECIFICATION.md)
+- [As-Built and Operations](MASTER_PROJECT_LHI/07_AS_BUILT_AND_OPERATIONS.md)
+- [API dan Database Inventory](MASTER_PROJECT_LHI/10_API_DATABASE_INVENTORY.md)
+- [Production Readiness Audit](MASTER_PROJECT_LHI/11_PRODUCTION_READINESS_AUDIT.md)
+- [Migration Reconciliation Manifest](MASTER_PROJECT_LHI/12_MIGRATION_RECONCILIATION_MANIFEST.md)
+- [Professionalization Roadmap](MASTER_PROJECT_LHI/PROFESSIONALIZATION_ROADMAP.md) — tahapan penguatan proyek; bukan bukti implementasi atau deployment.
+
 Dokumen tersebut menjelaskan arsitektur existing, peta direktori, katalog modul, backend, CI/CD, status modularisasi, dan rencana refactor bertahap.
 
 ## Arsitektur singkat
