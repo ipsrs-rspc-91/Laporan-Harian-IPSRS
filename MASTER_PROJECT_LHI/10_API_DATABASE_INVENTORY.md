@@ -159,7 +159,43 @@ Frontend `lhi-discipline-notifications.js` memanggil kedua action inbox dan hany
 | `lhi-recovery-exchange` | ACTIVE v1 | Tidak | Exact source sync diajukan di PR #80 |
 | `lhi-recovery-action` | ACTIVE v1 | Tidak | Exact source sync diajukan di PR #80 |
 
-## 8. Verification status
+## 8. Recheck Form Blok/Recovery — 16 November 2026
+
+Pemeriksaan read-only terhadap Supabase production dan source branch PR #76 memberikan pemisahan status berikut.
+
+### 8.1 Schema production
+
+| Objek/kolom | Status production saat recheck |
+|---|---|
+| staff.lhi_access_blocked_at | BELUM ADA |
+| staff.lhi_employment_activated_at | BELUM ADA |
+| staff.lhi_discipline_reset_at | ADA |
+| lhi_discipline_obligation_events | TABEL BELUM ADA |
+| lhi_discipline_obligations.snapshot_last_lhi_created_at | BELUM ADA |
+| lhi_discipline_obligations.snapshot_missed_days | BELUM ADA |
+| lhi_discipline_obligations.completed_at, excluded_at | ADA |
+| register_lhi_reset_attempt(text) | ADA; EXECUTE untuk service_role terverifikasi |
+| validate_lhi_recovery_session(text,text) | ADA; mengembalikan metadata insiden |
+| open_lhi_global_grace_v2(text) | ADA, tetapi masih mengembalikan SAFE_CUTOVER_REQUIRED |
+
+Migration alignment pada PR #76 menambahkan/melengkapi schema dan mengganti jalur recovery fail-closed tersebut dengan state transition yang diuji. Migration belum diterapkan pada production.
+
+### 8.2 Status runtime saat recheck
+
+- LHI_GLOBAL_BLOCK = NONAKTIF.
+- Satu incident berstatus GRACE, dimulai 14 November 2026 pukul 18.17 WIB dan berakhir sesuai deadline 19 November 2026 pukul 18.17 WIB.
+- Terdapat 22 petugas berstatus kepegawaian Aktif dan 18 Nonaktif pada saat query.
+- Terdapat 42 baris obligation yang masih pending pada saat query; angka ini adalah jumlah baris, bukan jumlah petugas unik.
+- Recheck bersifat read-only; tidak ada lock, incident, obligation, staff status, migration history, atau function production yang diubah.
+
+### 8.3 Source dan test pada PR #76
+
+- lhi-recovery-action dan lhi-recovery-exchange branch diselaraskan dengan source runtime yang diverifikasi.
+- lhi-block-status branch menambahkan pembacaan snapshot kewajiban yang belum selesai dan hanya menampilkan petugas yang masih berstatus Aktif.
+- Full automated regression gate pada SHA eafb67ed0a39432ead7610ac56c6ecd8b60fc61b lulus: static audit, Deno type-check, PostgreSQL LHI regression, browser 20/20, dan deployment-gate audit.
+- PR #76 masih OPEN/DRAFT; tidak ada migration atau Edge Function yang di-deploy ke production dalam proses tersebut.
+
+## 9. Verification status
 
 | Area | Status |
 |---|---|
@@ -173,7 +209,7 @@ Frontend `lhi-discipline-notifications.js` memanggil kedua action inbox dan hany
 | Per-action negative tests | NOT VERIFIED |
 | Runtime API health/security | NOT VERIFIED |
 
-## 9. Riwayat
+## 10. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
