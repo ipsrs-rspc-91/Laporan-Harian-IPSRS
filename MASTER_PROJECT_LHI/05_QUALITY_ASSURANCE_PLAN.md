@@ -91,7 +91,7 @@ Kasus berikut ditambahkan berdasarkan mismatch source yang ditemukan 16 November
 | LHI-WARN-010 | Peralihan hari WIB pukul 00.00 | Jumlah hari tanpa input berubah hanya setelah tanggal kalender penuh selesai |
 | LHI-WARN-011 | Status kepegawaian NONAKTIF lalu AKTIF kembali | Hitungan baru dimulai dari tanggal aktivasi kembali sesuai README |
 | LHI-WARN-012 | Hak akses individual hari ke-8 dan pemicu global hari ke-10 | Status pegawai dan status akses dipisahkan; blokir individual tidak menghilangkan pemicu global |
-| LHI-WARN-013 | Login normal, auto-restore session, dan login ulang | Inbox notifikasi dimuat melalui loader yang sama; tidak bergantung pada event DOMContentLoaded yang mungkin sudah lewat; tidak menampilkan modal warning legacy yang kontraknya tidak cocok |
+| LHI-WARN-013 | Login normal, auto-restore session, dan login ulang | `window.getSession` dan `window.authRun` tersedia sebelum inbox dipanggil; inbox dimuat melalui loader yang sama; tidak bergantung pada event DOMContentLoaded yang mungkin sudah lewat; tidak menampilkan modal warning legacy yang kontraknya tidak cocok |
 | LHI-WARN-014 | Petugas memiliki `lhi_discipline_reset_at` setelah recovery; laporan terakhir sebelum reset | Monitoring streak dimulai setelah tanggal reset dalam WIB dan tidak menampilkan hari kosong sebelum reset; tanggal kejadian tidak menggantikan `created_at` untuk streak |
 
 Sebelum menjalankan kasus, QA harus menyetujui kontrak event/API, test data, clock/timezone strategy, dan environment. Test hari ke-8/10 tidak boleh dieksekusi terhadap akun atau data produksi tanpa persetujuan dan prosedur aman.
