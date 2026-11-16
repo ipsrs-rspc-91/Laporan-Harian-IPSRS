@@ -1,54 +1,132 @@
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-const enc = new TextEncoder();
-const cors = (origin: string | null) => {
-  const allowed = new Set(String(Deno.env.get("LHI_ALLOWED_ORIGINS") || "").split(",").map(x => x.trim()).filter(Boolean));
-  if (!origin || (allowed.size && !allowed.has(origin))) return null;
-  return { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Max-Age": "600", Vary: "Origin" };
-};
-const json = (body: unknown, status: number, headers: Record<string,string>) =>
-  new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type":"application/json",
-    "Cache-Control":"no-store, max-age=0", Pragma:"no-cache" } });
-const sha256 = async (s: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)))]
-  .map(b => b.toString(16).padStart(2,"0")).join("");
+const encoder = new TextEncoder();
+
+function corsFor(origin: string | null) {
+  const allowed = new Set(
+    String(Deno.env.get("LHI_ALLOWED_ORIGINS") || "")
+      .split(",").map((value) => value.trim()).filter(Boolean),
+  );
+  if (!origin || (allowed.size > 0 && !allowed.has(origin))) return null;
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "600",
+    "Vary": "Origin",
+  };
+}
+
+function response(body: unknown, status: number, cors: Record<string, string>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...cors,
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store, max-age=0",
+      "Pragma": "no-cache",
+    },
+  });
+}
+
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 
 Deno.serve(async (req: Request) => {
-  const headers = cors(req.headers.get("origin"));
-  if (!headers) return new Response("Forbidden origin.", { status:403 });
-  if (req.method === "OPTIONS") return new Response("ok", { headers });
-  if (req.method !== "POST") return json({ ok:false, message:"Method not allowed." },405,headers);
-  try {
-    const url = Deno.env.get("SUPABASE_URL") || "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const capability = String(req.headers.get("authorization") || "").replace(/^Bearer\s+/i,"").trim();
-    const body = await req.json().catch(() => ({}));
-    const action = String(body?.action || "");
-    if (!url || !serviceKey || !capability || !["apiRecoveryStatus","apiStartLhiGrace"].includes(action))
-      return json({ ok:false, message:"Sesi pemulihan tidak valid atau tindakan tidak diizinkan." },401,headers);
-    const db = createClient(url, serviceKey, { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } });
-    const tokenHash = await sha256(capability);
-    const { data:auth, error:authError } = await db.rpc("validate_lhi_recovery_session", {
-      p_session_token_hash:tokenHash, p_action:action
-    });
-    if (authError || !auth?.ok || auth.role !== "KA_IPSRS")
-      return json({ ok:false, message:"Sesi pemulihan tidak valid atau telah kedaluwarsa." },401,headers);
+  const cors = corsFor(req.headers.get("origin"));
+  if (!cors) return new Response("Forbidden origin.", { status: 403 });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return response({ ok: false, message: "Method not allowed." }, 405, cors);
 
-    if (action === "apiRecoveryStatus") {
-      const { data, error } = await db.rpc("get_lhi_grace_status_v2");
-      if (error || !data) return json({ ok:false, message:"Snapshot kewajiban belum dapat dibaca." },503,headers);
-      if (Number(data.incident_id) !== Number(auth.incident_id))
-        return json({ ok:false, message:"Insiden pemulihan tidak cocok dengan sesi." },409,headers);
-      return json({ ok:true, grace_status:data },200,headers);
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !serviceKey) {
+      return response({ ok: false, message: "Recovery service unavailable." }, 503, cors);
     }
 
-    const { data, error } = await db.rpc("open_lhi_global_grace_v2", {
-      p_recovery_session_token_hash:tokenHash
+    const authHeader = req.headers.get("authorization") || "";
+    const capability = authHeader.match(/^Bearer\s+([A-Za-z0-9_-]{32,256})$/)?.[1] || "";
+    const body = await req.json().catch(() => ({}));
+    const action = String(body?.action || "").trim();
+
+    if (!capability || !["apiRecoveryStatus", "apiStartLhiGrace"].includes(action)) {
+      return response({ ok: false, message: "Aksi pemulihan tidak diizinkan." }, 403, cors);
+    }
+
+    const db = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    if (error || !data?.ok)
-      return json({ ok:false, message:"Pemulihan gagal. Blokir tetap berlaku dan masa tenggang tidak dimulai.", reason:data?.reason || "RECOVERY_FAILED" },409,headers);
-    return json({ ok:true, ...data },200,headers);
+
+    const tokenHash = await sha256(capability);
+    const { data: validation, error: validationError } = await db.rpc(
+      "validate_lhi_recovery_session",
+      {
+        p_session_token_hash: tokenHash,
+        p_action: action,
+      },
+    );
+
+    if (validationError || !validation?.ok) {
+      return response({ ok: false, message: "Sesi pemulihan tidak valid, kedaluwarsa, atau tidak berwenang." }, 403, cors);
+    }
+
+    if (action === "apiRecoveryStatus") {
+      // Snapshot internals deny direct table SELECT. Read the member-level
+      // obligation projection only after the recovery capability has passed
+      // server-side identity, role, incident, expiry, and action validation.
+      const { data: graceStatus, error: graceStatusError } = await db.rpc(
+        "get_lhi_grace_status_v2",
+      );
+      if (graceStatusError || !graceStatus) {
+        return response({
+          ok: false,
+          message: "Status dan daftar kewajiban pemulihan belum dapat dibaca. Akses operasional tetap dibatasi.",
+        }, 503, cors);
+      }
+      return response({
+        ok: true,
+        action,
+        incident_id: validation.incident_id,
+        incident_status: validation.incident_status,
+        started_at: validation.started_at,
+        deadline_at: validation.deadline_at,
+        staff_name: validation.staff_name,
+        grace_status: graceStatus,
+      }, 200, cors);
+    }
+
+    // The RPC revalidates the capability in-transaction and is idempotent.
+    const { data: result, error: resetError } = await db.rpc("open_lhi_global_grace_v2", {
+      p_recovery_session_token_hash: tokenHash,
+    });
+
+    if (resetError || !result?.ok) {
+      return response({
+        ok: false,
+        message: "Reset gagal diproses. Blokir global tetap dipertahankan.",
+      }, 409, cors);
+    }
+
+    // The transaction has committed. Fetch the read-only member projection
+    // for the KA recovery screen; a projection failure must not misreport the
+    // already-committed Reset as failed or invite a second grace cycle.
+    const { data: graceStatus } = await db.rpc("get_lhi_grace_status_v2");
+    return response({
+      ok: true,
+      action,
+      incident_id: result.incident_id,
+      status: result.status,
+      already_open: result.already_open,
+      started_at: result.started_at,
+      deadline_at: result.deadline_at,
+      snapshot_total: result.snapshot_total,
+      individual_access_unblocked: result.individual_access_unblocked,
+      grace_status: graceStatus || null,
+    }, 200, cors);
   } catch {
-    return json({ ok:false, message:"Layanan pemulihan sedang tidak tersedia." },503,headers);
+    return response({ ok: false, message: "Permintaan pemulihan gagal diproses." }, 503, cors);
   }
 });
