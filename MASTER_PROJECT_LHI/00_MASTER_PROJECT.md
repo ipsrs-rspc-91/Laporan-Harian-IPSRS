@@ -725,7 +725,7 @@ Pemeriksaan lanjutan terhadap branch PR #76, GitHub Actions, dan Supabase produc
 
 # BAGIAN V — PETA DOKUMEN DAN INVENTARIS TEKNIS
 
-### 19.1 Temuan source-level — peringatan disiplin LHI (16 November 2026)
+### 19.5 Temuan source-level — peringatan disiplin LHI (16 November 2026)
 
 Audit terhadap source `main` menemukan bahwa ketentuan README Form Blok hari ke-4/6/7 belum memiliki jalur implementasi end-to-end yang terbukti:
 - Backend `apiGetDisciplineWarning` hanya mengembalikan `staff_id` dan `nama`, sedangkan `frontend/login-fast.js` memfilter `missed_days >= 9`. Kontrak response tidak cocok.
