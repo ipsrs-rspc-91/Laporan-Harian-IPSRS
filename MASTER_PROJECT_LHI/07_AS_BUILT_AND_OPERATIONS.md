@@ -128,7 +128,9 @@ Temuan berikut berasal dari pembacaan source repository `main`; ini bukan pemeri
 | `frontend/lhi-discipline-notifications.js` / `da042578e00afeedda8c6d86187cf1c83bc7d287` | Memanggil `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead` | Source verified |
 | `frontend/app.js` / `fc061c5a8a1d28f8e776006c180685091cf1ae58` | Login path memanggil `showServerDisciplineWarning_` setelah autentikasi berhasil | Source verified |
 
-Kedua action inbox notifikasi tidak ditemukan pada backend `ipsrs-api/index.ts` snapshot yang diperiksa. Penyebab akhir notifikasi tidak muncul di perangkat tertentu tetap memerlukan pemeriksaan transport `gsRun`/`authRun`, deployment parity, function runtime, database, dan log. Status keseluruhan: **SOURCE-LEVEL INTEGRATION GAP CONFIRMED; PRODUCTION ROOT CAUSE NOT FULLY VERIFIED**.
+Database production memiliki `lhi_discipline_notifications` dan cron aktif `lhi-discipline-scheduler-every-5-minutes`. Pemeriksaan menemukan 521 row `DAY_4` dari 18 event. Namun Edge Function production `ipsrs-api` v114 tidak memiliki `apiGetLhiNotifications`/`apiMarkLhiNotificationRead`; frontend memanggil keduanya melalui `authRun`, sehingga inbox tidak dapat membaca dan menandai row tersebut. `apiGetDisciplineWarning` lama juga mengembalikan hanya `staff_id,nama`, sementara modal legacy mengharapkan `missed_days >= 9`.
+
+PR #77 menambahkan dua action API dengan filter penerima berdasarkan staff sesi, limit 50, dan penandaan baca idempotent; transport `frontend/app.js` diperbarui dan cache key app.js diganti. Status keseluruhan: **DAY_4 SCHEDULER/PERSISTENCE VERIFIED; PRODUCTION INBOX API GAP VERIFIED; FIX COMMITTED TO NON-PRODUCTION PR, NOT DEPLOYED**.
 
 Tidak ada script, database, konfigurasi, atau deployment produksi yang diubah sebagai bagian pencatatan temuan ini.
 
