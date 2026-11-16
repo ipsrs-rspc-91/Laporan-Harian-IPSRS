@@ -188,3 +188,48 @@ Pemeriksaan GitHub commit-path untuk tiga contoh migration remote-only (`2026103
 - Tidak ditemukan file source SQL untuk sebagian migration awal/core dan batch Form Blok pada snapshot repository yang diperiksa.
 - Migration history Supabase hanya memberikan version dan name; tool audit read-only yang tersedia tidak mengembalikan body SQL historis. Karena itu, content-level equivalence dan checksum tidak dapat dibuktikan dari metadata tersebut.
 - Rekonsiliasi tetap **BLOCKED / NOT RECONCILED**. Langkah aman selanjutnya adalah memperoleh arsip SQL historis dari backup resmi/riwayat deployment atau export schema yang disetujui, lalu melakukan semantic diff pada database staging/isolated. Jangan merekonstruksi migration lama dari tebakan nama atau schema saat ini, dan jangan menjalankan `migration repair`.
+## 10. Recheck migration/schema/runtime — 16 November 2026
+
+### 10.1 Schema production yang dikonfirmasi read-only
+
+| Objek | Status pada production |
+|---|---|
+| staff.lhi_access_blocked_at | BELUM ADA |
+| staff.lhi_employment_activated_at | BELUM ADA |
+| staff.lhi_discipline_reset_at | ADA |
+| lhi_discipline_obligation_events | BELUM ADA |
+| lhi_discipline_obligations.snapshot_last_lhi_created_at | BELUM ADA |
+| lhi_discipline_obligations.snapshot_missed_days | BELUM ADA |
+| lhi_discipline_obligations.completed_at / excluded_at | ADA |
+| register_lhi_reset_attempt(text) | ADA; service_role EXECUTE |
+| validate_lhi_recovery_session(text,text) | ADA; metadata insiden dikembalikan |
+
+Function production open_lhi_global_grace_v2 masih mengembalikan SAFE_CUTOVER_REQUIRED setelah validasi recovery session. Migration 20261115120000_lhi_form_block_compliance_alignment.sql pada PR #76 mengganti guard tersebut dengan implementasi state transition yang diuji, tetapi belum diterapkan ke production.
+
+### 10.2 Status incident pada saat recheck
+
+- LHI_GLOBAL_BLOCK = NONAKTIF.
+- Satu incident GRACE masih aktif; started_at 14 November 2026 pukul 18.17 WIB dan deadline 19 November 2026 pukul 18.17 WIB.
+- Terdapat 42 baris obligation berstatus pending pada saat query; jumlah baris tidak boleh disamakan dengan jumlah petugas unik.
+- Recheck bersifat read-only. Tidak ada migration history, schema, lock, incident, obligation, atau function production yang diubah.
+
+### 10.3 Bukti migration pada branch PR #76
+
+PR #76 memuat migration alignment dan rangkaian migration LHI terkait. Rangkaian tersebut telah diterapkan pada fixture PostgreSQL terisolasi melalui GitHub Actions workflow 43835446297 dan acceptance test berhasil PASS. Full gate pada SHA eafb67ed0a39432ead7610ac56c6ecd8b60fc61b juga menunjukkan static audit PASS, Deno type-check PASS, browser 20/20 PASS, dan deployment-gate audit PASS.
+
+**Interpretasi:** keberhasilan fixture test membuktikan migration dapat dijalankan pada schema test yang disiapkan dan skenario acceptance yang tersedia. Ini tidak membuktikan kesetaraan penuh terhadap seluruh schema production atau menyelesaikan migration parity 75 remote vs 35 file pada main. Migration alignment tetap NOT APPLIED / NOT CERTIFIED di production.
+
+### 10.4 Keputusan keselamatan terkini
+
+1. Jangan menjalankan db push, migration repair, atau deployment backend hanya berdasarkan CI branch PASS.
+2. Pertahankan incident GRACE yang sedang berjalan dan deadline 19 November 2026 pukul 18.17 WIB; jangan membuka ulang, mengganti, atau memulai ulang masa grace selama cutover tanpa prosedur dan persetujuan yang sesuai.
+3. Rekonsiliasi seluruh remote-only/local-only migration, termasuk file LHI 4–15 November, berdasarkan isi SQL dan schema aktual.
+4. Uji migration chain lengkap pada staging/isolated database yang merepresentasikan schema production, bukan hanya fixture minimal.
+5. Siapkan backup/checkpoint dan rencana forward-fix/rollback yang dapat diuji sebelum perubahan production.
+6. Perbarui manifest dengan checksum, source commit, status equivalence, owner, reviewer, dan keputusan setiap migration.
+
+## 11. Riwayat
+
+| Tanggal | Perubahan |
+|---|---|
+| 16 November 2026 | Recheck read-only schema dan runtime; mencatat missing snapshot columns/event table, SAFE_CUTOVER_REQUIRED masih aktif, incident GRACE sampai 19 November 2026 18.17 WIB, serta PR #76 full regression gate PASS namun belum diterapkan ke production. |
