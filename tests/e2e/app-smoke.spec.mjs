@@ -45,16 +45,21 @@ async function exposeAppShellForIsolatedUiTest(page){
 
 test('LHI global Reset stores one-time challenge and restores KA login form', async ({ page }) => {
   const challenge='test-only-recovery-challenge-'.padEnd(48,'x');
-  await page.route('**/functions/v1/lhi-block-status', route => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ok:true,blocked:true,message:'Mode Blok Aplikasi aktif.',noncompliant_staff:[]})
-  }));
+  let lhiStatusMockHit=false;
+  await page.route('**/functions/v1/lhi-block-status', route => {
+    lhiStatusMockHit=true;
+    return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ok:true,blocked:true,message:'Mode Blok Aplikasi aktif.',noncompliant_staff:[]})
+    });
+  });
   await page.route('**/functions/v1/lhi-reset-verify', route => route.fulfill({
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ok:true,valid:true,challenge,expires_at:'2026-11-15T12:05:00Z'})
   }));
   await page.goto('/', {waitUntil:'domcontentloaded'});
   await expect(page.locator('#lhiGlobalBlockReset')).toBeVisible({timeout:10000});
+  expect(lhiStatusMockHit).toBe(true);
   await page.locator('#lhiGlobalBlockReset').click();
   await expect(page.locator('#lhiResetBackdrop')).toBeVisible();
   await page.locator('#lhiResetCode').fill('123456');
