@@ -546,6 +546,9 @@
     return json;
   }
 
+  // Expose the authenticated API wrapper for isolated notification/reminder modules.
+  window.authRun = authRun;
+
   // Expose only the existing session reader needed by the reminder module.
   window.getSession = getSession;
 
