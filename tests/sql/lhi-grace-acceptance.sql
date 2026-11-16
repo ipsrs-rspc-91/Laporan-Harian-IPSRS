@@ -17,6 +17,19 @@ UPDATE public.staff SET lhi_access_blocked_at=now() WHERE staff_id IN ('A','B','
 INSERT INTO public.lhi_recovery_sessions(session_token_hash,auth_user_id,staff_id,staff_name,role,incident_id,expires_at)
 VALUES (repeat('a',64),'00000000-0000-0000-0000-000000000001','KA','KA IPSRS','KA_IPSRS',1,now()+interval '10 minutes');
 
+-- Recovery-session validation must return the incident metadata consumed by the recovery API.
+DO $
+DECLARE v_validation jsonb;
+BEGIN
+  v_validation := public.validate_lhi_recovery_session(repeat('a',64), 'apiRecoveryStatus');
+  IF COALESCE((v_validation->>'ok')::boolean,false) IS NOT TRUE
+     OR v_validation->>'incident_status' <> 'LOCKED'
+     OR NULLIF(v_validation->>'started_at','') IS NULL
+     OR NULLIF(v_validation->>'deadline_at','') IS NULL THEN
+    RAISE EXCEPTION 'FAIL: recovery validation omitted incident status/start/deadline metadata: %',v_validation;
+  END IF;
+END $;
+
 -- Recovery must atomically open global and individual access, start a new 120h window,
 -- and clear old completion markers from the previous locked period.
 SELECT public.open_lhi_global_grace_v2(repeat('a',64));
