@@ -41,7 +41,7 @@ Daftar aktor dan role final harus direkonsiliasi dengan implementasi backend, da
 | LHI-FR-010 | Dashboard menyajikan ringkasan operasional | High | Angka dapat direkonsiliasi dengan data sumber dan role | Product Owner (menunggu pengesahan) |
 | LHI-FR-011 | Rekap tersedia berdasarkan periode | High | Batas periode dan hasil agregasi benar serta konsisten | Product Owner (menunggu pengesahan) |
 | LHI-FR-012 | Monitoring menyajikan status sesuai definisi resmi | High | Status, waktu, dan pengecualian dihitung sesuai spesifikasi | Product Owner (menunggu pengesahan) |
-| LHI-FR-013 | Form Blok Aplikasi menegakkan aturan peringatan/blokir/pemulihan | Critical | Transisi status, batas hari, pengecualian, dan recovery sesuai spesifikasi resmi | Product Owner (menunggu pengesahan) |
+| LHI-FR-013 | Form Blok Aplikasi menegakkan aturan peringatan/blokir/pemulihan | Critical | Transisi status, batas hari, pengecualian, dan recovery sesuai spesifikasi resmi | Spesifikasi approved for implementation; release approval terpisah |
 | LHI-FR-014 | Aktivitas penting memiliki audit trail | High | Aktor, waktu, objek, tindakan, dan hasil tercatat tanpa secret | Product Owner (menunggu pengesahan) |
 | LHI-FR-015 | Pengguna dapat mengekspor laporan sesuai izin | Medium | File hanya memuat data yang boleh diakses dan formatnya tervalidasi | Product Owner (menunggu pengesahan) |
 | LHI-FR-016 | PWA/cache menyajikan asset versi yang benar | High | Pembaruan versi tidak meninggalkan asset lama yang merusak fungsi | Product Owner (menunggu pengesahan) |
@@ -93,15 +93,16 @@ Masing-masing harus mengacu pada spesifikasi resmi modul dan diuji dengan positi
 
 Requirement `LHI-FR-013` merujuk pada `README-FORM-BLOK-APLIKASI.md` Bagian 1–12 untuk rincian aturan penghitungan, tahapan peringatan, notifikasi, blokir individual/global, Reset, kewenangan KA IPSRS, grace period 120 jam, snapshot kewajiban, pengecualian status NONAKTIF, audit, skenario penerimaan, dan tata kelola implementasi.
 
-README tersebut saat ini menyatakan dirinya sebagai dokumen konsep/acuan kebutuhan dan belum menjadi persetujuan perubahan script, database, konfigurasi, atau deployment. Dengan demikian:
-- Aturan pada README adalah bahan spesifikasi rinci untuk dikonfirmasi Product Owner, bukan persetujuan otomatis untuk implementasi.
-- Prioritas Critical pada tabel LHI-FR-013 adalah prioritas usulan awal, bukan izin perubahan produksi.
+README tersebut menyatakan spesifikasi dan acceptance criteria telah disetujui untuk implementasi. Persetujuan spesifikasi tidak sama dengan persetujuan deployment production. Dengan demikian:
+- Aturan pada README menjadi baseline requirement rinci untuk implementasi dan pengujian.
+- Setiap perubahan source, schema, konfigurasi, dan deployment tetap wajib melalui change control, regression gate, migration reconciliation, dan release approval.
+- Prioritas Critical pada tabel LHI-FR-013 adalah prioritas requirement; bukan izin bypass kontrol atau deployment otomatis.
 - Detail bisnis tidak boleh disalin sebagai aturan alternatif ke dokumen lain; perubahan/penyelesaian konflik harus melalui change control.
 - Implementasi, status runtime, dan kesiapan recovery harus dinilai terpisah dari kelengkapan dokumen.
 
 Cakupan penerimaan FR-013 sekurang-kurangnya harus membuktikan: (1) hitung kalender/WIB dan status kepegawaian; (2) notifikasi hari ke-4/6/7; (3) blokir individual hari ke-8, masa tunggu hari ke-9, dan trigger global hari ke-10; (4) Reset serta autentikasi dan pembatasan KA IPSRS; (5) pemulihan terpadu dan grace period 120 jam; (6) snapshot, pengecualian NONAKTIF, reaktivasi, dan pembatalan LHI; (7) audit append-only; serta (8) failure atomicity, idempotency, dan retry aman.
 
-**Gap pengujian:** snapshot `REGRESSION_MATRIX.yaml` yang diperiksa belum memiliki kelompok test Form Blok/Recovery. File tersebut tercatat sebagai protected file di bawah CONTROL_BOOK LOCKED. Penambahan skenario ke matrix harus mengikuti prosedur unlock/change control dan persetujuan yang berlaku; dokumen SRS ini tidak mengubah register tersebut.
+**Status pengujian:** `REGRESSION_MATRIX.yaml` belum memiliki kelompok test Form Blok/Recovery dan tetap protected di bawah CONTROL_BOOK LOCKED. Namun test SQL acceptance dan browser E2E telah ditambahkan pada branch PR #76; full gate workflow `43835446297` PASS pada 16 November 2026 (static audit, Deno type-check, PostgreSQL, browser 20/20, deployment-gate audit). Hasil tersebut berlaku untuk branch/CI, bukan production. Penambahan skenario formal ke matrix tetap harus mengikuti prosedur unlock/change control dan persetujuan yang berlaku; dokumen SRS ini tidak mengubah register tersebut.
 
 ## 7. Requirement traceability
 
