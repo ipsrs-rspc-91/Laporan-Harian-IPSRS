@@ -76,7 +76,7 @@ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_session public.lhi_recovery_sessions%ROWTYPE;
-  v_incident_status text;
+  v_incident public.lhi_discipline_incidents%ROWTYPE;
 BEGIN
   IF p_session_token_hash IS NULL
      OR p_session_token_hash !~ '^[0-9a-f]{64}$'
@@ -97,12 +97,12 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'reason', 'RECOVERY_SESSION_INVALID');
   END IF;
 
-  SELECT status INTO v_incident_status
+  SELECT * INTO v_incident
   FROM public.lhi_discipline_incidents
   WHERE incident_id = v_session.incident_id;
 
-  IF v_incident_status IS NULL
-     OR v_incident_status NOT IN ('LOCKED', 'EXPIRED', 'GRACE') THEN
+  IF v_incident.incident_id IS NULL
+     OR v_incident.status NOT IN ('LOCKED', 'EXPIRED', 'GRACE') THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'INCIDENT_NOT_AVAILABLE');
   END IF;
 
@@ -112,6 +112,9 @@ BEGIN
     'staff_name', v_session.staff_name,
     'role', v_session.role,
     'incident_id', v_session.incident_id,
+    'incident_status', v_incident.status,
+    'started_at', v_incident.started_at,
+    'deadline_at', v_incident.deadline_at,
     'expires_at', v_session.expires_at,
     'action', p_action
   );
