@@ -703,6 +703,24 @@ Pembaruan pada branch dokumen tidak mengubah `main`, database, hosting, atau run
 
 Daftar ini merupakan snapshot temuan dan batas klaim, bukan hasil audit total terhadap seluruh source maupun runtime. Untuk perubahan berikutnya, lakukan recheck terhadap branch, PR, register kontrol, workflow, dan bukti runtime sebelum memperbarui status.
 
+### 19.4 Recheck Form Blok dan recovery — 16 November 2026
+
+Pemeriksaan lanjutan terhadap branch PR #76, GitHub Actions, dan Supabase production dilakukan secara terpisah. Hasil berikut membedakan bukti branch/CI dari kondisi database/runtime produksi:
+
+| Area | Bukti terbaru | Status yang boleh dinyatakan |
+|---|---|---|
+| PR #76 | Head `eafb67ed0a39432ead7610ac56c6ecd8b60fc61b`; OPEN / DRAFT | Implementasi berada pada branch, belum merge |
+| Audit statis + Deno type-check | Workflow run `43835446297` — SUCCESS | PASS pada SHA branch tersebut |
+| PostgreSQL LHI regression | Workflow run `43835446297` — SUCCESS | PASS pada database test terisolasi |
+| Browser regression | Workflow run `43835446297` — 20/20 PASS | PASS pada browser test terisolasi |
+| Deployment gate audit | Workflow run `43835446297` — SUCCESS | Audit gate branch PASS; bukan production deployment |
+| Migration production | Migration alignment PR #76 belum diterapkan; schema production belum memiliki `staff.lhi_access_blocked_at`, `staff.lhi_employment_activated_at`, snapshot metadata obligations, dan tabel `lhi_discipline_obligation_events` | PRODUCTION SCHEMA NOT ALIGNED |
+| Recovery production | `open_lhi_global_grace_v2` production masih mengembalikan `SAFE_CUTOVER_REQUIRED` | FAIL-CLOSED; belum operasional untuk membuka grace |
+| Runtime grace | `LHI_GLOBAL_BLOCK=NONAKTIF`; satu incident berstatus GRACE dengan deadline 19 November 2026 pukul 18.17 WIB | Kondisi aktif harus dipertahankan; jangan reset atau memulai ulang deadline saat cutover |
+| Edge Function source | `lhi-recovery-action` dan `lhi-recovery-exchange` branch disamakan dengan source runtime; `lhi-block-status` branch menambahkan pembacaan snapshot pending yang belum ada di runtime | Source branch lebih lengkap; belum deploy |
+
+**Keputusan:** Form Blok/Recovery pada PR #76 telah lulus full automated regression gate di lingkungan test. Ini bukan sertifikasi produksi. Migration parity 75 remote vs 35 file pada `main` tetap menjadi blocker terpisah; schema production dan `open_lhi_global_grace_v2` belum mengikuti migration branch. Tidak ada perubahan produksi yang dilakukan dalam recheck ini. Promosi ke `main`/production harus mengikuti SOP, migration reconciliation, backup/checkpoint, dan verifikasi yang disyaratkan.
+
 ---
 
 # BAGIAN V — PETA DOKUMEN DAN INVENTARIS TEKNIS
@@ -810,7 +828,7 @@ Halaman yang teridentifikasi pada snapshot: `Page_Login.html`, `Page_Dashboard.h
 
 Pemetaan endpoint, tabel, role, policy, dan dependency setiap handler belum dianggap lengkap sampai diverifikasi langsung dari source.
 
-**Temuan parity runtime:** Supabase memiliki 8 Edge Functions ACTIVE, sementara source `main` pada snapshot ini hanya melacak 5. Tiga function aktif (`lhi-block-status`, `lhi-recovery-exchange`, `lhi-recovery-action`) sedang disinkronkan ke repository melalui PR #80. Source aktif dicocokkan exact dengan runtime; PR belum merge/deploy.
+**Temuan parity runtime:** Supabase memiliki 8 Edge Functions ACTIVE, sementara source `main` pada snapshot audit hanya melacak 5. Pada 16 November, PR #76 juga membawa source ketiga function tersebut: `lhi-recovery-action` dan `lhi-recovery-exchange` dicocokkan exact dengan source runtime; `lhi-block-status` ditingkatkan pada branch untuk membaca kewajiban snapshot yang masih pending dan petugas yang masih AKTIF. Perubahan branch ini belum merge/deploy; source `main` tetap belum menjadi representasi runtime yang lengkap.
 
 ### 21.4 Workflow
 
@@ -942,10 +960,10 @@ Matriks traceability wajib menunjukkan requirement tanpa implementasi, implement
 
 | Requirement | Rujukan aturan rinci | Cakupan acceptance yang wajib dibuktikan | Status bukti pada snapshot |
 |---|---|---|---|
-| LHI-FR-013 | `README-FORM-BLOK-APLIKASI.md` Bagian 1–12 | Penghitungan hari berdasarkan `created_at` WIB dan status kepegawaian; peringatan hari ke-4/6/7; blokir individual hari ke-8; masa tunggu hari ke-9; blokir global hari ke-10; Reset dan autentikasi KA IPSRS; pemulihan terpadu; kelonggaran 120 jam; snapshot, pengecualian NONAKTIF, pembatalan LHI, audit append-only, dan kegagalan/percobaan ulang yang aman | Requirement teridentifikasi; persetujuan Product Owner belum tercatat; implementasi/runtime belum tersertifikasi |
-| LHI-FR-013 / test | `REGRESSION_MATRIX.yaml` | Test unit, integration, API/security negative, E2E, concurrency/idempotency, dan recovery sesuai skenario penerimaan | Belum ada kelompok test Form Blok/Recovery pada snapshot matrix yang diperiksa; jangan mengklaim regression coverage tersedia |
+| LHI-FR-013 | `README-FORM-BLOK-APLIKASI.md` Bagian 1–12 | Penghitungan hari berdasarkan `created_at` WIB dan status kepegawaian; peringatan hari ke-4/6/7; blokir individual hari ke-8; masa tunggu hari ke-9; blokir global hari ke-10; Reset dan autentikasi KA IPSRS; pemulihan terpadu; kelonggaran 120 jam; snapshot, pengecualian NONAKTIF, pembatalan LHI, audit append-only, dan kegagalan/percobaan ulang yang aman | README menetapkan spesifikasi approved for implementation; PR #76 full regression gate PASS pada SHA `eafb67e`; production belum tersertifikasi |
+| LHI-FR-013 / test | `REGRESSION_MATRIX.yaml`; `tests/sql/lhi-grace-acceptance.sql`; `tests/e2e/app-smoke.spec.mjs` | Test unit/integration, API/security negative, E2E, concurrency/idempotency, dan recovery sesuai skenario penerimaan | SQL acceptance dan browser smoke telah berjalan di PR #76; PostgreSQL PASS dan browser 20/20 PASS. `REGRESSION_MATRIX.yaml` tetap belum memiliki kelompok Form Blok/Recovery dan tidak diubah karena protected file |
 
-**Batas kewenangan dan kontrol:** README Form Blok saat ini berstatus dokumen konsep/acuan kebutuhan dan secara eksplisit belum menjadi persetujuan perubahan script, database, konfigurasi, atau deployment. Karena itu, rincian Bagian 1–12 menjadi referensi analisis kebutuhan, tetapi harus dikonfirmasi dan disahkan Product Owner sebelum dianggap sebagai baseline requirement final. `LHI-FR-013` adalah identitas requirement dalam SRS, bukan bukti fitur sudah dibangun atau disetujui untuk produksi.
+**Batas kewenangan dan kontrol:** README Form Blok menyatakan spesifikasi dan kriteria penerimaan telah disetujui untuk implementasi. Persetujuan spesifikasi tersebut tidak otomatis memberi persetujuan deployment produksi. PR #76 telah lulus full automated regression gate, tetapi masih OPEN/DRAFT dan migration belum diterapkan. `LHI-FR-013` adalah identitas requirement formal; status implementasi branch, schema production, dan runtime harus tetap dicatat terpisah.
 
 **Kendali register terkunci:** `REGRESSION_MATRIX.yaml` termasuk protected file di bawah modul `CONTROL_BOOK` yang berstatus LOCKED pada `LOCK_REGISTER.yaml`. Master Project dan SRS ini hanya mencatat gap coverage dan kebutuhan test; keduanya **tidak mengubah** regression matrix, lock, atau baseline. Penambahan test ke matrix memerlukan prosedur unlock/change control yang berlaku dan persetujuan eksplisit sesuai Project Control Book.
 
@@ -958,7 +976,7 @@ Usulan kelompok skenario untuk dianalisis sebelum dimasukkan ke regression matri
 6. Append-only audit, kegagalan parsial, idempotency, dan retry setelah respons hilang.
 7. Pengujian negatif API/RLS, session, bypass UI, dan isolasi role.
 
-Daftar di atas adalah cakupan yang diusulkan, bukan test yang sudah ada atau telah lulus.
+Daftar di atas adalah cakupan penerimaan. Sebagian cakupan telah diimplementasikan pada SQL acceptance test dan browser smoke test PR #76 dengan hasil PASS; cakupan security, concurrency, RLS, UAT, restore drill, dan regression formal pada `REGRESSION_MATRIX.yaml` tetap harus dilengkapi/ditetapkan sesuai rencana QA.
 
 Rencana QA wajib menentukan:
 - unit, integration, contract, end-to-end, regression, security, performance, compatibility, dan recovery test;
@@ -1037,5 +1055,6 @@ Perubahan owner/pengembang harus disertai transfer dokumentasi dan prosedur. Aku
 | 2026-11-15 | Audit tahap 5: menautkan setiap requirement formal ke ID modul/domain pada Katalog Modul untuk memperjelas ownership dan cakupan lintas modul |
 | 2026-11-15 | Audit tahap 6: menyelaraskan fase P0–P6 Master Project dengan tahap 0–8 Roadmap agar tidak terbaca sebagai dua urutan delivery yang bertentangan |
 | 2026-11-15 | Audit tahap 7: merekonsiliasi daftar persetujuan Charter termasuk Sponsor/Manajemen dengan tabel persetujuan dokumen Charter |
+| 2026-11-16 | Recheck Form Blok: mencatat PR #76 full regression gate PASS (static, Deno, PostgreSQL, browser 20/20), membedakan status branch dari production, dan mencatat schema/recovery production masih belum cutover serta grace aktif sampai 19 November 2026 pukul 18.17 WIB |
 
 **Pernyataan status:** Master Project ini menetapkan baseline arah dan kerangka proyek. Dokumen ini tidak menyatakan semua fitur telah selesai, seluruh test lulus, semua modul telah modular, backup dapat dipulihkan, atau produksi telah terverifikasi. Setiap status teknis harus didukung bukti dari source, test, workflow, dan runtime.
