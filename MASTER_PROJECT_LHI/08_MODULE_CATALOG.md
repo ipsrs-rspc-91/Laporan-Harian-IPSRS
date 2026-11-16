@@ -44,7 +44,7 @@ Catatan:
 2. Modul STABLE_CANDIDATE belum otomatis berarti seluruh acceptance criteria, regression, dan verifikasi produksi telah lulus.
 3. Status DASH dan CONTROL_BOOK yang LOCKED wajib dipertahankan sesuai prosedur kontrol.
 4. Domain baru dapat ditambahkan melalui proses pada Bab 4, 6, dan 8 Master Project.
-5. Domain Form Blok/Recovery dicantumkan sebagai domain kebutuhan karena memiliki requirement tersendiri, tetapi tidak tercatat sebagai modul terpisah pada snapshot `LOCK_REGISTER.yaml` tanggal 4 Oktober 2026. Label `NOT LISTED IN LOCK_REGISTER SNAPSHOT` bukan status lock baru dan tidak memberikan izin perubahan. Status kontrolnya wajib ditetapkan melalui change control; implementasi recovery tetap BLOCKED selama temuan `SAFE_CUTOVER_REQUIRED` belum ditutup.
+5. Domain Form Blok/Recovery dicantumkan sebagai domain kebutuhan karena memiliki requirement tersendiri, tetapi tidak tercatat sebagai modul terpisah pada snapshot `LOCK_REGISTER.yaml` tanggal 4 Oktober 2026. Label `NOT LISTED IN LOCK_REGISTER SNAPSHOT` bukan status lock baru dan tidak memberikan izin perubahan. README Form Blok menyatakan spesifikasi/kriteria penerimaan disetujui untuk implementasi. Branch PR #76 telah lulus full automated regression gate pada 16 November 2026, tetapi PR masih OPEN/DRAFT dan belum diterapkan ke production. Runtime production masih menahan `open_lhi_global_grace_v2` dengan `SAFE_CUTOVER_REQUIRED`; status domain ini adalah IN DEVELOPMENT / BRANCH TEST PASS / PRODUCTION NOT CERTIFIED. Status lock formal tetap mengikuti `LOCK_REGISTER.yaml` dan change control.
 
 ## 4. Katalog modul baru
 
