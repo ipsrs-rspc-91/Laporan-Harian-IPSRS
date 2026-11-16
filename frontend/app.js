@@ -421,6 +421,10 @@
       case 'apiGetOnlineUsers':
       case 'apiListStaff':
       case 'apiGetDisciplineWarning':
+      case 'apiGetLhiNotifications':
+        payload.token=token; break;
+      case 'apiMarkLhiNotificationRead':
+        payload.token=token; payload.notificationId=args[0]; break;
       case 'apiGetMasterData':
       case 'apiGetKategoriKustom':
       case 'apiGetAreaKerjaKustom':
