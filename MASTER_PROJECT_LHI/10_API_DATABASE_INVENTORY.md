@@ -137,14 +137,14 @@ Audit source `main` tanggal 16 November 2026 menemukan ketidaksesuaian berikut:
 | Komponen | Bukti source | Temuan | Dampak |
 |---|---|---|---|
 | `apiGetDisciplineWarning` | `supabase/functions/ipsrs-api/index.ts` | Response hanya memuat `staff_id` dan `nama`; tidak memuat `missed_days` atau tahap peringatan | Frontend `login-fast.js` memfilter `missed_days >= 9`, sehingga response yang tersedia tidak dapat memenuhi filter tersebut |
-| `apiGetLhiNotifications` | Dicari pada seluruh `ipsrs-api/index.ts` yang diperiksa | Action tidak ditemukan | Modul notifikasi tidak memiliki action backend yang teridentifikasi untuk membaca inbox |
-| `apiMarkLhiNotificationRead` | Dicari pada seluruh `ipsrs-api/index.ts` yang diperiksa | Action tidak ditemukan | Penandaan notifikasi dibaca tidak memiliki action backend yang teridentifikasi |
-| Warning generator hari 4/6/7 | Backend action inventory dan login gate | Tidak ditemukan generator/persistensi peristiwa tahap 4/6/7 | Ketentuan README belum terbukti diimplementasikan |
+| `apiGetLhiNotifications` | Frontend caller + active Edge Function v114 | Action tidak tersedia pada runtime v114; ditambahkan pada branch PR #77 | Inbox belum dapat dibaca sampai API fix dirilis |
+| `apiMarkLhiNotificationRead` | Frontend caller + active Edge Function v114 | Action tidak tersedia pada runtime v114; ditambahkan pada branch PR #77 dengan pembatasan recipient dan idempotency | Read receipt belum dapat dipakai sampai API fix dirilis |
+| Warning generator hari 4/6/7 | PostgreSQL `run_lhi_discipline_scheduler()` + cron aktif | Generator ada; DB produksi memuat 521 row `DAY_4` dari 18 event | Event sudah tersimpan, tetapi inbox frontend terputus oleh API action yang hilang |
 | Perhitungan login gate | `apiWhoAmI`/discipline gate | Menggunakan `reports.tanggal` pada tujuh tanggal sebelumnya; tidak menggunakan `created_at` WIB | Tidak sesuai dengan dasar hitung README Form Blok |
 
-Frontend `lhi-discipline-notifications.js` memanggil kedua action inbox di atas dan hanya menulis kegagalan ke `console.warn`. `login-fast.js` memanggil `apiGetDisciplineWarning`, mengharapkan `missed_days`, lalu hanya menampilkan nama dengan nilai minimal 9. Ini merupakan mismatch kontrak yang terverifikasi pada source snapshot, bukan bukti langsung keadaan runtime/notification delivery di production.
+Frontend `lhi-discipline-notifications.js` memanggil kedua action inbox dan hanya menulis kegagalan ke `console.warn`. Edge Function production v114 tidak memiliki kedua action tersebut. `login-fast.js` juga memanggil `apiGetDisciplineWarning`, mengharapkan `missed_days`, sedangkan action lama hanya mengembalikan `staff_id,nama`. Database production memiliki cron aktif setiap 5 menit dan menyimpan event hari ke-4/6/7; untuk DAY_4 terukur 521 row dari 18 event. Karena itu akar masalah tampilan notifikasi adalah API inbox/read yang hilang, bukan ketiadaan scheduler event.
 
-**Prioritas:** P0/P1 untuk rekonsiliasi requirement dan desain; implementasi belum diotorisasi oleh audit ini. Sebelum perubahan: konfirmasi Product Owner, audit seluruh caller/legacy transport, desain schema dan migration, status runtime functions, backup/checkpoint, dan regression matrix sesuai change control. Jangan membuat tabel atau action baru sebelum data model dan prosedur perubahan disetujui.
+**Perbaikan source:** PR #77 menambahkan `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead`, termasuk filter `recipient_staff_id`, limit 50, dan read idempotent; `frontend/app.js` merutekan action melalui bearer session. Tidak ada schema/migration baru karena tabel dan kolom sudah tersedia. Belum di-deploy ke production. Sebelum release: audit RLS/service-role boundary, test recipient isolation, test unread/read flow, workflow browser regression, dan approval deployment.
 
 ## 7. Edge Function runtime parity
 
