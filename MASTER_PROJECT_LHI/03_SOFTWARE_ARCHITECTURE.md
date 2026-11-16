@@ -159,6 +159,20 @@ Arsitektur dianggap sesuai bila:
 - backup/restore dan rollback diuji;
 - SLO dan monitoring tersedia.
 
+## 15. Temuan verifikasi source — notifikasi disiplin LHI
+
+Snapshot source `main` yang diperiksa 16 November 2026 menunjukkan alur peringatan disiplin belum membentuk satu jalur end-to-end:
+- `frontend/login-fast.js` memanggil `apiGetDisciplineWarning`, lalu hanya menampilkan nama dengan `missed_days >= 9`.
+- Backend `apiGetDisciplineWarning` pada `supabase/functions/ipsrs-api/index.ts` hanya mengembalikan `staff_id` dan `nama`; field `missed_days` tidak disediakan. Karena filter frontend membutuhkan nilai tersebut, daftar peringatan tidak dapat terbentuk dari response yang ada.
+- `frontend/lhi-discipline-notifications.js` meminta `apiGetLhiNotifications` dan menandai baca melalui `apiMarkLhiNotificationRead`; kedua action tersebut tidak ditemukan pada inventory action backend `ipsrs-api/index.ts` yang diperiksa.
+- Backend gate login menghitung tujuh tanggal sebelumnya dari kolom `reports.tanggal` dan melakukan blokir saat tujuh tanggal itu kosong. Ini berbeda dari acuan README Form Blok yang menetapkan `created_at` dikonversi ke WIB dan menghitung tanggal kalender penuh tanpa input.
+
+**Implikasi arsitektur:** event/policy engine untuk tahap hari ke-4/6/7, notification persistence/delivery, dan perhitungan disiplin terpusat belum terbukti terhubung. Frontend saat ini tidak boleh dianggap sebagai sumber hitungan atau otorisasi. Rancangan target harus menempatkan kalkulasi dan transisi di backend/database dengan deduplikasi/idempotency; frontend hanya menyajikan hasil server.
+
+**Status:** SOURCE-LEVEL GAP CONFIRMED; production runtime impact NOT VERIFIED. Tidak ada perubahan runtime pada audit ini. Implementasi memerlukan persetujuan Product Owner, desain transaksi/event, skema yang disetujui, backup/checkpoint, regression, dan deployment approval.
+
+## 16. Riwayat
+
 ## 15. Riwayat
 
 | Tanggal | Perubahan |
