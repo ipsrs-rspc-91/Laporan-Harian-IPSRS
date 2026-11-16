@@ -73,6 +73,27 @@ Cakupan FORM BLOCK/RECOVERY di atas adalah kebutuhan test yang harus dirancang, 
 
 Test ID, status, dan gate harus disinkronkan melalui proses perubahan resmi pada REGRESSION_MATRIX.yaml. Jangan mengubah dokumen kontrol yang LOCKED tanpa prosedur unlock.
 
+## 6.1 Regression cases khusus temuan warning/notifikasi LHI
+
+Kasus berikut ditambahkan berdasarkan mismatch source yang ditemukan 16 November 2026. Semua berstatus **PROPOSED / NOT RUN**; belum ada perubahan pada `REGRESSION_MATRIX.yaml` yang terkunci.
+
+| ID usulan | Skenario | Expected result |
+|---|---|---|
+| LHI-WARN-001 | Petugas mencapai 4 hari kalender penuh tanpa LHI sah | Peringatan 1 tercatat dan diterima petugas terkait serta seluruh tim; nama petugas dan tahap tampil |
+| LHI-WARN-002 | Petugas mencapai 6 hari kalender penuh tanpa LHI sah | Peringatan 2 tercatat satu kali untuk kejadian/tahap tersebut |
+| LHI-WARN-003 | Petugas mencapai 7 hari kalender penuh tanpa LHI sah | Peringatan 3 menyebut akses akan diblokir hari ke-8 |
+| LHI-WARN-004 | Evaluator dijalankan berulang pada hari/tahap yang sama | Tidak membuat/mengirim duplikasi per petugas, insiden, dan tahap |
+| LHI-WARN-005 | Backend warning API dipanggil oleh login frontend | Response schema memiliki field yang disepakati dan frontend tidak memfilter field yang tidak tersedia |
+| LHI-WARN-006 | Inbox notification list/read dipanggil | Action backend tersedia, hanya mengembalikan notifikasi penerima yang sah, dan read receipt tersimpan |
+| LHI-WARN-007 | Backend/API/notification delivery gagal sementara | Peristiwa tidak hilang; retry aman, idempotent, dan kegagalan tercatat |
+| LHI-WARN-008 | LHI tanggal kejadian lama tetapi dibuat pada tanggal input berbeda | Kepatuhan mengikuti `created_at` WIB sesuai README, bukan tanggal kejadian |
+| LHI-WARN-009 | LHI dibatalkan atau seluruh input pada tanggal tertentu dibatalkan | Tanggal tersebut tidak dihitung sebagai hari aktif input jika tidak ada LHI sah pengganti |
+| LHI-WARN-010 | Peralihan hari WIB pukul 00.00 | Jumlah hari tanpa input berubah hanya setelah tanggal kalender penuh selesai |
+| LHI-WARN-011 | Status kepegawaian NONAKTIF lalu AKTIF kembali | Hitungan baru dimulai dari tanggal aktivasi kembali sesuai README |
+| LHI-WARN-012 | Hak akses individual hari ke-8 dan pemicu global hari ke-10 | Status pegawai dan status akses dipisahkan; blokir individual tidak menghilangkan pemicu global |
+
+Sebelum menjalankan kasus, QA harus menyetujui kontrak event/API, test data, clock/timezone strategy, dan environment. Test hari ke-8/10 tidak boleh dieksekusi terhadap akun atau data produksi tanpa persetujuan dan prosedur aman.
+
 ## 7. Kriteria penerimaan test
 
 Setiap test case wajib memiliki:
