@@ -156,17 +156,17 @@ Status desain: **OPEN / GAP CONFIRMED FROM SOURCE**. Ini adalah catatan desain d
 
 | Elemen | Kondisi source yang diperiksa 16 Nov 2026 | Kebutuhan desain/keputusan berikutnya |
 |---|---|---|
-| Perhitungan hari tanpa input | Login gate memakai `reports.tanggal` untuk tujuh tanggal sebelumnya | Satu service backend memakai `created_at` WIB, status LHI sah/batal, status kepegawaian, aktivasi/reaktivasi sesuai README |
-| Peringatan tahap | Belum ditemukan generator hari ke-4/6/7 pada backend action inventory | Event tahap 4/6/7 dengan deduplikasi per petugas/per kejadian/per tahap |
+| Perhitungan hari tanpa input | Scheduler database memakai `created_at` WIB dan reset timestamp; login gate Edge Function masih memakai `reports.tanggal` | Rekonsiliasi login gate agar mengikuti sumber perhitungan scheduler/README dan status LHI sah/batal |
+| Peringatan tahap | PostgreSQL scheduler membuat event hari 4/6/7 setiap 5 menit; row `DAY_4` ditemukan pada database produksi | Pertahankan event key unik dan deduplikasi; uji penerima dan batas waktu tahap |
 | API peringatan login | `apiGetDisciplineWarning` mengembalikan `staff_id,nama`; UI memfilter `missed_days >= 9` | Kontrak response disepakati; field tahap/hari/nama/waktu dan penerima dinyatakan eksplisit |
-| Inbox notifikasi | Frontend memanggil `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead`; action tidak ditemukan pada backend source yang diperiksa | Backend action, tabel/queue, read receipt, authorization, retention, dan idempotency harus dirancang dan diverifikasi |
+| Inbox notifikasi | Tabel `lhi_discipline_notifications` tersedia dan terisi; Edge Function v114 tidak memiliki dua action yang diminta frontend | PR #77 menambahkan list/read API; verifikasi recipient isolation, pagination, read idempotency, dan deploy parity |
 | Blokir individual | Login gate memblokir berdasarkan tujuh tanggal kosong dan memperbarui `staff.status` | Pisahkan status kepegawaian dan status hak akses aplikasi sesuai README; jangan ubah sebelum audit migrasi dan status runtime |
 | Blokir global/recovery | Action recovery tersedia pada source, tetapi integrasi penuh dengan kalkulasi `created_at` belum tersertifikasi | State machine, transaksi atomik, snapshot, retry/idempotency, dan recovery test |
 
 ### 7.1 Kontrak target minimum yang harus dirancang
 - Service backend menghasilkan `missed_days`, `last_valid_lhi_created_at`, `calculation_date_wib`, `warning_stage`, dan `access_state` dari satu aturan yang konsisten.
-- Generator peringatan membuat satu peristiwa untuk tahap 4, 6, dan 7; pengiriman kepada petugas terkait dan tim mencantumkan identitas petugas lalai sesuai README.
-- Notification API memiliki kontrak list/read, validasi identitas penerima, pagination/limit, dan status read yang aman.
+- Scheduler database menghasilkan satu event untuk tahap 4, 6, dan 7 dengan `event_key` dan unique conflict handling; penerima meliputi petugas terkait dan petugas aktif/tim sesuai implementasi scheduler.
+- Notification API list/read ditambahkan pada branch PR #77; query list membatasi `recipient_staff_id` ke sesi aktif dan 50 baris terakhir; read hanya memperbarui notifikasi milik sesi tersebut dan retry aman.
 - Perhitungan tidak boleh bergantung pada aktivitas login pengguna; jadwal/trigger evaluasi harus ditetapkan secara arsitektural dan tidak memakai polling frontend sebagai sumber kebenaran.
 - Kegagalan pengiriman tidak boleh menghapus peristiwa; retry harus idempotent dan dapat diaudit.
 
