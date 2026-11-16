@@ -124,7 +124,7 @@ Temuan berikut berasal dari pembacaan source repository `main`; ini bukan pemeri
 | File / blob SHA | Observasi | Status bukti |
 |---|---|---|
 | `supabase/functions/ipsrs-api/index.ts` / `2409a55950cf822423eaa59f2eac7a8a7f65e01f` | `apiGetDisciplineWarning` hanya mengembalikan `staff_id,nama`; login gate menggunakan `reports.tanggal` untuk 7 tanggal sebelumnya | Source verified |
-| `frontend/login-fast.js` / `91c60d8faeb9350c48c9f939f84714b07ecf77d0` | Filter peringatan mensyaratkan `missed_days >= 9`, padahal response action tidak menyediakan field tersebut | Source verified |
+| `frontend/login-fast.js` / `36fa8016e6b329808d42fb9c75a4a5fe5a83042a` | Filter peringatan mensyaratkan `missed_days >= 9`, padahal response action tidak menyediakan field tersebut | Source verified |
 | `frontend/lhi-discipline-notifications.js` / `da042578e00afeedda8c6d86187cf1c83bc7d287` | Memanggil `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead` | Source verified |
 | `frontend/app.js` / `fc061c5a8a1d28f8e776006c180685091cf1ae58` | Login path memanggil `showServerDisciplineWarning_` setelah autentikasi berhasil | Source verified |
 
