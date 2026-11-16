@@ -132,6 +132,8 @@ Database production memiliki `lhi_discipline_notifications` dan cron aktif `lhi-
 
 PR #77 menambahkan dua action API dengan filter penerima berdasarkan staff sesi, limit 50, dan penandaan baca idempotent; transport `frontend/app.js` diperbarui dan cache key app.js diganti. Status keseluruhan: **DAY_4 SCHEDULER/PERSISTENCE VERIFIED; PRODUCTION INBOX API GAP VERIFIED; FIX COMMITTED TO NON-PRODUCTION PR, NOT DEPLOYED**.
 
+Pada commit PR `0f303f2d46fb83095f82865ba64442a76af344c8`, static audit PASS, browser regression **19 tests passed** termasuk dua test baru untuk inbox notifikasi hari ke-4 dan guard sesi, serta Deployment Gate CI PASS ([run 43804612562](https://github.com/ipsrs-rspc-91/Laporan-Harian-IPSRS/actions/runs/43804612562)). Dua test baru menggunakan mock API dan data sintetis; belum membuktikan integrasi live Supabase atau isolasi penerima pada runtime. PR #77 tetap OPEN/DRAFT dan belum merge/deploy. Status keseluruhan: **SOURCE FIX + MOCKED UI REGRESSION PASS; LIVE API INTEGRATION / SECURITY TEST AND PRODUCTION RELEASE STILL PENDING**.
+
 Tidak ada script, database, konfigurasi, atau deployment produksi yang diubah sebagai bagian pencatatan temuan ini.
 
 ## 11. Riwayat
