@@ -170,11 +170,21 @@ Snapshot source `main` yang diperiksa 16 November 2026 menunjukkan alur peringat
 
 **Implikasi arsitektur:** event generation dan persistence server-side sudah ada; yang terputus adalah API inbox/read antara frontend dan tabel notifikasi. Frontend tidak boleh menghitung sendiri atau membaca tabel secara langsung. PR #77 menambahkan API terautentikasi yang membatasi pembacaan/penandaan ke `recipient_staff_id` milik sesi.
 
-**Status:** DATABASE SCHEDULER + DAY_4 PERSISTENCE VERIFIED IN PRODUCTION; INBOX API MISSING IN ACTIVE EDGE FUNCTION v114; API FIX ADDED TO PR #77, NOT DEPLOYED. Tidak ada perubahan runtime produksi. Implementasi memerlukan persetujuan Product Owner, desain transaksi/event, skema yang disetujui, backup/checkpoint, regression, dan deployment approval.
+**Status:** DATABASE SCHEDULER + DAY_4 PERSISTENCE VERIFIED IN PRODUCTION; INBOX API MISSING IN ACTIVE EDGE FUNCTION v114; API FIX ADDED TO PR #77, NOT DEPLOYED. Tidak ada perubahan runtime produksi. Perbaikan inbox PR #77 dan Form Blok/Recovery PR #76 adalah dua change set terpisah; masing-masing wajib lulus gate dan deployment approval sebelum production.
 
-## 16. Riwayat
+## 16. Form Blok/Recovery architecture status — 16 November 2026
 
-## 15. Riwayat
+Arsitektur Form Blok/Recovery pada branch PR #76 memisahkan tanggung jawab sebagai berikut:
+- Frontend hanya memulai pemeriksaan status blokir dan menampilkan Form Blok; frontend tidak menentukan hari disiplin atau mengubah global lock.
+- lhi-reset-verify memverifikasi kode Reset dan menerbitkan one-time challenge dengan rate limit server-side.
+- lhi-recovery-exchange memvalidasi sesi Supabase KA IPSRS dan menukar challenge menjadi recovery capability terbatas.
+- lhi-recovery-action memvalidasi capability melalui database RPC untuk membaca status recovery atau memulai grace 120 jam.
+- lhi-block-status membaca global lock dan snapshot kewajiban; hanya kewajiban yang belum selesai dari petugas yang masih Aktif ditampilkan sebagai pemicu.
+- PostgreSQL menjadi otoritas state machine, scheduler, perhitungan WIB, snapshot, idempotency, dan audit.
+
+Branch PR #76 lulus full automated regression gate 43835446297 (static, Deno, PostgreSQL, browser 20/20). Production belum mengikuti migration alignment; open_lhi_global_grace_v2 production masih SAFE_CUTOVER_REQUIRED dan incident GRACE aktif sampai 19 November 2026 pukul 18.17 WIB. Arsitektur branch tidak boleh disamakan dengan as-built production.
+
+## 17. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
