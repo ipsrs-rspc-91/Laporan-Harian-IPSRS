@@ -165,27 +165,12 @@
   setTimeout(function(){ restoreRememberedPassword_(); },0);
 
   async function showServerDisciplineWarning_(){
-    if(document.getElementById('ipsrsServerDisciplineWarning')) return;
-    let names=[];
-    try{
-      if(typeof window.gsRun==='function'){
-        const data=await window.gsRun('apiGetDisciplineWarning');
-        const rows=Array.isArray(data)?data:(Array.isArray(data?.data)?data.data:(Array.isArray(data?.staff)?data.staff:[]));
-        const overdue=rows.filter(x=>Number(x?.missed_days)>=9).sort((x,y)=>Number(y?.missed_days)-Number(x?.missed_days));
-        names=overdue.map(x=>({nama:String(x?.nama||'').trim(),hari:Number(x?.missed_days)})).filter(x=>x.nama);
-      }
-    }catch(_e){}
-    if(!names.length) return;
-    const style=document.createElement('style');
-    style.id='ipsrsServerDisciplineWarningStyle';
-    style.textContent='#ipsrsServerDisciplineWarning{position:fixed;inset:0;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99999}#ipsrsServerDisciplineWarning .sdw-box{width:min(360px,100%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.22);font-family:inherit}#ipsrsServerDisciplineWarning .sdw-title{font-weight:800;font-size:16px;margin-bottom:12px}#ipsrsServerDisciplineWarning .sdw-body{font-size:14px;line-height:1.55}#ipsrsServerDisciplineWarning .sdw-btn{margin-top:16px;width:100%;height:40px;border:0;border-radius:9px;font-weight:700;cursor:pointer}';
-    document.head.appendChild(style);
-    const bg=document.createElement('div');
-    bg.id='ipsrsServerDisciplineWarning';
-    const list=names.map(x=>'🔴 '+x.nama+' — '+x.hari+' hari').join('<br>');
-    bg.innerHTML='<div class="sdw-box" role="alertdialog" aria-modal="true"><div class="sdw-title">⚠️ PERINGATAN DISIPLIN LHI</div><div class="sdw-body">'+names.length+' petugas tercatat tidak mengisi LHI selama 9 hari berturut-turut atau lebih:<br><br>'+list+'</div><button class="sdw-btn" type="button">OK</button></div>';
-    document.body.appendChild(bg);
-    bg.querySelector('.sdw-btn').onclick=function(){bg.remove();};
+    // Peringatan tahap 4/6/7 dibentuk scheduler database dan ditampilkan
+    // melalui inbox notifikasi terautentikasi. Jangan membaca endpoint legacy
+    // yang tidak menyediakan missed_days.
+    if(typeof window.__ipsrsLoadLhiNotifications==='function'){
+      await window.__ipsrsLoadLhiNotifications();
+    }
   }
 
   window.showServerDisciplineWarning_=showServerDisciplineWarning_;
