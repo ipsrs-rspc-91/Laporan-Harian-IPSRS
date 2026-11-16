@@ -707,6 +707,18 @@ Daftar ini merupakan snapshot temuan dan batas klaim, bukan hasil audit total te
 
 # BAGIAN V — PETA DOKUMEN DAN INVENTARIS TEKNIS
 
+### 19.1 Temuan source-level — peringatan disiplin LHI (16 November 2026)
+
+Audit terhadap source `main` menemukan bahwa ketentuan README Form Blok hari ke-4/6/7 belum memiliki jalur implementasi end-to-end yang terbukti:
+- Backend `apiGetDisciplineWarning` hanya mengembalikan `staff_id` dan `nama`, sedangkan `frontend/login-fast.js` memfilter `missed_days >= 9`. Kontrak response tidak cocok.
+- `frontend/lhi-discipline-notifications.js` memanggil `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead`; kedua action tidak ditemukan pada `supabase/functions/ipsrs-api/index.ts` yang diperiksa.
+- Tidak ditemukan generator/persistensi event peringatan hari ke-4/6/7 dalam backend action inventory yang diperiksa.
+- Login gate menggunakan `reports.tanggal` pada tujuh tanggal sebelumnya, sedangkan README menetapkan dasar hitung `created_at` dalam WIB dan status LHI yang sah.
+
+**Status:** source-level integration gap CONFIRMED; penyebab lengkap pada runtime produksi NOT FULLY VERIFIED. Pencatatan ini adalah gap proyek, bukan otorisasi implementasi. Tindakan berikutnya: (1) konfirmasi aturan dan penerima notifikasi oleh Product Owner; (2) audit caller/transport lama serta runtime; (3) rancang satu service kalkulasi server, event stage 4/6/7, penyimpanan/inbox dan read API; (4) pisahkan status kepegawaian dan status akses; (5) rancang idempotency, audit, retry, dan failure handling; (6) susun regression test dengan prosedur change control untuk dokumen terkunci; (7) baru implementasi di branch nonproduksi setelah approval.
+
+Bukti source snapshot: backend blob `2409a55950cf822423eaa59f2eac7a8a7f65e01f`; frontend login warning blob `91c60d8faeb9350c48c9f939f84714b07ecf77d0`; frontend notification blob `da042578e00afeedda8c6d86187cf1c83bc7d287`; app login path blob `fc061c5a8a1d28f8e776006c180685091cf1ae58`.
+
 ## 20. Struktur dokumen proyek
 
 Struktur dokumentasi yang ditemukan pada branch kerja saat audit 15 November 2026 (seluruh path di bawah telah diperiksa keberadaannya; roadmap disimpan dengan nama `PROFESSIONALIZATION_ROADMAP.md`, bukan file duplikat bernomor 06):
