@@ -250,8 +250,10 @@ if (fs.existsSync(appPath)) {
     .every(name=>new RegExp('\\[functions\\.'+name+'\\]\\s+verify_jwt\\s*=\\s*false').test(supabaseConfig));
   const recoveryActionPath=path.join(root,'supabase','functions','lhi-recovery-action','index.ts');
   const recoveryActionSource=fs.existsSync(recoveryActionPath)?fs.readFileSync(recoveryActionPath,'utf8'):'';
-  const recoveryResponseMatchesUi=recoveryActionSource.includes('grace_status:data')
-    && app.includes('statusPayload&&statusPayload.grace_status');
+  const recoveryResponseMatchesUi=(
+      recoveryActionSource.includes('grace_status:data') ||
+      recoveryActionSource.includes('grace_status: graceStatus')
+    ) && app.includes('statusPayload&&statusPayload.grace_status');
   if(missingRecoveryFunctions.length||!deployRecoveryFunctions||!recoverySchemaComplete||!recoveryJwtConfig||!recoveryResponseMatchesUi)
     fail('LHI recovery backend completeness','Missing function sources: '+missingRecoveryFunctions.join(', ')
       +'; deployment functions='+deployRecoveryFunctions+'; recovery schema='+recoverySchemaComplete
