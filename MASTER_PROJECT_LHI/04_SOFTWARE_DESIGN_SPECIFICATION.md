@@ -150,6 +150,28 @@ Setiap modul menggunakan bagian berikut:
 
 Sebelum perubahan, identifikasi requirement, module, shared file, API, table, RLS, migration, event, cache, role, regression test, dan production dependency yang terdampak. Perubahan lintas modul harus menambahkan regression coverage dan bukti review.
 
+## 7. Temuan desain modul — LHI discipline notification
+
+Status desain: **OPEN / GAP CONFIRMED FROM SOURCE**. Ini adalah catatan desain dan bukan izin untuk mengubah script/database/konfigurasi produksi.
+
+| Elemen | Kondisi source yang diperiksa 16 Nov 2026 | Kebutuhan desain/keputusan berikutnya |
+|---|---|---|
+| Perhitungan hari tanpa input | Login gate memakai `reports.tanggal` untuk tujuh tanggal sebelumnya | Satu service backend memakai `created_at` WIB, status LHI sah/batal, status kepegawaian, aktivasi/reaktivasi sesuai README |
+| Peringatan tahap | Belum ditemukan generator hari ke-4/6/7 pada backend action inventory | Event tahap 4/6/7 dengan deduplikasi per petugas/per kejadian/per tahap |
+| API peringatan login | `apiGetDisciplineWarning` mengembalikan `staff_id,nama`; UI memfilter `missed_days >= 9` | Kontrak response disepakati; field tahap/hari/nama/waktu dan penerima dinyatakan eksplisit |
+| Inbox notifikasi | Frontend memanggil `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead`; action tidak ditemukan pada backend source yang diperiksa | Backend action, tabel/queue, read receipt, authorization, retention, dan idempotency harus dirancang dan diverifikasi |
+| Blokir individual | Login gate memblokir berdasarkan tujuh tanggal kosong dan memperbarui `staff.status` | Pisahkan status kepegawaian dan status hak akses aplikasi sesuai README; jangan ubah sebelum audit migrasi dan status runtime |
+| Blokir global/recovery | Action recovery tersedia pada source, tetapi integrasi penuh dengan kalkulasi `created_at` belum tersertifikasi | State machine, transaksi atomik, snapshot, retry/idempotency, dan recovery test |
+
+### 7.1 Kontrak target minimum yang harus dirancang
+- Service backend menghasilkan `missed_days`, `last_valid_lhi_created_at`, `calculation_date_wib`, `warning_stage`, dan `access_state` dari satu aturan yang konsisten.
+- Generator peringatan membuat satu peristiwa untuk tahap 4, 6, dan 7; pengiriman kepada petugas terkait dan tim mencantumkan identitas petugas lalai sesuai README.
+- Notification API memiliki kontrak list/read, validasi identitas penerima, pagination/limit, dan status read yang aman.
+- Perhitungan tidak boleh bergantung pada aktivitas login pengguna; jadwal/trigger evaluasi harus ditetapkan secara arsitektural dan tidak memakai polling frontend sebagai sumber kebenaran.
+- Kegagalan pengiriman tidak boleh menghapus peristiwa; retry harus idempotent dan dapat diaudit.
+
+Semua butir di atas adalah rancangan yang harus disetujui dan diuji; bukan pernyataan bahwa implementasi sudah tersedia.
+
 ## 7. Riwayat
 
 | Tanggal | Perubahan |
