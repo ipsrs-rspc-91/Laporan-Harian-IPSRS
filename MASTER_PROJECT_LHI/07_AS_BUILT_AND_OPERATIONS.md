@@ -117,6 +117,21 @@ Setiap alert memiliki metric, threshold yang disetujui, severity, owner, channel
 | Access review | Daftar akses dan approval | NOT VERIFIED |
 | Source/runtime parity | SHA/version evidence | NOT VERIFIED |
 
+## 11. Source-level finding log — 16 November 2026
+
+Temuan berikut berasal dari pembacaan source repository `main`; ini bukan pemeriksaan live notification rows, database catalog, log production, atau bukti bahwa seluruh pengguna mengalami dampak yang sama.
+
+| File / blob SHA | Observasi | Status bukti |
+|---|---|---|
+| `supabase/functions/ipsrs-api/index.ts` / `2409a55950cf822423eaa59f2eac7a8a7f65e01f` | `apiGetDisciplineWarning` hanya mengembalikan `staff_id,nama`; login gate menggunakan `reports.tanggal` untuk 7 tanggal sebelumnya | Source verified |
+| `frontend/login-fast.js` / `91c60d8faeb9350c48c9f939f84714b07ecf77d0` | Filter peringatan mensyaratkan `missed_days >= 9`, padahal response action tidak menyediakan field tersebut | Source verified |
+| `frontend/lhi-discipline-notifications.js` / `da042578e00afeedda8c6d86187cf1c83bc7d287` | Memanggil `apiGetLhiNotifications` dan `apiMarkLhiNotificationRead` | Source verified |
+| `frontend/app.js` / `fc061c5a8a1d28f8e776006c180685091cf1ae58` | Login path memanggil `showServerDisciplineWarning_` setelah autentikasi berhasil | Source verified |
+
+Kedua action inbox notifikasi tidak ditemukan pada backend `ipsrs-api/index.ts` snapshot yang diperiksa. Penyebab akhir notifikasi tidak muncul di perangkat tertentu tetap memerlukan pemeriksaan transport `gsRun`/`authRun`, deployment parity, function runtime, database, dan log. Status keseluruhan: **SOURCE-LEVEL INTEGRATION GAP CONFIRMED; PRODUCTION ROOT CAUSE NOT FULLY VERIFIED**.
+
+Tidak ada script, database, konfigurasi, atau deployment produksi yang diubah sebagai bagian pencatatan temuan ini.
+
 ## 11. Riwayat
 
 | Tanggal | Perubahan |
