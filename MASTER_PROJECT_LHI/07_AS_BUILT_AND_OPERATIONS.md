@@ -136,7 +136,32 @@ Pada commit PR `0f303f2d46fb83095f82865ba64442a76af344c8`, static audit PASS, br
 
 Tidak ada script, database, konfigurasi, atau deployment produksi yang diubah sebagai bagian pencatatan temuan ini.
 
-## 11. Riwayat
+## 12. Form Blok/Recovery operational state — 16 November 2026
+
+### 12.1 Production runtime (read-only verification)
+
+- LHI_GLOBAL_BLOCK saat recheck: NONAKTIF.
+- Terdapat satu incident GRACE aktif; dimulai 14 November 2026 pukul 18.17 WIB dan deadline 19 November 2026 pukul 18.17 WIB.
+- Saat query terdapat 22 petugas Aktif, 18 Nonaktif, dan 42 baris obligation pending (baris, bukan distinct staff).
+- Function production open_lhi_global_grace_v2 masih fail-closed dengan reason SAFE_CUTOVER_REQUIRED. Karena itu, Reset/recovery belum dapat dinyatakan operasional end-to-end di production.
+- Schema production belum memiliki lhi_access_blocked_at, lhi_employment_activated_at, snapshot_last_lhi_created_at, snapshot_missed_days, dan lhi_discipline_obligation_events.
+
+### 12.2 Branch PR #76 (non-production)
+
+PR #76 head eafb67ed0a39432ead7610ac56c6ecd8b60fc61b lulus workflow 43835446297: static audit PASS, Deno type-check PASS, PostgreSQL LHI regression PASS, browser 20/20 PASS, deployment-gate audit PASS. Branch mencakup alignment migration, recovery source, block-status snapshot display, dan regression test.
+
+PR masih OPEN/DRAFT. Hasil CI bukan production deployment. Tidak ada migration, function, global lock, incident, atau obligation production yang diubah selama pekerjaan ini.
+
+### 12.3 Operasional cutover
+
+1. Jangan mengubah incident GRACE aktif atau deadline 19 November 2026 pukul 18.17 WIB selama cutover tanpa rencana dan persetujuan eksplisit.
+2. Selesaikan migration reconciliation sebelum db push; migration branch tidak boleh dianggap sudah diterapkan.
+3. Lakukan backup/checkpoint dan uji migration chain lengkap pada staging yang mewakili schema production.
+4. Deploy migration dan Edge Functions hanya melalui workflow release yang telah lulus audit dan approval.
+5. Setelah deployment, verifikasi schema, function source/version, status incident, deadline grace, login gate, Reset, dan smoke test production.
+6. Jika recovery status atau snapshot tidak dapat diverifikasi, sistem harus tetap fail-closed dan tidak boleh membuka login normal.
+
+## 13. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
