@@ -157,6 +157,7 @@ Status desain: **OPEN / GAP CONFIRMED FROM SOURCE**. Ini adalah catatan desain d
 | Elemen | Kondisi source yang diperiksa 16 Nov 2026 | Kebutuhan desain/keputusan berikutnya |
 |---|---|---|
 | Perhitungan hari tanpa input | Scheduler database memakai `created_at` WIB dan reset timestamp; login gate Edge Function masih memakai `reports.tanggal` | Rekonsiliasi login gate agar mengikuti sumber perhitungan scheduler/README dan status LHI sah/batal |
+| Monitoring streak | Sebelum fix branch, endpoint monitoring memakai `reports.tanggal` dan tidak menghormati `lhi_discipline_reset_at` | PR #77 mengubah streak monitoring memakai `created_at` WIB dan baseline reset; monthly reporting metrics tetap terpisah |
 | Peringatan tahap | PostgreSQL scheduler membuat event hari 4/6/7 setiap 5 menit; row `DAY_4` ditemukan pada database produksi | Pertahankan event key unik dan deduplikasi; uji penerima dan batas waktu tahap |
 | API peringatan login | `apiGetDisciplineWarning` mengembalikan `staff_id,nama`; UI memfilter `missed_days >= 9` | Kontrak response disepakati; field tahap/hari/nama/waktu dan penerima dinyatakan eksplisit |
 | Inbox notifikasi | Tabel `lhi_discipline_notifications` tersedia dan terisi; Edge Function v114 tidak memiliki dua action yang diminta frontend | PR #77 menambahkan list/read API; verifikasi recipient isolation, pagination, read idempotency, dan deploy parity |
