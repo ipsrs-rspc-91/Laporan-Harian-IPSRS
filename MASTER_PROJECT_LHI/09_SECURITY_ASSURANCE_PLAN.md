@@ -151,7 +151,19 @@ NO-GO bila terdapat temuan Critical, High tanpa risk acceptance formal, akses li
 - Risk acceptance register.
 - Security release decision.
 
-## 13. Riwayat
+## 13. Bukti security-related regression — PR #76, 16 November 2026
+
+Full regression gate PR #76 pada SHA eafb67ed0a39432ead7610ac56c6ecd8b60fc61b lulus. Bukti yang relevan terhadap keamanan meliputi:
+- Deno type-check untuk LHI Edge Functions: PASS.
+- Browser test limited recovery memastikan challenge ditukar menjadi capability terbatas KA IPSRS dan operational API normal tidak dipanggil sebelum Reset.
+- Browser test individual access block memastikan login ditolak setelah Supabase Auth dan sesi Auth sementara dibersihkan.
+- PostgreSQL acceptance test memverifikasi validasi recovery session, role KA IPSRS, incident metadata, transisi grace, idempotency, dan RLS/grants dalam fixture terisolasi.
+
+Batas bukti: test menggunakan data sintetis dan environment CI; belum menggantikan DAST, penetration test, full role × object negative testing, live recipient isolation, audit seluruh SECURITY DEFINER function, atau security assessment production. Status domain security tetap NOT CERTIFIED.
+
+Recheck production read-only menunjukkan function open_lhi_global_grace_v2 masih fail-closed dengan SAFE_CUTOVER_REQUIRED dan schema baru untuk snapshot/individual access belum diterapkan. Tidak ada bypass atau perubahan security configuration production yang dilakukan.
+
+## 14. Riwayat
 
 | Tanggal | Perubahan |
 |---|---|
